@@ -1,12 +1,5 @@
 import { Head, Link, usePage } from '@inertiajs/react';
-import { FolderOpen, LogOut, ShieldCheck, ShieldAlert, Users } from 'lucide-react';
-
-interface Estadisticas {
-    totalPersonas: number;
-    cudVigentes: number;
-    cudPorVencer: number;
-    legajosAbiertos: number;
-}
+import { LogOut } from 'lucide-react';
 
 interface PersonaReciente {
     id: number;
@@ -17,7 +10,6 @@ interface PersonaReciente {
 }
 
 interface DashboardProps {
-    estadisticas: Estadisticas;
     personasRecientes: PersonaReciente[];
 }
 
@@ -26,39 +18,8 @@ interface AuthUser {
     email?: string;
 }
 
-export default function Dashboard({ estadisticas, personasRecientes }: DashboardProps) {
+export default function Dashboard({ personasRecientes }: DashboardProps) {
     const { auth } = usePage<{ auth: { user: AuthUser | null } }>().props;
-
-    const tarjetas = [
-        {
-            label: 'Personas registradas',
-            valor: estadisticas.totalPersonas,
-            icon: Users,
-            color: '#B49BDE',
-            bg: '#EFE7FA',
-        },
-        {
-            label: 'CUD vigentes',
-            valor: estadisticas.cudVigentes,
-            icon: ShieldCheck,
-            color: '#4FA98A',
-            bg: '#DCF3EA',
-        },
-        {
-            label: 'CUD por vencer (30 días)',
-            valor: estadisticas.cudPorVencer,
-            icon: ShieldAlert,
-            color: '#D9985B',
-            bg: '#FBEBDC',
-        },
-        {
-            label: 'Legajos abiertos',
-            valor: estadisticas.legajosAbiertos,
-            icon: FolderOpen,
-            color: '#C77B87',
-            bg: '#FBE4E7',
-        },
-    ];
 
     return (
         <>
@@ -126,47 +87,33 @@ export default function Dashboard({ estadisticas, personasRecientes }: Dashboard
                     >
                         Panel general
                     </h2>
-                    <p
-                        className="mt-1 text-sm text-[#4A3F55]/60"
-                        style={{ fontFamily: "'Inter', sans-serif" }}
-                    >
-                        Resumen del estado actual del sistema.
-                    </p>
-
-                    {/* Tarjetas de estadísticas */}
-                    <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                        {tarjetas.map((tarjeta) => {
-                            const Icon = tarjeta.icon;
-                            return (
-                                <div
-                                    key={tarjeta.label}
-                                    className="rounded-2xl border border-white bg-white p-5 shadow-sm shadow-[#D8C9F0]/10"
-                                >
-                                    <div
-                                        className="flex h-10 w-10 items-center justify-center rounded-xl"
-                                        style={{ backgroundColor: tarjeta.bg }}
-                                    >
-                                        <Icon size={20} style={{ color: tarjeta.color }} />
-                                    </div>
-                                    <p
-                                        className="mt-4 text-3xl font-semibold text-[#4A3F55]"
-                                        style={{ fontFamily: "'Poppins', sans-serif" }}
-                                    >
-                                        {tarjeta.valor}
-                                    </p>
-                                    <p
-                                        className="mt-1 text-sm text-[#4A3F55]/60"
-                                        style={{ fontFamily: "'Inter', sans-serif" }}
-                                    >
-                                        {tarjeta.label}
-                                    </p>
-                                </div>
-                            );
-                        })}
+                    <div className="mt-1 flex items-center justify-between">
+                        <p
+                            className="text-sm text-[#4A3F55]/60"
+                            style={{ fontFamily: "'Inter', sans-serif" }}
+                        >
+                            Resumen del estado actual del sistema.
+                        </p>
+                        <div className="flex gap-2">
+                            <Link
+                                href="/personas/nueva"
+                                className="rounded-full bg-gradient-to-r from-[#C9B6E4] to-[#F6C6A6] px-4 py-2 text-sm font-semibold text-[#4A3F55] shadow-sm transition hover:brightness-105"
+                                style={{ fontFamily: "'Inter', sans-serif" }}
+                            >
+                                + Nueva persona
+                            </Link>
+                            <Link
+                                href="/legajos/nuevo"
+                                className="rounded-full border border-[#D8C9F0]/60 bg-white px-4 py-2 text-sm font-medium text-[#4A3F55] transition hover:bg-[#F5E9FB]"
+                                style={{ fontFamily: "'Inter', sans-serif" }}
+                            >
+                                + Nuevo legajo
+                            </Link>
+                        </div>
                     </div>
 
                     {/* Personas recientes */}
-                    <div className="mt-8 rounded-2xl border border-white bg-white p-5 shadow-sm shadow-[#D8C9F0]/10 sm:p-6">
+                    <div className="mt-6 rounded-2xl border border-white bg-white p-5 shadow-sm shadow-[#D8C9F0]/10 sm:p-6">
                         <h3
                             className="text-base font-semibold text-[#4A3F55]"
                             style={{ fontFamily: "'Poppins', sans-serif" }}

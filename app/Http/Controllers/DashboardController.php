@@ -2,8 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Cud;
-use App\Models\Legajo;
 use App\Models\Persona;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -13,16 +11,7 @@ class DashboardController extends Controller
 {
     public function __invoke(Request $request): Response
     {
-        $hoy = now();
-        $enTreintaDias = now()->addDays(30);
-
         return Inertia::render('dashboard', [
-            'estadisticas' => [
-                'totalPersonas' => Persona::where('activo', true)->count(),
-                'cudVigentes' => Cud::where('fecha_vencimiento', '>=', $hoy)->count(),
-                'cudPorVencer' => Cud::whereBetween('fecha_vencimiento', [$hoy, $enTreintaDias])->count(),
-                'legajosAbiertos' => Legajo::where('estado', 'Abierto')->count(),
-            ],
             'personasRecientes' => Persona::with('localidad')
                 ->where('activo', true)
                 ->latest('creado_en')
