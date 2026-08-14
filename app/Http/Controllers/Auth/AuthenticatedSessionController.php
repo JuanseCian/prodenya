@@ -25,7 +25,9 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        // Redirige a "home" (no pide parámetros). Cuando armemos el
+        // dashboard propio, cambiamos esto a esa ruta.
+        return redirect()->intended(route('home', absolute: false));
     }
 
     public function destroy(Request $request): RedirectResponse

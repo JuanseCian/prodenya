@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -31,12 +32,27 @@ class Usuario extends Authenticatable
         'remember_token',
     ];
 
+    /**
+     * Se agrega "name" a la respuesta JSON del modelo, ya que varios
+     * componentes del starter kit (sidebar, avatar, etc.) esperan ese
+     * campo. Nuestro esquema usa "nombre_usuario", así que lo exponemos
+     * como alias de solo lectura.
+     */
+    protected $appends = ['name'];
+
     protected function casts(): array
     {
         return [
             'activo' => 'boolean',
             'ultimo_acceso' => 'datetime',
         ];
+    }
+
+    protected function name(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->nombre_usuario ?: $this->email,
+        );
     }
 
     /**

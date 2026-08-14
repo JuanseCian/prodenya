@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\TeamInvitation;
+use App\Models\Cud;
+use App\Models\Legajo;
+use App\Models\Persona;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -11,28 +13,28 @@ class DashboardController extends Controller
 {
     public function __invoke(Request $request): Response
     {
-        $email = strtolower($request->user()->email);
-
-        $pendingInvitations = TeamInvitation::query()
-            ->with(['inviter', 'team'])
-            ->whereRaw('LOWER(email) = ?', [$email])
-            ->whereNull('accepted_at')
-            ->where(fn ($query) => $query
-                ->whereNull('expires_at')
-                ->orWhere('expires_at', '>=', now()))
-            ->latest()
-            ->get()
-            ->map(fn (TeamInvitation $invitation) => [
-                'code' => $invitation->code,
-                'inviterName' => $invitation->inviter->name,
-                'team' => [
-                    'name' => $invitation->team->name,
-                    'slug' => $invitation->team->slug,
-                ],
-            ]);
+        $hoy = now();
+        $enTreintaDias = now()->addDays(30);
 
         return Inertia::render('dashboard', [
-            'pendingInvitations' => $pendingInvitations,
+            'estadisticas' => [
+                'totalPersonas' => Persona::where('activo', true)->count(),
+                'cudVigentes' => Cud::where('fecha_vencimiento', '>=', $hoy)->count(),
+                'cudPorVencer' => Cud::whereBetween('fecha_vencimiento', [$hoy, $enTreintaDias])->count(),
+                'legajosAbiertos' => Legajo::where('estado', 'Abierto')->count(),
+            ],
+            'personasRecientes' => Persona::with('localidad')
+                ->where('activo', true)
+                ->latest('creado_en')
+                ->take(5)
+                ->get()
+                ->map(fn (Persona $persona) => [
+                    'id' => $persona->id,
+                    'nombreCompleto' => "{$persona->nombre} {$persona->apellido}",
+                    'dni' => $persona->dni,
+                    'localidad' => $persona->localidad?->nombre,
+                    'fechaAlta' => $persona->creado_en->format('d/m/Y'),
+                ]),
         ]);
     }
 }
