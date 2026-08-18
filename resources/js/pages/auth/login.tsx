@@ -5,6 +5,9 @@ interface LoginProps {
     status?: string;
 }
 
+const FONT_HEADING = "'Lora', serif";
+const FONT_BODY = "'Public Sans', sans-serif";
+
 export default function Login({ status }: LoginProps) {
     const { data, setData, post, processing, errors, reset } = useForm({
         email: '',
@@ -22,12 +25,6 @@ export default function Login({ status }: LoginProps) {
     return (
         <>
             <Head title="Iniciar sesión">
-                {/*
-                  Reset defensivo: fuerza html/body/#app a ocupar el 100% del
-                  viewport y anula cualquier max-width o dark-mode heredado
-                  de un layout padre, para que esta página siempre se vea
-                  a pantalla completa sin importar dónde se monte.
-                */}
                 <style>{`
                     html, body, #app {
                         width: 100% !important;
@@ -41,55 +38,44 @@ export default function Login({ status }: LoginProps) {
             </Head>
 
             <div
-                style={{
-                    position: 'fixed',
-                    inset: 0,
-                    width: '100vw',
-                    height: '100dvh',
-                    overflowY: 'auto',
-                }}
-                className="flex items-center justify-center bg-gradient-to-br from-[#F5E9FB] via-[#FDF3E7] to-[#E6F5EE] px-4 py-10 sm:px-6"
+                style={{ position: 'fixed', inset: 0, width: '100vw', height: '100dvh', overflowY: 'auto' }}
+                className="flex items-center justify-center bg-[#F6F5F1] px-4 py-10 sm:px-6"
             >
-                {/* Blobs decorativos pastel */}
-                <div className="pointer-events-none absolute -top-24 -left-16 h-72 w-72 rounded-full bg-[#D8C9F0] opacity-50 blur-3xl sm:-top-32 sm:-left-24 sm:h-96 sm:w-96" />
-                <div className="pointer-events-none absolute top-1/3 -right-20 h-80 w-80 rounded-full bg-[#BFE8DA] opacity-50 blur-3xl sm:-right-32 sm:h-[28rem] sm:w-[28rem]" />
-                <div className="pointer-events-none absolute -bottom-28 left-1/4 h-72 w-72 rounded-full bg-[#FBD9BD] opacity-40 blur-3xl sm:-bottom-40 sm:h-96 sm:w-96" />
-
-                {/* Card */}
-                <div className="relative w-full max-w-[22rem] rounded-[1.75rem] border border-white/60 bg-white/70 p-6 shadow-xl shadow-[#D8C9F0]/30 backdrop-blur-xl sm:max-w-sm sm:rounded-[2rem] sm:p-10">
-                    <div className="text-center">
+                <div className="w-full max-w-sm rounded-lg border border-[#E3E0D8] bg-white p-8 shadow-sm sm:p-10">
+                    <div className="border-b border-[#E3E0D8] pb-6 text-center">
                         <span
-                            className="text-[0.65rem] font-semibold tracking-[0.2em] text-[#9B87C4] uppercase sm:text-xs sm:tracking-[0.25em]"
-                            style={{ fontFamily: "'Inter', sans-serif" }}
+                            className="text-[0.65rem] font-semibold tracking-[0.2em] text-[#6B8F71] uppercase"
+                            style={{ fontFamily: FONT_BODY }}
                         >
                             Sistema de gestión
                         </span>
                         <h1
-                            className="mt-2 text-2xl font-semibold text-[#4A3F55] sm:text-3xl"
-                            style={{ fontFamily: "'Poppins', sans-serif" }}
+                            className="mt-2 text-2xl font-medium text-[#2C4A5E] sm:text-3xl"
+                            style={{ fontFamily: FONT_HEADING }}
                         >
                             Prodenya
                         </h1>
-                        <p
-                            className="mt-3 text-sm text-[#4A3F55]/70"
-                            style={{ fontFamily: "'Inter', sans-serif" }}
-                        >
-                            Ingresá con tu usuario para acceder al sistema.
-                        </p>
                     </div>
 
+                    <p
+                        className="mt-6 text-sm text-[#2B2F36]/70"
+                        style={{ fontFamily: FONT_BODY }}
+                    >
+                        Ingresá con tu usuario para acceder al sistema.
+                    </p>
+
                     {status && (
-                        <div className="mt-6 rounded-xl bg-[#BFE8DA]/50 px-4 py-3 text-center text-sm font-medium text-[#3E7A63]">
+                        <div className="mt-4 rounded-md border border-[#6B8F71]/30 bg-[#6B8F71]/10 px-4 py-3 text-sm font-medium text-[#4A6B52]">
                             {status}
                         </div>
                     )}
 
-                    <form onSubmit={submit} className="mt-8 space-y-4">
+                    <form onSubmit={submit} className="mt-6 space-y-4">
                         <div>
                             <label
                                 htmlFor="email"
-                                className="mb-1.5 block text-sm font-medium text-[#4A3F55]"
-                                style={{ fontFamily: "'Inter', sans-serif" }}
+                                className="mb-1.5 block text-sm font-medium text-[#2B2F36]"
+                                style={{ fontFamily: FONT_BODY }}
                             >
                                 Correo electrónico
                             </label>
@@ -101,19 +87,19 @@ export default function Login({ status }: LoginProps) {
                                 autoComplete="username"
                                 autoFocus
                                 onChange={(e) => setData('email', e.target.value)}
-                                className="block w-full rounded-xl border border-[#D8C9F0]/60 bg-white/80 px-4 py-2.5 text-sm text-[#4A3F55] placeholder-[#4A3F55]/30 shadow-sm outline-none transition focus:border-[#B49BDE] focus:ring-4 focus:ring-[#D8C9F0]/40"
+                                className="block w-full rounded-md border border-[#D5D1C6] bg-white px-3.5 py-2.5 text-sm text-[#2B2F36] placeholder-[#2B2F36]/30 outline-none transition focus:border-[#2C4A5E] focus:ring-2 focus:ring-[#2C4A5E]/20"
                                 placeholder="nombre@organismo.gob.ar"
                             />
                             {errors.email && (
-                                <p className="mt-1.5 text-sm text-[#D97A6C]">{errors.email}</p>
+                                <p className="mt-1.5 text-sm text-[#B1553F]">{errors.email}</p>
                             )}
                         </div>
 
                         <div>
                             <label
                                 htmlFor="password"
-                                className="mb-1.5 block text-sm font-medium text-[#4A3F55]"
-                                style={{ fontFamily: "'Inter', sans-serif" }}
+                                className="mb-1.5 block text-sm font-medium text-[#2B2F36]"
+                                style={{ fontFamily: FONT_BODY }}
                             >
                                 Contraseña
                             </label>
@@ -124,32 +110,30 @@ export default function Login({ status }: LoginProps) {
                                 value={data.password}
                                 autoComplete="current-password"
                                 onChange={(e) => setData('password', e.target.value)}
-                                className="block w-full rounded-xl border border-[#D8C9F0]/60 bg-white/80 px-4 py-2.5 text-sm text-[#4A3F55] placeholder-[#4A3F55]/30 shadow-sm outline-none transition focus:border-[#B49BDE] focus:ring-4 focus:ring-[#D8C9F0]/40"
+                                className="block w-full rounded-md border border-[#D5D1C6] bg-white px-3.5 py-2.5 text-sm text-[#2B2F36] placeholder-[#2B2F36]/30 outline-none transition focus:border-[#2C4A5E] focus:ring-2 focus:ring-[#2C4A5E]/20"
                                 placeholder="••••••••"
                             />
                             {errors.password && (
-                                <p className="mt-1.5 text-sm text-[#D97A6C]">{errors.password}</p>
+                                <p className="mt-1.5 text-sm text-[#B1553F]">{errors.password}</p>
                             )}
                         </div>
 
-                        <div className="flex items-center justify-between pt-1">
-                            <label className="flex items-center gap-2 text-sm text-[#4A3F55]/80">
-                                <input
-                                    type="checkbox"
-                                    name="remember"
-                                    checked={data.remember}
-                                    onChange={(e) => setData('remember', e.target.checked)}
-                                    className="h-4 w-4 rounded border-[#D8C9F0] text-[#B49BDE] focus:ring-[#D8C9F0]"
-                                />
-                                Recordarme
-                            </label>
-                        </div>
+                        <label className="flex items-center gap-2 text-sm text-[#2B2F36]/80" style={{ fontFamily: FONT_BODY }}>
+                            <input
+                                type="checkbox"
+                                name="remember"
+                                checked={data.remember}
+                                onChange={(e) => setData('remember', e.target.checked)}
+                                className="h-4 w-4 rounded border-[#D5D1C6] text-[#2C4A5E] focus:ring-[#2C4A5E]/30"
+                            />
+                            Recordarme
+                        </label>
 
                         <button
                             type="submit"
                             disabled={processing}
-                            className="mt-2 w-full rounded-full bg-gradient-to-r from-[#C9B6E4] to-[#F6C6A6] px-4 py-2.5 text-sm font-semibold text-[#4A3F55] shadow-md shadow-[#D8C9F0]/50 transition hover:brightness-105 focus:outline-none focus:ring-4 focus:ring-[#D8C9F0]/50 disabled:cursor-not-allowed disabled:opacity-60"
-                            style={{ fontFamily: "'Inter', sans-serif" }}
+                            className="w-full rounded-md bg-[#2C4A5E] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#233B4B] focus:outline-none focus:ring-2 focus:ring-[#2C4A5E]/40 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+                            style={{ fontFamily: FONT_BODY }}
                         >
                             {processing ? 'Ingresando…' : 'Ingresar'}
                         </button>

@@ -29,9 +29,9 @@ class StorePersonaRequest extends FormRequest
             'email' => ['nullable', 'email', 'max:150'],
             'observaciones' => ['nullable', 'string'],
 
-            // Legajo opcional
+            // Legajo opcional (el número se genera automáticamente en el controller)
             'abrir_legajo' => ['boolean'],
-            'numero_legajo' => ['required_if:abrir_legajo,true', 'nullable', 'string', 'max:30', 'unique:legajos,numero_legajo'],
+            'legajo_motivo_ingreso' => ['required_if:abrir_legajo,true', 'nullable', 'string'],
             'legajo_observaciones' => ['nullable', 'string'],
         ];
     }
@@ -40,8 +40,7 @@ class StorePersonaRequest extends FormRequest
     {
         return [
             'dni.unique' => 'Ya existe una persona registrada con ese DNI.',
-            'numero_legajo.required_if' => 'Ingresá un número de legajo o destildá la opción de abrir legajo.',
-            'numero_legajo.unique' => 'Ese número de legajo ya está en uso.',
+            'legajo_motivo_ingreso.required_if' => 'Ingresá el motivo de ingreso o destildá la opción de abrir legajo.',
         ];
     }
 }

@@ -12,10 +12,13 @@ interface CreateLegajoProps {
     personas: PersonaOpcion[];
 }
 
+const FONT_HEADING = "'Lora', serif";
+const FONT_BODY = "'Public Sans', sans-serif";
+
 export default function CreateLegajo({ personas }: CreateLegajoProps) {
     const { data, setData, post, processing, errors } = useForm({
         persona_id: '',
-        numero_legajo: '',
+        motivo_ingreso: '',
         observaciones: '',
     });
 
@@ -31,14 +34,27 @@ export default function CreateLegajo({ personas }: CreateLegajoProps) {
         );
     }, [busqueda, personas]);
 
+    const personaSeleccionada = personas.find((p) => String(p.id) === String(data.persona_id));
+
+    const previaLegajo = (() => {
+        if (!personaSeleccionada) return null;
+        const soloLetras = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[^A-Z]/g, '');
+        const ape = soloLetras(personaSeleccionada.apellido).padEnd(3, 'X').slice(0, 3);
+        const nom = soloLetras(personaSeleccionada.nombre).padEnd(3, 'X').slice(0, 3);
+        const dniDigitos = personaSeleccionada.dni.replace(/\D/g, '');
+        const ult3 = dniDigitos.length >= 3 ? dniDigitos.slice(-3) : dniDigitos.padStart(3, '0');
+        return `${ape}-${nom}-${ult3}`;
+    })();
+
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
         post('/legajos');
     };
 
     const inputClass =
-        'block w-full rounded-xl border border-[#D8C9F0]/60 bg-white/80 px-3.5 py-2 text-sm text-[#4A3F55] placeholder-[#4A3F55]/30 shadow-sm outline-none transition focus:border-[#B49BDE] focus:ring-4 focus:ring-[#D8C9F0]/40';
-    const labelClass = 'mb-1.5 block text-sm font-medium text-[#4A3F55]';
+        'block w-full rounded-md border border-[#D5D1C6] bg-white px-3.5 py-2 text-sm text-[#2B2F36] placeholder-[#2B2F36]/30 outline-none transition focus:border-[#2C4A5E] focus:ring-2 focus:ring-[#2C4A5E]/20';
+    const labelClass = 'mb-1.5 block text-sm font-medium text-[#2B2F36]';
+    const errorClass = 'mt-1.5 text-sm text-[#B1553F]';
 
     return (
         <>
@@ -57,36 +73,36 @@ export default function CreateLegajo({ personas }: CreateLegajoProps) {
 
             <div
                 style={{ position: 'fixed', inset: 0, width: '100vw', height: '100dvh', overflowY: 'auto' }}
-                className="bg-[#FBF8F4]"
+                className="bg-[#F6F5F1]"
             >
-                <header className="sticky top-0 z-10 border-b border-[#EAE3F5] bg-white/80 backdrop-blur-xl">
+                <header className="sticky top-0 z-10 border-b border-[#E3E0D8] bg-white">
                     <div className="mx-auto flex max-w-2xl items-center justify-between px-4 py-4 sm:px-6">
                         <h1
-                            className="text-xl font-semibold text-[#4A3F55]"
-                            style={{ fontFamily: "'Poppins', sans-serif" }}
+                            className="text-xl font-medium text-[#2C4A5E]"
+                            style={{ fontFamily: FONT_HEADING }}
                         >
                             Prodenya
                         </h1>
                         <Link
                             href="/dashboard"
-                            className="text-sm font-medium text-[#4A3F55]/70 hover:text-[#4A3F55]"
-                            style={{ fontFamily: "'Inter', sans-serif" }}
+                            className="text-sm font-medium text-[#2B2F36]/70 hover:text-[#2B2F36]"
+                            style={{ fontFamily: FONT_BODY }}
                         >
                             ← Volver al panel
                         </Link>
                     </div>
                 </header>
 
-                <main className="mx-auto max-w-2xl px-4 py-8 sm:px-6 sm:py-10" style={{ fontFamily: "'Inter', sans-serif" }}>
-                    <h2 className="text-2xl font-semibold text-[#4A3F55]" style={{ fontFamily: "'Poppins', sans-serif" }}>
+                <main className="mx-auto max-w-2xl px-4 py-8 sm:px-6 sm:py-10" style={{ fontFamily: FONT_BODY }}>
+                    <h2 className="text-2xl font-medium text-[#2C4A5E]" style={{ fontFamily: FONT_HEADING }}>
                         Nuevo legajo
                     </h2>
-                    <p className="mt-1 text-sm text-[#4A3F55]/60">
+                    <p className="mt-1 text-sm text-[#2B2F36]/60">
                         Elegí la persona para la que vas a abrir el legajo.
                     </p>
 
                     <form onSubmit={submit} className="mt-8 space-y-6">
-                        <section className="rounded-2xl border border-white bg-white p-6 shadow-sm shadow-[#D8C9F0]/10">
+                        <section className="rounded-lg border border-[#E3E0D8] bg-white p-6">
                             <label className={labelClass}>Buscar persona por nombre o DNI</label>
                             <input
                                 className={inputClass}
@@ -95,47 +111,52 @@ export default function CreateLegajo({ personas }: CreateLegajoProps) {
                                 placeholder="Ej: García o 30111222"
                             />
 
-                            <div className="mt-3 max-h-56 overflow-y-auto rounded-xl border border-[#EAE3F5]">
+                            <div className="mt-3 max-h-56 overflow-y-auto rounded-md border border-[#E3E0D8]">
                                 {personasFiltradas.length === 0 ? (
-                                    <p className="p-3 text-sm text-[#4A3F55]/50">No se encontraron personas.</p>
+                                    <p className="p-3 text-sm text-[#2B2F36]/50">No se encontraron personas.</p>
                                 ) : (
                                     personasFiltradas.map((p) => (
                                         <label
                                             key={p.id}
-                                            className={`flex cursor-pointer items-center justify-between border-b border-[#F5F1FA] px-3 py-2 text-sm last:border-0 hover:bg-[#F5E9FB]/50 ${
-                                                String(data.persona_id) === String(p.id) ? 'bg-[#F5E9FB]' : ''
+                                            className={`flex cursor-pointer items-center justify-between border-b border-[#F0EEE7] px-3 py-2 text-sm last:border-0 hover:bg-[#F6F5F1] ${
+                                                String(data.persona_id) === String(p.id) ? 'bg-[#F6F5F1]' : ''
                                             }`}
                                         >
-                                            <span className="text-[#4A3F55]">
+                                            <span className="text-[#2B2F36]">
                                                 {p.apellido}, {p.nombre}{' '}
-                                                <span className="text-[#4A3F55]/50">— DNI {p.dni}</span>
+                                                <span className="text-[#2B2F36]/50">— DNI {p.dni}</span>
                                             </span>
                                             <input
                                                 type="radio"
                                                 name="persona_id"
                                                 checked={String(data.persona_id) === String(p.id)}
                                                 onChange={() => setData('persona_id', String(p.id))}
-                                                className="h-4 w-4 text-[#B49BDE] focus:ring-[#D8C9F0]"
+                                                className="h-4 w-4 text-[#2C4A5E] focus:ring-[#2C4A5E]/30"
                                             />
                                         </label>
                                     ))
                                 )}
                             </div>
-                            {errors.persona_id && <p className="mt-1.5 text-sm text-[#D97A6C]">{errors.persona_id}</p>}
+                            {errors.persona_id && <p className={errorClass}>{errors.persona_id}</p>}
+
+                            {previaLegajo && (
+                                <p className="mt-3 text-xs text-[#2B2F36]/50">
+                                    Número de legajo (se genera automáticamente): <span className="font-mono font-medium text-[#2C4A5E]">{previaLegajo}</span>
+                                </p>
+                            )}
                         </section>
 
-                        <section className="rounded-2xl border border-white bg-white p-6 shadow-sm shadow-[#D8C9F0]/10">
+                        <section className="rounded-lg border border-[#E3E0D8] bg-white p-6">
                             <div>
-                                <label className={labelClass}>Número de legajo</label>
-                                <input
+                                <label className={labelClass}>Motivo de ingreso</label>
+                                <textarea
                                     className={inputClass}
-                                    value={data.numero_legajo}
-                                    onChange={(e) => setData('numero_legajo', e.target.value)}
-                                    placeholder="Ej: LEG-2026-001"
+                                    rows={3}
+                                    value={data.motivo_ingreso}
+                                    onChange={(e) => setData('motivo_ingreso', e.target.value)}
+                                    placeholder="Describí el motivo por el cual se abre el legajo…"
                                 />
-                                {errors.numero_legajo && (
-                                    <p className="mt-1 text-sm text-[#D97A6C]">{errors.numero_legajo}</p>
-                                )}
+                                {errors.motivo_ingreso && <p className={errorClass}>{errors.motivo_ingreso}</p>}
                             </div>
                             <div className="mt-4">
                                 <label className={labelClass}>Observaciones (opcional)</label>
@@ -151,7 +172,7 @@ export default function CreateLegajo({ personas }: CreateLegajoProps) {
                         <button
                             type="submit"
                             disabled={processing}
-                            className="w-full rounded-full bg-gradient-to-r from-[#C9B6E4] to-[#F6C6A6] px-4 py-2.5 text-sm font-semibold text-[#4A3F55] shadow-md shadow-[#D8C9F0]/50 transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
+                            className="w-full rounded-md bg-[#2C4A5E] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#233B4B] disabled:cursor-not-allowed disabled:opacity-60"
                         >
                             {processing ? 'Guardando…' : 'Crear legajo'}
                         </button>

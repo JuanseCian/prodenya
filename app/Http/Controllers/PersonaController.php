@@ -23,7 +23,7 @@ class PersonaController extends Controller
     {
         $datos = $request->validated();
 
-        $persona = DB::transaction(function () use ($datos, $request) {
+        [$persona, $legajo] = DB::transaction(function () use ($datos, $request) {
             $persona = Persona::create([
                 'nombre' => $datos['nombre'],
                 'apellido' => $datos['apellido'],
@@ -40,20 +40,27 @@ class PersonaController extends Controller
                 'observaciones' => $datos['observaciones'] ?? null,
             ]);
 
+            $legajo = null;
+
             if ($request->boolean('abrir_legajo')) {
-                Legajo::create([
+                $legajo = Legajo::create([
                     'persona_id' => $persona->id,
-                    'numero_legajo' => $datos['numero_legajo'],
+                    'numero_legajo' => Legajo::generarNumero($persona),
+                    'motivo_ingreso' => $datos['legajo_motivo_ingreso'],
                     'estado' => 'Abierto',
                     'observaciones' => $datos['legajo_observaciones'] ?? null,
                     'creado_por' => $request->user()->id,
                 ]);
             }
 
-            return $persona;
+            return [$persona, $legajo];
         });
 
-        return redirect()->route('dashboard')
-            ->with('status', "Persona \"{$persona->nombre} {$persona->apellido}\" registrada correctamente.");
+        $mensaje = "Persona \"{$persona->nombre} {$persona->apellido}\" registrada correctamente.";
+        if ($legajo) {
+            $mensaje .= " Legajo {$legajo->numero_legajo} abierto.";
+        }
+
+        return redirect()->route('dashboard')->with('status', $mensaje);
     }
 }

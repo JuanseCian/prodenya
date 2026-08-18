@@ -15,7 +15,7 @@ class StoreLegajoRequest extends FormRequest
     {
         return [
             'persona_id' => ['required', 'exists:personas,id'],
-            'numero_legajo' => ['required', 'string', 'max:30', 'unique:legajos,numero_legajo'],
+            'motivo_ingreso' => ['required', 'string'],
             'observaciones' => ['nullable', 'string'],
         ];
     }
@@ -23,8 +23,8 @@ class StoreLegajoRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'numero_legajo.unique' => 'Ese número de legajo ya está en uso.',
             'persona_id.required' => 'Elegí una persona para asociar el legajo.',
+            'motivo_ingreso.required' => 'Ingresá el motivo de ingreso.',
         ];
     }
 }

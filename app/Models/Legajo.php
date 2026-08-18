@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
 
 class Legajo extends Model
 {
@@ -16,6 +17,7 @@ class Legajo extends Model
     protected $fillable = [
         'persona_id',
         'numero_legajo',
+        'motivo_ingreso',
         'fecha_apertura',
         'estado',
         'observaciones',
@@ -47,6 +49,45 @@ class Legajo extends Model
     public function accesos(): HasMany
     {
         return $this->hasMany(AuditoriaAccesoLegajo::class, 'legajo_id');
+    }
+
+    /**
+     * Genera el número de legajo con el formato:
+     * 3 primeras letras del apellido - 3 primeras letras del nombre - últimos 3 dígitos del DNI
+     * Ej: García, Juan, DNI 30111222 -> GAR-JUA-222
+     *
+     * Si el código ya existe (colisión), agrega un sufijo numérico incremental.
+     */
+    public static function generarNumero(Persona $persona): string
+    {
+        $apellido = static::soloLetras($persona->apellido);
+        $nombre = static::soloLetras($persona->nombre);
+        $dni = preg_replace('/\D/', '', $persona->dni);
+
+        $base = sprintf(
+            '%s-%s-%s',
+            str_pad(substr($apellido, 0, 3), 3, 'X'),
+            str_pad(substr($nombre, 0, 3), 3, 'X'),
+            str_pad(substr($dni, -3), 3, '0', STR_PAD_LEFT),
+        );
+
+        $numero = $base;
+        $sufijo = 1;
+
+        while (static::where('numero_legajo', $numero)->exists()) {
+            $sufijo++;
+            $numero = "{$base}-{$sufijo}";
+        }
+
+        return $numero;
+    }
+
+    private static function soloLetras(string $texto): string
+    {
+        return (string) Str::of($texto)
+            ->ascii()
+            ->upper()
+            ->replaceMatches('/[^A-Z]/', '');
     }
 
     /**
