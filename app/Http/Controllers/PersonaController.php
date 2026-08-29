@@ -6,6 +6,8 @@ use App\Http\Requests\StorePersonaRequest;
 use App\Models\Legajo;
 use App\Models\Persona;
 use App\Models\Provincia;
+use App\Models\TipoMaltrato;
+use App\Models\Usuario;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -16,6 +18,10 @@ class PersonaController extends Controller
     {
         return Inertia::render('personas/create', [
             'provincias' => Provincia::orderBy('nombre')->get(['id', 'nombre']),
+            'tiposMaltrato' => TipoMaltrato::orderBy('nombre')->get(['id', 'nombre']),
+            'profesionales' => Usuario::where('activo', true)
+                ->orderBy('nombre_usuario')
+                ->get(['id', 'nombre_usuario', 'email']),
         ]);
     }
 
@@ -47,10 +53,15 @@ class PersonaController extends Controller
                     'persona_id' => $persona->id,
                     'numero_legajo' => Legajo::generarNumero($persona),
                     'motivo_ingreso' => $datos['legajo_motivo_ingreso'],
+                    'nivel_riesgo' => $datos['legajo_nivel_riesgo'],
+                    'origen_derivacion' => $datos['legajo_origen_derivacion'],
+                    'profesional_id' => $datos['legajo_profesional_id'] ?? null,
                     'estado' => 'Abierto',
                     'observaciones' => $datos['legajo_observaciones'] ?? null,
                     'creado_por' => $request->user()->id,
                 ]);
+
+                $legajo->tiposMaltrato()->sync($datos['legajo_tipos_maltrato']);
             }
 
             return [$persona, $legajo];

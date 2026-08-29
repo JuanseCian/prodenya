@@ -32,6 +32,11 @@ class StorePersonaRequest extends FormRequest
             // Legajo opcional (el número se genera automáticamente en el controller)
             'abrir_legajo' => ['boolean'],
             'legajo_motivo_ingreso' => ['required_if:abrir_legajo,true', 'nullable', 'string'],
+            'legajo_nivel_riesgo' => ['required_if:abrir_legajo,true', 'nullable', 'in:Bajo,Medio,Alto,Critico'],
+            'legajo_origen_derivacion' => ['required_if:abrir_legajo,true', 'nullable', 'string', 'max:255'],
+            'legajo_profesional_id' => ['nullable', 'exists:usuarios,id'],
+            'legajo_tipos_maltrato' => ['required_if:abrir_legajo,true', 'nullable', 'array', 'min:1'],
+            'legajo_tipos_maltrato.*' => ['exists:tipos_maltrato,id'],
             'legajo_observaciones' => ['nullable', 'string'],
         ];
     }
@@ -40,7 +45,10 @@ class StorePersonaRequest extends FormRequest
     {
         return [
             'dni.unique' => 'Ya existe una persona registrada con ese DNI.',
-            'legajo_motivo_ingreso.required_if' => 'Ingresá el motivo de ingreso o destildá la opción de abrir legajo.',
+            'legajo_motivo_ingreso.required_if' => 'Ingresá el motivo de ingreso.',
+            'legajo_nivel_riesgo.required_if' => 'Seleccioná el nivel de riesgo.',
+            'legajo_origen_derivacion.required_if' => 'Indicá la institución o persona que deriva el caso.',
+            'legajo_tipos_maltrato.required_if' => 'Seleccioná al menos un tipo de maltrato.',
         ];
     }
 }

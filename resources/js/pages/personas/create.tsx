@@ -6,14 +6,22 @@ interface Opcion {
     nombre: string;
 }
 
+interface Profesional {
+    id: number;
+    nombre_usuario: string;
+    email: string;
+}
+
 interface CreatePersonaProps {
     provincias: Opcion[];
+    tiposMaltrato: Opcion[];
+    profesionales: Profesional[];
 }
 
 const FONT_HEADING = "'Lora', serif";
 const FONT_BODY = "'Public Sans', sans-serif";
 
-export default function CreatePersona({ provincias }: CreatePersonaProps) {
+export default function CreatePersona({ provincias, tiposMaltrato, profesionales }: CreatePersonaProps) {
     const { data, setData, post, processing, errors } = useForm({
         nombre: '',
         apellido: '',
@@ -31,6 +39,10 @@ export default function CreatePersona({ provincias }: CreatePersonaProps) {
         observaciones: '',
         abrir_legajo: false,
         legajo_motivo_ingreso: '',
+        legajo_nivel_riesgo: '',
+        legajo_origen_derivacion: '',
+        legajo_profesional_id: '',
+        legajo_tipos_maltrato: [] as number[],
         legajo_observaciones: '',
     });
 
@@ -56,6 +68,15 @@ export default function CreatePersona({ provincias }: CreatePersonaProps) {
             .then((r) => r.json())
             .then(setBarrios);
     }, [data.localidad_id]);
+
+    const toggleTipoMaltrato = (id: number) => {
+        setData(
+            'legajo_tipos_maltrato',
+            data.legajo_tipos_maltrato.includes(id)
+                ? data.legajo_tipos_maltrato.filter((t) => t !== id)
+                : [...data.legajo_tipos_maltrato, id],
+        );
+    };
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
@@ -99,10 +120,7 @@ export default function CreatePersona({ provincias }: CreatePersonaProps) {
             >
                 <header className="sticky top-0 z-10 border-b border-[#E3E0D8] bg-white">
                     <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-4 sm:px-6">
-                        <h1
-                            className="text-xl font-medium text-[#2C4A5E]"
-                            style={{ fontFamily: FONT_HEADING }}
-                        >
+                        <h1 className="text-xl font-medium text-[#2C4A5E]" style={{ fontFamily: FONT_HEADING }}>
                             Prodenya
                         </h1>
                         <Link
@@ -131,29 +149,17 @@ export default function CreatePersona({ provincias }: CreatePersonaProps) {
                             <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
                                 <div>
                                     <label className={labelClass}>Nombre</label>
-                                    <input
-                                        className={inputClass}
-                                        value={data.nombre}
-                                        onChange={(e) => setData('nombre', e.target.value)}
-                                    />
+                                    <input className={inputClass} value={data.nombre} onChange={(e) => setData('nombre', e.target.value)} />
                                     {errors.nombre && <p className={errorClass}>{errors.nombre}</p>}
                                 </div>
                                 <div>
                                     <label className={labelClass}>Apellido</label>
-                                    <input
-                                        className={inputClass}
-                                        value={data.apellido}
-                                        onChange={(e) => setData('apellido', e.target.value)}
-                                    />
+                                    <input className={inputClass} value={data.apellido} onChange={(e) => setData('apellido', e.target.value)} />
                                     {errors.apellido && <p className={errorClass}>{errors.apellido}</p>}
                                 </div>
                                 <div>
                                     <label className={labelClass}>DNI</label>
-                                    <input
-                                        className={inputClass}
-                                        value={data.dni}
-                                        onChange={(e) => setData('dni', e.target.value)}
-                                    />
+                                    <input className={inputClass} value={data.dni} onChange={(e) => setData('dni', e.target.value)} />
                                     {errors.dni && <p className={errorClass}>{errors.dni}</p>}
                                 </div>
                                 <div>
@@ -168,11 +174,7 @@ export default function CreatePersona({ provincias }: CreatePersonaProps) {
                                 </div>
                                 <div>
                                     <label className={labelClass}>Género</label>
-                                    <select
-                                        className={inputClass}
-                                        value={data.genero}
-                                        onChange={(e) => setData('genero', e.target.value)}
-                                    >
+                                    <select className={inputClass} value={data.genero} onChange={(e) => setData('genero', e.target.value)}>
                                         <option value="NO_ESPECIFICA">Prefiere no especificar</option>
                                         <option value="F">Femenino</option>
                                         <option value="M">Masculino</option>
@@ -181,20 +183,11 @@ export default function CreatePersona({ provincias }: CreatePersonaProps) {
                                 </div>
                                 <div>
                                     <label className={labelClass}>Teléfono</label>
-                                    <input
-                                        className={inputClass}
-                                        value={data.telefono}
-                                        onChange={(e) => setData('telefono', e.target.value)}
-                                    />
+                                    <input className={inputClass} value={data.telefono} onChange={(e) => setData('telefono', e.target.value)} />
                                 </div>
                                 <div className="sm:col-span-2">
                                     <label className={labelClass}>Email</label>
-                                    <input
-                                        type="email"
-                                        className={inputClass}
-                                        value={data.email}
-                                        onChange={(e) => setData('email', e.target.value)}
-                                    />
+                                    <input type="email" className={inputClass} value={data.email} onChange={(e) => setData('email', e.target.value)} />
                                 </div>
                             </div>
                         </section>
@@ -208,27 +201,15 @@ export default function CreatePersona({ provincias }: CreatePersonaProps) {
                             <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
                                 <div className="sm:col-span-2">
                                     <label className={labelClass}>Calle</label>
-                                    <input
-                                        className={inputClass}
-                                        value={data.direccion_calle}
-                                        onChange={(e) => setData('direccion_calle', e.target.value)}
-                                    />
+                                    <input className={inputClass} value={data.direccion_calle} onChange={(e) => setData('direccion_calle', e.target.value)} />
                                 </div>
                                 <div>
                                     <label className={labelClass}>Número</label>
-                                    <input
-                                        className={inputClass}
-                                        value={data.direccion_numero}
-                                        onChange={(e) => setData('direccion_numero', e.target.value)}
-                                    />
+                                    <input className={inputClass} value={data.direccion_numero} onChange={(e) => setData('direccion_numero', e.target.value)} />
                                 </div>
                                 <div className="sm:col-span-3">
                                     <label className={labelClass}>Piso / depto (opcional)</label>
-                                    <input
-                                        className={inputClass}
-                                        value={data.direccion_piso_depto}
-                                        onChange={(e) => setData('direccion_piso_depto', e.target.value)}
-                                    />
+                                    <input className={inputClass} value={data.direccion_piso_depto} onChange={(e) => setData('direccion_piso_depto', e.target.value)} />
                                 </div>
 
                                 <div>
@@ -244,9 +225,7 @@ export default function CreatePersona({ provincias }: CreatePersonaProps) {
                                     >
                                         <option value="">Elegir…</option>
                                         {provincias.map((p) => (
-                                            <option key={p.id} value={p.id}>
-                                                {p.nombre}
-                                            </option>
+                                            <option key={p.id} value={p.id}>{p.nombre}</option>
                                         ))}
                                     </select>
                                     {errors.provincia_id && <p className={errorClass}>{errors.provincia_id}</p>}
@@ -264,9 +243,7 @@ export default function CreatePersona({ provincias }: CreatePersonaProps) {
                                     >
                                         <option value="">Elegir…</option>
                                         {localidades.map((l) => (
-                                            <option key={l.id} value={l.id}>
-                                                {l.nombre}
-                                            </option>
+                                            <option key={l.id} value={l.id}>{l.nombre}</option>
                                         ))}
                                     </select>
                                     {errors.localidad_id && <p className={errorClass}>{errors.localidad_id}</p>}
@@ -281,9 +258,7 @@ export default function CreatePersona({ provincias }: CreatePersonaProps) {
                                     >
                                         <option value="">Elegir…</option>
                                         {barrios.map((b) => (
-                                            <option key={b.id} value={b.id}>
-                                                {b.nombre}
-                                            </option>
+                                            <option key={b.id} value={b.id}>{b.nombre}</option>
                                         ))}
                                     </select>
                                 </div>
@@ -293,12 +268,7 @@ export default function CreatePersona({ provincias }: CreatePersonaProps) {
                         {/* Observaciones */}
                         <section className="rounded-lg border border-[#E3E0D8] bg-white p-6">
                             <label className={labelClass}>Observaciones (opcional)</label>
-                            <textarea
-                                className={inputClass}
-                                rows={3}
-                                value={data.observaciones}
-                                onChange={(e) => setData('observaciones', e.target.value)}
-                            />
+                            <textarea className={inputClass} rows={3} value={data.observaciones} onChange={(e) => setData('observaciones', e.target.value)} />
                         </section>
 
                         {/* Legajo opcional */}
@@ -320,6 +290,7 @@ export default function CreatePersona({ provincias }: CreatePersonaProps) {
                                             Número de legajo (se genera automáticamente): <span className="font-mono font-medium text-[#2C4A5E]">{previaLegajo}</span>
                                         </p>
                                     )}
+
                                     <div>
                                         <label className={labelClass}>Motivo de ingreso</label>
                                         <textarea
@@ -329,10 +300,70 @@ export default function CreatePersona({ provincias }: CreatePersonaProps) {
                                             onChange={(e) => setData('legajo_motivo_ingreso', e.target.value)}
                                             placeholder="Describí el motivo por el cual se abre el legajo…"
                                         />
-                                        {errors.legajo_motivo_ingreso && (
-                                            <p className={errorClass}>{errors.legajo_motivo_ingreso}</p>
-                                        )}
+                                        {errors.legajo_motivo_ingreso && <p className={errorClass}>{errors.legajo_motivo_ingreso}</p>}
                                     </div>
+
+                                    <div>
+                                        <label className={labelClass}>Tipo de maltrato (podés elegir más de uno)</label>
+                                        <div className="flex flex-wrap gap-x-5 gap-y-2 rounded-md border border-[#D5D1C6] bg-white px-3.5 py-3">
+                                            {tiposMaltrato.map((tipo) => (
+                                                <label key={tipo.id} className="flex items-center gap-1.5 text-sm text-[#2B2F36]">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={data.legajo_tipos_maltrato.includes(tipo.id)}
+                                                        onChange={() => toggleTipoMaltrato(tipo.id)}
+                                                        className="h-4 w-4 rounded border-[#D5D1C6] text-[#2C4A5E] focus:ring-[#2C4A5E]/30"
+                                                    />
+                                                    {tipo.nombre}
+                                                </label>
+                                            ))}
+                                        </div>
+                                        {errors.legajo_tipos_maltrato && <p className={errorClass}>{errors.legajo_tipos_maltrato}</p>}
+                                    </div>
+
+                                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                        <div>
+                                            <label className={labelClass}>Nivel de riesgo</label>
+                                            <select
+                                                className={inputClass}
+                                                value={data.legajo_nivel_riesgo}
+                                                onChange={(e) => setData('legajo_nivel_riesgo', e.target.value)}
+                                            >
+                                                <option value="">Elegir…</option>
+                                                <option value="Bajo">Bajo</option>
+                                                <option value="Medio">Medio</option>
+                                                <option value="Alto">Alto</option>
+                                                <option value="Critico">Crítico</option>
+                                            </select>
+                                            {errors.legajo_nivel_riesgo && <p className={errorClass}>{errors.legajo_nivel_riesgo}</p>}
+                                        </div>
+
+                                        <div>
+                                            <label className={labelClass}>Profesional interviniente (opcional)</label>
+                                            <select
+                                                className={inputClass}
+                                                value={data.legajo_profesional_id}
+                                                onChange={(e) => setData('legajo_profesional_id', e.target.value)}
+                                            >
+                                                <option value="">Sin asignar</option>
+                                                {profesionales.map((p) => (
+                                                    <option key={p.id} value={p.id}>{p.nombre_usuario}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className={labelClass}>Institución o persona que deriva</label>
+                                        <input
+                                            className={inputClass}
+                                            value={data.legajo_origen_derivacion}
+                                            onChange={(e) => setData('legajo_origen_derivacion', e.target.value)}
+                                            placeholder="Ej: Escuela N°12, Hospital Municipal, denuncia anónima…"
+                                        />
+                                        {errors.legajo_origen_derivacion && <p className={errorClass}>{errors.legajo_origen_derivacion}</p>}
+                                    </div>
+
                                     <div>
                                         <label className={labelClass}>Observaciones del legajo (opcional)</label>
                                         <textarea

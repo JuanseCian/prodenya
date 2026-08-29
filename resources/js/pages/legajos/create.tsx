@@ -1,38 +1,58 @@
 import { Head, Link, useForm } from '@inertiajs/react';
-import { FormEventHandler, useMemo, useState } from 'react';
+import { FormEventHandler } from 'react';
 
 interface PersonaOpcion {
     id: number;
     nombre: string;
     apellido: string;
     dni: string;
+    fechaNacimiento: string;
+    edad: number;
+    genero: string;
+    direccion: string;
+    localidad: string | null;
+    barrio: string | null;
+    telefono: string | null;
+    email: string | null;
+}
+
+interface Opcion {
+    id: number;
+    nombre: string;
+}
+
+interface Profesional {
+    id: number;
+    nombre_usuario: string;
+    email: string;
 }
 
 interface CreateLegajoProps {
     personas: PersonaOpcion[];
+    tiposMaltrato: Opcion[];
+    profesionales: Profesional[];
 }
 
 const FONT_HEADING = "'Lora', serif";
 const FONT_BODY = "'Public Sans', sans-serif";
 
-export default function CreateLegajo({ personas }: CreateLegajoProps) {
+const GENERO_LABEL: Record<string, string> = {
+    M: 'Masculino',
+    F: 'Femenino',
+    X: 'No binario / X',
+    NO_ESPECIFICA: 'No especifica',
+};
+
+export default function CreateLegajo({ personas, tiposMaltrato, profesionales }: CreateLegajoProps) {
     const { data, setData, post, processing, errors } = useForm({
         persona_id: '',
         motivo_ingreso: '',
+        nivel_riesgo: '',
+        origen_derivacion: '',
+        profesional_id: '',
+        tipos_maltrato: [] as number[],
         observaciones: '',
     });
-
-    const [busqueda, setBusqueda] = useState('');
-
-    const personasFiltradas = useMemo(() => {
-        const q = busqueda.trim().toLowerCase();
-        if (!q) return personas;
-        return personas.filter(
-            (p) =>
-                `${p.nombre} ${p.apellido}`.toLowerCase().includes(q) ||
-                p.dni.includes(q),
-        );
-    }, [busqueda, personas]);
 
     const personaSeleccionada = personas.find((p) => String(p.id) === String(data.persona_id));
 
@@ -45,6 +65,15 @@ export default function CreateLegajo({ personas }: CreateLegajoProps) {
         const ult3 = dniDigitos.length >= 3 ? dniDigitos.slice(-3) : dniDigitos.padStart(3, '0');
         return `${ape}-${nom}-${ult3}`;
     })();
+
+    const toggleTipoMaltrato = (id: number) => {
+        setData(
+            'tipos_maltrato',
+            data.tipos_maltrato.includes(id)
+                ? data.tipos_maltrato.filter((t) => t !== id)
+                : [...data.tipos_maltrato, id],
+        );
+    };
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
@@ -77,10 +106,7 @@ export default function CreateLegajo({ personas }: CreateLegajoProps) {
             >
                 <header className="sticky top-0 z-10 border-b border-[#E3E0D8] bg-white">
                     <div className="mx-auto flex max-w-2xl items-center justify-between px-4 py-4 sm:px-6">
-                        <h1
-                            className="text-xl font-medium text-[#2C4A5E]"
-                            style={{ fontFamily: FONT_HEADING }}
-                        >
+                        <h1 className="text-xl font-medium text-[#2C4A5E]" style={{ fontFamily: FONT_HEADING }}>
                             Prodenya
                         </h1>
                         <Link
@@ -102,42 +128,36 @@ export default function CreateLegajo({ personas }: CreateLegajoProps) {
                     </p>
 
                     <form onSubmit={submit} className="mt-8 space-y-6">
+                        {/* Selección de persona */}
                         <section className="rounded-lg border border-[#E3E0D8] bg-white p-6">
-                            <label className={labelClass}>Buscar persona por nombre o DNI</label>
-                            <input
+                            <label className={labelClass}>Persona</label>
+                            <select
                                 className={inputClass}
-                                value={busqueda}
-                                onChange={(e) => setBusqueda(e.target.value)}
-                                placeholder="Ej: García o 30111222"
-                            />
-
-                            <div className="mt-3 max-h-56 overflow-y-auto rounded-md border border-[#E3E0D8]">
-                                {personasFiltradas.length === 0 ? (
-                                    <p className="p-3 text-sm text-[#2B2F36]/50">No se encontraron personas.</p>
-                                ) : (
-                                    personasFiltradas.map((p) => (
-                                        <label
-                                            key={p.id}
-                                            className={`flex cursor-pointer items-center justify-between border-b border-[#F0EEE7] px-3 py-2 text-sm last:border-0 hover:bg-[#F6F5F1] ${
-                                                String(data.persona_id) === String(p.id) ? 'bg-[#F6F5F1]' : ''
-                                            }`}
-                                        >
-                                            <span className="text-[#2B2F36]">
-                                                {p.apellido}, {p.nombre}{' '}
-                                                <span className="text-[#2B2F36]/50">— DNI {p.dni}</span>
-                                            </span>
-                                            <input
-                                                type="radio"
-                                                name="persona_id"
-                                                checked={String(data.persona_id) === String(p.id)}
-                                                onChange={() => setData('persona_id', String(p.id))}
-                                                className="h-4 w-4 text-[#2C4A5E] focus:ring-[#2C4A5E]/30"
-                                            />
-                                        </label>
-                                    ))
-                                )}
-                            </div>
+                                value={data.persona_id}
+                                onChange={(e) => setData('persona_id', e.target.value)}
+                            >
+                                <option value="">Elegir persona…</option>
+                                {personas.map((p) => (
+                                    <option key={p.id} value={p.id}>
+                                        {p.apellido}, {p.nombre} — DNI {p.dni}
+                                    </option>
+                                ))}
+                            </select>
                             {errors.persona_id && <p className={errorClass}>{errors.persona_id}</p>}
+
+                            {personaSeleccionada && (
+                                <div className="mt-4 rounded-md border border-[#E3E0D8] bg-[#F6F5F1] p-4 text-sm text-[#2B2F36]">
+                                    <div className="grid grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-2">
+                                        <p><span className="text-[#2B2F36]/50">Nombre completo:</span> {personaSeleccionada.apellido}, {personaSeleccionada.nombre}</p>
+                                        <p><span className="text-[#2B2F36]/50">DNI:</span> {personaSeleccionada.dni}</p>
+                                        <p><span className="text-[#2B2F36]/50">Fecha de nacimiento:</span> {personaSeleccionada.fechaNacimiento} ({personaSeleccionada.edad} años)</p>
+                                        <p><span className="text-[#2B2F36]/50">Género:</span> {GENERO_LABEL[personaSeleccionada.genero] ?? personaSeleccionada.genero}</p>
+                                        <p className="sm:col-span-2"><span className="text-[#2B2F36]/50">Dirección:</span> {personaSeleccionada.direccion || '—'}{personaSeleccionada.barrio ? `, ${personaSeleccionada.barrio}` : ''}{personaSeleccionada.localidad ? `, ${personaSeleccionada.localidad}` : ''}</p>
+                                        <p><span className="text-[#2B2F36]/50">Teléfono:</span> {personaSeleccionada.telefono || '—'}</p>
+                                        <p><span className="text-[#2B2F36]/50">Email:</span> {personaSeleccionada.email || '—'}</p>
+                                    </div>
+                                </div>
+                            )}
 
                             {previaLegajo && (
                                 <p className="mt-3 text-xs text-[#2B2F36]/50">
@@ -146,26 +166,97 @@ export default function CreateLegajo({ personas }: CreateLegajoProps) {
                             )}
                         </section>
 
+                        {/* Datos del caso */}
                         <section className="rounded-lg border border-[#E3E0D8] bg-white p-6">
-                            <div>
-                                <label className={labelClass}>Motivo de ingreso</label>
-                                <textarea
-                                    className={inputClass}
-                                    rows={3}
-                                    value={data.motivo_ingreso}
-                                    onChange={(e) => setData('motivo_ingreso', e.target.value)}
-                                    placeholder="Describí el motivo por el cual se abre el legajo…"
-                                />
-                                {errors.motivo_ingreso && <p className={errorClass}>{errors.motivo_ingreso}</p>}
-                            </div>
-                            <div className="mt-4">
-                                <label className={labelClass}>Observaciones (opcional)</label>
-                                <textarea
-                                    className={inputClass}
-                                    rows={3}
-                                    value={data.observaciones}
-                                    onChange={(e) => setData('observaciones', e.target.value)}
-                                />
+                            <h3 className="text-base font-medium text-[#2C4A5E]" style={{ fontFamily: FONT_HEADING }}>
+                                Datos del caso
+                            </h3>
+
+                            <div className="mt-4 space-y-4">
+                                <div>
+                                    <label className={labelClass}>Motivo de ingreso</label>
+                                    <textarea
+                                        className={inputClass}
+                                        rows={3}
+                                        value={data.motivo_ingreso}
+                                        onChange={(e) => setData('motivo_ingreso', e.target.value)}
+                                        placeholder="Describí el motivo por el cual se abre el legajo…"
+                                    />
+                                    {errors.motivo_ingreso && <p className={errorClass}>{errors.motivo_ingreso}</p>}
+                                </div>
+
+                                <div>
+                                    <label className={labelClass}>Tipo de maltrato (podés elegir más de uno)</label>
+                                    <div className="flex flex-wrap gap-x-5 gap-y-2 rounded-md border border-[#D5D1C6] bg-white px-3.5 py-3">
+                                        {tiposMaltrato.map((tipo) => (
+                                            <label key={tipo.id} className="flex items-center gap-1.5 text-sm text-[#2B2F36]">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={data.tipos_maltrato.includes(tipo.id)}
+                                                    onChange={() => toggleTipoMaltrato(tipo.id)}
+                                                    className="h-4 w-4 rounded border-[#D5D1C6] text-[#2C4A5E] focus:ring-[#2C4A5E]/30"
+                                                />
+                                                {tipo.nombre}
+                                            </label>
+                                        ))}
+                                    </div>
+                                    {errors.tipos_maltrato && <p className={errorClass}>{errors.tipos_maltrato}</p>}
+                                </div>
+
+                                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                    <div>
+                                        <label className={labelClass}>Nivel de riesgo</label>
+                                        <select
+                                            className={inputClass}
+                                            value={data.nivel_riesgo}
+                                            onChange={(e) => setData('nivel_riesgo', e.target.value)}
+                                        >
+                                            <option value="">Elegir…</option>
+                                            <option value="Bajo">Bajo</option>
+                                            <option value="Medio">Medio</option>
+                                            <option value="Alto">Alto</option>
+                                            <option value="Critico">Crítico</option>
+                                        </select>
+                                        {errors.nivel_riesgo && <p className={errorClass}>{errors.nivel_riesgo}</p>}
+                                    </div>
+
+                                    <div>
+                                        <label className={labelClass}>Profesional interviniente (opcional)</label>
+                                        <select
+                                            className={inputClass}
+                                            value={data.profesional_id}
+                                            onChange={(e) => setData('profesional_id', e.target.value)}
+                                        >
+                                            <option value="">Sin asignar</option>
+                                            {profesionales.map((p) => (
+                                                <option key={p.id} value={p.id}>
+                                                    {p.nombre_usuario}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className={labelClass}>Institución o persona que deriva</label>
+                                    <input
+                                        className={inputClass}
+                                        value={data.origen_derivacion}
+                                        onChange={(e) => setData('origen_derivacion', e.target.value)}
+                                        placeholder="Ej: Escuela N°12, Hospital Municipal, denuncia anónima…"
+                                    />
+                                    {errors.origen_derivacion && <p className={errorClass}>{errors.origen_derivacion}</p>}
+                                </div>
+
+                                <div>
+                                    <label className={labelClass}>Observaciones (opcional)</label>
+                                    <textarea
+                                        className={inputClass}
+                                        rows={3}
+                                        value={data.observaciones}
+                                        onChange={(e) => setData('observaciones', e.target.value)}
+                                    />
+                                </div>
                             </div>
                         </section>
 
