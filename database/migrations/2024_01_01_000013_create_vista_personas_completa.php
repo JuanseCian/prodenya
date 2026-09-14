@@ -7,6 +7,12 @@ return new class extends Migration
 {
     public function up(): void
     {
+        $driver = DB::connection()->getDriverName();
+        $edad = $driver === 'sqlite'
+            ? "CAST((julianday('now') - julianday(p.fecha_nacimiento)) / 365.2425 AS INTEGER)"
+            : 'TIMESTAMPDIFF(YEAR, p.fecha_nacimiento, CURDATE())';
+        $hoy = $driver === 'sqlite' ? "date('now')" : 'CURDATE()';
+
         DB::statement("
             CREATE VIEW vista_personas_completa AS
             SELECT
@@ -14,13 +20,13 @@ return new class extends Migration
                 p.nombre,
                 p.apellido,
                 p.dni,
-                TIMESTAMPDIFF(YEAR, p.fecha_nacimiento, CURDATE()) AS edad,
+                {$edad} AS edad,
                 b.nombre AS barrio,
                 l.nombre AS localidad,
                 pr.nombre AS provincia,
                 c.numero_cud,
                 c.fecha_vencimiento AS cud_vencimiento,
-                CASE WHEN c.fecha_vencimiento >= CURDATE() THEN 'Vigente' ELSE 'Vencido' END AS estado_cud
+                CASE WHEN c.fecha_vencimiento >= {$hoy} THEN 'Vigente' ELSE 'Vencido' END AS estado_cud
             FROM personas p
             LEFT JOIN barrios b ON p.barrio_id = b.id
             JOIN localidades l ON p.localidad_id = l.id
