@@ -9,6 +9,6 @@ class LoginResponse implements LoginResponseContract
 {
     public function toResponse($request): Response
     {
-        return redirect()->route('home');
+        return redirect('/');
     }
 }

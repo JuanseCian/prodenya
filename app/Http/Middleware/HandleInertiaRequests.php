@@ -16,6 +16,15 @@ class HandleInertiaRequests extends Middleware
      */
     protected $rootView = 'app';
 
+    public function rootView(Request $request)
+    {
+        if ($request->routeIs('personas.create', 'legajos.create')) {
+            return 'layouts.frontend';
+        }
+
+        return parent::rootView($request);
+    }
+
     /**
      * Determines the current asset version.
      *

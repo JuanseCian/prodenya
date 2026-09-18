@@ -9,6 +9,6 @@ class TwoFactorLoginResponse implements TwoFactorLoginResponseContract
 {
     public function toResponse($request): Response
     {
-        return redirect()->route('home');
+        return redirect('/');
     }
 }

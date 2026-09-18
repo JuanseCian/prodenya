@@ -81,7 +81,7 @@
             <nav class="flex-1 px-4 py-6 space-y-1">
 
                 <a
-                    href="#"
+                    href="/dashboard#legajos"
                     class="flex items-center gap-3
                            px-4 py-3 rounded-xl
                            bg-slate-800 text-white"

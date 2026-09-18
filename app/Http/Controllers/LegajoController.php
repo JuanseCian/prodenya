@@ -59,7 +59,7 @@ class LegajoController extends Controller
 
         $legajo->tiposMaltrato()->sync($datos['tipos_maltrato']);
 
-        return redirect()->route('dashboard')
+        return redirect()->route('home')
             ->with('status', "Legajo {$legajo->numero_legajo} creado correctamente.");
     }
 }

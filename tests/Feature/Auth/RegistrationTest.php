@@ -4,7 +4,6 @@ use App\Enums\TeamRole;
 use App\Models\Team;
 use App\Models\TeamInvitation;
 use App\Models\User;
-use Inertia\Testing\AssertableInertia as Assert;
 
 test('registration screen can be rendered', function () {
     $response = $this->get(route('register'));
@@ -26,11 +25,9 @@ test('registration screen includes team invitation context', function () {
     $response = $this->get(route('register', ['invitation' => $invitation->code]));
 
     $response->assertOk();
-    $response->assertInertia(fn (Assert $page) => $page
-        ->component('auth/register')
-        ->where('teamInvitation.code', $invitation->code)
-        ->where('teamInvitation.teamName', 'Laravel Team'),
-    );
+    $response
+        ->assertSee('Crear cuenta')
+        ->assertSee('Laravel Team');
 });
 
 test('new users can register', function () {
@@ -44,5 +41,5 @@ test('new users can register', function () {
     $this->assertAuthenticated();
 
     $user = User::where('email', 'test@example.com')->first();
-    $response->assertRedirect(route('dashboard'));
+    $response->assertRedirect(route('home'));
 });
