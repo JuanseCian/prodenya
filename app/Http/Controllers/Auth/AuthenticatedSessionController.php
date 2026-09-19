@@ -4,18 +4,22 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Models\TeamInvitation;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Inertia\Inertia;
-use Inertia\Response;
+use Illuminate\View\View;
+use Laravel\Fortify\Features;
 
 class AuthenticatedSessionController extends Controller
 {
-    public function create(): Response
+    public function create(Request $request): View
     {
-        return Inertia::render('auth/login', [
-            'status' => session('status'),
+        return view('auth.access', [
+            'canResetPassword' => Features::enabled(Features::resetPasswords()),
+            'status' => $request->session()->get('status'),
+            'teamInvitation' => $this->teamInvitation($request),
+            'showRegister' => false,
         ]);
     }
 
@@ -25,7 +29,7 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->route('home');
+        return redirect('/');
     }
 
     public function destroy(Request $request): RedirectResponse
@@ -36,5 +40,37 @@ class AuthenticatedSessionController extends Controller
         $request->session()->regenerateToken();
 
         return redirect('/login');
+    }
+
+    /**
+     * Get a valid team invitation from the login query string.
+     *
+     * @return array{code: string, teamName: string}|null
+     */
+    private function teamInvitation(Request $request): ?array
+    {
+        $invitationCode = $request->query('invitation');
+
+        if (! is_string($invitationCode)) {
+            return null;
+        }
+
+        $invitation = TeamInvitation::query()
+            ->with('team')
+            ->where('code', $invitationCode)
+            ->whereNull('accepted_at')
+            ->where(fn ($query) => $query
+                ->whereNull('expires_at')
+                ->orWhere('expires_at', '>=', now()))
+            ->first();
+
+        if (! $invitation) {
+            return null;
+        }
+
+        return [
+            'code' => $invitation->code,
+            'teamName' => $invitation->team->name,
+        ];
     }
 }

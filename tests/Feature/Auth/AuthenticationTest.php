@@ -6,7 +6,6 @@ use App\Models\TeamInvitation;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
-use Inertia\Testing\AssertableInertia as Assert;
 use Laravel\Fortify\Features;
 use Laravel\Passkeys\Contracts\PasskeyLoginResponse;
 
@@ -30,11 +29,9 @@ test('login screen includes team invitation context', function () {
     $response = $this->get(route('login', ['invitation' => $invitation->code]));
 
     $response->assertOk();
-    $response->assertInertia(fn (Assert $page) => $page
-        ->component('auth/login')
-        ->where('teamInvitation.code', $invitation->code)
-        ->where('teamInvitation.teamName', 'Laravel Team'),
-    );
+    $response
+        ->assertSee('Iniciar sesión')
+        ->assertSee('Laravel Team');
 });
 
 test('users can authenticate using the login screen', function () {

@@ -47,7 +47,7 @@ class StorePersonaRequest extends FormRequest
             'dni.unique' => 'Ya existe una persona registrada con ese DNI.',
             'legajo_motivo_ingreso.required_if' => 'Ingresá el motivo de ingreso.',
             'legajo_nivel_riesgo.required_if' => 'Seleccioná el nivel de riesgo.',
-            'legajo_origen_derivacion.required_if' => 'Indicá la institución o persona que deriva el caso.',
+            'legajo_origen_derivacion.required_if' => 'Indicá la institución o referente que deriva el caso.',
             'legajo_tipos_maltrato.required_if' => 'Seleccioná al menos un tipo de maltrato.',
         ];
     }

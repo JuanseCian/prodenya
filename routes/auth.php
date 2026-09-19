@@ -5,6 +5,7 @@ use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use Illuminate\Support\Facades\Route;
+use Laravel\Fortify\Http\Controllers\AuthenticatedSessionController as FortifyAuthenticatedSessionController;
 
 // Rutas de invitado (no logueado)
 Route::middleware('guest')->group(function () {
@@ -17,7 +18,7 @@ Route::middleware('guest')->group(function () {
     Route::get('login', [AuthenticatedSessionController::class, 'create'])
         ->name('login');
 
-    Route::post('login', [AuthenticatedSessionController::class, 'store'])
+    Route::post('login', [FortifyAuthenticatedSessionController::class, 'store'])
         ->name('login.store');
 
     Route::get('forgot-password', [PasswordResetLinkController::class, 'create'])
