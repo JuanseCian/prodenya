@@ -11,10 +11,14 @@ class DatabaseSeeder extends Seeder
         $this->call([
             UbicacionSeeder::class,
             RolSeeder::class,
-            TipoDocumentoSeeder::class,
-            TipoMaltratoSeeder::class,
             UserSeeder::class,
             UsuarioSeeder::class,
+            RolesSeeder::class,
+            ProvinciasSeeder::class,
+            LocalidadesSeeder::class,
+            BarriosSeeder::class,
+            TiposDocumentoSeeder::class,
+            TiposMaltratoSeeder::class,
         ]);
     }
 }

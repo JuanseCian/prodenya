@@ -1,4 +1,4 @@
-import { Head, useForm } from '@inertiajs/react';
+import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 
 interface LoginProps {
@@ -138,6 +138,19 @@ export default function Login({ status }: LoginProps) {
                             {processing ? 'Ingresando…' : 'Ingresar'}
                         </button>
                     </form>
+
+                    <p
+                        className="mt-6 text-center text-sm text-[#2B2F36]/70"
+                        style={{ fontFamily: FONT_BODY }}
+                    >
+                        ¿No tenés una cuenta?{' '}
+                        <Link
+                            href="/register"
+                            className="font-medium text-[#2C4A5E] underline-offset-2 hover:underline"
+                        >
+                            Registrate
+                        </Link>
+                    </p>
                 </div>
             </div>
         </>

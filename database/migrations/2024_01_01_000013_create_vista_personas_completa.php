@@ -13,6 +13,8 @@ return new class extends Migration
             : 'TIMESTAMPDIFF(YEAR, p.fecha_nacimiento, CURDATE())';
         $hoy = $driver === 'sqlite' ? "date('now')" : 'CURDATE()';
 
+        DB::statement('DROP VIEW IF EXISTS vista_personas_completa');
+
         DB::statement("
             CREATE VIEW vista_personas_completa AS
             SELECT
