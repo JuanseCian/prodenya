@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
             BarriosSeeder::class,
             TiposDocumentoSeeder::class,
             TiposMaltratoSeeder::class,
+            ProblematicaSeeder::class,
         ]);
     }
 }
