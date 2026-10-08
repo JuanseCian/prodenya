@@ -33,7 +33,7 @@ class LegajoController extends Controller
                     'telefono' => $persona->telefono,
                     'email' => $persona->email,
                 ]),
-            'tiposMaltrato' => TipoMaltrato::orderBy('nombre')->get(['id', 'nombre']),
+            'problematicas' => Problematica::orderBy('nombre')->get(['id', 'nombre']),
             'profesionales' => Usuario::where('activo', true)
                 ->orderBy('nombre_usuario')
                 ->get(['id', 'nombre_usuario', 'email']),
@@ -48,7 +48,7 @@ class LegajoController extends Controller
         $legajo = Legajo::create([
             'persona_id' => $persona->id,
             'numero_legajo' => Legajo::generarNumero($persona),
-            'motivo_ingreso' => $datos['motivo_ingreso'],
+            'problematica' => $datos['problematica'],
             'nivel_riesgo' => $datos['nivel_riesgo'],
             'origen_derivacion' => $datos['origen_derivacion'],
             'profesional_id' => $datos['profesional_id'] ?? null,
@@ -57,7 +57,7 @@ class LegajoController extends Controller
             'creado_por' => $request->user()->id,
         ]);
 
-        $legajo->tiposMaltrato()->sync($datos['tipos_maltrato']);
+        $legajo->problematicas()->sync($datos['problematicas']);
 
         return redirect()->route('home')
             ->with('status', "Legajo {$legajo->numero_legajo} creado correctamente.");
