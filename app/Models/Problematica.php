@@ -7,9 +7,11 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Problematica extends Model
 {
-    use SoftDeletes;
+     use SoftDeletes;
 
     protected $table = 'problematica';
+
+    protected $fillable = ['nombre'];
 
     protected $fillable = [
         'nombre',

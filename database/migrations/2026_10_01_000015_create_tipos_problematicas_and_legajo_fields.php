@@ -8,9 +8,24 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('problematicas', function (Blueprint $table) {
-            $table->increments('id');
-            $table->string('nombre', 80)->unique();
+         Schema::create('problematica', function (Blueprint $table) {
+            $table->id();
+
+            $table->string('nombre', 190);
+
+            $table->timestamp('created_at')
+                ->useCurrent();
+
+            $table->unsignedInteger('updated_by')
+                ->nullable();
+
+            $table->unsignedInteger('deleted_by')
+                ->nullable();
+
+            $table->timestamp('updated_at')
+                ->nullable();
+
+            $table->softDeletes();
         });
 
         Schema::table('legajos', function (Blueprint $table) {
@@ -24,12 +39,12 @@ return new class extends Migration
 
         Schema::create('legajo_problematica', function (Blueprint $table) {
             $table->unsignedInteger('legajo_id');
-            $table->unsignedInteger('problematica_id');
+            $table->unsignedBigInteger('problematica_id');  
 
             $table->primary(['legajo_id', 'problematica_id']);
             $table->foreign('legajo_id')->references('id')->on('legajos')
                 ->onUpdate('cascade')->onDelete('cascade');
-            $table->foreign('problematica_id')->references('id')->on('problematicas')
+            $table->foreign('problematica_id')->references('id')->on('problematica')
                 ->onUpdate('cascade')->onDelete('restrict');
         });
     }
@@ -43,6 +58,6 @@ return new class extends Migration
             $table->dropColumn(['nivel_riesgo', 'origen_derivacion', 'profesional_id']);
         });
 
-        Schema::dropIfExists('problematicas');
+        Schema::dropIfExists('problematica');
     }
 };
