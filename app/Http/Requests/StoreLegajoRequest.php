@@ -19,8 +19,8 @@ class StoreLegajoRequest extends FormRequest
             'nivel_riesgo' => ['required', 'in:Bajo,Medio,Alto,Critico'],
             'origen_derivacion' => ['required', 'string', 'max:255'],
             'profesional_id' => ['nullable', 'exists:usuarios,id'],
-            'tipos_maltrato' => ['required', 'array', 'min:1'],
-            'tipos_maltrato.*' => ['exists:tipos_maltrato,id'],
+            'problematicas' => ['required', 'array', 'min:1'],
+            'problematicas.*' => ['exists:problematicas,id'],
             'observaciones' => ['nullable', 'string'],
         ];
     }
@@ -32,8 +32,8 @@ class StoreLegajoRequest extends FormRequest
             'motivo_ingreso.required' => 'Ingresá el motivo de ingreso.',
             'nivel_riesgo.required' => 'Seleccioná el nivel de riesgo.',
             'origen_derivacion.required' => 'Indicá la institución o referente que deriva el caso.',
-            'tipos_maltrato.required' => 'Seleccioná al menos un tipo de maltrato.',
-            'tipos_maltrato.min' => 'Seleccioná al menos un tipo de maltrato.',
+            'problematicas.required' => 'Seleccioná al menos una problemática.',
+            'problematicas.min' => 'Seleccioná al menos una problemática.',
         ];
     }
 }

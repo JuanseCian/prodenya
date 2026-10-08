@@ -11,7 +11,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('personas/nueva', [PersonaController::class, 'create'])->name('personas.create');
     Route::post('personas', [PersonaController::class, 'store'])->name('personas.store');
 
-    Route::get('legajos/nuevo', [LegajoController::class, 'create'])->name('legajos.create');
+    Route::get('legajos/create', [LegajoController::class, 'create'])->name('legajos.create');
     Route::post('legajos', [LegajoController::class, 'store'])->name('legajos.store');
 
     // Endpoints livianos para los selects en cascada del formulario de persona

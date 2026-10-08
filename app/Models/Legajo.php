@@ -14,15 +14,18 @@ class Legajo extends Model
     const CREATED_AT = 'creado_en';
     const UPDATED_AT = 'actualizado_en';
 
-    protected $fillable = [
-        'persona_id',
-        'numero_legajo',
-        'motivo_ingreso',
-        'fecha_apertura',
-        'estado',
-        'observaciones',
-        'creado_por',
-    ];
+  protected $fillable = [
+    'persona_id',
+    'numero_legajo',
+    'motivo_ingreso',
+    'nivel_riesgo',
+    'origen_derivacion',
+    'profesional_id',
+    'fecha_apertura',
+    'estado',
+    'observaciones',
+    'creado_por',
+];
 
     protected function casts(): array
     {
@@ -31,6 +34,15 @@ class Legajo extends Model
         ];
     }
 
+    public function problematicas(): BelongsToMany
+{
+    return $this->belongsToMany(
+        Problematica::class,
+        'legajo_problematica',   // ajustalo al nombre real de tu tabla pivote
+        'legajo_id',
+        'problematica_id',
+    );
+}
     public function persona(): BelongsTo
     {
         return $this->belongsTo(Persona::class, 'persona_id');

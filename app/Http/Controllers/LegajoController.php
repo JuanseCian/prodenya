@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreLegajoRequest;
 use App\Models\Legajo;
 use App\Models\Persona;
-use App\Models\TipoMaltrato;
+use App\Models\Problematica;
 use App\Models\Usuario;
 use Inertia\Inertia;
 use Inertia\Response;

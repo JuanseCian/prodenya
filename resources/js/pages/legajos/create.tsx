@@ -29,7 +29,7 @@ interface Profesional {
 
 interface CreateLegajoProps {
     personas: PersonaOpcion[];
-    tiposMaltrato: Opcion[];
+    problematicas: Opcion[];
     profesionales: Profesional[];
 }
 
@@ -45,7 +45,7 @@ const GENERO_LABEL: Record<string, string> = {
 
 export default function CreateLegajo({
     personas,
-    tiposMaltrato,
+    problematicas,
     profesionales,
 }: CreateLegajoProps) {
     const { data, setData, post, processing, errors } = useForm({
@@ -247,10 +247,10 @@ export default function CreateLegajo({
 
                             <div>
                                 <label className={labelClass}>
-                                    Tipo de maltrato (podés elegir más de uno)
+                                    Problematica (podés elegir más de uno)
                                 </label>
                                 <div className="flex flex-wrap gap-x-5 gap-y-2 rounded-md border border-[#D5D1C6] bg-white px-3.5 py-3">
-                                    {tiposMaltrato.map((tipo) => (
+                                    {problematicas.map((tipo) => (
                                         <label
                                             key={tipo.id}
                                             className="flex items-center gap-1.5 text-sm text-[#2B2F36]"
