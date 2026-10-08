@@ -35,7 +35,7 @@ interface Profesional {
 
 interface CreatePersonaProps {
     provincias: Opcion[];
-    tiposMaltrato: Opcion[];
+    problematicas: Opcion[];
     profesionales: Profesional[];
 }
 
@@ -89,7 +89,7 @@ function SectionHeading({
 
 export default function CreatePersona({
     provincias,
-    tiposMaltrato,
+    problematicas,
     profesionales,
 }: CreatePersonaProps) {
     const { data, setData, post, processing, errors } = useForm({
@@ -112,7 +112,7 @@ export default function CreatePersona({
         legajo_nivel_riesgo: '',
         legajo_origen_derivacion: '',
         legajo_profesional_id: '',
-        legajo_tipos_maltrato: [] as number[],
+        legajo_problematicas: [] as number[],
         legajo_observaciones: '',
     });
 
@@ -141,12 +141,12 @@ export default function CreatePersona({
             .then(setBarrios);
     }, [data.localidad_id]);
 
-    const toggleTipoMaltrato = (id: number) => {
+    const toggleProblematica = (id: number) => {
         setData(
-            'legajo_tipos_maltrato',
-            data.legajo_tipos_maltrato.includes(id)
-                ? data.legajo_tipos_maltrato.filter((tipo) => tipo !== id)
-                : [...data.legajo_tipos_maltrato, id],
+            'legajo_problematicas',
+            data.legajo_problematicas.includes(id)
+                ? data.legajo_problematicas.filter((problematica) => problematica !== id)
+                : [...data.legajo_problematicas, id],
         );
     };
 
@@ -667,36 +667,36 @@ export default function CreatePersona({
                                         </div>
                                         <div>
                                             <Label className={labelClass}>
-                                                Tipo de maltrato{' '}
+                                                 Problematica{' '}
                                                 <span className="text-[#A84635]">
                                                     *
                                                 </span>
                                             </Label>
                                             <div className="mt-2 grid gap-2 rounded-lg border border-[#D5D1C6] bg-white p-3 sm:grid-cols-2">
-                                                {tiposMaltrato.map((tipo) => (
+                                                {problematicas.map((problematica) => (
                                                     <label
-                                                        key={tipo.id}
+                                                        key={problematica.id}
                                                         className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm text-[#2B2F36] transition hover:bg-[#F4F6F5]"
                                                     >
                                                         <input
                                                             type="checkbox"
-                                                            checked={data.legajo_tipos_maltrato.includes(
-                                                                tipo.id,
+                                                            checked={data.legajo_problematicas.includes(
+                                                                problematica.id,
                                                             )}
                                                             onChange={() =>
-                                                                toggleTipoMaltrato(
-                                                                    tipo.id,
+                                                                toggleProblematica(
+                                                                    problematica.id,
                                                                 )
                                                             }
                                                             className="size-4 rounded border-[#B9C5BD] text-[#2C4A5E] focus:ring-[#2C4A5E]/30"
                                                         />
-                                                        {tipo.nombre}
+                                                        {problematica.nombre}
                                                     </label>
                                                 ))}
                                             </div>
                                             <FieldError
                                                 message={
-                                                    errors.legajo_tipos_maltrato
+                                                    errors.legajo_problematicas
                                                 }
                                             />
                                         </div>
@@ -905,7 +905,7 @@ export default function CreatePersona({
                                             ? Boolean(
                                                   data.legajo_motivo_ingreso &&
                                                   data.legajo_nivel_riesgo &&
-                                                  data.legajo_tipos_maltrato
+                                                  data.legajo_problematicas
                                                       .length,
                                               )
                                             : true,
