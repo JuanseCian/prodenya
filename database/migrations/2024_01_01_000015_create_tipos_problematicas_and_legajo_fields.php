@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('tipos_maltrato', function (Blueprint $table) {
+        Schema::create('problematicas', function (Blueprint $table) {
             $table->increments('id');
             $table->string('nombre', 80)->unique();
         });
@@ -22,27 +22,27 @@ return new class extends Migration
                 ->onUpdate('cascade')->onDelete('set null');
         });
 
-        Schema::create('legajo_tipo_maltrato', function (Blueprint $table) {
+        Schema::create('legajo_problematica', function (Blueprint $table) {
             $table->unsignedInteger('legajo_id');
-            $table->unsignedInteger('tipo_maltrato_id');
+            $table->unsignedInteger('problematica_id');
 
-            $table->primary(['legajo_id', 'tipo_maltrato_id']);
+            $table->primary(['legajo_id', 'problematica_id']);
             $table->foreign('legajo_id')->references('id')->on('legajos')
                 ->onUpdate('cascade')->onDelete('cascade');
-            $table->foreign('tipo_maltrato_id')->references('id')->on('tipos_maltrato')
+            $table->foreign('problematica_id')->references('id')->on('problematicas')
                 ->onUpdate('cascade')->onDelete('restrict');
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('legajo_tipo_maltrato');
+        Schema::dropIfExists('legajo_problematica');
 
         Schema::table('legajos', function (Blueprint $table) {
             $table->dropForeign(['profesional_id']);
             $table->dropColumn(['nivel_riesgo', 'origen_derivacion', 'profesional_id']);
         });
 
-        Schema::dropIfExists('tipos_maltrato');
+        Schema::dropIfExists('problematicas');
     }
 };

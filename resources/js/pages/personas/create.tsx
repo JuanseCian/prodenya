@@ -51,6 +51,69 @@ function FieldError({ message }: { message?: string }) {
     return message ? <p className={errorClass}>{message}</p> : null;
 }
 
+const FIELD_LABELS: Record<string, string> = {
+    nombre: 'Nombre',
+    apellido: 'Apellido',
+    dni: 'DNI',
+    fecha_nacimiento: 'Fecha de nacimiento',
+    genero: 'Género',
+    telefono: 'Teléfono',
+    email: 'Correo electrónico',
+    direccion_calle: 'Calle',
+    direccion_numero: 'Número',
+    direccion_piso_depto: 'Piso / Depto',
+    provincia_id: 'Provincia',
+    localidad_id: 'Localidad',
+    barrio_id: 'Barrio',
+    observaciones: 'Observaciones',
+    abrir_legajo: 'Abrir legajo',
+    legajo_motivo_ingreso: 'Motivo de ingreso',
+    legajo_problematicas: 'Problemática',
+    legajo_nivel_riesgo: 'Nivel de riesgo',
+    legajo_profesional_id: 'Profesional asignado',
+    legajo_origen_derivacion: 'Origen de la derivación',
+    legajo_observaciones: 'Observaciones del legajo',
+};
+
+const labelFor = (campo: string) => {
+    const base = campo.replace(/\.\d+$/, '');
+    return FIELD_LABELS[base] ?? base;
+};
+
+function ErrorSummary({ errors }: { errors: Record<string, string> }) {
+    const entries = Object.entries(errors);
+
+    if (entries.length === 0) return null;
+
+    return (
+        <div
+            id="resumen-errores"
+            role="alert"
+            className="rounded-lg border border-[#E3B7AE] bg-[#FBEFEC] p-4 sm:p-5"
+        >
+            <p className="text-sm font-semibold text-[#A84635]">
+                No se pudo guardar.{' '}
+                {entries.length === 1
+                    ? 'Revisá este campo:'
+                    : `Revisá estos ${entries.length} campos:`}
+            </p>
+            <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-[#7A2E21]">
+                {entries.map(([campo, mensaje]) => (
+                    <li key={campo}>
+                        {campo === 'general' ? (
+                            mensaje
+                        ) : (
+                            <>
+                                <strong>{labelFor(campo)}:</strong> {mensaje}
+                            </>
+                        )}
+                    </li>
+                ))}
+            </ul>
+        </div>
+    );
+}
+
 function SectionHeading({
     icon,
     eyebrow,
@@ -116,6 +179,7 @@ export default function CreatePersona({
         legajo_observaciones: '',
     });
 
+    const [intentosFallidos, setIntentosFallidos] = useState(0);
     const [localidades, setLocalidades] = useState<Opcion[]>([]);
     const [barrios, setBarrios] = useState<Opcion[]>([]);
 
@@ -141,6 +205,14 @@ export default function CreatePersona({
             .then(setBarrios);
     }, [data.localidad_id]);
 
+    useEffect(() => {
+        if (intentosFallidos > 0) {
+            document
+                .getElementById('resumen-errores')
+                ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }, [intentosFallidos]);
+
     const toggleProblematica = (id: number) => {
         setData(
             'legajo_problematicas',
@@ -152,7 +224,10 @@ export default function CreatePersona({
 
     const submit: FormEventHandler = (event) => {
         event.preventDefault();
-        post('/personas');
+        post('/personas', {
+            preserveScroll: true,
+            onError: () => setIntentosFallidos((n) => n + 1),
+        });
     };
 
     const previaLegajo = (() => {
@@ -201,6 +276,10 @@ export default function CreatePersona({
 
                 <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_290px]">
                     <form onSubmit={submit} className="space-y-6">
+                        <ErrorSummary
+                            errors={errors as Record<string, string>}
+                        />
+
                         <Card className="overflow-hidden border-[#DCE3DF] !bg-white py-0 shadow-[0_14px_35px_rgba(23,50,71,0.06)]">
                             <SectionHeading
                                 icon={<UserRound size={19} />}
@@ -329,6 +408,7 @@ export default function CreatePersona({
                                             No binario / X
                                         </option>
                                     </select>
+                                    <FieldError message={errors.genero} />
                                 </div>
                                 <div>
                                     <Label
@@ -349,6 +429,7 @@ export default function CreatePersona({
                                         className={inputClass}
                                         autoComplete="tel"
                                     />
+                                    <FieldError message={errors.telefono} />
                                 </div>
                                 <div className="sm:col-span-2">
                                     <Label
@@ -399,6 +480,7 @@ export default function CreatePersona({
                                         className={inputClass}
                                         autoComplete="street-address"
                                     />
+                                    <FieldError message={errors.direccion_calle} />
                                 </div>
                                 <div className="sm:col-span-2">
                                     <Label
@@ -418,6 +500,7 @@ export default function CreatePersona({
                                         }
                                         className={inputClass}
                                     />
+                                    <FieldError message={errors.direccion_numero} />
                                 </div>
                                 <div className="sm:col-span-6">
                                     <Label
@@ -440,6 +523,7 @@ export default function CreatePersona({
                                         }
                                         className={inputClass}
                                     />
+                                    <FieldError message={errors.direccion_piso_depto} />
                                 </div>
                                 <div className="sm:col-span-2">
                                     <Label
@@ -786,6 +870,7 @@ export default function CreatePersona({
                                                         ),
                                                     )}
                                                 </select>
+                                                <FieldError message={errors.legajo_profesional_id} />
                                             </div>
                                         </div>
                                         <div>
@@ -843,6 +928,7 @@ export default function CreatePersona({
                                                 }
                                                 className="mt-2 block w-full resize-y rounded-md border border-[#D5D1C6] bg-white px-3.5 py-3 text-sm text-[#2B2F36] transition outline-none placeholder:text-[#2B2F36]/35 focus:border-[#2C4A5E] focus:ring-2 focus:ring-[#2C4A5E]/20"
                                             />
+                                            <FieldError message={errors.legajo_observaciones} />
                                         </div>
                                     </div>
                                 )}
