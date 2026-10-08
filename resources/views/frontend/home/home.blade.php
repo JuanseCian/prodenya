@@ -78,25 +78,25 @@
             </div>
 
             <div class="home-area-grid">
-                @if (Route::has('personas.create'))
-                    <a href="{{ route('personas.create') }}" class="home-area-card home-area-card-purple">
+                @if (Route::has('personas.index'))
+                    <a href="{{ route('personas.index') }}" class="home-area-card home-area-card-purple">
                 @endif
                     <span class="home-area-icon"><i class="bi bi-people" aria-hidden="true"></i></span>
                     <span class="home-area-content">
                         <strong>Personas</strong>
-                        <span>Registro y alta de personas acompañadas.</span>
+                        <span>Consultá y buscá las personas registradas.</span>
                     </span>
                     <i class="bi bi-arrow-up-right home-area-arrow" aria-hidden="true"></i>
-                @if (Route::has('personas.create'))
+                @if (Route::has('personas.index'))
                     </a>
                 @endif
 
-                @if (Route::has('legajos.create'))
-                    <a href="{{ route('legajos.create') }}" class="home-area-card home-area-card-blue">
-                        <span class="home-area-icon"><i class="bi bi-folder-plus" aria-hidden="true"></i></span>
+                @if (Route::has('legajos.index'))
+                    <a href="{{ route('legajos.index') }}" class="home-area-card home-area-card-blue">
+                        <span class="home-area-icon"><i class="bi bi-folder2-open" aria-hidden="true"></i></span>
                         <span class="home-area-content">
-                            <strong>Nuevo legajo</strong>
-                            <span>Iniciá el seguimiento de una nueva situación.</span>
+                            <strong>Legajos</strong>
+                            <span>Consultá y buscá los legajos abiertos.</span>
                         </span>
                         <i class="bi bi-arrow-up-right home-area-arrow" aria-hidden="true"></i>
                     </a>

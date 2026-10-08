@@ -11,7 +11,7 @@ class Problematica extends Model
 
     protected $table = 'problematica';
 
-    protected $fillable = ['nombre'];
+   
 
     protected $fillable = [
         'nombre',

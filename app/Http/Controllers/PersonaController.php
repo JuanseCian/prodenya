@@ -8,6 +8,7 @@ use App\Models\Persona;
 use App\Models\Problematica;
 use App\Models\Provincia;
 use App\Models\Usuario;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -15,6 +16,56 @@ use Throwable;
 
 class PersonaController extends Controller
 {
+    public function index(Request $request): Response
+    {
+        $buscar = trim((string) $request->query('buscar', ''));
+        $digitos = preg_replace('/\D/', '', $buscar);
+
+        $personas = Persona::with(['localidad', 'barrio'])
+            ->where('activo', true)
+            ->when($buscar !== '', function ($consulta) use ($buscar, $digitos) {
+                $consulta->where(function ($q) use ($buscar, $digitos) {
+                    $q->where('nombre', 'like', "%{$buscar}%")
+                        ->orWhere('apellido', 'like', "%{$buscar}%")
+                        ->orWhereRaw("CONCAT(nombre, ' ', apellido) like ?", ["%{$buscar}%"])
+                        ->orWhereRaw("CONCAT(apellido, ' ', nombre) like ?", ["%{$buscar}%"]);
+
+                    if ($digitos !== '') {
+                        $q->orWhere('dni', 'like', "%{$digitos}%");
+                    }
+                });
+            })
+            ->orderBy('apellido')
+            ->orderBy('nombre')
+            ->paginate(15)
+            ->withQueryString();
+
+        // Números de legajo de las personas de esta página (una sola consulta).
+        $legajos = Legajo::whereIn('persona_id', $personas->pluck('id'))
+            ->orderBy('numero_legajo')
+            ->get(['persona_id', 'numero_legajo'])
+            ->groupBy('persona_id');
+
+        $personas->through(fn (Persona $persona) => [
+            'id' => $persona->id,
+            'nombre' => $persona->nombre,
+            'apellido' => $persona->apellido,
+            'dni' => $persona->dni,
+            'edad' => $persona->fecha_nacimiento?->age,
+            'genero' => $persona->genero,
+            'localidad' => $persona->localidad?->nombre,
+            'barrio' => $persona->barrio?->nombre,
+            'telefono' => $persona->telefono,
+            'email' => $persona->email,
+            'legajos' => $legajos->get($persona->id, collect())->pluck('numero_legajo')->values(),
+        ]);
+
+        return Inertia::render('personas/index', [
+            'personas' => $personas,
+            'filtros' => ['buscar' => $buscar !== '' ? $buscar : null],
+        ]);
+    }
+
     public function create(): Response
     {
         return Inertia::render('personas/create', [
@@ -70,8 +121,6 @@ class PersonaController extends Controller
                 return [$persona, $legajo];
             });
         } catch (Throwable $e) {
-            // Si algo falla, la transacción se revierte (no queda ni la persona
-            // ni el legajo) y se muestra el motivo en el formulario.
             report($e);
 
             return back()->withErrors([

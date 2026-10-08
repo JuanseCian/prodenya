@@ -13,7 +13,8 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('legajos/create', [LegajoController::class, 'create'])->name('legajos.create');
     Route::post('legajos', [LegajoController::class, 'store'])->name('legajos.store');
-
+    Route::get('/personas', [PersonaController::class, 'index'])->name('personas.index');
+    Route::get('/legajos', [LegajoController::class, 'index'])->name('legajos.index');
     // Endpoints livianos para los selects en cascada del formulario de persona
     Route::get('api/localidades', function (Request $request) {
         return Localidad::where('provincia_id', $request->query('provincia_id'))
