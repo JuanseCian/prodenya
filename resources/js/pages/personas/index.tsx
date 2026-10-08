@@ -24,6 +24,7 @@ interface PersonaFila {
 interface PersonasIndexProps {
     personas: Paginador<PersonaFila>;
     filtros: { buscar: string | null };
+    status?: string | null;
 }
 
 const FONT_HEADING = "'Lora', serif";
@@ -40,7 +41,7 @@ const thClass =
     'px-4 py-3 text-left text-[0.68rem] font-bold tracking-[0.12em] text-[#6B8F71] uppercase whitespace-nowrap';
 const tdClass = 'px-4 py-3.5 align-top text-sm text-[#2B2F36]';
 
-export default function PersonasIndex({ personas, filtros }: PersonasIndexProps) {
+export default function PersonasIndex({ personas, filtros, status }: PersonasIndexProps) {
     const [buscar, setBuscar] = useState(filtros.buscar ?? '');
 
     useEffect(() => {
@@ -101,6 +102,15 @@ export default function PersonasIndex({ personas, filtros }: PersonasIndexProps)
                     </div>
                 </div>
 
+                {status && (
+                    <div
+                        role="status"
+                        className="mb-6 rounded-lg border border-[#BDE3CB] bg-[#E8F7EF] px-4 py-3 text-sm font-medium text-[#267148]"
+                    >
+                        {status}
+                    </div>
+                )}
+
                 <Card className="overflow-hidden border-[#DCE3DF] !bg-white py-0 shadow-[0_14px_35px_rgba(23,50,71,0.06)]">
                     <div className="border-b border-[#E4E8E5] bg-[#F8FAF9] px-5 py-4 sm:px-6">
                         <div className="relative max-w-md">
@@ -145,6 +155,7 @@ export default function PersonasIndex({ personas, filtros }: PersonasIndexProps)
                                             <th className={thClass}>Domicilio</th>
                                             <th className={thClass}>Contacto</th>
                                             <th className={thClass}>Legajo</th>
+                                            <th className={thClass}></th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-[#EEF0ED]">
@@ -203,6 +214,21 @@ export default function PersonasIndex({ personas, filtros }: PersonasIndexProps)
                                                             Sin legajo
                                                         </span>
                                                     )}
+                                                </td>
+                                                <td className={`${tdClass} whitespace-nowrap text-right`}>
+                                                    <Link
+                                                        href={`/personas/${persona.id}`}
+                                                        className="text-sm font-semibold text-[#2C4A5E] hover:underline"
+                                                    >
+                                                        Ver
+                                                    </Link>
+                                                    <span className="mx-2 text-[#B4C1B8]">·</span>
+                                                    <Link
+                                                        href={`/personas/${persona.id}/edit`}
+                                                        className="text-sm font-semibold text-[#2C4A5E] hover:underline"
+                                                    >
+                                                        Editar
+                                                    </Link>
                                                 </td>
                                             </tr>
                                         ))}

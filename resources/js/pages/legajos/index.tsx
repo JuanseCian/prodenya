@@ -29,6 +29,7 @@ interface LegajosIndexProps {
     legajos: Paginador<LegajoFila>;
     filtros: Filtros;
     estados: string[];
+    status?: string | null;
 }
 
 const FONT_HEADING = "'Lora', serif";
@@ -49,7 +50,7 @@ const tdClass = 'px-4 py-3.5 align-top text-sm text-[#2B2F36]';
 const selectClass =
     'h-11 rounded-md border border-[#D5D1C6] bg-white px-3 text-sm text-[#2B2F36] outline-none focus:border-[#2C4A5E] focus:ring-2 focus:ring-[#2C4A5E]/20';
 
-export default function LegajosIndex({ legajos, filtros, estados }: LegajosIndexProps) {
+export default function LegajosIndex({ legajos, filtros, estados, status }: LegajosIndexProps) {
     const [buscar, setBuscar] = useState(filtros.buscar ?? '');
     const [nivel, setNivel] = useState(filtros.nivel_riesgo ?? '');
     const [estado, setEstado] = useState(filtros.estado ?? '');
@@ -123,6 +124,15 @@ export default function LegajosIndex({ legajos, filtros, estados }: LegajosIndex
                     </div>
                 </div>
 
+                {status && (
+                    <div
+                        role="status"
+                        className="mb-6 rounded-lg border border-[#BDE3CB] bg-[#E8F7EF] px-4 py-3 text-sm font-medium text-[#267148]"
+                    >
+                        {status}
+                    </div>
+                )}
+
                 <Card className="overflow-hidden border-[#DCE3DF] !bg-white py-0 shadow-[0_14px_35px_rgba(23,50,71,0.06)]">
                     <div className="flex flex-col gap-3 border-b border-[#E4E8E5] bg-[#F8FAF9] px-5 py-4 sm:flex-row sm:items-center sm:px-6">
                         <div className="relative w-full sm:max-w-md">
@@ -195,6 +205,7 @@ export default function LegajosIndex({ legajos, filtros, estados }: LegajosIndex
                                             <th className={thClass}>Derivación</th>
                                             <th className={thClass}>Profesional</th>
                                             <th className={thClass}>Apertura</th>
+                                            <th className={thClass}></th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-[#EEF0ED]">
@@ -248,6 +259,21 @@ export default function LegajosIndex({ legajos, filtros, estados }: LegajosIndex
                                                 <td className={tdClass}>{legajo.profesional ?? '—'}</td>
                                                 <td className={`${tdClass} whitespace-nowrap`}>
                                                     {legajo.fecha_apertura ?? '—'}
+                                                </td>
+                                                <td className={`${tdClass} whitespace-nowrap text-right`}>
+                                                    <Link
+                                                        href={`/legajos/${legajo.id}`}
+                                                        className="text-sm font-semibold text-[#2C4A5E] hover:underline"
+                                                    >
+                                                        Ver
+                                                    </Link>
+                                                    <span className="mx-2 text-[#B4C1B8]">·</span>
+                                                    <Link
+                                                        href={`/legajos/${legajo.id}/edit`}
+                                                        className="text-sm font-semibold text-[#2C4A5E] hover:underline"
+                                                    >
+                                                        Editar
+                                                    </Link>
                                                 </td>
                                             </tr>
                                         ))}
