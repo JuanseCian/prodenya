@@ -171,6 +171,7 @@
         .btn-main { background: linear-gradient(135deg, var(--violet-dark), var(--blue)); border: none; border-radius: 10px; box-shadow: 0 8px 17px rgba(93, 86, 176, 0.2); color: #fff; cursor: pointer; font: inherit; font-size: 0.88rem; font-weight: 700; letter-spacing: 0.01em; min-height: 47px; padding: 11px 12px; transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s; width: 100%; }
         .btn-main:hover { box-shadow: 0 11px 23px rgba(93, 86, 176, 0.28); opacity: 0.92; transform: translateY(-1px); }
         .btn-main:active { transform: translateY(0); }
+        #registerForm .btn-main { margin-top: 8px; }
         .switch-link { color: var(--muted); font-size: 0.78rem; margin-top: 21px; text-align: center; }
         .switch-link button { background: none; border: 0; color: var(--violet-dark); cursor: pointer; font: inherit; font-weight: 700; padding: 0; }
         .switch-link button:hover { text-decoration: underline; }
