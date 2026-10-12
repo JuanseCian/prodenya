@@ -1,5 +1,6 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import {
+    ArrowDown,
     Check,
     ClipboardPlus,
     Home,
@@ -7,7 +8,8 @@ import {
     ShieldCheck,
     UserRound,
 } from 'lucide-react';
-import { FormEventHandler, type ReactNode, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import type { FormEventHandler, ReactNode } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -77,13 +79,16 @@ const FIELD_LABELS: Record<string, string> = {
 
 const labelFor = (campo: string) => {
     const base = campo.replace(/\.\d+$/, '');
+
     return FIELD_LABELS[base] ?? base;
 };
 
 function ErrorSummary({ errors }: { errors: Record<string, string> }) {
     const entries = Object.entries(errors);
 
-    if (entries.length === 0) return null;
+    if (entries.length === 0) {
+        return null;
+    }
 
     return (
         <div
@@ -182,27 +187,75 @@ export default function CreatePersona({
     const [intentosFallidos, setIntentosFallidos] = useState(0);
     const [localidades, setLocalidades] = useState<Opcion[]>([]);
     const [barrios, setBarrios] = useState<Opcion[]>([]);
+    const [cargandoLocalidades, setCargandoLocalidades] = useState(false);
+    const [cargandoBarrios, setCargandoBarrios] = useState(false);
 
     useEffect(() => {
+        const controller = new AbortController();
+
         if (!data.provincia_id) {
-            setLocalidades([]);
-            return;
+            return () => controller.abort();
         }
 
-        fetch(`/api/localidades?provincia_id=${data.provincia_id}`)
-            .then((response) => response.json())
-            .then(setLocalidades);
+        fetch(`/api/localidades?provincia_id=${data.provincia_id}`, {
+            signal: controller.signal,
+        })
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error('No se pudieron cargar las localidades.');
+                }
+
+                return response.json();
+            })
+            .then(setLocalidades)
+            .catch((error: unknown) => {
+                if (error instanceof DOMException && error.name === 'AbortError') {
+                    return;
+                }
+
+                setLocalidades([]);
+            })
+            .finally(() => {
+                if (!controller.signal.aborted) {
+                    setCargandoLocalidades(false);
+                }
+            });
+
+        return () => controller.abort();
     }, [data.provincia_id]);
 
     useEffect(() => {
+        const controller = new AbortController();
+
         if (!data.localidad_id) {
-            setBarrios([]);
-            return;
+            return () => controller.abort();
         }
 
-        fetch(`/api/barrios?localidad_id=${data.localidad_id}`)
-            .then((response) => response.json())
-            .then(setBarrios);
+        fetch(`/api/barrios?localidad_id=${data.localidad_id}`, {
+            signal: controller.signal,
+        })
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error('No se pudieron cargar los barrios.');
+                }
+
+                return response.json();
+            })
+            .then(setBarrios)
+            .catch((error: unknown) => {
+                if (error instanceof DOMException && error.name === 'AbortError') {
+                    return;
+                }
+
+                setBarrios([]);
+            })
+            .finally(() => {
+                if (!controller.signal.aborted) {
+                    setCargandoBarrios(false);
+                }
+            });
+
+        return () => controller.abort();
     }, [data.localidad_id]);
 
     useEffect(() => {
@@ -243,10 +296,47 @@ export default function CreatePersona({
         const ultimosDigitos =
             dni.length >= 3 ? dni.slice(-3) : dni.padStart(3, '0');
 
-        if (!data.apellido || !data.nombre || !data.dni) return null;
+        if (!data.apellido || !data.nombre || !data.dni) {
+            return null;
+        }
 
         return `${apellido}-${nombre}-${ultimosDigitos}`;
     })();
+
+    const secciones = [
+        {
+            id: 'datos-personales',
+            label: 'Identificación',
+            complete: Boolean(
+                data.nombre &&
+                    data.apellido &&
+                    data.dni &&
+                    data.fecha_nacimiento,
+            ),
+        },
+        {
+            id: 'domicilio',
+            label: 'Domicilio',
+            complete: Boolean(data.provincia_id && data.localidad_id),
+        },
+        {
+            id: 'informacion-complementaria',
+            label: 'Información complementaria',
+            complete: true,
+        },
+        {
+            id: 'abrir-legajo',
+            label: 'Legajo',
+            complete: data.abrir_legajo
+                ? Boolean(
+                      data.legajo_motivo_ingreso &&
+                          data.legajo_nivel_riesgo &&
+                          data.legajo_problematicas.length,
+                  )
+                : true,
+        },
+    ];
+    const seccionesCompletas = secciones.filter((seccion) => seccion.complete).length;
 
     return (
         <>
@@ -256,6 +346,7 @@ export default function CreatePersona({
                 className="bg-[#F4F6F5] px-4 py-8 sm:px-6 sm:py-10 lg:px-8"
                 style={{ fontFamily: FONT_BODY }}
             >
+                <div className="mx-auto w-full max-w-6xl">
                 <div className="mb-8 max-w-3xl">
                     <div className="flex items-center gap-2 text-xs font-semibold tracking-[0.14em] text-[#6B8F71] uppercase">
                         <span>Personas</span>
@@ -280,7 +371,7 @@ export default function CreatePersona({
                             errors={errors as Record<string, string>}
                         />
 
-                        <Card className="overflow-hidden border-[#DCE3DF] !bg-white py-0 shadow-[0_14px_35px_rgba(23,50,71,0.06)]">
+                        <Card id="datos-personales" className="scroll-mt-6 overflow-hidden border-[#DCE3DF] !bg-white py-0 shadow-[0_10px_26px_rgba(23,50,71,0.05)]">
                             <SectionHeading
                                 icon={<UserRound size={19} />}
                                 eyebrow="Paso 01"
@@ -309,6 +400,7 @@ export default function CreatePersona({
                                         }
                                         className={inputClass}
                                         autoComplete="given-name"
+                                        required
                                     />
                                     <FieldError message={errors.nombre} />
                                 </div>
@@ -333,6 +425,7 @@ export default function CreatePersona({
                                         }
                                         className={inputClass}
                                         autoComplete="family-name"
+                                        required
                                     />
                                     <FieldError message={errors.apellido} />
                                 </div>
@@ -352,6 +445,7 @@ export default function CreatePersona({
                                         className={inputClass}
                                         inputMode="numeric"
                                         autoComplete="off"
+                                        required
                                     />
                                     <FieldError message={errors.dni} />
                                 </div>
@@ -376,6 +470,7 @@ export default function CreatePersona({
                                             )
                                         }
                                         className={inputClass}
+                                        required
                                     />
                                     <FieldError
                                         message={errors.fecha_nacimiento}
@@ -453,7 +548,7 @@ export default function CreatePersona({
                             </CardContent>
                         </Card>
 
-                        <Card className="overflow-hidden border-[#DCE3DF] !bg-white py-0 shadow-[0_14px_35px_rgba(23,50,71,0.06)]">
+                        <Card id="domicilio" className="scroll-mt-6 overflow-hidden border-[#DCE3DF] !bg-white py-0 shadow-[0_10px_26px_rgba(23,50,71,0.05)]">
                             <SectionHeading
                                 icon={<Home size={19} />}
                                 eyebrow="Paso 02"
@@ -539,16 +634,23 @@ export default function CreatePersona({
                                         id="provincia_id"
                                         className={`${inputClass} block w-full rounded-md border px-3 text-sm`}
                                         value={data.provincia_id}
+                                        required
                                         onChange={(event) => {
+                                            const provinciaId = event.target.value;
+
                                             setData(
                                                 'provincia_id',
-                                                event.target.value,
+                                                provinciaId,
                                             );
                                             setData('localidad_id', '');
                                             setData('barrio_id', '');
+                                            setLocalidades([]);
+                                            setBarrios([]);
+                                            setCargandoLocalidades(Boolean(provinciaId));
+                                            setCargandoBarrios(false);
                                         }}
                                     >
-                                        <option value="">Seleccionar</option>
+                                        <option value="">Seleccionar provincia</option>
                                         {provincias.map((provincia) => (
                                             <option
                                                 key={provincia.id}
@@ -574,16 +676,28 @@ export default function CreatePersona({
                                         id="localidad_id"
                                         className={`${inputClass} block w-full rounded-md border px-3 text-sm disabled:cursor-not-allowed disabled:bg-[#F1F3F1]`}
                                         value={data.localidad_id}
-                                        disabled={!data.provincia_id}
+                                        disabled={!data.provincia_id || cargandoLocalidades}
+                                        required
+                                        aria-busy={cargandoLocalidades}
                                         onChange={(event) => {
+                                            const localidadId = event.target.value;
+
                                             setData(
                                                 'localidad_id',
-                                                event.target.value,
+                                                localidadId,
                                             );
                                             setData('barrio_id', '');
+                                            setBarrios([]);
+                                            setCargandoBarrios(Boolean(localidadId));
                                         }}
                                     >
-                                        <option value="">Seleccionar</option>
+                                        <option value="">
+                                            {cargandoLocalidades
+                                                ? 'Cargando localidades…'
+                                                : data.provincia_id
+                                                  ? 'Seleccionar localidad'
+                                                  : 'Primero elegí una provincia'}
+                                        </option>
                                         {localidades.map((localidad) => (
                                             <option
                                                 key={localidad.id}
@@ -609,7 +723,8 @@ export default function CreatePersona({
                                         id="barrio_id"
                                         className={`${inputClass} block w-full rounded-md border px-3 text-sm disabled:cursor-not-allowed disabled:bg-[#F1F3F1]`}
                                         value={data.barrio_id}
-                                        disabled={!data.localidad_id}
+                                        disabled={!data.localidad_id || cargandoBarrios}
+                                        aria-busy={cargandoBarrios}
                                         onChange={(event) =>
                                             setData(
                                                 'barrio_id',
@@ -617,7 +732,13 @@ export default function CreatePersona({
                                             )
                                         }
                                     >
-                                        <option value="">Seleccionar</option>
+                                        <option value="">
+                                            {cargandoBarrios
+                                                ? 'Cargando barrios…'
+                                                : data.localidad_id
+                                                  ? 'Seleccionar barrio (opcional)'
+                                                  : 'Primero elegí una localidad'}
+                                        </option>
                                         {barrios.map((barrio) => (
                                             <option
                                                 key={barrio.id}
@@ -632,7 +753,7 @@ export default function CreatePersona({
                             </CardContent>
                         </Card>
 
-                        <Card className="overflow-hidden border-[#DCE3DF] !bg-white py-0 shadow-[0_14px_35px_rgba(23,50,71,0.06)]">
+                        <Card id="informacion-complementaria" className="scroll-mt-6 overflow-hidden border-[#DCE3DF] !bg-white py-0 shadow-[0_10px_26px_rgba(23,50,71,0.05)]">
                             <SectionHeading
                                 icon={<MapPin size={19} />}
                                 eyebrow="Paso 03"
@@ -667,7 +788,8 @@ export default function CreatePersona({
                         </Card>
 
                         <Card
-                            className={`overflow-hidden !bg-white py-0 shadow-[0_14px_35px_rgba(23,50,71,0.06)] ${data.abrir_legajo ? 'border-[#2C4A5E]/35' : 'border-[#DCE3DF]'}`}
+                            id="abrir-legajo"
+                            className={`scroll-mt-6 overflow-hidden !bg-white py-0 shadow-[0_10px_26px_rgba(23,50,71,0.05)] ${data.abrir_legajo ? 'border-[#2C4A5E]/35' : 'border-[#DCE3DF]'}`}
                         >
                             <SectionHeading
                                 icon={<ClipboardPlus size={19} />}
@@ -935,7 +1057,7 @@ export default function CreatePersona({
                             </CardContent>
                         </Card>
 
-                        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-end">
+                        <div className="sticky bottom-3 z-20 -mx-1 flex flex-col-reverse gap-3 rounded-xl border border-[#DCE3DF] bg-[#F4F6F5]/95 p-3 shadow-[0_10px_25px_rgba(23,50,71,0.1)] backdrop-blur sm:flex-row sm:items-center sm:justify-end lg:static lg:mx-0 lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none lg:backdrop-blur-0">
                             <Link
                                 href="/"
                                 className="inline-flex h-11 items-center justify-center rounded-md px-5 text-sm font-semibold text-[#2B2F36]/65 transition hover:bg-white hover:text-[#2B2F36]"
@@ -954,66 +1076,55 @@ export default function CreatePersona({
                         </div>
                     </form>
 
-                    <aside className="space-y-4 lg:sticky lg:top-6">
-                        <Card className="border-[#DCE3DF] !bg-white py-0 shadow-[0_14px_35px_rgba(23,50,71,0.06)]">
+                    <aside className="order-first space-y-4 lg:order-none lg:sticky lg:top-6">
+                        <Card className="border-[#DCE3DF] !bg-white py-0 shadow-[0_10px_26px_rgba(23,50,71,0.05)]">
                             <CardHeader className="px-5 pt-5 pb-3">
-                                <div className="flex items-center gap-2">
-                                    <ShieldCheck
-                                        size={17}
-                                        className="text-[#6B8F71]"
-                                    />
-                                    <CardTitle className="text-sm font-semibold text-[#173247]">
-                                        Antes de guardar
-                                    </CardTitle>
+                                <div className="flex items-start justify-between gap-3">
+                                    <div className="flex items-center gap-2">
+                                        <ShieldCheck
+                                            size={17}
+                                            className="text-[#6B8F71]"
+                                        />
+                                        <div>
+                                            <CardTitle className="text-sm font-semibold text-[#173247]">
+                                                Tu progreso
+                                            </CardTitle>
+                                            <p className="mt-1 text-xs text-[#2B2F36]/55">
+                                                {seccionesCompletas} de {secciones.length} secciones listas
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <span className="text-xs font-semibold text-[#6B8F71]">
+                                        {Math.round((seccionesCompletas / secciones.length) * 100)}%
+                                    </span>
                                 </div>
                             </CardHeader>
-                            <CardContent className="space-y-3 px-5 pb-5 text-sm text-[#2B2F36]/65">
-                                {[
-                                    [
-                                        'Identificación',
-                                        Boolean(
-                                            data.nombre &&
-                                            data.apellido &&
-                                            data.dni &&
-                                            data.fecha_nacimiento,
-                                        ),
-                                    ],
-                                    [
-                                        'Domicilio',
-                                        Boolean(
-                                            data.provincia_id &&
-                                            data.localidad_id,
-                                        ),
-                                    ],
-                                    [
-                                        'Legajo',
-                                        data.abrir_legajo
-                                            ? Boolean(
-                                                  data.legajo_motivo_ingreso &&
-                                                  data.legajo_nivel_riesgo &&
-                                                  data.legajo_problematicas
-                                                      .length,
-                                              )
-                                            : true,
-                                    ],
-                                ].map(([label, complete]) => (
-                                    <div
-                                        key={String(label)}
-                                        className="flex items-center justify-between gap-3"
+                            <CardContent className="space-y-2 px-5 pb-5 text-sm text-[#2B2F36]/65">
+                                {secciones.map((seccion) => (
+                                    <a
+                                        key={seccion.id}
+                                        href={`#${seccion.id}`}
+                                        className="group flex items-center gap-3 rounded-lg px-2 py-2 transition hover:bg-[#F4F6F5]"
                                     >
-                                        <span>{label}</span>
                                         <span
-                                            className={`flex size-5 items-center justify-center rounded-full ${complete ? 'bg-[#E3F0E6] text-[#41634A]' : 'bg-[#EEF0ED] text-[#A1AAA3]'}`}
+                                            className={`flex size-6 shrink-0 items-center justify-center rounded-full ${seccion.complete ? 'bg-[#E3F0E6] text-[#41634A]' : 'bg-[#EEF0ED] text-[#A1AAA3]'}`}
                                         >
-                                            <Check size={13} strokeWidth={3} />
+                                            {seccion.complete ? (
+                                                <Check size={13} strokeWidth={3} />
+                                            ) : (
+                                                <span className="size-1.5 rounded-full bg-current" />
+                                            )}
                                         </span>
-                                    </div>
+                                        <span className="flex-1">{seccion.label}</span>
+                                        <ArrowDown
+                                            size={14}
+                                            className="text-[#2B2F36]/30 transition group-hover:translate-y-0.5 group-hover:text-[#2C4A5E]"
+                                        />
+                                    </a>
                                 ))}
                                 <Separator className="bg-[#E4E8E5]" />
                                 <p className="text-xs leading-5 text-[#2B2F36]/50">
-                                    La información se guarda en el sistema
-                                    municipal y queda disponible para el equipo
-                                    autorizado.
+                                    Los campos con * son obligatorios. La información queda disponible para el equipo autorizado.
                                 </p>
                             </CardContent>
                         </Card>
@@ -1028,6 +1139,7 @@ export default function CreatePersona({
                             </p>
                         </div>
                     </aside>
+                </div>
                 </div>
             </main>
         </>
