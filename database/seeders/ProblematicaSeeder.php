@@ -7,135 +7,44 @@ use Illuminate\Support\Facades\DB;
 
 class ProblematicaSeeder extends Seeder
 {
+    /**
+     * Carga las problemáticas en la tabla `problematicas` (antes `problematica`).
+     * Se conservan los ids originales porque los legajos existentes los referencian.
+     * insertOrIgnore: se puede ejecutar más de una vez sin errores por ids duplicados.
+     */
     public function run(): void
     {
-        DB::table('problematica')->insert([
-            [
-                'id' => 1,
-                'nombre' => 'Ausencia del adulto responsable',
+        $problematicas = [
+            1 => 'Ausencia del adulto responsable',
+            3 => 'Maltrato',
+            4 => 'Negligencia',
+            5 => 'COVID 19',
+            6 => 'Abuso sexual',
+            7 => 'Explotacion',
+            8 => 'Falta de acceso a servicios',
+            9 => 'Discriminacion/Violencia institucional',
+            10 => 'Identidad',
+            11 => 'Responsabilidad penal juvenil',
+            12 => 'Consulta juridicas',
+            13 => 'Salud',
+            15 => 'Medidas de abrigo',
+            16 => 'Otros',
+        ];
+
+        $filas = [];
+
+        foreach ($problematicas as $id => $nombre) {
+            $filas[] = [
+                'id' => $id,
+                'nombre' => $nombre,
                 'created_at' => '2024-10-24 04:59:55',
                 'updated_by' => null,
                 'deleted_by' => null,
                 'updated_at' => null,
                 'deleted_at' => null,
-            ],
-            [
-                'id' => 3,
-                'nombre' => 'Maltrato',
-                'created_at' => '2024-10-24 04:59:55',
-                'updated_by' => null,
-                'deleted_by' => null,
-                'updated_at' => null,
-                'deleted_at' => null,
-            ],
-            [
-                'id' => 4,
-                'nombre' => 'Negligencia',
-                'created_at' => '2024-10-24 04:59:55',
-                'updated_by' => null,
-                'deleted_by' => null,
-                'updated_at' => null,
-                'deleted_at' => null,
-            ],
-            [
-                'id' => 5,
-                'nombre' => 'COVID 19',
-                'created_at' => '2024-10-24 04:59:55',
-                'updated_by' => null,
-                'deleted_by' => null,
-                'updated_at' => null,
-                'deleted_at' => null,
-            ],
-            [
-                'id' => 6,
-                'nombre' => 'Abuso sexual',
-                'created_at' => '2024-10-24 04:59:55',
-                'updated_by' => null,
-                'deleted_by' => null,
-                'updated_at' => null,
-                'deleted_at' => null,
-            ],
-            [
-                'id' => 7,
-                'nombre' => 'Explotacion',
-                'created_at' => '2024-10-24 04:59:55',
-                'updated_by' => null,
-                'deleted_by' => null,
-                'updated_at' => null,
-                'deleted_at' => null,
-            ],
-            [
-                'id' => 8,
-                'nombre' => 'Falta de acceso a servicios',
-                'created_at' => '2024-10-24 04:59:55',
-                'updated_by' => null,
-                'deleted_by' => null,
-                'updated_at' => null,
-                'deleted_at' => null,
-            ],
-            [
-                'id' => 9,
-                'nombre' => 'Discriminacion/Violencia institucional',
-                'created_at' => '2024-10-24 04:59:55',
-                'updated_by' => null,
-                'deleted_by' => null,
-                'updated_at' => null,
-                'deleted_at' => null,
-            ],
-            [
-                'id' => 10,
-                'nombre' => 'Identidad',
-                'created_at' => '2024-10-24 04:59:55',
-                'updated_by' => null,
-                'deleted_by' => null,
-                'updated_at' => null,
-                'deleted_at' => null,
-            ],
-            [
-                'id' => 11,
-                'nombre' => 'Responsabilidad penal juvenil',
-                'created_at' => '2024-10-24 04:59:55',
-                'updated_by' => null,
-                'deleted_by' => null,
-                'updated_at' => null,
-                'deleted_at' => null,
-            ],
-            [
-                'id' => 12,
-                'nombre' => 'Consulta juridicas',
-                'created_at' => '2024-10-24 04:59:55',
-                'updated_by' => null,
-                'deleted_by' => null,
-                'updated_at' => null,
-                'deleted_at' => null,
-            ],
-            [
-                'id' => 13,
-                'nombre' => 'Salud',
-                'created_at' => '2024-10-24 04:59:55',
-                'updated_by' => null,
-                'deleted_by' => null,
-                'updated_at' => null,
-                'deleted_at' => null,
-            ],
-            [
-                'id' => 15,
-                'nombre' => 'Medidas de abrigo',
-                'created_at' => '2024-10-24 04:59:55',
-                'updated_by' => null,
-                'deleted_by' => null,
-                'updated_at' => null,
-                'deleted_at' => null,
-            ],
-            [
-                'id' => 16,
-                'nombre' => 'Otros',
-                'created_at' => '2024-10-24 04:59:55',
-                'updated_by' => null,
-                'deleted_by' => null,
-                'updated_at' => null,
-                'deleted_at' => null,
-            ],
-        ]);
+            ];
+        }
+
+        DB::table('problematicas')->insertOrIgnore($filas);
     }
 }

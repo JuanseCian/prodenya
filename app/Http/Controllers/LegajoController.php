@@ -7,7 +7,7 @@ use App\Http\Requests\UpdateLegajoRequest;
 use App\Models\Legajo;
 use App\Models\Persona;
 use App\Models\Problematica;
-use App\Models\Usuario;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -50,8 +50,8 @@ class LegajoController extends Controller
             ->withQueryString();
 
         // Nombres de los profesionales de esta página (una sola consulta).
-        $profesionales = Usuario::whereIn('id', $legajos->pluck('profesional_id')->filter())
-            ->pluck('nombre_usuario', 'id');
+        $profesionales = User::whereIn('id', $legajos->pluck('profesional_id')->filter())
+            ->pluck('name', 'id');
 
         $legajos->through(fn (Legajo $legajo) => [
             'id' => $legajo->id,
@@ -103,31 +103,43 @@ class LegajoController extends Controller
                     'email' => $persona->email,
                 ]),
             'problematicas' => Problematica::orderBy('nombre')->get(['id', 'nombre']),
-            'profesionales' => Usuario::where('activo', true)
-                ->orderBy('nombre_usuario')
-                ->get(['id', 'nombre_usuario', 'email']),
+            'profesionales' => $this->profesionalesActivos(),
         ]);
     }
 
     public function store(StoreLegajoRequest $request)
     {
         $datos = $request->validated();
-        $persona = Persona::findOrFail($datos['persona_id']);
 
-        $legajo = Legajo::create([
-            'persona_id' => $persona->id,
-            'numero_legajo' => Legajo::generarNumero($persona),
-            'motivo_ingreso' => $datos['motivo_ingreso'],
-            'nivel_riesgo' => $datos['nivel_riesgo'],
-            'origen_derivacion' => $datos['origen_derivacion'],
-            'profesional_id' => $datos['profesional_id'] ?? null,
-            'fecha_apertura' => now()->toDateString(),
-            'observaciones' => $datos['observaciones'] ?? null,
-            'estado' => 'Abierto',
-            'creado_por' => $request->user()->id,
-        ]);
+        // Solo se abren legajos a personas activas.
+        $persona = Persona::where('activo', true)->findOrFail($datos['persona_id']);
 
-        $legajo->problematicas()->sync($datos['problematicas']);
+        try {
+            $legajo = DB::transaction(function () use ($datos, $persona, $request) {
+                $legajo = Legajo::crearConNumeroUnico($persona, [
+                    'motivo_ingreso' => $datos['motivo_ingreso'],
+                    'nivel_riesgo' => $datos['nivel_riesgo'],
+                    'origen_derivacion' => $datos['origen_derivacion'],
+                    'profesional_id' => $datos['profesional_id'] ?? null,
+                    'fecha_apertura' => now()->toDateString(),
+                    'observaciones' => $datos['observaciones'] ?? null,
+                    'estado' => 'Abierto',
+                    'creado_por' => $request->user()->id,
+                ]);
+
+                $legajo->problematicas()->sync($datos['problematicas']);
+
+                return $legajo;
+            });
+        } catch (Throwable $e) {
+            report($e);
+
+            return back()->withErrors([
+                'general' => config('app.debug')
+                    ? 'No se pudo guardar: '.$e->getMessage()
+                    : 'No se pudo crear el legajo. Intentá nuevamente; si el problema continúa, avisá al administrador.',
+            ]);
+        }
 
         return redirect()->route('home')
             ->with('status', "Legajo {$legajo->numero_legajo} creado correctamente.");
@@ -137,7 +149,7 @@ class LegajoController extends Controller
     {
         $legajo->load(['persona', 'problematicas']);
 
-        $this->registrarAcceso($request, $legajo, 'VISTA');
+        $this->registrarAcceso($request, $legajo, 'Visualizacion');
 
         return Inertia::render('legajos/show', [
             'legajo' => [
@@ -150,7 +162,7 @@ class LegajoController extends Controller
                 'observaciones' => $legajo->observaciones,
                 'fecha_apertura' => ($legajo->fecha_apertura ?? $legajo->creado_en)?->format('d/m/Y'),
                 'profesional' => $legajo->profesional_id
-                    ? Usuario::find($legajo->profesional_id)?->nombre_usuario
+                    ? User::find($legajo->profesional_id)?->name
                     : null,
                 'problematicas' => $legajo->problematicas->pluck('nombre')->values(),
                 'persona' => $legajo->persona ? [
@@ -183,9 +195,7 @@ class LegajoController extends Controller
                 'problematicas' => $legajo->problematicas->pluck('id')->values(),
             ],
             'problematicas' => Problematica::orderBy('nombre')->get(['id', 'nombre']),
-            'profesionales' => Usuario::where('activo', true)
-                ->orderBy('nombre_usuario')
-                ->get(['id', 'nombre_usuario', 'email']),
+            'profesionales' => $this->profesionalesActivos(),
         ]);
     }
 
@@ -248,13 +258,24 @@ class LegajoController extends Controller
     }
 
     /**
+     * Usuarios activos que pueden asignarse como profesional.
+     * Se expone "name" con el alias "nombre_usuario" para no tocar el front.
+     */
+    private function profesionalesActivos()
+    {
+        return User::where('activo', true)
+            ->orderBy('name')
+            ->get(['id', 'name as nombre_usuario', 'email']);
+    }
+
+    /**
      * Auditoría de accesos (ver Legajo::registrarAcceso). Nunca debe romper la pantalla.
      */
     private function registrarAcceso(Request $request, Legajo $legajo, string $tipoAccion): void
     {
         $usuario = $request->user();
 
-        if (! $usuario instanceof Usuario) {
+        if (! $usuario instanceof User) {
             return;
         }
 

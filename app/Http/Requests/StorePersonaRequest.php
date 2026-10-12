@@ -7,7 +7,7 @@ use App\Models\Localidad;
 use App\Models\Persona;
 use App\Models\Problematica;
 use App\Models\Provincia;
-use App\Models\Usuario;
+use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -53,7 +53,7 @@ class StorePersonaRequest extends FormRequest
             'legajo_problematicas.*' => [Rule::exists(Problematica::class, 'id')],
             'legajo_nivel_riesgo' => $conLegajo ? ['required', 'in:Bajo,Medio,Alto,Critico'] : ['nullable'],
             'legajo_origen_derivacion' => $conLegajo ? ['required', 'string', 'max:255'] : ['nullable'],
-            'legajo_profesional_id' => ['nullable', Rule::exists(Usuario::class, 'id')],
+            'legajo_profesional_id' => ['nullable', Rule::exists(user::class, 'id')],
             'legajo_observaciones' => ['nullable', 'string', 'max:2000'],
         ];
     }

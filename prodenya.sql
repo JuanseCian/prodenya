@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: localhost
--- Tiempo de generación: 15-09-2026 a las 15:13:47
+-- Tiempo de generación: 12-10-2026 a las 11:31:42
 -- Versión del servidor: 8.0.30
 -- Versión de PHP: 8.4.24
 
@@ -305,16 +305,30 @@ CREATE TABLE `legajos` (
   `actualizado_en` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Volcado de datos para la tabla `legajos`
+--
+
+INSERT INTO `legajos` (`id`, `persona_id`, `numero_legajo`, `motivo_ingreso`, `nivel_riesgo`, `origen_derivacion`, `profesional_id`, `fecha_apertura`, `estado`, `observaciones`, `creado_por`, `creado_en`, `actualizado_en`) VALUES
+(1, 1, 'VIL-HER-735', 'asd', 'Critico', 'asd', 1, '2026-10-08', 'Abierto', NULL, 1, '2026-10-08 10:45:17', '2026-10-08 10:45:17');
+
 -- --------------------------------------------------------
 
 --
--- Estructura de tabla para la tabla `legajo_tipo_maltrato`
+-- Estructura de tabla para la tabla `legajo_problematica`
 --
 
-CREATE TABLE `legajo_tipo_maltrato` (
+CREATE TABLE `legajo_problematica` (
   `legajo_id` int UNSIGNED NOT NULL,
-  `tipo_maltrato_id` int UNSIGNED NOT NULL
+  `problematica_id` bigint UNSIGNED NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Volcado de datos para la tabla `legajo_problematica`
+--
+
+INSERT INTO `legajo_problematica` (`legajo_id`, `problematica_id`) VALUES
+(1, 6);
 
 -- --------------------------------------------------------
 
@@ -578,12 +592,11 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (16, '2024_01_01_000012_create_auditoria_descargas_table', 1),
 (17, '2024_01_01_000013_create_vista_personas_completa', 1),
 (18, '2024_01_01_000014_add_motivo_ingreso_to_legajos_table', 1),
-(19, '2024_01_01_000015_create_tipos_maltrato_and_legajo_fields', 1),
-(20, '2025_08_14_170933_add_two_factor_columns_to_users_table', 1),
-(21, '2026_01_27_000001_create_teams_table', 1),
-(22, '2026_01_27_000002_add_current_team_id_to_users_table', 1),
-(23, '2026_09_17_000001_add_dump_columns_to_geographic_tables', 1),
-(24, '2026_09_22_000001_create_problematica_table', 1);
+(19, '2025_08_14_170933_add_two_factor_columns_to_users_table', 1),
+(20, '2026_01_27_000001_create_teams_table', 1),
+(21, '2026_01_27_000002_add_current_team_id_to_users_table', 1),
+(22, '2026_09_17_000001_add_dump_columns_to_geographic_tables', 1),
+(23, '2026_10_01_000015_create_tipos_problematicas_and_legajo_fields', 1);
 
 -- --------------------------------------------------------
 
@@ -639,6 +652,13 @@ CREATE TABLE `personas` (
   `creado_en` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `actualizado_en` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Volcado de datos para la tabla `personas`
+--
+
+INSERT INTO `personas` (`id`, `nombre`, `apellido`, `dni`, `fecha_nacimiento`, `genero`, `direccion_calle`, `direccion_numero`, `direccion_piso_depto`, `barrio_id`, `localidad_id`, `telefono`, `email`, `observaciones`, `activo`, `creado_en`, `actualizado_en`) VALUES
+(1, 'hernan', 'vilchez', '41145735', '2019-05-02', 'M', 'paraguay 1', '384', NULL, 14, 5, '+543364367123', 'hernanvilchezdoc@gmail.com', 'asd', 1, '2026-10-08 10:45:17', '2026-10-08 10:45:17');
 
 -- --------------------------------------------------------
 
@@ -739,9 +759,9 @@ CREATE TABLE `roles` (
 --
 
 INSERT INTO `roles` (`id`, `nombre`, `descripcion`, `creado_en`) VALUES
-(1, 'admin', 'Acceso total al sistema', '2026-09-23 17:28:46'),
-(2, 'operador', 'Carga y edición de personas y documentos', '2026-09-23 17:28:46'),
-(3, 'consulta', 'Solo lectura y descarga de documentos', '2026-09-23 17:28:46');
+(1, 'admin', 'Acceso total al sistema', '2026-10-08 07:42:33'),
+(2, 'operador', 'Carga y edición de personas y documentos', '2026-10-08 07:42:33'),
+(3, 'consulta', 'Solo lectura y descarga de documentos', '2026-10-08 07:42:33');
 
 -- --------------------------------------------------------
 
@@ -763,7 +783,7 @@ CREATE TABLE `sessions` (
 --
 
 INSERT INTO `sessions` (`id`, `user_id`, `ip_address`, `user_agent`, `payload`, `last_activity`) VALUES
-('XwpUcVIOQgzF2ueCc2OvLXBbdBqNNXHAH634bb8w', 1, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', 'eyJfdG9rZW4iOiJJUmJ2ZDZ1VUt0UEpKR0dNNHdTdWtjY1pYbkxjQlM2WGQ0MEFVVE5zIiwidXJsIjp7ImludGVuZGVkIjoiaHR0cDpcL1wvbG9jYWxob3N0OjgwMDBcL2xlZ2Fqb3NcL251ZXZvIn0sIl9wcmV2aW91cyI6eyJ1cmwiOiJodHRwOlwvXC9sb2NhbGhvc3Q6ODAwMFwvbGVnYWpvc1wvbnVldm8iLCJyb3V0ZSI6ImxlZ2Fqb3MuY3JlYXRlIn0sIl9mbGFzaCI6eyJvbGQiOltdLCJuZXciOltdfSwibG9naW5fd2ViXzU5YmEzNmFkZGMyYjJmOTQwMTU4MGYwMTRjN2Y1OGVhNGUzMDk4OWQiOjF9', 1790184695);
+('ct2YXndsmeTH8wkqSoBKLHxr9M3J0Um4TPUcY6u9', 1, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'eyJfdG9rZW4iOiJ2NXVyR0dMMlJvSm5SMEpDcUdPMTlJUlRrUDBKaWRsWlNVN0xIRll4IiwidXJsIjp7ImludGVuZGVkIjoiaHR0cDpcL1wvMTI3LjAuMC4xOjgwMDBcL3BlcnNvbmFzXC9udWV2YSJ9LCJfcHJldmlvdXMiOnsidXJsIjoiaHR0cDpcL1wvMTI3LjAuMC4xOjgwMDBcL2FwaVwvYmFycmlvcz9sb2NhbGlkYWRfaWQ9NSIsInJvdXRlIjoiYXBpLmJhcnJpb3MifSwiX2ZsYXNoIjp7Im9sZCI6W10sIm5ldyI6W119LCJsb2dpbl93ZWJfNTliYTM2YWRkYzJiMmY5NDAxNTgwZjAxNGM3ZjU4ZWE0ZTMwOTg5ZCI6MX0=', 1791447578);
 
 -- --------------------------------------------------------
 
@@ -839,29 +859,6 @@ INSERT INTO `tipos_documento` (`id`, `nombre`) VALUES
 -- --------------------------------------------------------
 
 --
--- Estructura de tabla para la tabla `tipos_maltrato`
---
-
-CREATE TABLE `tipos_maltrato` (
-  `id` int UNSIGNED NOT NULL,
-  `nombre` varchar(80) COLLATE utf8mb4_unicode_ci NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Volcado de datos para la tabla `tipos_maltrato`
---
-
-INSERT INTO `tipos_maltrato` (`id`, `nombre`) VALUES
-(4, 'Abuso sexual'),
-(5, 'Económico / Patrimonial'),
-(1, 'Físico'),
-(3, 'Negligencia / Abandono'),
-(6, 'Otro'),
-(2, 'Psicológico / Emocional');
-
--- --------------------------------------------------------
-
---
 -- Estructura de tabla para la tabla `users`
 --
 
@@ -885,7 +882,7 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `name`, `email`, `email_verified_at`, `password`, `current_team_id`, `two_factor_secret`, `two_factor_recovery_codes`, `two_factor_confirmed_at`, `remember_token`, `created_at`, `updated_at`) VALUES
-(1, 'Administrador', 'admin@prodenya.local', NULL, '$2y$12$i3Vti2lwDZvdrMui6kBNi.RTFsoufxHVjzy2XWTlIpP9veTddMqdC', NULL, NULL, NULL, NULL, NULL, '2026-09-23 20:28:46', '2026-09-23 20:28:46');
+(1, 'Administrador', 'admin@prodenya.local', NULL, '$2y$12$8/XuyEtB148i1LRmlU8HYeSNt/YK8lzbI3ZiMctHdhKuM8KlYhUfm', NULL, NULL, NULL, NULL, NULL, '2026-10-08 10:42:34', '2026-10-08 10:42:34');
 
 -- --------------------------------------------------------
 
@@ -911,7 +908,7 @@ CREATE TABLE `usuarios` (
 --
 
 INSERT INTO `usuarios` (`id`, `nombre_usuario`, `email`, `password_hash`, `rol_id`, `activo`, `ultimo_acceso`, `remember_token`, `creado_en`, `actualizado_en`) VALUES
-(1, 'admin', 'admin@prodenya.local', '$2y$12$JrMEk6equy9hABb94qQQH.QTBJh6TeHFuMH1xqbWsoSaem98IhhcC', 1, 1, NULL, NULL, '2026-09-23 20:28:46', '2026-09-23 20:28:46');
+(1, 'admin', 'admin@prodenya.local', '$2y$12$n9TWE.HX1ymTprVCI7054.y68wWmeOdbSUFOaNiwD50PTP9oOWsEu', 1, 1, NULL, NULL, '2026-10-08 10:42:34', '2026-10-08 10:42:34');
 
 -- --------------------------------------------------------
 
@@ -1028,11 +1025,11 @@ ALTER TABLE `legajos`
   ADD KEY `legajos_profesional_id_foreign` (`profesional_id`);
 
 --
--- Indices de la tabla `legajo_tipo_maltrato`
+-- Indices de la tabla `legajo_problematica`
 --
-ALTER TABLE `legajo_tipo_maltrato`
-  ADD PRIMARY KEY (`legajo_id`,`tipo_maltrato_id`),
-  ADD KEY `legajo_tipo_maltrato_tipo_maltrato_id_foreign` (`tipo_maltrato_id`);
+ALTER TABLE `legajo_problematica`
+  ADD PRIMARY KEY (`legajo_id`,`problematica_id`),
+  ADD KEY `legajo_problematica_problematica_id_foreign` (`problematica_id`);
 
 --
 -- Indices de la tabla `localidades`
@@ -1133,13 +1130,6 @@ ALTER TABLE `tipos_documento`
   ADD UNIQUE KEY `tipos_documento_nombre_unique` (`nombre`);
 
 --
--- Indices de la tabla `tipos_maltrato`
---
-ALTER TABLE `tipos_maltrato`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `tipos_maltrato_nombre_unique` (`nombre`);
-
---
 -- Indices de la tabla `users`
 --
 ALTER TABLE `users`
@@ -1206,7 +1196,7 @@ ALTER TABLE `jobs`
 -- AUTO_INCREMENT de la tabla `legajos`
 --
 ALTER TABLE `legajos`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT de la tabla `localidades`
@@ -1218,7 +1208,7 @@ ALTER TABLE `localidades`
 -- AUTO_INCREMENT de la tabla `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
 
 --
 -- AUTO_INCREMENT de la tabla `passkeys`
@@ -1230,7 +1220,7 @@ ALTER TABLE `passkeys`
 -- AUTO_INCREMENT de la tabla `personas`
 --
 ALTER TABLE `personas`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT de la tabla `problematica`
@@ -1273,12 +1263,6 @@ ALTER TABLE `team_members`
 --
 ALTER TABLE `tipos_documento`
   MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
-
---
--- AUTO_INCREMENT de la tabla `tipos_maltrato`
---
-ALTER TABLE `tipos_maltrato`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT de la tabla `users`
@@ -1349,11 +1333,11 @@ ALTER TABLE `legajos`
   ADD CONSTRAINT `legajos_profesional_id_foreign` FOREIGN KEY (`profesional_id`) REFERENCES `usuarios` (`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 --
--- Filtros para la tabla `legajo_tipo_maltrato`
+-- Filtros para la tabla `legajo_problematica`
 --
-ALTER TABLE `legajo_tipo_maltrato`
-  ADD CONSTRAINT `legajo_tipo_maltrato_legajo_id_foreign` FOREIGN KEY (`legajo_id`) REFERENCES `legajos` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  ADD CONSTRAINT `legajo_tipo_maltrato_tipo_maltrato_id_foreign` FOREIGN KEY (`tipo_maltrato_id`) REFERENCES `tipos_maltrato` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `legajo_problematica`
+  ADD CONSTRAINT `legajo_problematica_legajo_id_foreign` FOREIGN KEY (`legajo_id`) REFERENCES `legajos` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `legajo_problematica_problematica_id_foreign` FOREIGN KEY (`problematica_id`) REFERENCES `problematica` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 --
 -- Filtros para la tabla `localidades`

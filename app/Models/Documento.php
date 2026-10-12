@@ -48,7 +48,7 @@ class Documento extends Model
 
     public function subidoPor(): BelongsTo
     {
-        return $this->belongsTo(Usuario::class, 'subido_por');
+        return $this->belongsTo(User::class, 'subido_por');
     }
 
     public function descargas(): HasMany
@@ -57,15 +57,14 @@ class Documento extends Model
     }
 
     /**
-     * Registra una descarga del documento. Usar en el controller
-     * antes de enviar el archivo al navegador.
+     * Registra una descarga. Usar en el controller antes de enviar el archivo.
      */
-    public function registrarDescarga(Usuario $usuario): AuditoriaDescarga
+    public function registrarDescarga(User $usuario): AuditoriaDescarga
     {
         return $this->descargas()->create([
             'usuario_id' => $usuario->id,
             'ip_origen' => request()->ip(),
-            'user_agent' => request()->userAgent(),
+            'user_agent' => mb_substr((string) request()->userAgent(), 0, 255),
         ]);
     }
 }

@@ -1,0 +1,23 @@
+// Pegar en routes/web.php, dentro del mismo grupo donde ya están
+// personas.create / legajos.create (las de "create" van ANTES de estas).
+
+// Arriba del archivo, junto a los otros "use":
+use App\Http\Controllers\LegajoController;
+use App\Http\Controllers\PersonaController;
+
+// Listados
+Route::get('/personas', [PersonaController::class, 'index'])->name('personas.index');
+Route::get('/legajos', [LegajoController::class, 'index'])->name('legajos.index');
+
+// Personas: detalle, edición y baja
+Route::get('/personas/{persona}', [PersonaController::class, 'show'])->name('personas.show')->whereNumber('persona');
+Route::get('/personas/{persona}/edit', [PersonaController::class, 'edit'])->name('personas.edit')->whereNumber('persona');
+Route::put('/personas/{persona}', [PersonaController::class, 'update'])->name('personas.update')->whereNumber('persona');
+Route::delete('/personas/{persona}', [PersonaController::class, 'destroy'])->name('personas.destroy')->whereNumber('persona');
+
+// Legajos: detalle, edición, cierre y reapertura
+Route::get('/legajos/{legajo}', [LegajoController::class, 'show'])->name('legajos.show')->whereNumber('legajo');
+Route::get('/legajos/{legajo}/edit', [LegajoController::class, 'edit'])->name('legajos.edit')->whereNumber('legajo');
+Route::put('/legajos/{legajo}', [LegajoController::class, 'update'])->name('legajos.update')->whereNumber('legajo');
+Route::patch('/legajos/{legajo}/cerrar', [LegajoController::class, 'cerrar'])->name('legajos.cerrar')->whereNumber('legajo');
+Route::patch('/legajos/{legajo}/reabrir', [LegajoController::class, 'reabrir'])->name('legajos.reabrir')->whereNumber('legajo');

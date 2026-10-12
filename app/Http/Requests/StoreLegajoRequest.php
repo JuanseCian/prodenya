@@ -18,7 +18,7 @@ class StoreLegajoRequest extends FormRequest
             'motivo_ingreso' => ['required', 'string'],
             'nivel_riesgo' => ['required', 'in:Bajo,Medio,Alto,Critico'],
             'origen_derivacion' => ['required', 'string', 'max:255'],
-            'profesional_id' => ['nullable', 'exists:usuarios,id'],
+            'profesional_id' => ['nullable', 'exists:user,id'],
             'problematicas' => ['required', 'array', 'min:1'],
             'problematicas.*' => ['exists:problematicas,id'],
             'observaciones' => ['nullable', 'string'],

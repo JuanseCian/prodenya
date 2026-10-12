@@ -9,7 +9,6 @@ class Problematica extends Model
 {
      use SoftDeletes;
 
-    protected $table = 'problematica';
 
    
 

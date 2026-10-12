@@ -3,7 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Models\Problematica;
-use App\Models\Usuario;
+use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -20,7 +20,7 @@ class UpdateLegajoRequest extends FormRequest
             'motivo_ingreso' => ['required', 'string', 'max:2000'],
             'nivel_riesgo' => ['required', 'in:Bajo,Medio,Alto,Critico'],
             'origen_derivacion' => ['required', 'string', 'max:255'],
-            'profesional_id' => ['nullable', Rule::exists(Usuario::class, 'id')],
+            'profesional_id' => ['nullable', Rule::exists(User::class, 'id')],
             'problematicas' => ['required', 'array', 'min:1'],
             'problematicas.*' => [Rule::exists(Problematica::class, 'id')],
             'observaciones' => ['nullable', 'string', 'max:2000'],

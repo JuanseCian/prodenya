@@ -2,32 +2,36 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\RegistraAutor;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-
 
 class Legajo extends Model
 {
+    use RegistraAutor;
+
     protected $table = 'legajos';
 
     const CREATED_AT = 'creado_en';
     const UPDATED_AT = 'actualizado_en';
 
-  protected $fillable = [
-    'persona_id',
-    'numero_legajo',
-    'motivo_ingreso',
-    'nivel_riesgo',
-    'origen_derivacion',
-    'profesional_id',
-    'fecha_apertura',
-    'estado',
-    'observaciones',
-    'creado_por',
-];
+    protected $fillable = [
+        'persona_id',
+        'numero_legajo',
+        'motivo_ingreso',
+        'nivel_riesgo',
+        'origen_derivacion',
+        'profesional_id',
+        'fecha_apertura',
+        'estado',
+        'observaciones',
+        'creado_por',
+    ];
 
     protected function casts(): array
     {
@@ -37,14 +41,15 @@ class Legajo extends Model
     }
 
     public function problematicas(): BelongsToMany
-{
-    return $this->belongsToMany(
-        Problematica::class,
-        'legajo_problematica',   // ajustalo al nombre real de tu tabla pivote
-        'legajo_id',
-        'problematica_id',
-    );
-}
+    {
+        return $this->belongsToMany(
+            Problematica::class,
+            'legajo_problematica',
+            'legajo_id',
+            'problematica_id',
+        );
+    }
+
     public function persona(): BelongsTo
     {
         return $this->belongsTo(Persona::class, 'persona_id');
@@ -52,7 +57,12 @@ class Legajo extends Model
 
     public function creadoPor(): BelongsTo
     {
-        return $this->belongsTo(Usuario::class, 'creado_por');
+        return $this->belongsTo(User::class, 'creado_por');
+    }
+
+    public function profesional(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'profesional_id');
     }
 
     public function documentos(): HasMany
@@ -66,17 +76,41 @@ class Legajo extends Model
     }
 
     /**
-     * Genera el número de legajo con el formato:
-     * 3 primeras letras del apellido - 3 primeras letras del nombre - últimos 3 dígitos del DNI
-     * Ej: García, Juan, DNI 30111222 -> GAR-JUA-222
+     * Crea el legajo generando un número único. Si dos legajos se crean a la
+     * vez y chocan en el índice UNIQUE de numero_legajo, reintenta con el
+     * siguiente sufijo libre.
      *
-     * Si el código ya existe (colisión), agrega un sufijo numérico incremental.
+     * $atributos son los campos del legajo, sin persona_id ni numero_legajo.
+     */
+    public static function crearConNumeroUnico(Persona $persona, array $atributos): static
+    {
+        $intentos = 0;
+
+        while (true) {
+            try {
+                return DB::transaction(fn () => static::create($atributos + [
+                    'persona_id' => $persona->id,
+                    'numero_legajo' => static::generarNumero($persona),
+                ]));
+            } catch (UniqueConstraintViolationException $e) {
+                if (++$intentos >= 5) {
+                    throw $e;
+                }
+            }
+        }
+    }
+
+    /**
+     * Formato: 3 primeras letras del apellido - 3 primeras del nombre -
+     * últimos 3 dígitos del DNI. Ej: García, Juan, DNI 30111222 -> GAR-JUA-222
+     *
+     * Si el código ya existe, agrega un sufijo numérico incremental.
      */
     public static function generarNumero(Persona $persona): string
     {
         $apellido = static::soloLetras($persona->apellido);
         $nombre = static::soloLetras($persona->nombre);
-        $dni = preg_replace('/\D/', '', $persona->dni);
+        $dni = preg_replace('/\D/', '', (string) $persona->dni);
 
         $base = sprintf(
             '%s-%s-%s',
@@ -105,16 +139,15 @@ class Legajo extends Model
     }
 
     /**
-     * Registra un acceso (vista o descarga) al legajo. Usar esto
-     * en el controller cada vez que un usuario abre o descarga el legajo.
+     * Registra un acceso (vista o descarga) al legajo.
      */
-    public function registrarAcceso(Usuario $usuario, string $tipoAccion): AuditoriaAccesoLegajo
+    public function registrarAcceso(User $usuario, string $tipoAccion): AuditoriaAccesoLegajo
     {
         return $this->accesos()->create([
             'usuario_id' => $usuario->id,
             'tipo_accion' => $tipoAccion,
             'ip_origen' => request()->ip(),
-            'user_agent' => request()->userAgent(),
+            'user_agent' => mb_substr((string) request()->userAgent(), 0, 255),
         ]);
     }
 }

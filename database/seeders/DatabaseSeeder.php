@@ -6,14 +6,16 @@ use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
+    /**
+     * El orden importa por las claves foráneas:
+     *  roles -> users (users.rol_id)
+     *  provincias -> localidades -> barrios
+     */
     public function run(): void
     {
         $this->call([
-            UbicacionSeeder::class,
-            RolSeeder::class,
-            UserSeeder::class,
-            UsuarioSeeder::class,
             RolesSeeder::class,
+            UserSeeder::class,
             ProvinciasSeeder::class,
             LocalidadesSeeder::class,
             BarriosSeeder::class,

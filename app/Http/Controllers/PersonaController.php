@@ -8,7 +8,7 @@ use App\Models\Legajo;
 use App\Models\Persona;
 use App\Models\Problematica;
 use App\Models\Provincia;
-use App\Models\Usuario;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -73,9 +73,10 @@ class PersonaController extends Controller
         return Inertia::render('personas/create', [
             'provincias' => Provincia::orderBy('nombre')->get(['id', 'nombre']),
             'problematicas' => Problematica::orderBy('nombre')->get(['id', 'nombre']),
-            'profesionales' => Usuario::where('activo', true)
-                ->orderBy('nombre_usuario')
-                ->get(['id', 'nombre_usuario', 'email']),
+            // Se expone "name" con el alias "nombre_usuario" para no tocar el front.
+            'profesionales' => User::where('activo', true)
+                ->orderBy('name')
+                ->get(['id', 'name as nombre_usuario', 'email']),
         ]);
     }
 
@@ -88,7 +89,7 @@ class PersonaController extends Controller
                 $persona = Persona::create([
                     'nombre' => $datos['nombre'],
                     'apellido' => $datos['apellido'],
-                    'dni' => $datos['dni'],
+                    'dni' => $datos['dni'] ?? null,
                     'fecha_nacimiento' => $datos['fecha_nacimiento'],
                     'genero' => $datos['genero'],
                     'direccion_calle' => $datos['direccion_calle'] ?? null,
@@ -104,9 +105,7 @@ class PersonaController extends Controller
                 $legajo = null;
 
                 if ($request->boolean('abrir_legajo')) {
-                    $legajo = Legajo::create([
-                        'persona_id' => $persona->id,
-                        'numero_legajo' => Legajo::generarNumero($persona),
+                    $legajo = Legajo::crearConNumeroUnico($persona, [
                         'motivo_ingreso' => $datos['legajo_motivo_ingreso'],
                         'nivel_riesgo' => $datos['legajo_nivel_riesgo'],
                         'origen_derivacion' => $datos['legajo_origen_derivacion'],
@@ -178,7 +177,7 @@ class PersonaController extends Controller
             $persona->update([
                 'nombre' => $datos['nombre'],
                 'apellido' => $datos['apellido'],
-                'dni' => $datos['dni'],
+                'dni' => $datos['dni'] ?? null,
                 'fecha_nacimiento' => $datos['fecha_nacimiento'],
                 'genero' => $datos['genero'],
                 'direccion_calle' => $datos['direccion_calle'] ?? null,
