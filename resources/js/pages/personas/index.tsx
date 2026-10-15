@@ -2,7 +2,8 @@ import { Head, Link, router } from '@inertiajs/react';
 import { FolderOpen, Search, UserPlus } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
-import Paginacion, { type Paginador } from '@/components/paginacion-listado';
+import Paginacion from '@/components/paginacion-listado';
+import type { Paginador } from '@/components/paginacion-listado';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -45,7 +46,9 @@ export default function PersonasIndex({ personas, filtros, status }: PersonasInd
     const [buscar, setBuscar] = useState(filtros.buscar ?? '');
 
     useEffect(() => {
-        if (buscar === (filtros.buscar ?? '')) return;
+        if (buscar === (filtros.buscar ?? '')) {
+            return;
+        }
 
         const timeout = setTimeout(() => {
             router.get(
@@ -93,7 +96,7 @@ export default function PersonasIndex({ personas, filtros, status }: PersonasInd
                             Ver legajos
                         </Link>
                         <Link
-                            href="/personas/create"
+                            href="/personas/nueva"
                             className="inline-flex h-11 items-center gap-2 rounded-md bg-[#2C4A5E] px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#1F394B]"
                         >
                             <UserPlus size={16} />
@@ -137,7 +140,7 @@ export default function PersonasIndex({ personas, filtros, status }: PersonasInd
                                 </p>
                                 {!filtros.buscar && (
                                     <Link
-                                        href="/personas/create"
+                                        href="/personas/nueva"
                                         className="mt-3 inline-block text-sm font-semibold text-[#2C4A5E] underline"
                                     >
                                         Registrar la primera persona

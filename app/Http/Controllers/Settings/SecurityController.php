@@ -4,8 +4,12 @@ namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\PasswordUpdateRequest;
+use App\Http\Requests\Settings\RevokeOtherSessionsRequest;
 use App\Http\Requests\Settings\TwoFactorAuthenticationRequest;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -38,6 +42,8 @@ class SecurityController extends Controller
                     ->all()
                 : [],
             'passwordRules' => Password::defaults()->toPasswordRulesString(),
+            'canManageSessions' => $this->canManageSessions(),
+            'sessions' => $this->sessions($request),
         ];
 
         if (Features::canManageTwoFactorAuthentication()) {
@@ -62,5 +68,57 @@ class SecurityController extends Controller
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Password updated.')]);
 
         return back();
+    }
+
+    /**
+     * Revoke all database-backed sessions except the current one.
+     */
+    public function destroyOtherSessions(RevokeOtherSessionsRequest $request): RedirectResponse
+    {
+        if ($this->canManageSessions()) {
+            DB::table(config('session.table'))
+                ->where('user_id', $request->user()->getAuthIdentifier())
+                ->where('id', '!=', $request->session()->getId())
+                ->delete();
+        }
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => 'Se cerraron las demás sesiones.']);
+
+        return back();
+    }
+
+    /**
+     * Determine whether real database sessions are available to manage.
+     */
+    private function canManageSessions(): bool
+    {
+        return config('session.driver') === 'database'
+            && Schema::hasTable(config('session.table'));
+    }
+
+    /**
+     * Return real sessions belonging to the authenticated user.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function sessions(TwoFactorAuthenticationRequest $request): array
+    {
+        if (! $this->canManageSessions()) {
+            return [];
+        }
+
+        return DB::table(config('session.table'))
+            ->where('user_id', $request->user()->getAuthIdentifier())
+            ->orderByDesc('last_activity')
+            ->get(['id', 'ip_address', 'user_agent', 'last_activity'])
+            ->map(fn (object $session): array => [
+                'id' => $session->id,
+                'ip_address' => $session->ip_address,
+                'user_agent' => $session->user_agent ?: 'Navegador no identificado',
+                'last_active_at' => Carbon::createFromTimestamp((int) $session->last_activity)->toIso8601String(),
+                'is_current' => $session->id === $request->session()->getId(),
+            ])
+            ->values()
+            ->all();
     }
 }

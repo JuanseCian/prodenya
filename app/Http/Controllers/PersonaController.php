@@ -136,7 +136,7 @@ class PersonaController extends Controller
             $mensaje .= " Legajo {$legajo->numero_legajo} abierto.";
         }
 
-        return redirect()->route('home')->with('status', $mensaje);
+        return redirect()->route('personas.index')->with('status', $mensaje);
     }
 
     public function show(Persona $persona): Response

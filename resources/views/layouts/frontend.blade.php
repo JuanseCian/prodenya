@@ -164,6 +164,53 @@
             width: 32px;
         }
 
+        .site-user-avatar-image { object-fit: cover; }
+
+        .site-account { position: relative; }
+
+        .site-account-trigger {
+            align-items: center;
+            background: transparent;
+            border: 0;
+            border-radius: 12px;
+            color: #fff;
+            cursor: pointer;
+            display: flex;
+            gap: 9px;
+            list-style: none;
+            padding: 5px 7px;
+        }
+
+        .site-account-trigger::-webkit-details-marker { display: none; }
+        .site-account-trigger:hover, .site-account[open] .site-account-trigger { background: rgba(255, 255, 255, 0.13); }
+        .site-account-chevron { font-size: 0.8rem; transition: transform 180ms ease; }
+        .site-account[open] .site-account-chevron { transform: rotate(180deg); }
+
+        .site-account-menu {
+            background: #fff;
+            border: 1px solid #e2e5ed;
+            border-radius: 14px;
+            box-shadow: 0 18px 45px rgba(35, 33, 76, 0.18);
+            color: var(--ink);
+            min-width: 278px;
+            padding: 8px;
+            position: absolute;
+            right: 0;
+            top: calc(100% + 10px);
+            z-index: 30;
+        }
+
+        .site-account-menu-header { border-bottom: 1px solid #edf0f5; padding: 10px 10px 13px; }
+        .site-account-menu-name { color: #2d3348; font-size: 0.9rem; font-weight: 800; }
+        .site-account-menu-email { color: #778096; font-size: 0.75rem; margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .site-account-menu-meta { color: #6673a9; font-size: 0.7rem; font-weight: 700; margin-top: 8px; }
+        .site-account-menu-link, .site-account-menu-logout { align-items: center; border-radius: 9px; display: flex; font-size: 0.82rem; font-weight: 600; gap: 10px; padding: 10px; text-decoration: none; width: 100%; }
+        .site-account-menu-link { color: #3e455d; }
+        .site-account-menu-link:hover { background: #f4f5fb; color: var(--brand-dark); }
+        .site-account-menu-logout { background: transparent; border: 0; color: #b14657; cursor: pointer; text-align: left; }
+        .site-account-menu-logout:hover { background: #fff1f2; }
+        .site-account-menu-separator { border-top: 1px solid #edf0f5; margin: 6px 2px; }
+
         .logout-button {
             background: rgba(43, 38, 91, 0.32);
             border: 1px solid rgba(255, 255, 255, 0.18);
@@ -211,6 +258,7 @@
             .brand-divider, .brand-caption, .site-user-name { display: none; }
             .site-user { border-left: 0; margin-left: auto; padding-left: 0; }
             .site-nav-link { font-size: 0.82rem; padding: 9px 10px; }
+            .site-account-menu { max-width: calc(100vw - 32px); min-width: 250px; }
             .site-footer-inner { align-items: flex-start; flex-direction: column; padding: 20px 16px; }
         }
     </style>
@@ -256,14 +304,61 @@
 
                 <div class="site-user">
                     @auth
-                        <span class="site-user-name">{{ auth()->user()->name }}</span>
-                        <span class="site-user-avatar" aria-hidden="true">
-                            {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
-                        </span>
-                        <form method="POST" action="{{ route('logout') }}">
-                            @csrf
-                            <button type="submit" class="logout-button">Salir</button>
-                        </form>
+                        @php
+                            $accountUser = auth()->user();
+                            $accountTeam = $accountUser->currentTeam;
+                            $accountRole = $accountTeam ? $accountUser->teamRole($accountTeam)?->label() : null;
+                            $accountInitials = collect(explode(' ', trim($accountUser->name)))
+                                ->filter()
+                                ->take(2)
+                                ->map(fn ($part) => strtoupper(substr($part, 0, 1)))
+                                ->join('');
+                        @endphp
+
+                        <details class="site-account">
+                            <summary class="site-account-trigger" aria-label="Abrir menú de cuenta">
+                                <span class="site-user-name">{{ $accountUser->name }}</span>
+                                @if ($accountUser->avatar)
+                                    <img src="{{ $accountUser->avatar }}" class="site-user-avatar site-user-avatar-image" alt="">
+                                @else
+                                    <span class="site-user-avatar" aria-hidden="true">{{ $accountInitials }}</span>
+                                @endif
+                                <i class="bi bi-chevron-down site-account-chevron" aria-hidden="true"></i>
+                            </summary>
+                            <div class="site-account-menu">
+                                <div class="site-account-menu-header">
+                                    <div class="site-account-menu-name">{{ $accountUser->name }}</div>
+                                    <div class="site-account-menu-email">{{ $accountUser->email }}</div>
+                                    @if ($accountTeam || $accountRole)
+                                        <div class="site-account-menu-meta">
+                                            {{ $accountTeam?->name ?? 'Sin equipo' }}{{ $accountRole ? ' · '.$accountRole : '' }}
+                                        </div>
+                                    @endif
+                                </div>
+
+                                @if (Route::has('profile.edit'))
+                                    <a href="{{ route('profile.edit') }}" class="site-account-menu-link">
+                                        <i class="bi bi-person-circle" aria-hidden="true"></i>
+                                        Mi perfil
+                                    </a>
+                                @endif
+                                @if (Route::has('security.edit'))
+                                    <a href="{{ route('security.edit') }}" class="site-account-menu-link">
+                                        <i class="bi bi-shield-lock" aria-hidden="true"></i>
+                                        Seguridad y contraseña
+                                    </a>
+                                @endif
+
+                                <div class="site-account-menu-separator"></div>
+                                <form method="POST" action="{{ route('logout') }}">
+                                    @csrf
+                                    <button type="submit" class="site-account-menu-logout">
+                                        <i class="bi bi-box-arrow-right" aria-hidden="true"></i>
+                                        Cerrar sesión
+                                    </button>
+                                </form>
+                            </div>
+                        </details>
                     @else
                         <a href="{{ route('login') }}" class="site-nav-link">
                             <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i>
