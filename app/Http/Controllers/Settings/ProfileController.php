@@ -23,14 +23,21 @@ class ProfileController extends Controller
     {
         $user = $request->user();
         $currentTeam = $user->currentTeam;
+        $teamRole = $currentTeam ? $user->teamRole($currentTeam)?->label() : null;
+        $role = match ($user->rol?->nombre) {
+            'admin' => 'Administrador',
+            'operador' => 'Operador',
+            default => $user->rol?->nombre ?? $teamRole,
+        };
 
         return Inertia::render('settings/profile', [
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
             'status' => $request->session()->get('status'),
             'account' => [
                 'team' => $currentTeam?->name,
-                'role' => $currentTeam ? $user->teamRole($currentTeam)?->label() : null,
+                'role' => $role,
                 'createdAt' => $user->created_at?->toIso8601String(),
+                'lastAccess' => $user->ultimo_acceso?->toIso8601String(),
             ],
         ]);
     }

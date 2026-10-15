@@ -4,13 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StorePersonaRequest;
 use App\Http\Requests\UpdatePersonaRequest;
-use App\Models\Legajo;
 use App\Models\Persona;
 use App\Models\Problematica;
+use App\Models\MotivoIngreso;
 use App\Models\Provincia;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Inertia\Inertia;
 use Inertia\Response;
 use Throwable;
@@ -22,30 +23,27 @@ class PersonaController extends Controller
         $buscar = trim((string) $request->query('buscar', ''));
         $digitos = preg_replace('/\D/', '', $buscar);
 
-        $personas = Persona::with(['localidad', 'barrio'])
+        $personas = Persona::with(['localidad', 'barrio', 'problematicas'])
             ->where('activo', true)
             ->when($buscar !== '', function ($consulta) use ($buscar, $digitos) {
                 $consulta->where(function ($q) use ($buscar, $digitos) {
                     $q->where('nombre', 'like', "%{$buscar}%")
                         ->orWhere('apellido', 'like', "%{$buscar}%")
+                        ->orWhere('numero_legajo', 'like', "%{$buscar}%")
                         ->orWhereRaw("CONCAT(nombre, ' ', apellido) like ?", ["%{$buscar}%"])
                         ->orWhereRaw("CONCAT(apellido, ' ', nombre) like ?", ["%{$buscar}%"]);
 
                     if ($digitos !== '') {
                         $q->orWhere('dni', 'like', "%{$digitos}%");
                     }
+
+                    $q->orWhereHas('problematicas', fn ($problematica) => $problematica->where('nombre', 'like', "%{$buscar}%"));
                 });
             })
             ->orderBy('apellido')
             ->orderBy('nombre')
             ->paginate(15)
             ->withQueryString();
-
-        // Números de legajo de las personas de esta página (una sola consulta).
-        $legajos = Legajo::whereIn('persona_id', $personas->pluck('id'))
-            ->orderBy('numero_legajo')
-            ->get(['persona_id', 'numero_legajo'])
-            ->groupBy('persona_id');
 
         $personas->through(fn (Persona $persona) => [
             'id' => $persona->id,
@@ -58,7 +56,7 @@ class PersonaController extends Controller
             'barrio' => $persona->barrio?->nombre,
             'telefono' => $persona->telefono,
             'email' => $persona->email,
-            'legajos' => $legajos->get($persona->id, collect())->pluck('numero_legajo')->values(),
+            'legajos' => $persona->numero_legajo ? [$persona->numero_legajo] : [],
         ]);
 
         return Inertia::render('personas/index', [
@@ -70,13 +68,17 @@ class PersonaController extends Controller
 
     public function create(): Response
     {
+        $profesionales = User::query()
+            ->when(Schema::hasColumn('users', 'activo'), fn ($query) => $query->where('activo', true))
+            ->orderBy('name')
+            ->get(['id', 'name as nombre_usuario', 'email']);
+
         return Inertia::render('personas/create', [
             'provincias' => Provincia::orderBy('nombre')->get(['id', 'nombre']),
             'problematicas' => Problematica::orderBy('nombre')->get(['id', 'nombre']),
+            'motivosIngreso' => MotivoIngreso::where('activo', true)->orderBy('nombre')->get(['id', 'nombre']),
             // Se expone "name" con el alias "nombre_usuario" para no tocar el front.
-            'profesionales' => User::where('activo', true)
-                ->orderBy('name')
-                ->get(['id', 'name as nombre_usuario', 'email']),
+            'profesionales' => $profesionales,
         ]);
     }
 
@@ -105,18 +107,20 @@ class PersonaController extends Controller
                 $legajo = null;
 
                 if ($request->boolean('abrir_legajo')) {
-                    $legajo = Legajo::crearConNumeroUnico($persona, [
+                    $persona->update([
+                        'numero_legajo' => Persona::generarNumeroLegajo($persona),
                         'motivo_ingreso' => $datos['legajo_motivo_ingreso'],
+                        'motivo_ingreso_id' => $datos['legajo_motivo_ingreso_id'] ?? null,
                         'nivel_riesgo' => $datos['legajo_nivel_riesgo'],
                         'origen_derivacion' => $datos['legajo_origen_derivacion'],
                         'profesional_id' => $datos['legajo_profesional_id'] ?? null,
                         'fecha_apertura' => now()->toDateString(),
                         'estado' => 'Abierto',
-                        'observaciones' => $datos['legajo_observaciones'] ?? null,
-                        'creado_por' => $request->user()->id,
+                        'observaciones_legajo' => $datos['legajo_observaciones'] ?? null,
                     ]);
 
-                    $legajo->problematicas()->sync($datos['legajo_problematicas']);
+                    $persona->problematicas()->sync($datos['legajo_problematicas']);
+                    $legajo = $persona->fresh();
                 }
 
                 return [$persona, $legajo];
@@ -136,23 +140,19 @@ class PersonaController extends Controller
             $mensaje .= " Legajo {$legajo->numero_legajo} abierto.";
         }
 
-        return redirect()->route('personas.index')->with('status', $mensaje);
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'title' => $legajo ? 'Persona y legajo creados' : 'Persona registrada',
+            'message' => $mensaje,
+        ]);
+
+        return redirect()->route('personas.index');
     }
 
     public function show(Persona $persona): Response
     {
-        $legajos = Legajo::where('persona_id', $persona->id)
-            ->with('problematicas')
-            ->latest('creado_en')
-            ->get()
-            ->map(fn (Legajo $legajo) => [
-                'id' => $legajo->id,
-                'numero_legajo' => $legajo->numero_legajo,
-                'estado' => $legajo->estado,
-                'nivel_riesgo' => $legajo->nivel_riesgo,
-                'fecha_apertura' => ($legajo->fecha_apertura ?? $legajo->creado_en)?->format('d/m/Y'),
-                'problematicas' => $legajo->problematicas->pluck('nombre')->values(),
-            ]);
+        $persona->load('problematicas');
+        $legajos = $persona->numero_legajo ? [$this->datosLegajo($persona)] : [];
 
         return Inertia::render('personas/show', [
             'persona' => $this->datosPersona($persona),
@@ -208,11 +208,9 @@ class PersonaController extends Controller
      */
     public function destroy(Persona $persona)
     {
-        $tieneLegajosAbiertos = Legajo::where('persona_id', $persona->id)
-            ->where('estado', 'Abierto')
-            ->exists();
+        $tieneLegajoAbierto = $persona->numero_legajo !== null && $persona->estado === 'Abierto';
 
-        if ($tieneLegajosAbiertos) {
+        if ($tieneLegajoAbierto) {
             return back()->withErrors([
                 'general' => 'No se puede dar de baja: la persona tiene legajos abiertos. Cerralos primero.',
             ]);
@@ -252,6 +250,18 @@ class PersonaController extends Controller
             'email' => $persona->email,
             'observaciones' => $persona->observaciones,
             'activo' => (bool) $persona->activo,
+        ];
+    }
+
+    private function datosLegajo(Persona $persona): array
+    {
+        return [
+            'id' => $persona->id,
+            'numero_legajo' => $persona->numero_legajo,
+            'estado' => $persona->estado,
+            'nivel_riesgo' => $persona->nivel_riesgo,
+            'fecha_apertura' => $persona->fecha_apertura?->format('d/m/Y'),
+            'problematicas' => $persona->problematicas->pluck('nombre')->values(),
         ];
     }
 }

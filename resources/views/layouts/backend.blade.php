@@ -36,9 +36,9 @@
 
         {{-- SIDEBAR --}}
         <aside
-            class="hidden lg:flex
-                   w-64 bg-slate-900 text-white
-                   flex-col fixed inset-y-0 left-0"
+            id="backend-sidebar"
+            class="flex w-72 bg-slate-900 text-white flex-col fixed inset-y-0 left-0 z-40
+                   -translate-x-full lg:translate-x-0 transition-transform duration-200"
         >
 
             {{-- Logo --}}
@@ -77,118 +77,37 @@
             </div>
 
 
-            {{-- Navegación --}}
-            <nav class="flex-1 px-4 py-6 space-y-1">
+            <nav class="flex-1 space-y-1 overflow-y-auto px-4 py-6" aria-label="Navegación administrativa">
+                <p class="mb-3 px-3 text-[0.65rem] font-bold tracking-[0.16em] text-slate-500 uppercase">Catálogos</p>
 
-                <a
-                    href="/dashboard#legajos"
-                    class="flex items-center gap-3
-                           px-4 py-3 rounded-xl
-                           bg-slate-800 text-white"
-                >
-                    <i class="bi bi-grid"></i>
-
-                    <span>
-                        Dashboard
-                    </span>
+                <a href="{{ route('admin.catalogos.index', ['catalog' => 'roles']) }}" class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-slate-300 transition hover:bg-slate-800 hover:text-white {{ request()->routeIs('admin.catalogos.*') && request()->route('catalog') === 'roles' ? 'bg-slate-800 text-white' : '' }}">
+                    <i class="bi bi-shield-lock w-5"></i>
+                    Roles
                 </a>
-
-
-                <a
-                    href="#"
-                    class="flex items-center gap-3
-                           px-4 py-3 rounded-xl
-                           text-slate-300
-                           hover:bg-slate-800
-                           hover:text-white transition"
-                >
-                    <i class="bi bi-folder2-open"></i>
-
-                    <span>
-                        Legajos
-                    </span>
+                <a href="{{ route('admin.catalogos.index', ['catalog' => 'provincias']) }}" class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-slate-300 transition hover:bg-slate-800 hover:text-white {{ request()->route('catalog') === 'provincias' ? 'bg-slate-800 text-white' : '' }}">
+                    <i class="bi bi-map w-5"></i>
+                    Provincias
                 </a>
-
-
-                <a
-                    href="#"
-                    class="flex items-center gap-3
-                           px-4 py-3 rounded-xl
-                           text-slate-300
-                           hover:bg-slate-800
-                           hover:text-white transition"
-                >
-                    <i class="bi bi-people"></i>
-
-                    <span>
-                        Personas
-                    </span>
+                <a href="{{ route('admin.catalogos.index', ['catalog' => 'localidades']) }}" class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-slate-300 transition hover:bg-slate-800 hover:text-white {{ request()->route('catalog') === 'localidades' ? 'bg-slate-800 text-white' : '' }}">
+                    <i class="bi bi-geo-alt w-5"></i>
+                    Localidades
                 </a>
-
-
-                <a
-                    href="#"
-                    class="flex items-center gap-3
-                           px-4 py-3 rounded-xl
-                           text-slate-300
-                           hover:bg-slate-800
-                           hover:text-white transition"
-                >
-                    <i class="bi bi-journal-text"></i>
-
-                    <span>
-                        Intervenciones
-                    </span>
+                <a href="{{ route('admin.catalogos.index', ['catalog' => 'barrios']) }}" class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-slate-300 transition hover:bg-slate-800 hover:text-white {{ request()->route('catalog') === 'barrios' ? 'bg-slate-800 text-white' : '' }}">
+                    <i class="bi bi-signpost-2 w-5"></i>
+                    Barrios
                 </a>
-
-
-                <a
-                    href="#"
-                    class="flex items-center gap-3
-                           px-4 py-3 rounded-xl
-                           text-slate-300
-                           hover:bg-slate-800
-                           hover:text-white transition"
-                >
-                    <i class="bi bi-file-earmark-text"></i>
-
-                    <span>
-                        Oficios
-                    </span>
+                <a href="{{ route('admin.catalogos.index', ['catalog' => 'tipos-documento']) }}" class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-slate-300 transition hover:bg-slate-800 hover:text-white {{ request()->route('catalog') === 'tipos-documento' ? 'bg-slate-800 text-white' : '' }}">
+                    <i class="bi bi-card-text w-5"></i>
+                    Tipos de documento
                 </a>
-
-
-                <a
-                    href="#"
-                    class="flex items-center gap-3
-                           px-4 py-3 rounded-xl
-                           text-slate-300
-                           hover:bg-slate-800
-                           hover:text-white transition"
-                >
-                    <i class="bi bi-arrow-left-right"></i>
-
-                    <span>
-                        Derivaciones
-                    </span>
+                <a href="{{ route('admin.catalogos.index', ['catalog' => 'motivos-ingreso']) }}" class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-slate-300 transition hover:bg-slate-800 hover:text-white {{ request()->route('catalog') === 'motivos-ingreso' ? 'bg-slate-800 text-white' : '' }}">
+                    <i class="bi bi-box-arrow-in-right w-5"></i>
+                    Motivos de ingreso
                 </a>
-
-
-                <a
-                    href="#"
-                    class="flex items-center gap-3
-                           px-4 py-3 rounded-xl
-                           text-slate-300
-                           hover:bg-slate-800
-                           hover:text-white transition"
-                >
-                    <i class="bi bi-bar-chart"></i>
-
-                    <span>
-                        Estadísticas
-                    </span>
+                <a href="{{ route('admin.catalogos.index', ['catalog' => 'problematicas']) }}" class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-slate-300 transition hover:bg-slate-800 hover:text-white {{ request()->route('catalog') === 'problematicas' ? 'bg-slate-800 text-white' : '' }}">
+                    <i class="bi bi-journal-medical w-5"></i>
+                    Problemáticas
                 </a>
-
             </nav>
 
 
@@ -217,10 +136,14 @@
 
         </aside>
 
+        <div
+            id="backend-sidebar-backdrop"
+            class="fixed inset-0 z-30 hidden bg-slate-950/40 lg:hidden"
+        ></div>
 
 
         {{-- CONTENIDO DERECHO --}}
-        <div class="flex-1 lg:ml-64">
+        <div class="flex-1 lg:ml-72">
 
             {{-- Navbar superior --}}
             <header
@@ -231,7 +154,17 @@
                        px-5 md:px-8"
             >
 
-                <div>
+                <div class="flex items-center gap-3">
+                    <button
+                        type="button"
+                        id="backend-menu-toggle"
+                        class="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-slate-700 transition hover:bg-slate-50 lg:hidden"
+                        aria-label="Abrir menú administrativo"
+                    >
+                        <i class="bi bi-list text-lg"></i>
+                    </button>
+
+                    <div>
 
                     <h1 class="font-semibold text-xl text-slate-900">
                         @yield('page-title', 'Panel')
@@ -245,6 +178,7 @@
 
                     @endif
 
+                    </div>
                 </div>
 
 
@@ -350,6 +284,26 @@
 
 
     @stack('scripts')
+    <script>
+        (() => {
+            const sidebar = document.getElementById('backend-sidebar');
+            const toggle = document.getElementById('backend-menu-toggle');
+            const backdrop = document.getElementById('backend-sidebar-backdrop');
+
+            if (!sidebar || !toggle || !backdrop) return;
+
+            const closeSidebar = () => {
+                sidebar.classList.add('-translate-x-full');
+                backdrop.classList.add('hidden');
+            };
+
+            toggle.addEventListener('click', () => {
+                sidebar.classList.toggle('-translate-x-full');
+                backdrop.classList.toggle('hidden');
+            });
+            backdrop.addEventListener('click', closeSidebar);
+        })();
+    </script>
 
 </body>
 

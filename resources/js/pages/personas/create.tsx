@@ -11,6 +11,7 @@ import {
 import { useEffect, useState } from 'react';
 import type { FormEventHandler, ReactNode } from 'react';
 
+import ResumenErrores from '@/components/resumen-errores';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -38,7 +39,9 @@ interface Profesional {
 interface CreatePersonaProps {
     provincias: Opcion[];
     problematicas: Opcion[];
+    motivosIngreso: Opcion[];
     profesionales: Profesional[];
+    modoLegajo?: boolean;
 }
 
 const FONT_HEADING = "'Lora', serif";
@@ -69,55 +72,14 @@ const FIELD_LABELS: Record<string, string> = {
     barrio_id: 'Barrio',
     observaciones: 'Observaciones',
     abrir_legajo: 'Abrir legajo',
-    legajo_motivo_ingreso: 'Motivo de ingreso',
+    legajo_motivo_ingreso: 'Detalle del motivo de ingreso',
+    legajo_motivo_ingreso_id: 'Tipo de motivo de ingreso',
     legajo_problematicas: 'Problemática',
     legajo_nivel_riesgo: 'Nivel de riesgo',
     legajo_profesional_id: 'Profesional asignado',
     legajo_origen_derivacion: 'Origen de la derivación',
     legajo_observaciones: 'Observaciones del legajo',
 };
-
-const labelFor = (campo: string) => {
-    const base = campo.replace(/\.\d+$/, '');
-
-    return FIELD_LABELS[base] ?? base;
-};
-
-function ErrorSummary({ errors }: { errors: Record<string, string> }) {
-    const entries = Object.entries(errors);
-
-    if (entries.length === 0) {
-        return null;
-    }
-
-    return (
-        <div
-            id="resumen-errores"
-            role="alert"
-            className="rounded-lg border border-[#E3B7AE] bg-[#FBEFEC] p-4 sm:p-5"
-        >
-            <p className="text-sm font-semibold text-[#A84635]">
-                No se pudo guardar.{' '}
-                {entries.length === 1
-                    ? 'Revisá este campo:'
-                    : `Revisá estos ${entries.length} campos:`}
-            </p>
-            <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-[#7A2E21]">
-                {entries.map(([campo, mensaje]) => (
-                    <li key={campo}>
-                        {campo === 'general' ? (
-                            mensaje
-                        ) : (
-                            <>
-                                <strong>{labelFor(campo)}:</strong> {mensaje}
-                            </>
-                        )}
-                    </li>
-                ))}
-            </ul>
-        </div>
-    );
-}
 
 function SectionHeading({
     icon,
@@ -158,7 +120,9 @@ function SectionHeading({
 export default function CreatePersona({
     provincias,
     problematicas,
+    motivosIngreso,
     profesionales,
+    modoLegajo = false,
 }: CreatePersonaProps) {
     const { data, setData, post, processing, errors } = useForm({
         nombre: '',
@@ -175,8 +139,9 @@ export default function CreatePersona({
         telefono: '',
         email: '',
         observaciones: '',
-        abrir_legajo: false,
+        abrir_legajo: modoLegajo,
         legajo_motivo_ingreso: '',
+        legajo_motivo_ingreso_id: '',
         legajo_nivel_riesgo: '',
         legajo_origen_derivacion: '',
         legajo_profesional_id: '',
@@ -184,7 +149,6 @@ export default function CreatePersona({
         legajo_observaciones: '',
     });
 
-    const [intentosFallidos, setIntentosFallidos] = useState(0);
     const [localidades, setLocalidades] = useState<Opcion[]>([]);
     const [barrios, setBarrios] = useState<Opcion[]>([]);
     const [cargandoLocalidades, setCargandoLocalidades] = useState(false);
@@ -258,14 +222,6 @@ export default function CreatePersona({
         return () => controller.abort();
     }, [data.localidad_id]);
 
-    useEffect(() => {
-        if (intentosFallidos > 0) {
-            document
-                .getElementById('resumen-errores')
-                ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-    }, [intentosFallidos]);
-
     const toggleProblematica = (id: number) => {
         setData(
             'legajo_problematicas',
@@ -277,9 +233,8 @@ export default function CreatePersona({
 
     const submit: FormEventHandler = (event) => {
         event.preventDefault();
-        post('/personas', {
+        post(modoLegajo ? '/legajos' : '/personas', {
             preserveScroll: true,
-            onError: () => setIntentosFallidos((n) => n + 1),
         });
     };
 
@@ -340,7 +295,7 @@ export default function CreatePersona({
 
     return (
         <>
-            <Head title="Nueva persona" />
+            <Head title={modoLegajo ? 'Nuevo legajo' : 'Nueva persona'} />
 
             <main
                 className="bg-[#F4F6F5] px-4 py-8 sm:px-6 sm:py-10 lg:px-8"
@@ -349,26 +304,29 @@ export default function CreatePersona({
                 <div className="mx-auto w-full max-w-6xl">
                 <div className="mb-8 max-w-3xl">
                     <div className="flex items-center gap-2 text-xs font-semibold tracking-[0.14em] text-[#6B8F71] uppercase">
-                        <span>Personas</span>
+                            <span>{modoLegajo ? 'Legajos' : 'Personas'}</span>
                         <span className="text-[#B4C1B8]">/</span>
-                        <span className="text-[#2B2F36]/45">Nueva alta</span>
+                            <span className="text-[#2B2F36]/45">{modoLegajo ? 'Nuevo legajo' : 'Nueva alta'}</span>
                     </div>
                     <h2
                         className="mt-3 text-3xl font-semibold tracking-tight text-[#173247] sm:text-4xl"
                         style={{ fontFamily: FONT_HEADING }}
                     >
-                        Registrar una persona
+                        {modoLegajo ? 'Crear un legajo' : 'Registrar una persona'}
                     </h2>
                     <p className="mt-2 max-w-2xl text-sm leading-6 text-[#2B2F36]/65 sm:text-base">
-                        Completá la información básica para crear el registro.
+                        {modoLegajo
+                            ? 'Completá los datos de la persona y del legajo. Se guardará todo en un único registro.'
+                            : 'Completá la información básica para crear el registro.'}
                         Los campos marcados con asterisco son obligatorios.
                     </p>
                 </div>
 
                 <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_290px]">
                     <form onSubmit={submit} className="space-y-6">
-                        <ErrorSummary
+                        <ResumenErrores
                             errors={errors as Record<string, string>}
+                            etiquetas={FIELD_LABELS}
                         />
 
                         <Card id="datos-personales" className="scroll-mt-6 overflow-hidden border-[#DCE3DF] !bg-white py-0 shadow-[0_10px_26px_rgba(23,50,71,0.05)]">
@@ -793,12 +751,12 @@ export default function CreatePersona({
                         >
                             <SectionHeading
                                 icon={<ClipboardPlus size={19} />}
-                                eyebrow="Paso 04 · Opcional"
-                                title="Abrir legajo"
-                                description="Podés iniciar el legajo ahora o hacerlo más adelante."
+                                eyebrow={modoLegajo ? 'Paso 04' : 'Paso 04 · Opcional'}
+                                title={modoLegajo ? 'Datos del legajo' : 'Abrir legajo'}
+                                description={modoLegajo ? 'Registrá el motivo, riesgo, derivación y problemáticas asociadas.' : 'Podés iniciar el legajo ahora o hacerlo más adelante.'}
                             />
                             <CardContent className="px-5 py-6 sm:px-6">
-                                <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-[#DCE3DF] bg-[#FAFBFA] p-4 transition hover:border-[#2C4A5E]/40">
+                                {!modoLegajo && <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-[#DCE3DF] bg-[#FAFBFA] p-4 transition hover:border-[#2C4A5E]/40">
                                     <input
                                         type="checkbox"
                                         checked={data.abrir_legajo}
@@ -820,7 +778,7 @@ export default function CreatePersona({
                                             número de legajo.
                                         </span>
                                     </span>
-                                </label>
+                                </label>}
 
                                 {data.abrir_legajo && (
                                     <div className="mt-6 space-y-5 border-t border-[#E4E8E5] pt-5">
@@ -842,13 +800,34 @@ export default function CreatePersona({
                                         )}
                                         <div>
                                             <Label
-                                                htmlFor="legajo_motivo_ingreso"
+                                                htmlFor="legajo_motivo_ingreso_id"
                                                 className={labelClass}
                                             >
-                                                Motivo de ingreso{' '}
-                                                <span className="text-[#A84635]">
-                                                    *
-                                                </span>
+                                                Tipo de motivo de ingreso
+                                            </Label>
+                                            <select
+                                                id="legajo_motivo_ingreso_id"
+                                                className={`${inputClass} block w-full rounded-md border px-3 text-sm`}
+                                                value={data.legajo_motivo_ingreso_id}
+                                                onChange={(event) =>
+                                                    setData('legajo_motivo_ingreso_id', event.target.value)
+                                                }
+                                            >
+                                                <option value="">Sin clasificar</option>
+                                                {motivosIngreso.map((motivo) => (
+                                                    <option key={motivo.id} value={motivo.id}>
+                                                        {motivo.nombre}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            <FieldError message={errors.legajo_motivo_ingreso_id} />
+
+                                            <Label
+                                                htmlFor="legajo_motivo_ingreso"
+                                                className={`${labelClass} mt-4 block`}
+                                            >
+                                                Detalle del motivo de ingreso{' '}
+                                                <span className="text-[#A84635]">*</span>
                                             </Label>
                                             <textarea
                                                 id="legajo_motivo_ingreso"
@@ -1059,7 +1038,7 @@ export default function CreatePersona({
 
                         <div className="sticky bottom-3 z-20 -mx-1 flex flex-col-reverse gap-3 rounded-xl border border-[#DCE3DF] bg-[#F4F6F5]/95 p-3 shadow-[0_10px_25px_rgba(23,50,71,0.1)] backdrop-blur sm:flex-row sm:items-center sm:justify-end lg:static lg:mx-0 lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none lg:backdrop-blur-0">
                             <Link
-                                href="/"
+                                href={modoLegajo ? '/legajos' : '/'}
                                 className="inline-flex h-11 items-center justify-center rounded-md px-5 text-sm font-semibold text-[#2B2F36]/65 transition hover:bg-white hover:text-[#2B2F36]"
                             >
                                 Cancelar
@@ -1069,9 +1048,7 @@ export default function CreatePersona({
                                 disabled={processing}
                                 className="h-11 bg-[#2C4A5E] px-6 text-sm font-semibold text-white shadow-sm hover:bg-[#1F394B]"
                             >
-                                {processing
-                                    ? 'Guardando…'
-                                    : 'Registrar persona'}
+                                    {processing ? 'Guardando…' : modoLegajo ? 'Crear legajo' : 'Registrar persona'}
                             </Button>
                         </div>
                     </form>

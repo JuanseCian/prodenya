@@ -30,23 +30,16 @@
                     </h1>
 
                     <p class="home-hero-lead">
-                        PRODENYA reúne personas, legajos y documentación en un mismo lugar para acompañar
+                        PRODENYA reúne legajos y documentación en un mismo lugar para acompañar
                         cada situación con información clara y seguimiento responsable.
                     </p>
 
                     <div class="home-actions">
-                        @if (Route::has('personas.create'))
-                            <a href="{{ route('personas.create') }}" class="home-button home-button-primary">
-                                <i class="bi bi-person-plus" aria-hidden="true"></i>
-                                Registrar persona
-                                <i class="bi bi-arrow-up-right" aria-hidden="true"></i>
-                            </a>
-                        @endif
-
                         @if (Route::has('legajos.create'))
-                            <a href="{{ route('legajos.create') }}" class="home-button home-button-light">
+                            <a href="{{ route('legajos.create') }}" class="home-button home-button-primary">
                                 <i class="bi bi-folder-plus" aria-hidden="true"></i>
                                 Nuevo legajo
+                                <i class="bi bi-arrow-up-right" aria-hidden="true"></i>
                             </a>
                         @endif
                     </div>
@@ -78,19 +71,6 @@
             </div>
 
             <div class="home-area-grid">
-                @if (Route::has('personas.index'))
-                    <a href="{{ route('personas.index') }}" class="home-area-card home-area-card-purple">
-                @endif
-                    <span class="home-area-icon"><i class="bi bi-people" aria-hidden="true"></i></span>
-                    <span class="home-area-content">
-                        <strong>Personas</strong>
-                        <span>Consultá y buscá las personas registradas.</span>
-                    </span>
-                    <i class="bi bi-arrow-up-right home-area-arrow" aria-hidden="true"></i>
-                @if (Route::has('personas.index'))
-                    </a>
-                @endif
-
                 @if (Route::has('legajos.index'))
                     <a href="{{ route('legajos.index') }}" class="home-area-card home-area-card-blue">
                         <span class="home-area-icon"><i class="bi bi-folder2-open" aria-hidden="true"></i></span>

@@ -21,6 +21,7 @@ type AccountDetails = {
     team: string | null;
     role: string | null;
     createdAt: string | null;
+    lastAccess: string | null;
 };
 
 export default function Profile({
@@ -284,6 +285,18 @@ export default function Profile({
                                                       ).toLocaleDateString(
                                                           'es-AR',
                                                       )
+                                                    : 'No registrado'}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                                                Último acceso
+                                            </p>
+                                            <p className="mt-1 text-sm">
+                                                {account.lastAccess
+                                                    ? new Date(
+                                                          account.lastAccess,
+                                                      ).toLocaleString('es-AR')
                                                     : 'No registrado'}
                                             </p>
                                         </div>

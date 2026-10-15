@@ -39,16 +39,16 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
     const { isCurrentOrParentUrl } = useCurrentUrl();
 
     return (
-        <div className="px-4 py-6">
+        <div className="min-h-full bg-background px-4 py-6 sm:px-6 lg:px-8">
             <Heading
                 title="Mi cuenta"
                 description="Administrá tu información, seguridad y preferencias."
             />
 
-            <div className="flex flex-col lg:flex-row lg:space-x-12">
-                <aside className="w-full max-w-xl lg:w-48">
+            <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:gap-10">
+                <aside className="w-full lg:w-56 lg:shrink-0">
                     <nav
-                        className="grid grid-cols-1 gap-1 sm:grid-cols-2 lg:flex lg:flex-col"
+                        className="grid grid-cols-1 gap-1 rounded-xl border bg-card p-2 shadow-sm sm:grid-cols-2 lg:flex lg:flex-col"
                         aria-label="Secciones de mi cuenta"
                     >
                         {sidebarNavItems.map((item, index) => (
@@ -58,7 +58,8 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
                                 variant="ghost"
                                 asChild
                                 className={cn('w-full justify-start', {
-                                    'bg-muted': isCurrentOrParentUrl(item.href),
+                                    'bg-secondary font-semibold text-secondary-foreground hover:bg-secondary/80':
+                                        isCurrentOrParentUrl(item.href),
                                 })}
                             >
                                 <Link href={item.href}>
@@ -74,8 +75,8 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
 
                 <Separator className="my-6 lg:hidden" />
 
-                <div className="flex-1 md:max-w-2xl">
-                    <section className="max-w-xl space-y-12">
+                <div className="min-w-0 flex-1">
+                    <section className="max-w-3xl space-y-8">
                         {children}
                     </section>
                 </div>

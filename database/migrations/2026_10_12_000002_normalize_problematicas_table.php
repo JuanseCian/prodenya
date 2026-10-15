@@ -15,25 +15,47 @@ return new class extends Migration
 {
     private array $tablasConAuditoria = ['barrios', 'localidades', 'provincias', 'problematicas'];
 
+    private function tieneForeignKey(string $tabla, string $columna): bool
+    {
+        return collect(Schema::getForeignKeys($tabla))
+            ->contains(fn (array $foreignKey) => in_array($columna, $foreignKey['columns'], true));
+    }
+
     public function up(): void
     {
+        // SQLite rebuilds tables when changing foreign keys and cannot rebuild
+        // a table referenced by an existing view.
+        if (DB::getDriverName() === 'sqlite') {
+            DB::statement('DROP VIEW IF EXISTS `vista_personas_completa`');
+        }
+
         // Renombrado y tipo de id
-        Schema::table('legajo_problematica', fn (Blueprint $t) => $t->dropForeign(['problematica_id']));
+        if ($this->tieneForeignKey('legajo_problematica', 'problematica_id')) {
+            Schema::table('legajo_problematica', fn (Blueprint $t) => $t->dropForeign(['problematica_id']));
+        }
 
-        DB::statement('ALTER TABLE `problematica` MODIFY `id` INT UNSIGNED NOT NULL AUTO_INCREMENT');
-        DB::statement('ALTER TABLE `legajo_problematica` MODIFY `problematica_id` INT UNSIGNED NOT NULL');
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement('ALTER TABLE `problematica` MODIFY `id` INT UNSIGNED NOT NULL AUTO_INCREMENT');
+            DB::statement('ALTER TABLE `legajo_problematica` MODIFY `problematica_id` INT UNSIGNED NOT NULL');
+        }
 
-        Schema::rename('problematica', 'problematicas');
+        if (Schema::hasTable('problematica') && ! Schema::hasTable('problematicas')) {
+            Schema::rename('problematica', 'problematicas');
+        }
 
-        Schema::table('legajo_problematica', function (Blueprint $t) {
-            $t->foreign('problematica_id')->references('id')->on('problematicas')
-                ->onUpdate('cascade')->onDelete('restrict');
-        });
+        if (! $this->tieneForeignKey('legajo_problematica', 'problematica_id')) {
+            Schema::table('legajo_problematica', function (Blueprint $t) {
+                $t->foreign('problematica_id')->references('id')->on('problematicas')
+                    ->onUpdate('cascade')->onDelete('restrict');
+            });
+        }
 
         // Columnas de auditoría: mismo tipo que users.id y con clave foránea
         foreach ($this->tablasConAuditoria as $tabla) {
             foreach (['updated_by', 'deleted_by'] as $columna) {
-                DB::statement("ALTER TABLE `{$tabla}` MODIFY `{$columna}` BIGINT UNSIGNED NULL");
+                if (DB::getDriverName() !== 'sqlite') {
+                    DB::statement("ALTER TABLE `{$tabla}` MODIFY `{$columna}` BIGINT UNSIGNED NULL");
+                }
 
                 // Valores que no correspondan a un usuario existente se limpian
                 DB::table($tabla)
@@ -41,9 +63,11 @@ return new class extends Migration
                     ->whereNotIn($columna, DB::table('users')->select('id'))
                     ->update([$columna => null]);
 
-                Schema::table($tabla, function (Blueprint $t) use ($columna) {
-                    $t->foreign($columna)->references('id')->on('users')->nullOnDelete();
-                });
+                if (! $this->tieneForeignKey($tabla, $columna)) {
+                    Schema::table($tabla, function (Blueprint $t) use ($columna) {
+                        $t->foreign($columna)->references('id')->on('users')->nullOnDelete();
+                    });
+                }
             }
         }
     }

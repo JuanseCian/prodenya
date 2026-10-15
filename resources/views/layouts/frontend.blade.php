@@ -261,16 +261,210 @@
             .site-account-menu { max-width: calc(100vw - 32px); min-width: 250px; }
             .site-footer-inner { align-items: flex-start; flex-direction: column; padding: 20px 16px; }
         }
+
+        .site-shell { background: var(--page); position: relative; }
+        .site-page { display: flex; flex-direction: column; min-height: 100vh; margin-left: 0; }
+        .site-sidebar {
+            background: linear-gradient(170deg, #302b68 0%, #403b80 52%, #514b9f 100%);
+            bottom: 0;
+            box-shadow: -12px 0 32px rgba(49, 43, 104, 0.12);
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            left: auto;
+            overflow-y: auto;
+            padding: 22px 15px 16px;
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 276px;
+            z-index: 40;
+        }
+        .site-sidebar-brand { align-items: center; display: flex; gap: 11px; padding: 3px 10px 24px; }
+        .site-sidebar-brand .brand-mark { flex-shrink: 0; height: 44px; width: 44px; }
+        .site-sidebar-brand .brand-name { font-size: 1.02rem; }
+        .site-sidebar-brand .brand-caption { color: rgba(255, 255, 255, 0.6); font-size: 0.64rem; }
+        .site-sidebar-rule { background: rgba(255, 255, 255, 0.15); height: 1px; margin: 0 10px 23px; }
+        .site-sidebar-label { color: rgba(255, 255, 255, 0.45); font-size: 0.64rem; font-weight: 800; letter-spacing: 0.15em; padding: 0 12px 9px; text-transform: uppercase; }
+        .site-sidebar-nav { display: flex; flex-direction: column; gap: 5px; }
+        .site-sidebar-link {
+            align-items: center;
+            border: 1px solid transparent;
+            border-radius: 12px;
+            color: rgba(255, 255, 255, 0.72);
+            display: flex;
+            font-size: 0.86rem;
+            font-weight: 650;
+            gap: 12px;
+            padding: 12px 13px;
+            text-decoration: none;
+            transition: background-color 180ms ease, color 180ms ease, transform 180ms ease;
+        }
+        .site-sidebar-link i { color: rgba(255, 255, 255, 0.56); font-size: 1.03rem; width: 20px; }
+        .site-sidebar-link:hover { background: rgba(255, 255, 255, 0.1); color: #fff; transform: translateX(2px); }
+        .site-sidebar-link:hover i, .site-sidebar-link.is-active i { color: #fff; }
+        .site-sidebar-link.is-active { background: rgba(255, 255, 255, 0.14); border-color: rgba(255, 255, 255, 0.1); box-shadow: inset 3px 0 0 #9ce0bf; color: #fff; }
+        .site-sidebar-link.is-admin { background: rgba(156, 224, 191, 0.12); color: #dff8e9; margin-top: 6px; }
+        .site-sidebar-link.is-admin i { color: #9ce0bf; }
+        .site-sidebar-link.is-admin:hover { background: rgba(156, 224, 191, 0.2); }
+        .site-sidebar-spacer { flex: 1; min-height: 28px; }
+        .site-sidebar-user { align-items: center; background: rgba(0, 0, 0, 0.13); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 15px; display: flex; gap: 10px; padding: 11px; }
+        .site-sidebar-user-copy { min-width: 0; }
+        .site-sidebar-user-name { color: #fff; font-size: 0.78rem; font-weight: 750; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .site-sidebar-user-meta { color: rgba(255, 255, 255, 0.56); font-size: 0.67rem; margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .site-sidebar-account { position: relative; width: 100%; }
+        .site-sidebar-account-trigger { gap: 10px; justify-content: flex-start; padding: 8px; width: 100%; }
+        .site-sidebar-account-trigger .site-user-name { flex: 1; min-width: 0; text-align: left; }
+        .site-sidebar-account .site-account-menu { bottom: calc(100% + 10px); left: 0; min-width: 0; right: auto; top: auto; transform-origin: bottom left; width: 100%; }
+        .site-header { position: sticky; top: 0; }
+        .site-header-inner { max-width: none; }
+        .site-header-brand { display: none; }
+        .site-admin-quicklink { align-items: center; background: rgba(255, 255, 255, 0.14); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 10px; color: #fff; display: inline-flex; font-size: 0.79rem; font-weight: 750; gap: 7px; padding: 9px 12px; text-decoration: none; transition: background-color 180ms ease, transform 180ms ease; }
+        .site-admin-quicklink:hover { background: rgba(255, 255, 255, 0.23); color: #fff; transform: translateY(-1px); }
+        .site-sidebar-backdrop { background: rgba(24, 21, 57, 0.42); inset: 0; opacity: 0; pointer-events: none; position: fixed; transition: opacity 180ms ease; z-index: 35; }
+
+        @media (max-width: 1020px) {
+            .site-page { margin-left: 0; }
+            .site-sidebar { transform: translateX(105%); transition: transform 220ms ease; }
+            .site-shell.sidebar-open .site-sidebar { transform: translateX(0); }
+            .site-shell.sidebar-open .site-sidebar-backdrop { opacity: 1; pointer-events: auto; }
+            .site-header-brand { align-items: center; color: #fff; display: inline-flex; flex: 1; gap: 8px; margin-left: 4px; text-decoration: none; }
+            .site-header-brand .brand-mark { height: 36px; width: 36px; }
+            .site-header-brand .brand-name { font-size: 0.9rem; }
+            .site-header-brand .brand-caption { display: none; }
+            .site-header-brand .brand-divider { height: 28px; }
+            .site-user { margin-left: 8px; }
+        }
+
+        @media (max-width: 560px) {
+            .site-header-inner { min-height: 68px; padding: 9px 16px; }
+            .site-admin-quicklink { font-size: 0; gap: 0; height: 38px; padding: 9px 10px; width: 38px; }
+            .site-admin-quicklink i { font-size: 0.95rem; }
+            .site-user { border-left: 0; margin-left: 2px; padding-left: 0; }
+        }
+
+        .site-page { margin-left: 0; transition: margin-left 220ms ease; }
+        .site-sidebar { transform: translateX(105%); transition: transform 220ms ease; }
+        .site-shell.sidebar-open .site-sidebar { transform: translateX(0); }
+        .site-header-brand { display: inline-flex; }
+        .site-user-toggle { align-items: center; background: transparent; border: 0; border-radius: 999px; cursor: pointer; display: inline-flex; justify-content: center; padding: 2px; transition: box-shadow 180ms ease, transform 180ms ease; }
+        .site-user-toggle:hover, .site-user-toggle[aria-expanded="true"] { box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.17); transform: translateY(-1px); }
+        .site-user-toggle .site-user-avatar { height: 36px; width: 36px; }
+
+        .site-shell.sidebar-open .site-sidebar-backdrop { opacity: 1; pointer-events: auto; }
     </style>
 
     @stack('styles')
 </head>
 
 <body>
-    <div class="site-shell flex flex-col">
+    <div class="site-shell" id="site-shell">
+        <aside class="site-sidebar" id="site-sidebar" aria-label="Menú principal">
+            <a href="{{ route('home') }}" class="site-sidebar-brand" aria-label="Ir al inicio de Prodenya">
+                <img src="{{ asset('assets/img/SN.png') }}" class="brand-mark brand-mark-image" alt="San Nicolás">
+                <span>
+                    <span class="brand-name block">PRODENYA</span>
+                    <span class="brand-caption block">Gestión con propósito</span>
+                </span>
+            </a>
+            <div class="site-sidebar-rule" aria-hidden="true"></div>
+
+            <div class="site-sidebar-label">Espacios de trabajo</div>
+            <nav class="site-sidebar-nav">
+                <a href="{{ route('home') }}" class="site-sidebar-link {{ request()->routeIs('home') ? 'is-active' : '' }}">
+                    <i class="bi bi-house-door" aria-hidden="true"></i>
+                    Inicio
+                </a>
+
+                @auth
+                    @if (Route::has('legajos.index') && auth()->user()->tieneRol('admin', 'operador', 'consulta'))
+                        <a href="{{ route('legajos.index') }}" class="site-sidebar-link {{ request()->routeIs('legajos.*') ? 'is-active' : '' }}">
+                            <i class="bi bi-folder2-open" aria-hidden="true"></i>
+                            Legajos
+                        </a>
+                    @endif
+
+                    @if (Route::has('mailbox.index') && auth()->user()->tieneRol('admin'))
+                        <a href="{{ route('mailbox.index') }}" class="site-sidebar-link {{ request()->routeIs('mailbox.*') ? 'is-active' : '' }}">
+                            <i class="bi bi-envelope" aria-hidden="true"></i>
+                            Mailbox
+                        </a>
+                    @endif
+
+                    @if (Route::has('admin.home') && auth()->user()->tieneRol('admin'))
+                        <a href="{{ route('admin.home') }}" class="site-sidebar-link is-admin {{ request()->routeIs('admin.*') ? 'is-active' : '' }}">
+                            <i class="bi bi-speedometer2" aria-hidden="true"></i>
+                            Administrador
+                        </a>
+                    @endif
+                @endauth
+            </nav>
+
+            <div class="site-sidebar-spacer"></div>
+
+            @auth
+                @php
+                    $sidebarUser = auth()->user();
+                    $sidebarTeam = $sidebarUser->currentTeam;
+                    $sidebarRole = $sidebarTeam ? $sidebarUser->teamRole($sidebarTeam)?->label() : null;
+                    $sidebarInitials = collect(explode(' ', trim($sidebarUser->name)))
+                        ->filter()
+                        ->take(2)
+                        ->map(fn ($part) => strtoupper(substr($part, 0, 1)))
+                        ->join('');
+                @endphp
+                <details class="site-account site-sidebar-account">
+                    <summary class="site-account-trigger site-sidebar-account-trigger" aria-label="Abrir control de perfil">
+                        @if ($sidebarUser->avatar)
+                            <img src="{{ $sidebarUser->avatar }}" class="site-user-avatar site-user-avatar-image" alt="">
+                        @else
+                            <span class="site-user-avatar" aria-hidden="true">{{ $sidebarInitials }}</span>
+                        @endif
+                        <span class="site-user-name">{{ $sidebarUser->name }}</span>
+                        <i class="bi bi-chevron-up site-account-chevron" aria-hidden="true"></i>
+                    </summary>
+                    <div class="site-account-menu">
+                        <div class="site-account-menu-header">
+                            <div class="site-account-menu-name">{{ $sidebarUser->name }}</div>
+                            <div class="site-account-menu-email">{{ $sidebarUser->email }}</div>
+                            @if ($sidebarTeam || $sidebarRole)
+                                <div class="site-account-menu-meta">
+                                    {{ $sidebarTeam?->name ?? 'Sin equipo' }}{{ $sidebarRole ? ' · '.$sidebarRole : '' }}
+                                </div>
+                            @endif
+                        </div>
+
+                        @if (Route::has('profile.edit'))
+                            <a href="{{ route('profile.edit') }}" class="site-account-menu-link">
+                                <i class="bi bi-person-circle" aria-hidden="true"></i>
+                                Mi perfil
+                            </a>
+                        @endif
+                        @if (Route::has('security.edit'))
+                            <a href="{{ route('security.edit') }}" class="site-account-menu-link">
+                                <i class="bi bi-shield-lock" aria-hidden="true"></i>
+                                Seguridad y contraseña
+                            </a>
+                        @endif
+
+                        <div class="site-account-menu-separator"></div>
+                        <form method="POST" action="{{ route('logout') }}">
+                            @csrf
+                            <button type="submit" class="site-account-menu-logout">
+                                <i class="bi bi-box-arrow-right" aria-hidden="true"></i>
+                                Cerrar sesión
+                            </button>
+                        </form>
+                    </div>
+                </details>
+            @endauth
+        </aside>
+        <div class="site-sidebar-backdrop" data-sidebar-close aria-hidden="true"></div>
+
+        <div class="site-page">
         <header class="site-header">
             <div class="site-header-inner">
-                <a href="{{ route('home') }}" class="brand-lockup" aria-label="Ir al inicio de Prodenya">
+                <a href="{{ route('home') }}" class="brand-lockup site-header-brand" aria-label="Ir al inicio de Prodenya">
                     <img src="{{ asset('assets/img/SN.png') }}" class="brand-mark brand-mark-image" alt="San Nicolás">
                     <span class="brand-divider" aria-hidden="true"></span>
                     <span>
@@ -279,35 +473,10 @@
                     </span>
                 </a>
 
-                <nav class="site-nav" aria-label="Navegación principal">
-                    <a href="{{ route('home') }}" class="site-nav-link {{ request()->routeIs('home') ? 'is-active' : '' }}">
-                        <i class="bi bi-house-door" aria-hidden="true"></i>
-                        Inicio
-                    </a>
-
-                    @auth
-                        @if (Route::has('personas.create'))
-                            <a href="{{ route('personas.create') }}" class="site-nav-link {{ request()->routeIs('personas.*') ? 'is-active' : '' }}">
-                                <i class="bi bi-people" aria-hidden="true"></i>
-                                Personas
-                            </a>
-                        @endif
-
-                        @if (Route::has('legajos.create'))
-                            <a href="{{ route('legajos.create') }}" class="site-nav-link {{ request()->routeIs('legajos.*') ? 'is-active' : '' }}">
-                                <i class="bi bi-folder2-open" aria-hidden="true"></i>
-                                Legajos
-                            </a>
-                        @endif
-                    @endauth
-                </nav>
-
                 <div class="site-user">
                     @auth
                         @php
                             $accountUser = auth()->user();
-                            $accountTeam = $accountUser->currentTeam;
-                            $accountRole = $accountTeam ? $accountUser->teamRole($accountTeam)?->label() : null;
                             $accountInitials = collect(explode(' ', trim($accountUser->name)))
                                 ->filter()
                                 ->take(2)
@@ -315,50 +484,20 @@
                                 ->join('');
                         @endphp
 
-                        <details class="site-account">
-                            <summary class="site-account-trigger" aria-label="Abrir menú de cuenta">
-                                <span class="site-user-name">{{ $accountUser->name }}</span>
-                                @if ($accountUser->avatar)
-                                    <img src="{{ $accountUser->avatar }}" class="site-user-avatar site-user-avatar-image" alt="">
-                                @else
-                                    <span class="site-user-avatar" aria-hidden="true">{{ $accountInitials }}</span>
-                                @endif
-                                <i class="bi bi-chevron-down site-account-chevron" aria-hidden="true"></i>
-                            </summary>
-                            <div class="site-account-menu">
-                                <div class="site-account-menu-header">
-                                    <div class="site-account-menu-name">{{ $accountUser->name }}</div>
-                                    <div class="site-account-menu-email">{{ $accountUser->email }}</div>
-                                    @if ($accountTeam || $accountRole)
-                                        <div class="site-account-menu-meta">
-                                            {{ $accountTeam?->name ?? 'Sin equipo' }}{{ $accountRole ? ' · '.$accountRole : '' }}
-                                        </div>
-                                    @endif
-                                </div>
+                        <button type="button" class="site-user-toggle" data-sidebar-toggle aria-expanded="false" aria-label="Abrir menú lateral">
+                            @if ($accountUser->avatar)
+                                <img src="{{ $accountUser->avatar }}" class="site-user-avatar site-user-avatar-image" alt="">
+                            @else
+                                <span class="site-user-avatar" aria-hidden="true">{{ $accountInitials }}</span>
+                            @endif
+                        </button>
 
-                                @if (Route::has('profile.edit'))
-                                    <a href="{{ route('profile.edit') }}" class="site-account-menu-link">
-                                        <i class="bi bi-person-circle" aria-hidden="true"></i>
-                                        Mi perfil
-                                    </a>
-                                @endif
-                                @if (Route::has('security.edit'))
-                                    <a href="{{ route('security.edit') }}" class="site-account-menu-link">
-                                        <i class="bi bi-shield-lock" aria-hidden="true"></i>
-                                        Seguridad y contraseña
-                                    </a>
-                                @endif
-
-                                <div class="site-account-menu-separator"></div>
-                                <form method="POST" action="{{ route('logout') }}">
-                                    @csrf
-                                    <button type="submit" class="site-account-menu-logout">
-                                        <i class="bi bi-box-arrow-right" aria-hidden="true"></i>
-                                        Cerrar sesión
-                                    </button>
-                                </form>
-                            </div>
-                        </details>
+                        @if (Route::has('admin.home') && auth()->user()->tieneRol('admin'))
+                            <a href="{{ route('admin.home') }}" class="site-admin-quicklink">
+                                <i class="bi bi-shield-lock" aria-hidden="true"></i>
+                                <span>Administrador</span>
+                            </a>
+                        @endif
                     @else
                         <a href="{{ route('login') }}" class="site-nav-link">
                             <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i>
@@ -386,9 +525,29 @@
                 <small>© {{ date('Y') }} · Uso institucional</small>
             </div>
         </footer>
+        </div>
     </div>
 
     @stack('scripts')
+    <script>
+        (() => {
+            const shell = document.getElementById('site-shell');
+            const toggle = document.querySelector('[data-sidebar-toggle]');
+            const close = document.querySelector('[data-sidebar-close]');
+
+            if (!shell || !toggle || !close) return;
+
+            const setSidebarState = (isOpen) => {
+                shell.classList.toggle('sidebar-open', isOpen);
+                toggle.setAttribute('aria-expanded', String(isOpen));
+                toggle.setAttribute('aria-label', isOpen ? 'Cerrar menú' : 'Abrir menú');
+            };
+            const closeSidebar = () => setSidebarState(false);
+            toggle.addEventListener('click', () => setSidebarState(!shell.classList.contains('sidebar-open')));
+            close.addEventListener('click', closeSidebar);
+            document.querySelectorAll('.site-sidebar-link').forEach((link) => link.addEventListener('click', closeSidebar));
+        })();
+    </script>
 </body>
 
 </html>

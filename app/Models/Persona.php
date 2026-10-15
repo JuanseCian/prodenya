@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\Concerns\RegistraAutor;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Persona extends Model
@@ -14,6 +15,7 @@ class Persona extends Model
     protected $table = 'personas';
 
     const CREATED_AT = 'creado_en';
+
     const UPDATED_AT = 'actualizado_en';
 
     protected $fillable = [
@@ -31,6 +33,15 @@ class Persona extends Model
         'email',
         'observaciones',
         'activo',
+        'numero_legajo',
+        'motivo_ingreso',
+        'nivel_riesgo',
+        'origen_derivacion',
+        'profesional_id',
+        'fecha_apertura',
+        'estado',
+        'observaciones_legajo',
+        'motivo_ingreso_id',
     ];
 
     protected function casts(): array
@@ -38,6 +49,7 @@ class Persona extends Model
         return [
             'fecha_nacimiento' => 'date',
             'activo' => 'boolean',
+            'fecha_apertura' => 'date',
         ];
     }
 
@@ -62,9 +74,24 @@ class Persona extends Model
             ->where('fecha_vencimiento', '>=', now());
     }
 
-    public function legajos(): HasMany
+    public function problematicas(): BelongsToMany
     {
-        return $this->hasMany(Legajo::class, 'persona_id');
+        return $this->belongsToMany(
+            Problematica::class,
+            'persona_problematica',
+            'persona_id',
+            'problematica_id',
+        );
+    }
+
+    public function profesional(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'profesional_id');
+    }
+
+    public function motivoIngreso(): BelongsTo
+    {
+        return $this->belongsTo(MotivoIngreso::class, 'motivo_ingreso_id');
     }
 
     public function documentos(): HasMany
@@ -75,5 +102,28 @@ class Persona extends Model
     public function getEdadAttribute(): int
     {
         return $this->fecha_nacimiento->age;
+    }
+
+    public static function generarNumeroLegajo(self $persona): string
+    {
+        $soloLetras = static fn (string $texto): string => (string) str($texto)
+            ->ascii()
+            ->upper()
+            ->replaceMatches('/[^A-Z]/', '');
+        $base = sprintf(
+            '%s-%s-%s',
+            str_pad(substr($soloLetras($persona->apellido), 0, 3), 3, 'X'),
+            str_pad(substr($soloLetras($persona->nombre), 0, 3), 3, 'X'),
+            str_pad(substr(preg_replace('/\D/', '', (string) $persona->dni), -3), 3, '0', STR_PAD_LEFT),
+        );
+
+        $numero = $base;
+        $sufijo = 1;
+
+        while (static::where('numero_legajo', $numero)->exists()) {
+            $numero = "{$base}-".++$sufijo;
+        }
+
+        return $numero;
     }
 }

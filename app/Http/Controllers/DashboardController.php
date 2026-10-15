@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Legajo;
 use App\Models\Persona;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -25,19 +24,20 @@ class DashboardController extends Controller
                     'localidad' => $persona->localidad?->nombre,
                     'fechaAlta' => $persona->creado_en->format('d/m/Y'),
                 ]),
-            'legajosRecientes' => Legajo::with('persona')
-                ->latest('creado_en')
+            'legajosRecientes' => Persona::query()
+                ->whereNotNull('numero_legajo')
+                ->latest('fecha_apertura')
                 ->take(6)
                 ->get()
-                ->map(fn (Legajo $legajo) => [
-                    'id' => $legajo->id,
-                    'numero' => $legajo->numero_legajo,
-                    'persona' => "{$legajo->persona->apellido}, {$legajo->persona->nombre}",
-                    'dni' => $legajo->persona->dni,
-                    'riesgo' => $legajo->nivel_riesgo,
-                    'estado' => $legajo->estado,
-                    'fechaApertura' => $legajo->fecha_apertura->format('d/m/Y'),
-                    'motivo' => $legajo->motivo_ingreso,
+                ->map(fn (Persona $persona) => [
+                    'id' => $persona->id,
+                    'numero' => $persona->numero_legajo,
+                    'persona' => "{$persona->apellido}, {$persona->nombre}",
+                    'dni' => $persona->dni,
+                    'riesgo' => $persona->nivel_riesgo,
+                    'estado' => $persona->estado,
+                    'fechaApertura' => $persona->fecha_apertura?->format('d/m/Y'),
+                    'motivo' => $persona->motivo_ingreso,
                 ]),
         ]);
     }

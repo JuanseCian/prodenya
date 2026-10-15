@@ -1,8 +1,9 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { FolderPlus, Search, Users } from 'lucide-react';
+import { FolderPlus, Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
-import Paginacion, { type Paginador } from '@/components/paginacion-listado';
+import Paginacion from '@/components/paginacion-listado';
+import type {Paginador} from '@/components/paginacion-listado';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -61,7 +62,9 @@ export default function LegajosIndex({ legajos, filtros, estados, status }: Lega
             nivel === (filtros.nivel_riesgo ?? '') &&
             estado === (filtros.estado ?? '');
 
-        if (sinCambios) return;
+        if (sinCambios) {
+return;
+}
 
         const timeout = setTimeout(() => {
             router.get(
@@ -102,18 +105,11 @@ export default function LegajosIndex({ legajos, filtros, estados, status }: Lega
                             Legajos
                         </h2>
                         <p className="mt-2 text-sm text-[#2B2F36]/65">
-                            Buscá por número de legajo, nombre, apellido o DNI.
+                            Buscá por número de legajo, problemática, nombre, apellido o DNI.
                         </p>
                     </div>
 
                     <div className="flex flex-wrap gap-2">
-                        <Link
-                            href="/personas"
-                            className="inline-flex h-11 items-center gap-2 rounded-md border border-[#D5D1C6] bg-white px-4 text-sm font-semibold text-[#2C4A5E] transition hover:border-[#2C4A5E]/40"
-                        >
-                            <Users size={16} />
-                            Ver personas
-                        </Link>
                         <Link
                             href="/legajos/create"
                             className="inline-flex h-11 items-center gap-2 rounded-md bg-[#2C4A5E] px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#1F394B]"
@@ -143,7 +139,7 @@ export default function LegajosIndex({ legajos, filtros, estados, status }: Lega
                             <Input
                                 value={buscar}
                                 onChange={(event) => setBuscar(event.target.value)}
-                                placeholder="Buscar legajo, nombre o DNI…"
+                                    placeholder="Buscar legajo, problemática, nombre o DNI…"
                                 className="h-11 border-[#D5D1C6] bg-white pl-10 text-[#2B2F36] shadow-none focus-visible:border-[#2C4A5E] focus-visible:ring-[#2C4A5E]/20"
                             />
                         </div>

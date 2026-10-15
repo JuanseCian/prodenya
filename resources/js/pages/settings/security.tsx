@@ -24,6 +24,7 @@ type Session = {
 
 type Props = {
     passwordRules: string;
+    passwordRequirements: string;
     canManageSessions: boolean;
     sessions: Session[];
 } & ManagePasskeysProps &
@@ -143,9 +144,9 @@ export default function Security(props: Props) {
                                     />
                                 </div>
                                 <p className="rounded-lg bg-muted/40 p-3 text-xs leading-relaxed text-muted-foreground">
-                                    Requisitos configurados por el sistema:{' '}
+                                    Requisitos de contraseña:{' '}
                                     <span className="font-medium text-foreground">
-                                        {props.passwordRules}
+                                        {props.passwordRequirements}
                                     </span>
                                 </p>
                                 <div className="flex flex-wrap items-center gap-3">

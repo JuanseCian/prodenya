@@ -47,19 +47,21 @@ export default function DeleteTeamModal({ team, open, onOpenChange }: Props) {
                     {({ errors, processing }) => (
                         <>
                             <DialogHeader>
-                                <DialogTitle>Are you sure?</DialogTitle>
+                                <DialogTitle>
+                                    ¿Confirmás esta acción?
+                                </DialogTitle>
                                 <DialogDescription>
-                                    This action cannot be undone. This will
-                                    permanently delete the team{' '}
-                                    <strong>"{team.name}"</strong>.
+                                    Esta acción no se puede deshacer. Se
+                                    eliminará permanentemente el equipo{' '}
+                                    <strong>“{team.name}”</strong>.
                                 </DialogDescription>
                             </DialogHeader>
 
                             <div className="space-y-4 py-4">
                                 <div className="grid gap-2">
                                     <Label htmlFor="confirmation-name">
-                                        Type <strong>"{team.name}"</strong> to
-                                        confirm
+                                        Escribí <strong>“{team.name}”</strong>{' '}
+                                        para confirmar
                                     </Label>
                                     <Input
                                         id="confirmation-name"
@@ -71,7 +73,7 @@ export default function DeleteTeamModal({ team, open, onOpenChange }: Props) {
                                                 event.target.value,
                                             )
                                         }
-                                        placeholder="Enter team name"
+                                        placeholder="Ingresá el nombre del equipo"
                                         autoComplete="off"
                                     />
                                     <InputError message={errors.name} />
@@ -80,7 +82,9 @@ export default function DeleteTeamModal({ team, open, onOpenChange }: Props) {
 
                             <DialogFooter className="gap-2">
                                 <DialogClose asChild>
-                                    <Button variant="secondary">Cancel</Button>
+                                    <Button variant="secondary">
+                                        Cancelar
+                                    </Button>
                                 </DialogClose>
 
                                 <Button
@@ -89,7 +93,7 @@ export default function DeleteTeamModal({ team, open, onOpenChange }: Props) {
                                     data-test="delete-team-confirm"
                                     disabled={!canDeleteTeam || processing}
                                 >
-                                    Delete team
+                                    Eliminar equipo
                                 </Button>
                             </DialogFooter>
                         </>

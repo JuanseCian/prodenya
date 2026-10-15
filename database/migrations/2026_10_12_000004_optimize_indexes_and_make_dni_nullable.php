@@ -16,39 +16,65 @@ return new class extends Migration
     public function up(): void
     {
         // --- personas ---
-        DB::statement('ALTER TABLE `personas` MODIFY `dni` VARCHAR(15) NULL');
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement('ALTER TABLE `personas` MODIFY `dni` VARCHAR(15) NULL');
+        }
 
-        Schema::table('personas', function (Blueprint $table) {
-            $table->index(['activo', 'apellido', 'nombre'], 'idx_persona_activo_apellido_nombre');
-        });
+        if (! Schema::hasIndex('personas', 'idx_persona_activo_apellido_nombre')) {
+            Schema::table('personas', function (Blueprint $table) {
+                $table->index(['activo', 'apellido', 'nombre'], 'idx_persona_activo_apellido_nombre');
+            });
+        }
 
         Schema::table('personas', function (Blueprint $table) {
             // idx_persona_dni duplicaba a personas_dni_unique
-            $table->dropIndex('idx_persona_dni');
+            if (Schema::hasIndex('personas', 'idx_persona_dni')) {
+                $table->dropIndex('idx_persona_dni');
+            }
+
             // lo cubre el índice nuevo (activo, apellido, nombre)
-            $table->dropIndex('idx_persona_apellido_nombre');
+            if (Schema::hasIndex('personas', 'idx_persona_apellido_nombre')) {
+                $table->dropIndex('idx_persona_apellido_nombre');
+            }
         });
 
         // --- legajos ---
         // El índice nuevo se crea antes de borrar el viejo: la clave foránea
         // legajos_persona_id_foreign necesita siempre un índice que empiece por persona_id.
-        Schema::table('legajos', function (Blueprint $table) {
-            $table->index(['persona_id', 'estado'], 'idx_legajo_persona_estado');
-            $table->index(['estado', 'creado_en'], 'idx_legajo_estado_creado');
-        });
+        if (! Schema::hasIndex('legajos', 'idx_legajo_persona_estado')) {
+            Schema::table('legajos', function (Blueprint $table) {
+                $table->index(['persona_id', 'estado'], 'idx_legajo_persona_estado');
+            });
+        }
 
-        Schema::table('legajos', fn (Blueprint $table) => $table->dropIndex('idx_legajo_persona'));
+        if (! Schema::hasIndex('legajos', 'idx_legajo_estado_creado')) {
+            Schema::table('legajos', function (Blueprint $table) {
+                $table->index(['estado', 'creado_en'], 'idx_legajo_estado_creado');
+            });
+        }
+
+        if (Schema::hasIndex('legajos', 'idx_legajo_persona')) {
+            Schema::table('legajos', fn (Blueprint $table) => $table->dropIndex('idx_legajo_persona'));
+        }
 
         // --- auditoría (las tablas que más crecen) ---
-        Schema::table('auditoria_accesos_legajo', function (Blueprint $table) {
-            $table->index(['legajo_id', 'fecha_acceso'], 'idx_auditlegajo_legajo_fecha');
-        });
-        Schema::table('auditoria_accesos_legajo', fn (Blueprint $table) => $table->dropIndex('idx_auditlegajo_legajo'));
+        if (! Schema::hasIndex('auditoria_accesos_legajo', 'idx_auditlegajo_legajo_fecha')) {
+            Schema::table('auditoria_accesos_legajo', function (Blueprint $table) {
+                $table->index(['legajo_id', 'fecha_acceso'], 'idx_auditlegajo_legajo_fecha');
+            });
+        }
+        if (Schema::hasIndex('auditoria_accesos_legajo', 'idx_auditlegajo_legajo')) {
+            Schema::table('auditoria_accesos_legajo', fn (Blueprint $table) => $table->dropIndex('idx_auditlegajo_legajo'));
+        }
 
-        Schema::table('auditoria_descargas', function (Blueprint $table) {
-            $table->index(['documento_id', 'fecha_descarga'], 'idx_auditoria_documento_fecha');
-        });
-        Schema::table('auditoria_descargas', fn (Blueprint $table) => $table->dropIndex('idx_auditoria_documento'));
+        if (! Schema::hasIndex('auditoria_descargas', 'idx_auditoria_documento_fecha')) {
+            Schema::table('auditoria_descargas', function (Blueprint $table) {
+                $table->index(['documento_id', 'fecha_descarga'], 'idx_auditoria_documento_fecha');
+            });
+        }
+        if (Schema::hasIndex('auditoria_descargas', 'idx_auditoria_documento')) {
+            Schema::table('auditoria_descargas', fn (Blueprint $table) => $table->dropIndex('idx_auditoria_documento'));
+        }
     }
 
     public function down(): void
@@ -77,6 +103,8 @@ return new class extends Migration
             );
         }
 
-        DB::statement('ALTER TABLE `personas` MODIFY `dni` VARCHAR(15) NOT NULL');
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement('ALTER TABLE `personas` MODIFY `dni` VARCHAR(15) NOT NULL');
+        }
     }
 };

@@ -1,23 +1,16 @@
 <?php
 
 use App\Http\Controllers\LegajoController;
-use App\Http\Controllers\PersonaController;
 use App\Models\Barrio;
 use App\Models\Localidad;
+use App\Models\Persona;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth'])->group(function () {
-
-    // ── Escritura: admin y operador ─────────────────────────────────────
-    // (las rutas fijas como personas/nueva y legajos/create van antes que
-    //  las que llevan {persona} / {legajo}; además esas usan whereNumber)
+    // Legajos es la única experiencia visible. Estas rutas mantienen enlaces antiguos funcionando.
     Route::middleware('rol:admin,operador')->group(function () {
-        Route::get('personas/nueva', [PersonaController::class, 'create'])->name('personas.create');
-        Route::post('personas', [PersonaController::class, 'store'])->name('personas.store');
-        Route::get('/personas/{persona}/edit', [PersonaController::class, 'edit'])->name('personas.edit')->whereNumber('persona');
-        Route::put('/personas/{persona}', [PersonaController::class, 'update'])->name('personas.update')->whereNumber('persona');
-
+        Route::get('personas/nueva', fn () => redirect()->route('legajos.create'))->name('personas.create');
         Route::get('legajos/create', [LegajoController::class, 'create'])->name('legajos.create');
         Route::post('legajos', [LegajoController::class, 'store'])->name('legajos.store');
         Route::get('/legajos/{legajo}/edit', [LegajoController::class, 'edit'])->name('legajos.edit')->whereNumber('legajo');
@@ -26,15 +19,11 @@ Route::middleware(['auth'])->group(function () {
         Route::patch('/legajos/{legajo}/reabrir', [LegajoController::class, 'reabrir'])->name('legajos.reabrir')->whereNumber('legajo');
     });
 
-    // ── Baja de personas: solo admin ────────────────────────────────────
-    Route::middleware('rol:admin')->group(function () {
-        Route::delete('/personas/{persona}', [PersonaController::class, 'destroy'])->name('personas.destroy')->whereNumber('persona');
-    });
-
     // ── Lectura: admin, operador y consulta ─────────────────────────────
     Route::middleware('rol:admin,operador,consulta')->group(function () {
-        Route::get('/personas', [PersonaController::class, 'index'])->name('personas.index');
-        Route::get('/personas/{persona}', [PersonaController::class, 'show'])->name('personas.show')->whereNumber('persona');
+        Route::get('/personas', fn () => redirect()->route('legajos.index'))->name('personas.index');
+        Route::get('/personas/{persona}', fn (Persona $persona) => redirect()->route('legajos.show', $persona->id))
+            ->name('personas.show')->whereNumber('persona');
         Route::get('/legajos', [LegajoController::class, 'index'])->name('legajos.index');
         Route::get('/legajos/{legajo}', [LegajoController::class, 'show'])->name('legajos.show')->whereNumber('legajo');
 

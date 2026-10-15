@@ -1,6 +1,7 @@
 import { router } from '@inertiajs/react';
 import { useEffect } from 'react';
 import { toast } from 'sonner';
+import { ProdenyaToast } from '@/components/prodenya-toast';
 import type { FlashToast } from '@/types/ui';
 
 export function useFlashToast(): void {
@@ -13,7 +14,17 @@ export function useFlashToast(): void {
                 return;
             }
 
-            toast[data.type](data.message);
+            toast.custom(
+                (id) => (
+                    <ProdenyaToast
+                        type={data.type}
+                        title={data.title}
+                        message={data.message}
+                        onDismiss={() => toast.dismiss(id)}
+                    />
+                ),
+                { duration: 5000 },
+            );
         });
     }, []);
 }

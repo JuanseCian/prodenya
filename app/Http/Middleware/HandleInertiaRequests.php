@@ -18,7 +18,7 @@ class HandleInertiaRequests extends Middleware
 
     public function rootView(Request $request)
     {
-        if ($request->routeIs('personas.create', 'legajos.create')) {
+        if ($request->routeIs('legajos.*', 'mailbox.index')) {
             return 'layouts.frontend';
         }
 
@@ -51,6 +51,9 @@ class HandleInertiaRequests extends Middleware
             'name' => config('app.name'),
             'auth' => [
                 'user' => $user,
+            ],
+            'can' => [
+                'accessMailbox' => $user?->tieneRol('admin') ?? false,
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];

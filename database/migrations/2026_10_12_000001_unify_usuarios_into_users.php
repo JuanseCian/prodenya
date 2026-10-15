@@ -26,31 +26,51 @@ return new class extends Migration
         ['auditoria_descargas', 'usuario_id', false, 'restrict'],
     ];
 
+    private function tieneForeignKey(string $tabla, string $columna): bool
+    {
+        return collect(Schema::getForeignKeys($tabla))
+            ->contains(fn (array $foreignKey) => in_array($columna, $foreignKey['columns'], true));
+    }
+
     public function up(): void
     {
         // 1) users incorpora lo que tenía usuarios
-        Schema::table('users', function (Blueprint $table) {
-            $table->unsignedInteger('rol_id')->nullable()->after('password');
-            $table->boolean('activo')->default(true)->after('rol_id');
-            $table->dateTime('ultimo_acceso')->nullable()->after('activo');
+        if (! Schema::hasColumn('users', 'rol_id')) {
+            Schema::table('users', fn (Blueprint $table) => $table->unsignedInteger('rol_id')->nullable()->after('password'));
+        }
 
-            $table->foreign('rol_id')->references('id')->on('roles')
-                ->onUpdate('cascade')->onDelete('restrict');
-        });
+        if (! Schema::hasColumn('users', 'activo')) {
+            Schema::table('users', fn (Blueprint $table) => $table->boolean('activo')->default(true)->after('rol_id'));
+        }
+
+        if (! Schema::hasColumn('users', 'ultimo_acceso')) {
+            Schema::table('users', fn (Blueprint $table) => $table->dateTime('ultimo_acceso')->nullable()->after('activo'));
+        }
+
+        if (! $this->tieneForeignKey('users', 'rol_id')) {
+            Schema::table('users', function (Blueprint $table) {
+                $table->foreign('rol_id')->references('id')->on('roles')
+                    ->onUpdate('cascade')->onDelete('restrict');
+            });
+        }
 
         // 2) Se sueltan las claves foráneas que apuntaban a usuarios
         foreach ($this->referencias as [$tabla, $columna]) {
-            Schema::table($tabla, fn (Blueprint $t) => $t->dropForeign([$columna]));
+            if ($this->tieneForeignKey($tabla, $columna)) {
+                Schema::table($tabla, fn (Blueprint $t) => $t->dropForeign([$columna]));
+            }
         }
 
         // 3) Las columnas pasan a bigint unsigned (el tipo de users.id)
         foreach ($this->referencias as [$tabla, $columna, $admiteNull]) {
-            DB::statement(sprintf(
-                'ALTER TABLE `%s` MODIFY `%s` BIGINT UNSIGNED %s',
-                $tabla,
-                $columna,
-                $admiteNull ? 'NULL' : 'NOT NULL'
-            ));
+            if (DB::getDriverName() !== 'sqlite') {
+                DB::statement(sprintf(
+                    'ALTER TABLE `%s` MODIFY `%s` BIGINT UNSIGNED %s',
+                    $tabla,
+                    $columna,
+                    $admiteNull ? 'NULL' : 'NOT NULL'
+                ));
+            }
         }
 
         // 4) Se emparejan los usuarios por email: usuarios.id => users.id
@@ -98,11 +118,13 @@ return new class extends Migration
 
         // 6) Nuevas claves foráneas hacia users
         foreach ($this->referencias as [$tabla, $columna, , $alBorrar]) {
-            Schema::table($tabla, function (Blueprint $t) use ($columna, $alBorrar) {
-                $fk = $t->foreign($columna)->references('id')->on('users')->onUpdate('cascade');
+            if (! $this->tieneForeignKey($tabla, $columna)) {
+                Schema::table($tabla, function (Blueprint $t) use ($columna, $alBorrar) {
+                    $fk = $t->foreign($columna)->references('id')->on('users')->onUpdate('cascade');
 
-                $alBorrar === 'set null' ? $fk->nullOnDelete() : $fk->restrictOnDelete();
-            });
+                    $alBorrar === 'set null' ? $fk->nullOnDelete() : $fk->restrictOnDelete();
+                });
+            }
         }
 
         // 7) usuarios ya no se usa

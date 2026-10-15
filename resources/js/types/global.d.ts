@@ -16,6 +16,9 @@ declare module '@inertiajs/core' {
             sidebarOpen: boolean;
             currentTeam: Team | null;
             teams: Team[];
+            can: {
+                accessMailbox: boolean;
+            };
             [key: string]: unknown;
         };
     }

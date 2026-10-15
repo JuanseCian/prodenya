@@ -75,7 +75,11 @@ class User extends Authenticatable implements PasskeyUser
      */
     public function tieneRol(string ...$roles): bool
     {
-        return $this->activo && in_array($this->rol?->nombre, $roles, true);
+        $activo = $this->getAttribute('activo');
+
+        // Legacy databases may not have the post-pull `activo` column yet.
+        return ($activo === null || $activo)
+            && in_array($this->rol?->nombre, $roles, true);
     }
 
     public function esAdmin(): bool

@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, FolderGit2, LayoutGrid } from 'lucide-react';
+import { Home, LayoutGrid, Mail, UserRound } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -25,22 +25,25 @@ export function AppSidebar() {
 
     const mainNavItems: NavItem[] = [
         {
-            title: 'Dashboard',
+            title: 'Panel principal',
             href: dashboardUrl,
             icon: LayoutGrid,
         },
+        ...(page.props.can?.accessMailbox
+            ? [{ title: 'Mailbox', href: '/mailbox', icon: Mail }]
+            : []),
     ];
 
     const footerNavItems: NavItem[] = [
         {
-            title: 'Repository',
-            href: 'https://github.com/laravel/react-starter-kit',
-            icon: FolderGit2,
+            title: 'Inicio institucional',
+            href: '/',
+            icon: Home,
         },
         {
-            title: 'Documentation',
-            href: 'https://laravel.com/docs/starter-kits#react',
-            icon: BookOpen,
+            title: 'Mi cuenta',
+            href: '/settings/profile',
+            icon: UserRound,
         },
     ];
 

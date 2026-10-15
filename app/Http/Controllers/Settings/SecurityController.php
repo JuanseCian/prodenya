@@ -42,6 +42,9 @@ class SecurityController extends Controller
                     ->all()
                 : [],
             'passwordRules' => Password::defaults()->toPasswordRulesString(),
+            'passwordRequirements' => app()->isProduction()
+                ? 'Mínimo 12 caracteres, mayúsculas, minúsculas, números y símbolos.'
+                : 'Se aplican las reglas estándar configuradas por el sistema.',
             'canManageSessions' => $this->canManageSessions(),
             'sessions' => $this->sessions($request),
         ];

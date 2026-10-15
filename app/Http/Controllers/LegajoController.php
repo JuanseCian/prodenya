@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\StoreLegajoRequest;
+use App\Http\Requests\StorePersonaRequest;
 use App\Http\Requests\UpdateLegajoRequest;
-use App\Models\Legajo;
 use App\Models\Persona;
+use App\Models\MotivoIngreso;
 use App\Models\Problematica;
+use App\Models\Provincia;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -27,47 +28,28 @@ class LegajoController extends Controller
             : null;
         $estado = $request->query('estado') ?: null;
 
-        $legajos = Legajo::with(['persona', 'problematicas'])
-            ->when($buscar !== '', function ($consulta) use ($buscar, $digitos) {
-                $consulta->where(function ($q) use ($buscar, $digitos) {
-                    $q->where('numero_legajo', 'like', "%{$buscar}%")
-                        ->orWhereHas('persona', function ($persona) use ($buscar, $digitos) {
-                            $persona->where('nombre', 'like', "%{$buscar}%")
-                                ->orWhere('apellido', 'like', "%{$buscar}%")
-                                ->orWhereRaw("CONCAT(nombre, ' ', apellido) like ?", ["%{$buscar}%"])
-                                ->orWhereRaw("CONCAT(apellido, ' ', nombre) like ?", ["%{$buscar}%"]);
+        $legajos = Persona::with(['problematicas', 'profesional'])
+            ->where('activo', true)
+            ->whereNotNull('numero_legajo')
+            ->when($buscar !== '', function ($query) use ($buscar, $digitos) {
+                $query->where(function ($query) use ($buscar, $digitos) {
+                    $query->where('numero_legajo', 'like', "%{$buscar}%")
+                        ->orWhere('nombre', 'like', "%{$buscar}%")
+                        ->orWhere('apellido', 'like', "%{$buscar}%")
+                        ->orWhereHas('problematicas', fn ($problematica) => $problematica->where('nombre', 'like', "%{$buscar}%"));
 
-                            if ($digitos !== '') {
-                                $persona->orWhere('dni', 'like', "%{$digitos}%");
-                            }
-                        });
+                    if ($digitos !== '') {
+                        $query->orWhere('dni', 'like', "%{$digitos}%");
+                    }
                 });
             })
-            ->when($nivel, fn ($q, $valor) => $q->where('nivel_riesgo', $valor))
-            ->when($estado, fn ($q, $valor) => $q->where('estado', $valor))
-            ->latest('creado_en')
+            ->when($nivel, fn ($query, $value) => $query->where('nivel_riesgo', $value))
+            ->when($estado, fn ($query, $value) => $query->where('estado', $value))
+            ->latest('fecha_apertura')
             ->paginate(15)
             ->withQueryString();
 
-        // Nombres de los profesionales de esta página (una sola consulta).
-        $profesionales = User::whereIn('id', $legajos->pluck('profesional_id')->filter())
-            ->pluck('name', 'id');
-
-        $legajos->through(fn (Legajo $legajo) => [
-            'id' => $legajo->id,
-            'numero_legajo' => $legajo->numero_legajo,
-            'persona' => $legajo->persona ? [
-                'id' => $legajo->persona->id,
-                'nombre_completo' => "{$legajo->persona->apellido}, {$legajo->persona->nombre}",
-                'dni' => $legajo->persona->dni,
-            ] : null,
-            'problematicas' => $legajo->problematicas->pluck('nombre')->values(),
-            'nivel_riesgo' => $legajo->nivel_riesgo,
-            'estado' => $legajo->estado,
-            'origen_derivacion' => $legajo->origen_derivacion,
-            'profesional' => $profesionales->get($legajo->profesional_id),
-            'fecha_apertura' => ($legajo->fecha_apertura ?? $legajo->creado_en)?->format('d/m/Y'),
-        ]);
+        $legajos->through(fn (Persona $persona) => $this->filaLegajo($persona));
 
         return Inertia::render('legajos/index', [
             'legajos' => $legajos,
@@ -76,60 +58,33 @@ class LegajoController extends Controller
                 'nivel_riesgo' => $nivel,
                 'estado' => $estado,
             ],
-            'estados' => Legajo::query()->distinct()->orderBy('estado')->pluck('estado'),
+            'estados' => Persona::whereNotNull('numero_legajo')->distinct()->orderBy('estado')->pluck('estado'),
             'status' => session('status'),
         ]);
     }
 
     public function create(): Response
     {
-        return Inertia::render('legajos/create', [
-            'personas' => Persona::with(['localidad', 'barrio'])
-                ->where('activo', true)
-                ->orderBy('apellido')
-                ->get()
-                ->map(fn (Persona $persona) => [
-                    'id' => $persona->id,
-                    'nombre' => $persona->nombre,
-                    'apellido' => $persona->apellido,
-                    'dni' => $persona->dni,
-                    'fechaNacimiento' => $persona->fecha_nacimiento->format('d/m/Y'),
-                    'edad' => $persona->fecha_nacimiento->age,
-                    'genero' => $persona->genero,
-                    'direccion' => trim("{$persona->direccion_calle} {$persona->direccion_numero}"),
-                    'localidad' => $persona->localidad?->nombre,
-                    'barrio' => $persona->barrio?->nombre,
-                    'telefono' => $persona->telefono,
-                    'email' => $persona->email,
-                ]),
+        return Inertia::render('personas/create', [
+            'modoLegajo' => true,
+            'provincias' => Provincia::orderBy('nombre')->get(['id', 'nombre']),
             'problematicas' => Problematica::orderBy('nombre')->get(['id', 'nombre']),
+            'motivosIngreso' => MotivoIngreso::where('activo', true)->orderBy('nombre')->get(['id', 'nombre']),
             'profesionales' => $this->profesionalesActivos(),
         ]);
     }
 
-    public function store(StoreLegajoRequest $request)
+    public function store(StorePersonaRequest $request)
     {
         $datos = $request->validated();
 
-        // Solo se abren legajos a personas activas.
-        $persona = Persona::where('activo', true)->findOrFail($datos['persona_id']);
-
         try {
-            $legajo = DB::transaction(function () use ($datos, $persona, $request) {
-                $legajo = Legajo::crearConNumeroUnico($persona, [
-                    'motivo_ingreso' => $datos['motivo_ingreso'],
-                    'nivel_riesgo' => $datos['nivel_riesgo'],
-                    'origen_derivacion' => $datos['origen_derivacion'],
-                    'profesional_id' => $datos['profesional_id'] ?? null,
-                    'fecha_apertura' => now()->toDateString(),
-                    'observaciones' => $datos['observaciones'] ?? null,
-                    'estado' => 'Abierto',
-                    'creado_por' => $request->user()->id,
-                ]);
+            $persona = DB::transaction(function () use ($datos) {
+                $persona = Persona::create($this->datosPersonales($datos));
+                $persona->update($this->datosLegajo($datos, $persona));
+                $persona->problematicas()->sync($datos['legajo_problematicas']);
 
-                $legajo->problematicas()->sync($datos['problematicas']);
-
-                return $legajo;
+                return $persona->fresh('problematicas');
             });
         } catch (Throwable $e) {
             report($e);
@@ -141,65 +96,68 @@ class LegajoController extends Controller
             ]);
         }
 
-        return redirect()->route('home')
-            ->with('status', "Legajo {$legajo->numero_legajo} creado correctamente.");
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'title' => 'Legajo creado',
+            'message' => "El legajo {$persona->numero_legajo} quedó abierto y listo para trabajar.",
+        ]);
+
+        return redirect()->route('legajos.index');
     }
 
-    public function show(Request $request, Legajo $legajo): Response
+    public function show(Persona $legajo): Response
     {
-        $legajo->load(['persona', 'problematicas']);
-
-        $this->registrarAcceso($request, $legajo, 'Visualizacion');
+        $legajo->load(['problematicas', 'profesional', 'motivoIngreso']);
 
         return Inertia::render('legajos/show', [
             'legajo' => [
                 'id' => $legajo->id,
                 'numero_legajo' => $legajo->numero_legajo,
                 'motivo_ingreso' => $legajo->motivo_ingreso,
+                'motivo_ingreso_id' => $legajo->motivo_ingreso_id,
+                'motivo_ingreso_nombre' => $legajo->motivoIngreso?->nombre,
                 'nivel_riesgo' => $legajo->nivel_riesgo,
                 'estado' => $legajo->estado,
                 'origen_derivacion' => $legajo->origen_derivacion,
-                'observaciones' => $legajo->observaciones,
-                'fecha_apertura' => ($legajo->fecha_apertura ?? $legajo->creado_en)?->format('d/m/Y'),
-                'profesional' => $legajo->profesional_id
-                    ? User::find($legajo->profesional_id)?->name
-                    : null,
+                'observaciones' => $legajo->observaciones_legajo,
+                'fecha_apertura' => $legajo->fecha_apertura?->format('d/m/Y'),
+                'profesional' => $legajo->profesional?->name,
                 'problematicas' => $legajo->problematicas->pluck('nombre')->values(),
-                'persona' => $legajo->persona ? [
-                    'id' => $legajo->persona->id,
-                    'nombre_completo' => "{$legajo->persona->apellido}, {$legajo->persona->nombre}",
-                    'dni' => $legajo->persona->dni,
-                    'edad' => $legajo->persona->fecha_nacimiento?->age,
-                ] : null,
+                'persona' => [
+                    'id' => $legajo->id,
+                    'nombre_completo' => "{$legajo->apellido}, {$legajo->nombre}",
+                    'dni' => $legajo->dni,
+                    'edad' => $legajo->fecha_nacimiento?->age,
+                ],
             ],
             'status' => session('status'),
         ]);
     }
 
-    public function edit(Legajo $legajo): Response
+    public function edit(Persona $legajo): Response
     {
-        $legajo->load(['persona', 'problematicas']);
+        $legajo->load('problematicas');
 
         return Inertia::render('legajos/edit', [
             'legajo' => [
                 'id' => $legajo->id,
                 'numero_legajo' => $legajo->numero_legajo,
-                'persona' => $legajo->persona
-                    ? "{$legajo->persona->apellido}, {$legajo->persona->nombre}"
-                    : null,
+                'persona' => "{$legajo->apellido}, {$legajo->nombre}",
                 'motivo_ingreso' => $legajo->motivo_ingreso,
+                'motivo_ingreso_id' => $legajo->motivo_ingreso_id,
                 'nivel_riesgo' => $legajo->nivel_riesgo,
                 'origen_derivacion' => $legajo->origen_derivacion,
                 'profesional_id' => $legajo->profesional_id,
-                'observaciones' => $legajo->observaciones,
+                'observaciones' => $legajo->observaciones_legajo,
                 'problematicas' => $legajo->problematicas->pluck('id')->values(),
             ],
             'problematicas' => Problematica::orderBy('nombre')->get(['id', 'nombre']),
+            'motivosIngreso' => MotivoIngreso::where('activo', true)->orderBy('nombre')->get(['id', 'nombre']),
             'profesionales' => $this->profesionalesActivos(),
         ]);
     }
 
-    public function update(UpdateLegajoRequest $request, Legajo $legajo)
+    public function update(UpdateLegajoRequest $request, Persona $legajo)
     {
         $datos = $request->validated();
 
@@ -207,10 +165,11 @@ class LegajoController extends Controller
             DB::transaction(function () use ($legajo, $datos) {
                 $legajo->update([
                     'motivo_ingreso' => $datos['motivo_ingreso'],
+                    'motivo_ingreso_id' => $datos['motivo_ingreso_id'] ?? null,
                     'nivel_riesgo' => $datos['nivel_riesgo'],
                     'origen_derivacion' => $datos['origen_derivacion'],
                     'profesional_id' => $datos['profesional_id'] ?? null,
-                    'observaciones' => $datos['observaciones'] ?? null,
+                    'observaciones_legajo' => $datos['observaciones'] ?? null,
                 ]);
 
                 $legajo->problematicas()->sync($datos['problematicas']);
@@ -229,60 +188,86 @@ class LegajoController extends Controller
             ->with('status', 'El legajo se actualizó correctamente.');
     }
 
-    public function cerrar(Legajo $legajo)
+    public function cerrar(Persona $legajo)
     {
         return $this->cambiarEstado($legajo, 'Cerrado', "Legajo {$legajo->numero_legajo} cerrado.");
     }
 
-    public function reabrir(Legajo $legajo)
+    public function reabrir(Persona $legajo)
     {
         return $this->cambiarEstado($legajo, 'Abierto', "Legajo {$legajo->numero_legajo} reabierto.");
     }
 
-    private function cambiarEstado(Legajo $legajo, string $estado, string $mensaje)
+    private function cambiarEstado(Persona $legajo, string $estado, string $mensaje)
     {
         try {
-            $legajo->estado = $estado;
-            $legajo->save();
+            $legajo->update(['estado' => $estado]);
         } catch (Throwable $e) {
             report($e);
 
-            return back()->withErrors([
-                'general' => config('app.debug')
-                    ? 'No se pudo cambiar el estado: '.$e->getMessage()
-                    : 'No se pudo cambiar el estado del legajo.',
-            ]);
+            return back()->withErrors(['general' => 'No se pudo cambiar el estado del legajo.']);
         }
 
         return back()->with('status', $mensaje);
     }
 
-    /**
-     * Usuarios activos que pueden asignarse como profesional.
-     * Se expone "name" con el alias "nombre_usuario" para no tocar el front.
-     */
+    private function filaLegajo(Persona $persona): array
+    {
+        return [
+            'id' => $persona->id,
+            'numero_legajo' => $persona->numero_legajo,
+            'persona' => [
+                'id' => $persona->id,
+                'nombre_completo' => "{$persona->apellido}, {$persona->nombre}",
+                'dni' => $persona->dni,
+            ],
+            'problematicas' => $persona->problematicas->pluck('nombre')->values(),
+            'nivel_riesgo' => $persona->nivel_riesgo,
+            'estado' => $persona->estado,
+            'origen_derivacion' => $persona->origen_derivacion,
+            'profesional' => $persona->profesional?->name,
+            'fecha_apertura' => $persona->fecha_apertura?->format('d/m/Y'),
+        ];
+    }
+
+    private function datosPersonales(array $datos): array
+    {
+        return [
+            'nombre' => $datos['nombre'],
+            'apellido' => $datos['apellido'],
+            'dni' => $datos['dni'],
+            'fecha_nacimiento' => $datos['fecha_nacimiento'],
+            'genero' => $datos['genero'],
+            'direccion_calle' => $datos['direccion_calle'] ?? null,
+            'direccion_numero' => $datos['direccion_numero'] ?? null,
+            'direccion_piso_depto' => $datos['direccion_piso_depto'] ?? null,
+            'localidad_id' => $datos['localidad_id'],
+            'barrio_id' => $datos['barrio_id'] ?? null,
+            'telefono' => $datos['telefono'] ?? null,
+            'email' => $datos['email'] ?? null,
+            'observaciones' => $datos['observaciones'] ?? null,
+        ];
+    }
+
+    private function datosLegajo(array $datos, Persona $persona): array
+    {
+        return [
+            'numero_legajo' => Persona::generarNumeroLegajo($persona),
+            'motivo_ingreso' => $datos['legajo_motivo_ingreso'],
+            'motivo_ingreso_id' => $datos['legajo_motivo_ingreso_id'] ?? null,
+            'nivel_riesgo' => $datos['legajo_nivel_riesgo'],
+            'origen_derivacion' => $datos['legajo_origen_derivacion'],
+            'profesional_id' => $datos['legajo_profesional_id'] ?? null,
+            'fecha_apertura' => now()->toDateString(),
+            'estado' => 'Abierto',
+            'observaciones_legajo' => $datos['legajo_observaciones'] ?? null,
+        ];
+    }
+
     private function profesionalesActivos()
     {
         return User::where('activo', true)
             ->orderBy('name')
             ->get(['id', 'name as nombre_usuario', 'email']);
-    }
-
-    /**
-     * Auditoría de accesos (ver Legajo::registrarAcceso). Nunca debe romper la pantalla.
-     */
-    private function registrarAcceso(Request $request, Legajo $legajo, string $tipoAccion): void
-    {
-        $usuario = $request->user();
-
-        if (! $usuario instanceof User) {
-            return;
-        }
-
-        try {
-            $legajo->registrarAcceso($usuario, $tipoAccion);
-        } catch (Throwable $e) {
-            report($e);
-        }
     }
 }
