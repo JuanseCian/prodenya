@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
             BarriosSeeder::class,
             TiposDocumentoSeeder::class,
             ProblematicaSeeder::class,
+            TiposIntervencionSeeder::class,
         ]);
     }
 }
