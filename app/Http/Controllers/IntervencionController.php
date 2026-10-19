@@ -28,6 +28,7 @@ class IntervencionController extends Controller
             'profesionales' => $this->profesionales(),
             'profesionalPorDefecto' => $request->user()->id,
             'hoy' => now()->toDateString(),
+            'horaAhora' => now()->format('H:i'),
         ]);
     }
 
@@ -35,20 +36,28 @@ class IntervencionController extends Controller
     {
         $datos = $request->validated();
         $rutas = [];
+        $rutasObsoletas = [];
 
         try {
-            DB::transaction(function () use ($request, $legajo, $datos, &$rutas) {
+            DB::transaction(function () use ($request, $legajo, $datos, &$rutas, &$rutasObsoletas) {
                 $intervencion = Intervencion::create([
                     'legajo_id' => $legajo->id,
                     'tipo_intervencion_id' => $datos['tipo_intervencion_id'],
                     'profesional_id' => $datos['profesional_id'],
                     'fecha_intervencion' => $datos['fecha_intervencion'],
+                    'hora_intervencion' => $datos['hora_intervencion'],
                     'detalle' => $datos['detalle'],
+                    'firma_nombre' => $datos['firma_nombre'],
+                    'firma_aclaracion' => $datos['firma_aclaracion'],
+                    'firma_entrevistado_nombre' => $datos['firma_entrevistado_nombre'] ?? null,
+                    'firma_entrevistado_aclaracion' => $datos['firma_entrevistado_aclaracion'] ?? null,
                     'creado_por' => $request->user()->id,
                 ]);
 
                 $this->guardarArchivos($request, $legajo, $intervencion, $rutas);
+                $this->guardarFirmas($request, $intervencion, $rutas, $rutasObsoletas);
             });
+            Storage::disk(self::DISCO)->delete($rutasObsoletas);
         } catch (Throwable $e) {
             Storage::disk(self::DISCO)->delete($rutas);
             report($e);
@@ -58,12 +67,13 @@ class IntervencionController extends Controller
             ]);
         }
 
-        return redirect()->route('legajos.show', $legajo)
+        return redirect()->route('legajos.show', $legajo->persona_id)
             ->with('status', 'Intervención registrada correctamente.');
     }
 
-    public function edit(Intervencion $intervencion): Response
+    public function edit(Legajo $legajo, Intervencion $intervencion): Response
     {
+        abort_unless($intervencion->legajo_id === $legajo->id, 404);
         $legajo = $intervencion->legajo()->with('persona')->firstOrFail();
 
         return Inertia::render('intervenciones/edit', [
@@ -71,35 +81,68 @@ class IntervencionController extends Controller
             'intervencion' => [
                 'id' => $intervencion->id,
                 'fecha_intervencion' => $intervencion->fecha_intervencion?->format('Y-m-d'),
+                'hora_intervencion' => $intervencion->hora_intervencion
+                    ? substr($intervencion->hora_intervencion, 0, 5)
+                    : null,
                 'tipo_intervencion_id' => $intervencion->tipo_intervencion_id,
                 'profesional_id' => $intervencion->profesional_id,
                 'detalle' => $intervencion->detalle,
+                'firma_nombre' => $intervencion->firma_nombre,
+                'firma_aclaracion' => $intervencion->firma_aclaracion,
+                'tiene_firma_responsable' => filled($intervencion->firma_archivo_path),
+                'firma_entrevistado_nombre' => $intervencion->firma_entrevistado_nombre,
+                'firma_entrevistado_aclaracion' => $intervencion->firma_entrevistado_aclaracion,
+                'tiene_firma_entrevistado' => filled($intervencion->firma_entrevistado_archivo_path),
             ],
             'adjuntos' => $this->adjuntosDe($intervencion->id),
             'tipos' => $this->tipos(),
             'profesionales' => $this->profesionales(),
             'hoy' => now()->toDateString(),
+            'horaAhora' => now()->format('H:i'),
         ]);
     }
 
-    public function update(GuardarIntervencionRequest $request, Intervencion $intervencion)
+    public function update(GuardarIntervencionRequest $request, Legajo $legajo, Intervencion $intervencion)
     {
+        abort_unless($intervencion->legajo_id === $legajo->id, 404);
         $datos = $request->validated();
         $legajo = $intervencion->legajo()->firstOrFail();
         $rutas = [];
+        $rutasObsoletas = [];
 
         try {
-            DB::transaction(function () use ($request, $legajo, $intervencion, $datos, &$rutas) {
+            DB::transaction(function () use ($request, $legajo, $intervencion, $datos, &$rutas, &$rutasObsoletas) {
                 $intervencion->update([
                     'tipo_intervencion_id' => $datos['tipo_intervencion_id'],
                     'profesional_id' => $datos['profesional_id'],
                     'fecha_intervencion' => $datos['fecha_intervencion'],
+                    'hora_intervencion' => $datos['hora_intervencion'],
                     'detalle' => $datos['detalle'],
+                    'firma_nombre' => $datos['firma_nombre'],
+                    'firma_aclaracion' => $datos['firma_aclaracion'],
+                    'firma_entrevistado_nombre' => $datos['firma_entrevistado_nombre'] ?? null,
+                    'firma_entrevistado_aclaracion' => $datos['firma_entrevistado_aclaracion'] ?? null,
                     'actualizado_por' => $request->user()->id,
                 ]);
 
+                if (
+                    blank($datos['firma_entrevistado_nombre'] ?? null)
+                    && blank($datos['firma_entrevistado_aclaracion'] ?? null)
+                    && ! $request->hasFile('firma_entrevistado_archivo')
+                    && ! $request->filled('firma_entrevistado_dibujo')
+                    && $intervencion->firma_entrevistado_archivo_path
+                ) {
+                    $rutasObsoletas[] = $intervencion->firma_entrevistado_archivo_path;
+                    $intervencion->update([
+                        'firma_entrevistado_archivo_path' => null,
+                        'firma_entrevistado_en' => null,
+                    ]);
+                }
+
                 $this->guardarArchivos($request, $legajo, $intervencion, $rutas);
+                $this->guardarFirmas($request, $intervencion, $rutas, $rutasObsoletas);
             });
+            Storage::disk(self::DISCO)->delete($rutasObsoletas);
         } catch (Throwable $e) {
             Storage::disk(self::DISCO)->delete($rutas);
             report($e);
@@ -109,8 +152,24 @@ class IntervencionController extends Controller
             ]);
         }
 
-        return redirect()->route('legajos.show', $legajo)
+        return redirect()->route('legajos.show', $legajo->persona_id)
             ->with('status', 'Intervención actualizada correctamente.');
+    }
+
+    public function descargarFirma(Request $request, Legajo $legajo, Intervencion $intervencion, string $firma)
+    {
+        abort_unless($intervencion->legajo_id === $legajo->id, 404);
+
+        $columna = match ($firma) {
+            'responsable' => 'firma_archivo_path',
+            'entrevistado' => 'firma_entrevistado_archivo_path',
+            default => abort(404),
+        };
+        $ruta = $intervencion->{$columna};
+
+        abort_unless($ruta && Storage::disk(self::DISCO)->exists($ruta), 404);
+
+        return Storage::disk(self::DISCO)->download($ruta, "firma-{$firma}-intervencion-{$intervencion->id}.".pathinfo($ruta, PATHINFO_EXTENSION));
     }
 
     /**
@@ -119,9 +178,11 @@ class IntervencionController extends Controller
     public function descargarAdjunto(Request $request, int $documento)
     {
         $archivo = DB::table('documentos')
-            ->where('id', $documento)
-            ->whereNotNull('intervencion_id')
-            ->where('activo', 1)
+            ->join('intervenciones', 'intervenciones.id', '=', 'documentos.intervencion_id')
+            ->where('documentos.id', $documento)
+            ->whereNotNull('documentos.intervencion_id')
+            ->where('documentos.activo', 1)
+            ->select('documentos.*', 'intervenciones.legajo_id')
             ->first();
 
         abort_if(! $archivo, 404);
@@ -160,6 +221,9 @@ class IntervencionController extends Controller
             $tamanio = $archivo->getSize();
 
             $ruta = $archivo->store("legajos/{$legajo->id}/intervenciones/{$intervencion->id}", self::DISCO);
+            if (! is_string($ruta)) {
+                throw new RuntimeException('No se pudo guardar uno de los adjuntos.');
+            }
             $rutas[] = $ruta;
 
             DB::table('documentos')->insert([
@@ -171,6 +235,68 @@ class IntervencionController extends Controller
                 'ruta_archivo' => $ruta,
                 'tamanio_bytes' => $tamanio,
                 'subido_por' => $request->user()->id,
+            ]);
+        }
+    }
+
+    private function guardarFirmas(Request $request, Intervencion $intervencion, array &$rutas, array &$rutasObsoletas): void
+    {
+        $firmas = [
+            'responsable' => [
+                'dibujo' => 'firma_responsable_dibujo',
+                'archivo' => 'firma_responsable_archivo',
+                'columna' => 'firma_archivo_path',
+                'fecha' => 'firmada_en',
+            ],
+            'entrevistado' => [
+                'dibujo' => 'firma_entrevistado_dibujo',
+                'archivo' => 'firma_entrevistado_archivo',
+                'columna' => 'firma_entrevistado_archivo_path',
+                'fecha' => 'firma_entrevistado_en',
+            ],
+        ];
+
+        foreach ($firmas as $nombre => $firma) {
+            $ruta = null;
+
+            if ($request->hasFile($firma['archivo'])) {
+                $archivo = $request->file($firma['archivo']);
+                $extension = strtolower($archivo->getClientOriginalExtension() ?: 'bin');
+                $ruta = $archivo->storeAs(
+                    "legajos/{$intervencion->legajo_id}/intervenciones/{$intervencion->id}/firmas",
+                    "{$nombre}-".Str::uuid().".{$extension}",
+                    self::DISCO,
+                );
+                if (! is_string($ruta)) {
+                    throw new RuntimeException('No se pudo guardar el archivo de firma.');
+                }
+                $rutas[] = $ruta;
+            } elseif ($request->filled($firma['dibujo'])) {
+                $data = (string) $request->input($firma['dibujo']);
+                $contenido = base64_decode((string) Str::after($data, 'base64,'), true);
+
+                if ($contenido === false) {
+                    throw new RuntimeException('La firma dibujada no pudo procesarse.');
+                }
+
+                $ruta = "legajos/{$intervencion->legajo_id}/intervenciones/{$intervencion->id}/firmas/{$nombre}-".Str::uuid().'.png';
+                if (! Storage::disk(self::DISCO)->put($ruta, $contenido)) {
+                    throw new RuntimeException('No se pudo guardar la firma dibujada.');
+                }
+                $rutas[] = $ruta;
+            }
+
+            if (! $ruta) {
+                continue;
+            }
+
+            if ($intervencion->{$firma['columna']}) {
+                $rutasObsoletas[] = $intervencion->{$firma['columna']};
+            }
+
+            $intervencion->update([
+                $firma['columna'] => $ruta,
+                $firma['fecha'] => now(),
             ]);
         }
     }
@@ -196,6 +322,7 @@ class IntervencionController extends Controller
 
         return [
             'id' => $legajo->id,
+            'persona_id' => $legajo->persona_id,
             'numero_legajo' => $legajo->numero_legajo,
             'persona' => $legajo->persona
                 ? "{$legajo->persona->apellido}, {$legajo->persona->nombre}"

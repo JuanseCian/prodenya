@@ -1,5 +1,5 @@
 import { Head, useForm } from '@inertiajs/react';
-import { FormEventHandler } from 'react';
+import type { FormEventHandler } from 'react';
 
 import ResumenErrores from '@/components/resumen-errores';
 
@@ -78,7 +78,10 @@ export default function CreateLegajo({
     );
 
     const previaLegajo = (() => {
-        if (!personaSeleccionada) return null;
+        if (!personaSeleccionada) {
+            return null;
+        }
+
         const soloLetras = (s: string) =>
             s
                 .normalize('NFD')
@@ -96,6 +99,7 @@ export default function CreateLegajo({
             dniDigitos.length >= 3
                 ? dniDigitos.slice(-3)
                 : dniDigitos.padStart(3, '0');
+
         return `${ape}-${nom}-${ult3}`;
     })();
 
@@ -124,10 +128,10 @@ export default function CreateLegajo({
 
             <main
                 className="bg-[#F4F6F5] px-4 py-8 sm:px-6 sm:py-10"
-                style={{ colorScheme: 'light', fontFamily: FONT_BODY }}
+                style={{ fontFamily: FONT_BODY }}
             >
                 <h2
-                    className="text-2xl font-medium text-[#2C4A5E]"
+                    className="text-2xl font-semibold text-[#2B2F36]"
                     style={{ fontFamily: FONT_HEADING }}
                 >
                     Nuevo legajo
@@ -138,18 +142,24 @@ export default function CreateLegajo({
 
                 <form onSubmit={submit} className="mt-8 max-w-4xl space-y-6">
                     <ResumenErrores
+                        key={JSON.stringify(errors)}
                         errors={errors as Record<string, string>}
                         etiquetas={ETIQUETAS}
+                        floating
                     />
 
                     {/* Selección de persona */}
-                    <section className="rounded-lg border border-[#E3E0D8] bg-white p-6">
+                    <section className="rounded-xl border border-[#DCE3DF] bg-white p-6 shadow-[0_14px_35px_rgba(23,50,71,0.06)]">
                         <label className={labelClass}>Persona</label>
                         <select
                             className={`${inputClass} ${errors.persona_id ? 'border-[#D59A8E] bg-[#FFF9F7]' : ''}`}
                             value={data.persona_id}
                             aria-invalid={Boolean(errors.persona_id)}
-                            aria-describedby={errors.persona_id ? 'persona_id-error' : undefined}
+                            aria-describedby={
+                                errors.persona_id
+                                    ? 'persona_id-error'
+                                    : undefined
+                            }
                             onChange={(e) =>
                                 setData('persona_id', e.target.value)
                             }
@@ -168,7 +178,7 @@ export default function CreateLegajo({
                         )}
 
                         {personaSeleccionada && (
-                            <div className="mt-4 rounded-md border border-[#E3E0D8] bg-[#F6F5F1] p-4 text-sm text-[#2B2F36]">
+                            <div className="mt-4 rounded-md border border-[#DCE3DF] bg-[#F4F6F5] p-4 text-sm text-[#2B2F36]">
                                 <div className="grid grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-2">
                                     <p>
                                         <span className="text-[#2B2F36]/50">
@@ -237,7 +247,7 @@ export default function CreateLegajo({
                     </section>
 
                     {/* Datos del caso */}
-                    <section className="rounded-lg border border-[#E3E0D8] bg-white p-6">
+                    <section className="rounded-xl border border-[#DCE3DF] bg-white p-6 shadow-[0_14px_35px_rgba(23,50,71,0.06)]">
                         <h3
                             className="text-base font-medium text-[#2C4A5E]"
                             style={{ fontFamily: FONT_HEADING }}
@@ -247,30 +257,52 @@ export default function CreateLegajo({
 
                         <div className="mt-4 space-y-4">
                             <div>
-                                    <label htmlFor="motivo_ingreso_id" className={labelClass}>
-                                        Tipo de motivo de ingreso
-                                    </label>
-                                    <select
-                                        id="motivo_ingreso_id"
-                                        className={`${inputClass} block w-full rounded-md border px-3 text-sm`}
-                                        value={data.motivo_ingreso_id}
-                                        onChange={(e) => setData('motivo_ingreso_id', e.target.value)}
-                                    >
-                                        <option value="">Sin clasificar</option>
-                                        {motivosIngreso.map((motivo) => (
-                                            <option key={motivo.id} value={motivo.id}>{motivo.nombre}</option>
-                                        ))}
-                                    </select>
+                                <label
+                                    htmlFor="motivo_ingreso_id"
+                                    className={labelClass}
+                                >
+                                    Tipo de motivo de ingreso
+                                </label>
+                                <select
+                                    id="motivo_ingreso_id"
+                                    className={`${inputClass} block w-full rounded-md border px-3 text-sm`}
+                                    value={data.motivo_ingreso_id}
+                                    onChange={(e) =>
+                                        setData(
+                                            'motivo_ingreso_id',
+                                            e.target.value,
+                                        )
+                                    }
+                                >
+                                    <option value="">Sin clasificar</option>
+                                    {motivosIngreso.map((motivo) => (
+                                        <option
+                                            key={motivo.id}
+                                            value={motivo.id}
+                                        >
+                                            {motivo.nombre}
+                                        </option>
+                                    ))}
+                                </select>
 
-                                    <label htmlFor="motivo_ingreso" className={`${labelClass} mt-4 block`}>
-                                        Detalle del motivo de ingreso
-                                    </label>
-                                    <textarea
+                                <label
+                                    htmlFor="motivo_ingreso"
+                                    className={`${labelClass} mt-4 block`}
+                                >
+                                    Detalle del motivo de ingreso
+                                </label>
+                                <textarea
                                     className={`${inputClass} ${errors.motivo_ingreso ? 'border-[#D59A8E] bg-[#FFF9F7]' : ''}`}
                                     rows={3}
                                     value={data.motivo_ingreso}
-                                    aria-invalid={Boolean(errors.motivo_ingreso)}
-                                    aria-describedby={errors.motivo_ingreso ? 'motivo_ingreso-error' : undefined}
+                                    aria-invalid={Boolean(
+                                        errors.motivo_ingreso,
+                                    )}
+                                    aria-describedby={
+                                        errors.motivo_ingreso
+                                            ? 'motivo_ingreso-error'
+                                            : undefined
+                                    }
                                     onChange={(e) =>
                                         setData(
                                             'motivo_ingreso',
@@ -280,7 +312,10 @@ export default function CreateLegajo({
                                     placeholder="Describí el motivo por el cual se abre el legajo…"
                                 />
                                 {errors.motivo_ingreso && (
-                                    <p id="motivo_ingreso-error" className={errorClass}>
+                                    <p
+                                        id="motivo_ingreso-error"
+                                        className={errorClass}
+                                    >
                                         {errors.motivo_ingreso}
                                     </p>
                                 )}
@@ -292,7 +327,11 @@ export default function CreateLegajo({
                                 </label>
                                 <div
                                     className={`flex flex-wrap gap-x-5 gap-y-2 rounded-md border bg-white px-3.5 py-3 ${errors.problematicas ? 'border-[#D59A8E] bg-[#FFF9F7]' : 'border-[#D5D1C6]'}`}
-                                    aria-describedby={errors.problematicas ? 'problematicas-error' : undefined}
+                                    aria-describedby={
+                                        errors.problematicas
+                                            ? 'problematicas-error'
+                                            : undefined
+                                    }
                                 >
                                     {problematicas.map((tipo) => (
                                         <label
@@ -314,7 +353,10 @@ export default function CreateLegajo({
                                     ))}
                                 </div>
                                 {errors.problematicas && (
-                                    <p id="problematicas-error" className={errorClass}>
+                                    <p
+                                        id="problematicas-error"
+                                        className={errorClass}
+                                    >
                                         {errors.problematicas}
                                     </p>
                                 )}
@@ -328,8 +370,14 @@ export default function CreateLegajo({
                                     <select
                                         className={`${inputClass} ${errors.nivel_riesgo ? 'border-[#D59A8E] bg-[#FFF9F7]' : ''}`}
                                         value={data.nivel_riesgo}
-                                        aria-invalid={Boolean(errors.nivel_riesgo)}
-                                        aria-describedby={errors.nivel_riesgo ? 'nivel_riesgo-error' : undefined}
+                                        aria-invalid={Boolean(
+                                            errors.nivel_riesgo,
+                                        )}
+                                        aria-describedby={
+                                            errors.nivel_riesgo
+                                                ? 'nivel_riesgo-error'
+                                                : undefined
+                                        }
                                         onChange={(e) =>
                                             setData(
                                                 'nivel_riesgo',
@@ -344,9 +392,12 @@ export default function CreateLegajo({
                                         <option value="Critico">Crítico</option>
                                     </select>
                                     {errors.nivel_riesgo && (
-                                            <p id="nivel_riesgo-error" className={errorClass}>
-                                                {errors.nivel_riesgo}
-                                            </p>
+                                        <p
+                                            id="nivel_riesgo-error"
+                                            className={errorClass}
+                                        >
+                                            {errors.nivel_riesgo}
+                                        </p>
                                     )}
                                 </div>
 
@@ -357,8 +408,14 @@ export default function CreateLegajo({
                                     <select
                                         className={`${inputClass} ${errors.profesional_id ? 'border-[#D59A8E] bg-[#FFF9F7]' : ''}`}
                                         value={data.profesional_id}
-                                        aria-invalid={Boolean(errors.profesional_id)}
-                                        aria-describedby={errors.profesional_id ? 'profesional_id-error' : undefined}
+                                        aria-invalid={Boolean(
+                                            errors.profesional_id,
+                                        )}
+                                        aria-describedby={
+                                            errors.profesional_id
+                                                ? 'profesional_id-error'
+                                                : undefined
+                                        }
                                         onChange={(e) =>
                                             setData(
                                                 'profesional_id',
@@ -374,7 +431,10 @@ export default function CreateLegajo({
                                         ))}
                                     </select>
                                     {errors.profesional_id && (
-                                        <p id="profesional_id-error" className={errorClass}>
+                                        <p
+                                            id="profesional_id-error"
+                                            className={errorClass}
+                                        >
                                             {errors.profesional_id}
                                         </p>
                                     )}
@@ -388,8 +448,14 @@ export default function CreateLegajo({
                                 <input
                                     className={`${inputClass} ${errors.origen_derivacion ? 'border-[#D59A8E] bg-[#FFF9F7]' : ''}`}
                                     value={data.origen_derivacion}
-                                    aria-invalid={Boolean(errors.origen_derivacion)}
-                                    aria-describedby={errors.origen_derivacion ? 'origen_derivacion-error' : undefined}
+                                    aria-invalid={Boolean(
+                                        errors.origen_derivacion,
+                                    )}
+                                    aria-describedby={
+                                        errors.origen_derivacion
+                                            ? 'origen_derivacion-error'
+                                            : undefined
+                                    }
                                     onChange={(e) =>
                                         setData(
                                             'origen_derivacion',
@@ -399,7 +465,10 @@ export default function CreateLegajo({
                                     placeholder="Ej: Escuela N°12, Hospital Municipal, denuncia anónima…"
                                 />
                                 {errors.origen_derivacion && (
-                                    <p id="origen_derivacion-error" className={errorClass}>
+                                    <p
+                                        id="origen_derivacion-error"
+                                        className={errorClass}
+                                    >
                                         {errors.origen_derivacion}
                                     </p>
                                 )}

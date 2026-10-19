@@ -48,7 +48,7 @@ export function ProdenyaToast({
     return (
         <div
             role={type === 'error' ? 'alert' : 'status'}
-            className="pointer-events-auto relative flex w-[min(calc(100vw-2rem),390px)] items-start gap-3 overflow-hidden rounded-2xl border border-[#DCE3DF] bg-white p-4 text-[#173247] shadow-[0_18px_45px_rgba(23,50,71,0.16)] dark:border-[#414262] dark:bg-[#292A45] dark:text-[#F8F8FF]"
+            className="pointer-events-auto relative flex w-[min(calc(100vw-2rem),390px)] items-start gap-3 overflow-hidden rounded-lg border border-[#DFE4EA] bg-white p-4 text-[#243140] dark:border-[#3B4552] dark:bg-[#232A34] dark:text-[#EDF1F5]"
         >
             <span
                 aria-hidden="true"

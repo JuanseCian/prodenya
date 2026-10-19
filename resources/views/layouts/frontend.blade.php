@@ -377,10 +377,19 @@
                 </a>
 
                 @auth
+                    <a href="{{ route('estadisticas') }}" class="site-sidebar-link {{ request()->routeIs('estadisticas', 'dashboard') ? 'is-active' : '' }}">
+                        <i class="bi bi-bar-chart-line" aria-hidden="true"></i>
+                        Estadísticas
+                    </a>
+
                     @if (Route::has('legajos.index') && auth()->user()->tieneRol('admin', 'operador', 'consulta'))
                         <a href="{{ route('legajos.index') }}" class="site-sidebar-link {{ request()->routeIs('legajos.*') ? 'is-active' : '' }}">
                             <i class="bi bi-folder2-open" aria-hidden="true"></i>
                             Legajos
+                        </a>
+                        <a href="{{ route('mayores18.index') }}" class="site-sidebar-link {{ request()->routeIs('mayores18.*') ? 'is-active' : '' }}">
+                            <i class="bi bi-person-check" aria-hidden="true"></i>
+                            +18
                         </a>
                     @endif
 

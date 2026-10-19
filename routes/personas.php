@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\IntervencionController;
 use App\Http\Controllers\LegajoController;
 use App\Models\Barrio;
 use App\Models\Localidad;
@@ -17,6 +18,10 @@ Route::middleware(['auth'])->group(function () {
         Route::put('/legajos/{legajo}', [LegajoController::class, 'update'])->name('legajos.update')->whereNumber('legajo');
         Route::patch('/legajos/{legajo}/cerrar', [LegajoController::class, 'cerrar'])->name('legajos.cerrar')->whereNumber('legajo');
         Route::patch('/legajos/{legajo}/reabrir', [LegajoController::class, 'reabrir'])->name('legajos.reabrir')->whereNumber('legajo');
+        Route::get('/legajos/{legajo}/intervenciones/create', [IntervencionController::class, 'create'])->name('legajos.intervenciones.create')->whereNumber('legajo');
+        Route::post('/legajos/{legajo}/intervenciones', [IntervencionController::class, 'store'])->name('legajos.intervenciones.store')->whereNumber('legajo');
+        Route::get('/legajos/{legajo}/intervenciones/{intervencion}/edit', [IntervencionController::class, 'edit'])->name('legajos.intervenciones.edit')->whereNumber(['legajo', 'intervencion']);
+        Route::put('/legajos/{legajo}/intervenciones/{intervencion}', [IntervencionController::class, 'update'])->name('legajos.intervenciones.update')->whereNumber(['legajo', 'intervencion']);
     });
 
     // ── Lectura: admin, operador y consulta ─────────────────────────────
@@ -25,7 +30,12 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/personas/{persona}', fn (Persona $persona) => redirect()->route('legajos.show', $persona->id))
             ->name('personas.show')->whereNumber('persona');
         Route::get('/legajos', [LegajoController::class, 'index'])->name('legajos.index');
+        Route::get('/mayores-18', [LegajoController::class, 'mayores18'])->name('mayores18.index');
         Route::get('/legajos/{legajo}', [LegajoController::class, 'show'])->name('legajos.show')->whereNumber('legajo');
+        Route::get('/intervenciones/documentos/{documento}/descargar', [IntervencionController::class, 'descargarAdjunto'])
+            ->name('intervenciones.documentos.descargar')->whereNumber('documento');
+        Route::get('/legajos/{legajo}/intervenciones/{intervencion}/firma/{firma}/descargar', [IntervencionController::class, 'descargarFirma'])
+            ->name('legajos.intervenciones.firma')->whereNumber(['legajo', 'intervencion']);
 
         // Endpoints livianos para los selects en cascada del formulario de persona
         Route::get('api/localidades', function (Request $request) {

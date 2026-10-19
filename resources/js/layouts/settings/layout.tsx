@@ -48,7 +48,7 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
             <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:gap-10">
                 <aside className="w-full lg:w-56 lg:shrink-0">
                     <nav
-                        className="grid grid-cols-1 gap-1 rounded-xl border bg-card p-2 shadow-sm sm:grid-cols-2 lg:flex lg:flex-col"
+                        className="grid grid-cols-1 gap-1 rounded-lg border bg-card p-1 sm:grid-cols-2 lg:flex lg:flex-col"
                         aria-label="Secciones de mi cuenta"
                     >
                         {sidebarNavItems.map((item, index) => (

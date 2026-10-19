@@ -18,7 +18,7 @@ class HandleInertiaRequests extends Middleware
 
     public function rootView(Request $request)
     {
-        if ($request->routeIs('legajos.*', 'mailbox.index')) {
+        if ($request->routeIs('legajos.*', 'mayores18.*', 'mailbox.index')) {
             return 'layouts.frontend';
         }
 

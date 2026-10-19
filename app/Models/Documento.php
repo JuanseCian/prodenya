@@ -41,6 +41,11 @@ class Documento extends Model
         return $this->belongsTo(Legajo::class, 'legajo_id');
     }
 
+    public function intervencion(): BelongsTo
+    {
+        return $this->belongsTo(Intervencion::class, 'intervencion_id');
+    }
+
     public function tipoDocumento(): BelongsTo
     {
         return $this->belongsTo(TipoDocumento::class, 'tipo_documento_id');

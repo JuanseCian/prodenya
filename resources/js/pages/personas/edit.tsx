@@ -1,6 +1,7 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import { ArrowLeft } from 'lucide-react';
-import { FormEventHandler, type ReactNode, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import type { FormEventHandler, ReactNode } from 'react';
 
 import { FONT_BODY, FONT_HEADING } from '@/components/detalle';
 import ResumenErrores from '@/components/resumen-errores';
@@ -78,7 +79,8 @@ function Campo({
     return (
         <div className={className}>
             <Label htmlFor={id} className={labelClass}>
-                {etiqueta} {requerido && <span className="text-[#A84635]">*</span>}
+                {etiqueta}{' '}
+                {requerido && <span className="text-[#A84635]">*</span>}
             </Label>
             {children}
             {error && <p className={errorClass}>{error}</p>}
@@ -109,9 +111,9 @@ export default function PersonaEdit({ persona, provincias }: Props) {
 
     useEffect(() => {
         if (!data.provincia_id) {
-            setLocalidades([]);
             return;
         }
+
         fetch(`/api/localidades?provincia_id=${data.provincia_id}`)
             .then((response) => response.json())
             .then(setLocalidades);
@@ -119,9 +121,9 @@ export default function PersonaEdit({ persona, provincias }: Props) {
 
     useEffect(() => {
         if (!data.localidad_id) {
-            setBarrios([]);
             return;
         }
+
         fetch(`/api/barrios?localidad_id=${data.localidad_id}`)
             .then((response) => response.json())
             .then(setBarrios);
@@ -145,7 +147,7 @@ export default function PersonaEdit({ persona, provincias }: Props) {
             <Head title="Editar persona" />
 
             <main
-                className="min-h-screen bg-[#F4F6F5] px-4 py-8 sm:px-6 sm:py-10 lg:px-8"
+                    className="min-h-screen bg-[#F4F6F5] px-4 py-8 sm:px-6 sm:py-10 lg:px-8"
                 style={{ fontFamily: FONT_BODY }}
             >
                 <Link
@@ -164,22 +166,43 @@ export default function PersonaEdit({ persona, provincias }: Props) {
                 </h2>
 
                 <form onSubmit={submit} className="max-w-4xl space-y-6">
-                    <ResumenErrores errors={errors as Record<string, string>} etiquetas={ETIQUETAS} />
+                    <ResumenErrores
+                        errors={errors as Record<string, string>}
+                        etiquetas={ETIQUETAS}
+                    />
 
                     <Card className="border-[#DCE3DF] !bg-white py-0 shadow-[0_14px_35px_rgba(23,50,71,0.06)]">
                         <CardHeader className="border-b border-[#E4E8E5] bg-[#F8FAF9] px-5 py-4">
-                            <CardTitle className="text-base text-[#2C4A5E]" style={{ fontFamily: FONT_HEADING }}>
+                            <CardTitle
+                                className="text-base text-[#2C4A5E]"
+                                style={{ fontFamily: FONT_HEADING }}
+                            >
                                 Datos personales
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="grid gap-5 px-5 py-6 sm:grid-cols-2">
-                            <Campo id="nombre" etiqueta="Nombre" requerido error={errors.nombre}>
+                            <Campo
+                                id="nombre"
+                                etiqueta="Nombre"
+                                requerido
+                                error={errors.nombre}
+                            >
                                 <Input {...texto('nombre')} />
                             </Campo>
-                            <Campo id="apellido" etiqueta="Apellido" requerido error={errors.apellido}>
+                            <Campo
+                                id="apellido"
+                                etiqueta="Apellido"
+                                requerido
+                                error={errors.apellido}
+                            >
                                 <Input {...texto('apellido')} />
                             </Campo>
-                            <Campo id="dni" etiqueta="DNI" requerido error={errors.dni}>
+                            <Campo
+                                id="dni"
+                                etiqueta="DNI"
+                                requerido
+                                error={errors.dni}
+                            >
                                 <Input {...texto('dni')} inputMode="numeric" />
                             </Campo>
                             <Campo
@@ -188,22 +211,37 @@ export default function PersonaEdit({ persona, provincias }: Props) {
                                 requerido
                                 error={errors.fecha_nacimiento}
                             >
-                                <Input {...texto('fecha_nacimiento')} type="date" />
+                                <Input
+                                    {...texto('fecha_nacimiento')}
+                                    type="date"
+                                />
                             </Campo>
-                            <Campo id="genero" etiqueta="Género" error={errors.genero}>
+                            <Campo
+                                id="genero"
+                                etiqueta="Género"
+                                error={errors.genero}
+                            >
                                 <select
                                     id="genero"
                                     className={selectClass}
                                     value={data.genero}
-                                    onChange={(event) => setData('genero', event.target.value)}
+                                    onChange={(event) =>
+                                        setData('genero', event.target.value)
+                                    }
                                 >
-                                    <option value="NO_ESPECIFICA">Prefiere no especificar</option>
+                                    <option value="NO_ESPECIFICA">
+                                        Prefiere no especificar
+                                    </option>
                                     <option value="F">Femenino</option>
                                     <option value="M">Masculino</option>
                                     <option value="X">No binario / X</option>
                                 </select>
                             </Campo>
-                            <Campo id="telefono" etiqueta="Teléfono" error={errors.telefono}>
+                            <Campo
+                                id="telefono"
+                                etiqueta="Teléfono"
+                                error={errors.telefono}
+                            >
                                 <Input {...texto('telefono')} />
                             </Campo>
                             <Campo
@@ -219,7 +257,10 @@ export default function PersonaEdit({ persona, provincias }: Props) {
 
                     <Card className="border-[#DCE3DF] !bg-white py-0 shadow-[0_14px_35px_rgba(23,50,71,0.06)]">
                         <CardHeader className="border-b border-[#E4E8E5] bg-[#F8FAF9] px-5 py-4">
-                            <CardTitle className="text-base text-[#2C4A5E]" style={{ fontFamily: FONT_HEADING }}>
+                            <CardTitle
+                                className="text-base text-[#2C4A5E]"
+                                style={{ fontFamily: FONT_HEADING }}
+                            >
                                 Domicilio
                             </CardTitle>
                         </CardHeader>
@@ -260,17 +301,25 @@ export default function PersonaEdit({ persona, provincias }: Props) {
                                     className={selectClass}
                                     value={data.provincia_id}
                                     onChange={(event) =>
-                                        setData({
-                                            ...data,
-                                            provincia_id: event.target.value,
-                                            localidad_id: '',
-                                            barrio_id: '',
-                                        })
+                                        (() => {
+                                            setLocalidades([]);
+                                            setBarrios([]);
+                                            setData({
+                                                ...data,
+                                                provincia_id:
+                                                    event.target.value,
+                                                localidad_id: '',
+                                                barrio_id: '',
+                                            });
+                                        })()
                                     }
                                 >
                                     <option value="">Seleccionar</option>
                                     {provincias.map((provincia) => (
-                                        <option key={provincia.id} value={provincia.id}>
+                                        <option
+                                            key={provincia.id}
+                                            value={provincia.id}
+                                        >
                                             {provincia.nombre}
                                         </option>
                                     ))}
@@ -288,17 +337,24 @@ export default function PersonaEdit({ persona, provincias }: Props) {
                                     className={selectClass}
                                     value={data.localidad_id}
                                     onChange={(event) =>
-                                        setData({
-                                            ...data,
-                                            localidad_id: event.target.value,
-                                            barrio_id: '',
-                                        })
+                                        (() => {
+                                            setBarrios([]);
+                                            setData({
+                                                ...data,
+                                                localidad_id:
+                                                    event.target.value,
+                                                barrio_id: '',
+                                            });
+                                        })()
                                     }
                                     disabled={!data.provincia_id}
                                 >
                                     <option value="">Seleccionar</option>
                                     {localidades.map((localidad) => (
-                                        <option key={localidad.id} value={localidad.id}>
+                                        <option
+                                            key={localidad.id}
+                                            value={localidad.id}
+                                        >
                                             {localidad.nombre}
                                         </option>
                                     ))}
@@ -314,12 +370,17 @@ export default function PersonaEdit({ persona, provincias }: Props) {
                                     id="barrio_id"
                                     className={selectClass}
                                     value={data.barrio_id}
-                                    onChange={(event) => setData('barrio_id', event.target.value)}
+                                    onChange={(event) =>
+                                        setData('barrio_id', event.target.value)
+                                    }
                                     disabled={!data.localidad_id}
                                 >
                                     <option value="">Sin barrio</option>
                                     {barrios.map((barrio) => (
-                                        <option key={barrio.id} value={barrio.id}>
+                                        <option
+                                            key={barrio.id}
+                                            value={barrio.id}
+                                        >
                                             {barrio.nombre}
                                         </option>
                                     ))}
@@ -330,7 +391,10 @@ export default function PersonaEdit({ persona, provincias }: Props) {
 
                     <Card className="border-[#DCE3DF] !bg-white py-0 shadow-[0_14px_35px_rgba(23,50,71,0.06)]">
                         <CardHeader className="border-b border-[#E4E8E5] bg-[#F8FAF9] px-5 py-4">
-                            <CardTitle className="text-base text-[#2C4A5E]" style={{ fontFamily: FONT_HEADING }}>
+                            <CardTitle
+                                className="text-base text-[#2C4A5E]"
+                                style={{ fontFamily: FONT_HEADING }}
+                            >
                                 Observaciones
                             </CardTitle>
                         </CardHeader>
@@ -339,10 +403,16 @@ export default function PersonaEdit({ persona, provincias }: Props) {
                                 id="observaciones"
                                 rows={4}
                                 value={data.observaciones}
-                                onChange={(event) => setData('observaciones', event.target.value)}
+                                onChange={(event) =>
+                                    setData('observaciones', event.target.value)
+                                }
                                 className="block w-full resize-y rounded-md border border-[#D5D1C6] bg-white px-3.5 py-3 text-sm text-[#2B2F36] outline-none focus:border-[#2C4A5E] focus:ring-2 focus:ring-[#2C4A5E]/20"
                             />
-                            {errors.observaciones && <p className={errorClass}>{errors.observaciones}</p>}
+                            {errors.observaciones && (
+                                <p className={errorClass}>
+                                    {errors.observaciones}
+                                </p>
+                            )}
                         </CardContent>
                     </Card>
 

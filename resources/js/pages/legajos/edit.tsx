@@ -1,6 +1,6 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import { ArrowLeft } from 'lucide-react';
-import { FormEventHandler } from 'react';
+import type { FormEventHandler } from 'react';
 
 import { FONT_BODY, FONT_HEADING } from '@/components/detalle';
 import ResumenErrores from '@/components/resumen-errores';
@@ -56,13 +56,22 @@ const selectClass =
 const textareaClass =
     'mt-2 block w-full resize-y rounded-md border border-[#D5D1C6] bg-white px-3.5 py-3 text-sm text-[#2B2F36] outline-none focus:border-[#2C4A5E] focus:ring-2 focus:ring-[#2C4A5E]/20';
 
-export default function LegajoEdit({ legajo, problematicas, motivosIngreso, profesionales }: Props) {
+export default function LegajoEdit({
+    legajo,
+    problematicas,
+    motivosIngreso,
+    profesionales,
+}: Props) {
     const { data, setData, put, processing, errors } = useForm({
         motivo_ingreso: legajo.motivo_ingreso ?? '',
-        motivo_ingreso_id: legajo.motivo_ingreso_id ? String(legajo.motivo_ingreso_id) : '',
+        motivo_ingreso_id: legajo.motivo_ingreso_id
+            ? String(legajo.motivo_ingreso_id)
+            : '',
         nivel_riesgo: legajo.nivel_riesgo ?? '',
         origen_derivacion: legajo.origen_derivacion ?? '',
-        profesional_id: legajo.profesional_id ? String(legajo.profesional_id) : '',
+        profesional_id: legajo.profesional_id
+            ? String(legajo.profesional_id)
+            : '',
         observaciones: legajo.observaciones ?? '',
         problematicas: legajo.problematicas as number[],
     });
@@ -98,58 +107,98 @@ export default function LegajoEdit({ legajo, problematicas, motivosIngreso, prof
                 </Link>
 
                 <h2
-                    className="text-3xl font-semibold tracking-tight text-[#173247] sm:text-4xl"
+                    className="text-2xl font-semibold tracking-tight text-[#173247] sm:text-3xl"
                     style={{ fontFamily: FONT_HEADING }}
                 >
                     Editar legajo
                 </h2>
                 <p className="mt-2 mb-8 text-sm text-[#2B2F36]/65">
-                    <span className="font-mono font-semibold text-[#2C4A5E]">{legajo.numero_legajo}</span>
-                    {legajo.persona && ` · ${legajo.persona}`}. El número y la persona no se pueden modificar.
+                    <span className="font-mono font-semibold text-[#2C4A5E]">
+                        {legajo.numero_legajo}
+                    </span>
+                    {legajo.persona && ` · ${legajo.persona}`}. El número y la
+                    persona no se pueden modificar.
                 </p>
 
                 <form onSubmit={submit} className="max-w-4xl space-y-6">
-                    <ResumenErrores errors={errors as Record<string, string>} etiquetas={ETIQUETAS} />
+                    <ResumenErrores
+                        errors={errors as Record<string, string>}
+                        etiquetas={ETIQUETAS}
+                    />
 
                     <Card className="border-[#DCE3DF] !bg-white py-0 shadow-[0_14px_35px_rgba(23,50,71,0.06)]">
                         <CardHeader className="border-b border-[#E4E8E5] bg-[#F8FAF9] px-5 py-4">
-                            <CardTitle className="text-base text-[#2C4A5E]" style={{ fontFamily: FONT_HEADING }}>
+                            <CardTitle
+                                className="text-base text-[#2C4A5E]"
+                                style={{ fontFamily: FONT_HEADING }}
+                            >
                                 Datos del caso
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-5 px-5 py-6">
                             <div>
-                                <Label htmlFor="motivo_ingreso_id" className={labelClass}>
+                                <Label
+                                    htmlFor="motivo_ingreso_id"
+                                    className={labelClass}
+                                >
                                     Tipo de motivo de ingreso
                                 </Label>
                                 <select
                                     id="motivo_ingreso_id"
                                     className={selectClass}
                                     value={data.motivo_ingreso_id}
-                                    onChange={(event) => setData('motivo_ingreso_id', event.target.value)}
+                                    onChange={(event) =>
+                                        setData(
+                                            'motivo_ingreso_id',
+                                            event.target.value,
+                                        )
+                                    }
                                 >
                                     <option value="">Sin clasificar</option>
                                     {motivosIngreso.map((motivo) => (
-                                        <option key={motivo.id} value={motivo.id}>{motivo.nombre}</option>
+                                        <option
+                                            key={motivo.id}
+                                            value={motivo.id}
+                                        >
+                                            {motivo.nombre}
+                                        </option>
                                     ))}
                                 </select>
-                                {errors.motivo_ingreso_id && <p className={errorClass}>{errors.motivo_ingreso_id}</p>}
-                                <Label htmlFor="motivo_ingreso" className={`${labelClass} mt-4 block`}>
-                                    Detalle del motivo de ingreso <span className="text-[#A84635]">*</span>
+                                {errors.motivo_ingreso_id && (
+                                    <p className={errorClass}>
+                                        {errors.motivo_ingreso_id}
+                                    </p>
+                                )}
+                                <Label
+                                    htmlFor="motivo_ingreso"
+                                    className={`${labelClass} mt-4 block`}
+                                >
+                                    Detalle del motivo de ingreso{' '}
+                                    <span className="text-[#A84635]">*</span>
                                 </Label>
                                 <textarea
                                     id="motivo_ingreso"
                                     rows={4}
                                     value={data.motivo_ingreso}
-                                    onChange={(event) => setData('motivo_ingreso', event.target.value)}
+                                    onChange={(event) =>
+                                        setData(
+                                            'motivo_ingreso',
+                                            event.target.value,
+                                        )
+                                    }
                                     className={textareaClass}
                                 />
-                                {errors.motivo_ingreso && <p className={errorClass}>{errors.motivo_ingreso}</p>}
+                                {errors.motivo_ingreso && (
+                                    <p className={errorClass}>
+                                        {errors.motivo_ingreso}
+                                    </p>
+                                )}
                             </div>
 
                             <div>
                                 <Label className={labelClass}>
-                                    Problemáticas <span className="text-[#A84635]">*</span>
+                                    Problemáticas{' '}
+                                    <span className="text-[#A84635]">*</span>
                                 </Label>
                                 <div className="mt-2 grid gap-2 rounded-lg border border-[#D5D1C6] bg-white p-3 sm:grid-cols-2">
                                     {problematicas.map((problematica) => (
@@ -159,27 +208,48 @@ export default function LegajoEdit({ legajo, problematicas, motivosIngreso, prof
                                         >
                                             <input
                                                 type="checkbox"
-                                                checked={data.problematicas.includes(problematica.id)}
-                                                onChange={() => alternarProblematica(problematica.id)}
+                                                checked={data.problematicas.includes(
+                                                    problematica.id,
+                                                )}
+                                                onChange={() =>
+                                                    alternarProblematica(
+                                                        problematica.id,
+                                                    )
+                                                }
                                                 className="size-4 rounded border-[#B9C5BD] text-[#2C4A5E] focus:ring-[#2C4A5E]/30"
                                             />
                                             {problematica.nombre}
                                         </label>
                                     ))}
                                 </div>
-                                {errors.problematicas && <p className={errorClass}>{errors.problematicas}</p>}
+                                {errors.problematicas && (
+                                    <p className={errorClass}>
+                                        {errors.problematicas}
+                                    </p>
+                                )}
                             </div>
 
                             <div className="grid gap-5 sm:grid-cols-2">
                                 <div>
-                                    <Label htmlFor="nivel_riesgo" className={labelClass}>
-                                        Nivel de riesgo <span className="text-[#A84635]">*</span>
+                                    <Label
+                                        htmlFor="nivel_riesgo"
+                                        className={labelClass}
+                                    >
+                                        Nivel de riesgo{' '}
+                                        <span className="text-[#A84635]">
+                                            *
+                                        </span>
                                     </Label>
                                     <select
                                         id="nivel_riesgo"
                                         className={selectClass}
                                         value={data.nivel_riesgo}
-                                        onChange={(event) => setData('nivel_riesgo', event.target.value)}
+                                        onChange={(event) =>
+                                            setData(
+                                                'nivel_riesgo',
+                                                event.target.value,
+                                            )
+                                        }
                                     >
                                         <option value="">Seleccionar</option>
                                         <option value="Bajo">Bajo</option>
@@ -187,56 +257,102 @@ export default function LegajoEdit({ legajo, problematicas, motivosIngreso, prof
                                         <option value="Alto">Alto</option>
                                         <option value="Critico">Crítico</option>
                                     </select>
-                                    {errors.nivel_riesgo && <p className={errorClass}>{errors.nivel_riesgo}</p>}
+                                    {errors.nivel_riesgo && (
+                                        <p className={errorClass}>
+                                            {errors.nivel_riesgo}
+                                        </p>
+                                    )}
                                 </div>
 
                                 <div>
-                                    <Label htmlFor="profesional_id" className={labelClass}>
+                                    <Label
+                                        htmlFor="profesional_id"
+                                        className={labelClass}
+                                    >
                                         Profesional asignado
                                     </Label>
                                     <select
                                         id="profesional_id"
                                         className={selectClass}
                                         value={data.profesional_id}
-                                        onChange={(event) => setData('profesional_id', event.target.value)}
+                                        onChange={(event) =>
+                                            setData(
+                                                'profesional_id',
+                                                event.target.value,
+                                            )
+                                        }
                                     >
                                         <option value="">Sin asignar</option>
                                         {profesionales.map((profesional) => (
-                                            <option key={profesional.id} value={profesional.id}>
+                                            <option
+                                                key={profesional.id}
+                                                value={profesional.id}
+                                            >
                                                 {profesional.nombre_usuario}
                                             </option>
                                         ))}
                                     </select>
-                                    {errors.profesional_id && <p className={errorClass}>{errors.profesional_id}</p>}
+                                    {errors.profesional_id && (
+                                        <p className={errorClass}>
+                                            {errors.profesional_id}
+                                        </p>
+                                    )}
                                 </div>
                             </div>
 
                             <div>
-                                <Label htmlFor="origen_derivacion" className={labelClass}>
-                                    Origen de la derivación <span className="text-[#A84635]">*</span>
+                                <Label
+                                    htmlFor="origen_derivacion"
+                                    className={labelClass}
+                                >
+                                    Origen de la derivación{' '}
+                                    <span className="text-[#A84635]">*</span>
                                 </Label>
                                 <Input
                                     id="origen_derivacion"
                                     value={data.origen_derivacion}
-                                    onChange={(event) => setData('origen_derivacion', event.target.value)}
+                                    onChange={(event) =>
+                                        setData(
+                                            'origen_derivacion',
+                                            event.target.value,
+                                        )
+                                    }
                                     className="mt-2 h-11 border-[#D5D1C6] bg-white shadow-none focus-visible:border-[#2C4A5E] focus-visible:ring-[#2C4A5E]/20"
                                 />
-                                {errors.origen_derivacion && <p className={errorClass}>{errors.origen_derivacion}</p>}
+                                {errors.origen_derivacion && (
+                                    <p className={errorClass}>
+                                        {errors.origen_derivacion}
+                                    </p>
+                                )}
                             </div>
 
                             <div>
-                                <Label htmlFor="observaciones" className={labelClass}>
+                                <Label
+                                    htmlFor="observaciones"
+                                    className={labelClass}
+                                >
                                     Observaciones{' '}
-                                    <span className="font-normal text-[#2B2F36]/45">(opcional)</span>
+                                    <span className="font-normal text-[#2B2F36]/45">
+                                        (opcional)
+                                    </span>
                                 </Label>
                                 <textarea
                                     id="observaciones"
                                     rows={4}
                                     value={data.observaciones}
-                                    onChange={(event) => setData('observaciones', event.target.value)}
+                                    onChange={(event) =>
+                                        setData(
+                                            'observaciones',
+                                            event.target.value,
+                                        )
+                                    }
                                     className={textareaClass}
                                 />
-                                {errors.observaciones && <p className={errorClass}>{errors.observaciones}</p>}
+                                {errors.observaciones && (
+                                    <p className={errorClass}>
+                                        {errors.observaciones}
+                                    </p>
+                                )}
                             </div>
                         </CardContent>
                     </Card>

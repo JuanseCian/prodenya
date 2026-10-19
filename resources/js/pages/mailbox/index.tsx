@@ -3,7 +3,7 @@ import { Check, Mail, Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import Paginacion from '@/components/paginacion-listado';
-import type {Paginador} from '@/components/paginacion-listado';
+import type { Paginador } from '@/components/paginacion-listado';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -26,8 +26,8 @@ interface Props {
 
 const formatDate = (value: string | null) => {
     if (!value) {
-return 'Sin fecha';
-}
+        return 'Sin fecha';
+    }
 
     return new Intl.DateTimeFormat('es-AR', {
         dateStyle: 'medium',
@@ -40,9 +40,12 @@ export default function Mailbox({ mensajes, filtros, noLeidos }: Props) {
     const [noLeidosFiltro, setNoLeidosFiltro] = useState(filtros.no_leidos);
 
     useEffect(() => {
-        if (buscar === (filtros.buscar ?? '') && noLeidosFiltro === filtros.no_leidos) {
-return;
-}
+        if (
+            buscar === (filtros.buscar ?? '') &&
+            noLeidosFiltro === filtros.no_leidos
+        ) {
+            return;
+        }
 
         const timeout = setTimeout(() => {
             router.get(
@@ -75,13 +78,16 @@ return;
                             <h1 className="mt-3 text-3xl font-semibold tracking-tight text-[#173247] sm:text-4xl">
                                 Mailbox
                             </h1>
-                            <p className="mt-2 text-sm text-[#2B2F36]/65">
+                            <p className="mt-2 text-sm text-[#697586]">
                                 Bandeja institucional para la gestión de correos.
                             </p>
                         </div>
                         {noLeidos > 0 && (
                             <Badge className="w-fit border-0 bg-[#E8F7EF] text-[#267148]">
-                                {noLeidos} {noLeidos === 1 ? 'correo nuevo' : 'correos nuevos'}
+                                {noLeidos}{' '}
+                                {noLeidos === 1
+                                    ? 'correo nuevo'
+                                    : 'correos nuevos'}
                             </Badge>
                         )}
                     </div>
@@ -92,7 +98,9 @@ return;
                                 <Search className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-[#2B2F36]/40" />
                                 <Input
                                     value={buscar}
-                                    onChange={(event) => setBuscar(event.target.value)}
+                                    onChange={(event) =>
+                                        setBuscar(event.target.value)
+                                    }
                                     placeholder="Buscar por remitente, asunto o contenido…"
                                     className="h-11 border-[#D5D1C6] bg-white pl-10 shadow-none"
                                 />
@@ -101,7 +109,9 @@ return;
                                 <input
                                     type="checkbox"
                                     checked={noLeidosFiltro}
-                                    onChange={(event) => setNoLeidosFiltro(event.target.checked)}
+                                    onChange={(event) =>
+                                        setNoLeidosFiltro(event.target.checked)
+                                    }
                                     className="size-4 rounded border-[#B9C5BD] text-[#2C4A5E] focus:ring-[#2C4A5E]/30"
                                 />
                                 Solo no leídos
@@ -129,26 +139,35 @@ return;
                                             <div className="min-w-0 flex-1">
                                                 <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                                                     <div className="min-w-0">
-                                                        <p className={`truncate text-sm ${mensaje.is_read ? 'font-medium' : 'font-bold'} text-[#173247]`}>
+                                                        <p
+                                                            className={`truncate text-sm ${mensaje.is_read ? 'font-medium' : 'font-bold'} text-[#173247]`}
+                                                        >
                                                             {mensaje.subject}
                                                         </p>
                                                         <p className="mt-1 truncate text-xs text-[#2B2F36]/60">
-                                                            {mensaje.from_name ? `${mensaje.from_name} · ` : ''}
+                                                            {mensaje.from_name
+                                                                ? `${mensaje.from_name} · `
+                                                                : ''}
                                                             {mensaje.from_email}
                                                         </p>
                                                     </div>
                                                     <time className="shrink-0 text-xs text-[#2B2F36]/50">
-                                                        {formatDate(mensaje.received_at)}
+                                                        {formatDate(
+                                                            mensaje.received_at,
+                                                        )}
                                                     </time>
                                                 </div>
                                                 <p className="mt-3 line-clamp-2 text-sm leading-6 text-[#2B2F36]/70">
-                                                    {mensaje.preview || 'Sin contenido de texto.'}
+                                                    {mensaje.preview ||
+                                                        'Sin contenido de texto.'}
                                                 </p>
                                             </div>
                                             {!mensaje.is_read && (
                                                 <button
                                                     type="button"
-                                                    onClick={() => marcarLeido(mensaje.id)}
+                                                    onClick={() =>
+                                                        marcarLeido(mensaje.id)
+                                                    }
                                                     className="inline-flex h-9 shrink-0 items-center gap-1.5 self-start rounded-md border border-[#D5D1C6] bg-white px-3 text-xs font-semibold text-[#2C4A5E] transition hover:border-[#2C4A5E]/40"
                                                 >
                                                     <Check className="size-3.5" />

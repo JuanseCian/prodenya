@@ -1,7 +1,13 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { ArrowLeft, Pencil, UserX } from 'lucide-react';
 
-import { AvisoEstado, Dato, FONT_BODY, FONT_HEADING, NivelBadge } from '@/components/detalle';
+import {
+    AvisoEstado,
+    Dato,
+    FONT_BODY,
+    FONT_HEADING,
+    NivelBadge,
+} from '@/components/detalle';
 import ResumenErrores from '@/components/resumen-errores';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -54,7 +60,9 @@ export default function PersonaShow({ persona, legajos, status }: Props) {
     const errors = (usePage().props.errors ?? {}) as Record<string, string>;
 
     const domicilio = [
-        [persona.direccion_calle, persona.direccion_numero].filter(Boolean).join(' '),
+        [persona.direccion_calle, persona.direccion_numero]
+            .filter(Boolean)
+            .join(' '),
         persona.direccion_piso_depto,
     ]
         .filter(Boolean)
@@ -136,7 +144,10 @@ export default function PersonaShow({ persona, legajos, status }: Props) {
                 <div className="grid gap-6 lg:grid-cols-2">
                     <Card className="border-[#DCE3DF] !bg-white py-0 shadow-[0_14px_35px_rgba(23,50,71,0.06)]">
                         <CardHeader className="border-b border-[#E4E8E5] bg-[#F8FAF9] px-5 py-4">
-                            <CardTitle className={tituloCard} style={{ fontFamily: FONT_HEADING }}>
+                            <CardTitle
+                                className={tituloCard}
+                                style={{ fontFamily: FONT_HEADING }}
+                            >
                                 Datos personales
                             </CardTitle>
                         </CardHeader>
@@ -144,28 +155,41 @@ export default function PersonaShow({ persona, legajos, status }: Props) {
                             <dl className="grid gap-4 sm:grid-cols-2">
                                 <Dato etiqueta="Fecha de nacimiento">
                                     {persona.fecha_nacimiento_texto}
-                                    {persona.edad !== null && ` (${persona.edad} años)`}
+                                    {persona.edad !== null &&
+                                        ` (${persona.edad} años)`}
                                 </Dato>
                                 <Dato etiqueta="Género">
-                                    {GENERO_LABEL[persona.genero] ?? persona.genero}
+                                    {GENERO_LABEL[persona.genero] ??
+                                        persona.genero}
                                 </Dato>
-                                <Dato etiqueta="Teléfono">{persona.telefono}</Dato>
-                                <Dato etiqueta="Correo electrónico">{persona.email}</Dato>
+                                <Dato etiqueta="Teléfono">
+                                    {persona.telefono}
+                                </Dato>
+                                <Dato etiqueta="Correo electrónico">
+                                    {persona.email}
+                                </Dato>
                             </dl>
                         </CardContent>
                     </Card>
 
                     <Card className="border-[#DCE3DF] !bg-white py-0 shadow-[0_14px_35px_rgba(23,50,71,0.06)]">
                         <CardHeader className="border-b border-[#E4E8E5] bg-[#F8FAF9] px-5 py-4">
-                            <CardTitle className={tituloCard} style={{ fontFamily: FONT_HEADING }}>
+                            <CardTitle
+                                className={tituloCard}
+                                style={{ fontFamily: FONT_HEADING }}
+                            >
                                 Domicilio
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="px-5 py-5">
                             <dl className="grid gap-4 sm:grid-cols-2">
                                 <Dato etiqueta="Dirección">{domicilio}</Dato>
-                                <Dato etiqueta="Provincia">{persona.provincia}</Dato>
-                                <Dato etiqueta="Localidad">{persona.localidad}</Dato>
+                                <Dato etiqueta="Provincia">
+                                    {persona.provincia}
+                                </Dato>
+                                <Dato etiqueta="Localidad">
+                                    {persona.localidad}
+                                </Dato>
                                 <Dato etiqueta="Barrio">{persona.barrio}</Dato>
                             </dl>
                         </CardContent>
@@ -173,20 +197,28 @@ export default function PersonaShow({ persona, legajos, status }: Props) {
 
                     <Card className="border-[#DCE3DF] !bg-white py-0 shadow-[0_14px_35px_rgba(23,50,71,0.06)] lg:col-span-2">
                         <CardHeader className="border-b border-[#E4E8E5] bg-[#F8FAF9] px-5 py-4">
-                            <CardTitle className={tituloCard} style={{ fontFamily: FONT_HEADING }}>
+                            <CardTitle
+                                className={tituloCard}
+                                style={{ fontFamily: FONT_HEADING }}
+                            >
                                 Observaciones
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="px-5 py-5">
                             <dl>
-                                <Dato etiqueta="Notas">{persona.observaciones}</Dato>
+                                <Dato etiqueta="Notas">
+                                    {persona.observaciones}
+                                </Dato>
                             </dl>
                         </CardContent>
                     </Card>
 
                     <Card className="border-[#DCE3DF] !bg-white py-0 shadow-[0_14px_35px_rgba(23,50,71,0.06)] lg:col-span-2">
                         <CardHeader className="border-b border-[#E4E8E5] bg-[#F8FAF9] px-5 py-4">
-                            <CardTitle className={tituloCard} style={{ fontFamily: FONT_HEADING }}>
+                            <CardTitle
+                                className={tituloCard}
+                                style={{ fontFamily: FONT_HEADING }}
+                            >
                                 Legajos
                             </CardTitle>
                         </CardHeader>
@@ -208,12 +240,20 @@ export default function PersonaShow({ persona, legajos, status }: Props) {
                                                         {legajo.numero_legajo}
                                                     </p>
                                                     <p className="mt-0.5 text-xs text-[#2B2F36]/55">
-                                                        {legajo.problematicas.join(' · ') || 'Sin problemáticas'}
-                                                        {legajo.fecha_apertura && ` — abierto el ${legajo.fecha_apertura}`}
+                                                        {legajo.problematicas.join(
+                                                            ' · ',
+                                                        ) ||
+                                                            'Sin problemáticas'}
+                                                        {legajo.fecha_apertura &&
+                                                            ` — abierto el ${legajo.fecha_apertura}`}
                                                     </p>
                                                 </div>
                                                 <div className="flex items-center gap-2">
-                                                    <NivelBadge nivel={legajo.nivel_riesgo} />
+                                                    <NivelBadge
+                                                        nivel={
+                                                            legajo.nivel_riesgo
+                                                        }
+                                                    />
                                                     <Badge className="border-0 bg-[#EEF0ED] text-[#2B2F36]">
                                                         {legajo.estado}
                                                     </Badge>

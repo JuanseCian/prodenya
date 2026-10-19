@@ -28,7 +28,13 @@ export default function ResetPassword({ token, email }: Props) {
             </Head>
 
             <div
-                style={{ position: 'fixed', inset: 0, width: '100vw', height: '100dvh', overflowY: 'auto' }}
+                style={{
+                    position: 'fixed',
+                    inset: 0,
+                    width: '100vw',
+                    height: '100dvh',
+                    overflowY: 'auto',
+                }}
                 className="flex items-center justify-center bg-[#F6F5F1] px-4 py-10 sm:px-6"
             >
                 <div className="w-full max-w-sm rounded-lg border border-[#E3E0D8] bg-white p-8 shadow-sm sm:p-10">
@@ -97,7 +103,7 @@ export default function ResetPassword({ token, email }: Props) {
                                         autoComplete="new-password"
                                         autoFocus
                                         placeholder="••••••••"
-                                        className="block w-full rounded-md border border-[#D5D1C6] bg-white px-3.5 py-2.5 text-sm text-[#2B2F36] placeholder-[#2B2F36]/30 outline-none transition focus:border-[#2C4A5E] focus:ring-2 focus:ring-[#2C4A5E]/20"
+                                        className="block w-full rounded-md border border-[#D5D1C6] bg-white px-3.5 py-2.5 text-sm text-[#2B2F36] placeholder-[#2B2F36]/30 transition outline-none focus:border-[#2C4A5E] focus:ring-2 focus:ring-[#2C4A5E]/20"
                                     />
                                     <InputError message={errors.password} />
                                 </div>
@@ -116,19 +122,23 @@ export default function ResetPassword({ token, email }: Props) {
                                         name="password_confirmation"
                                         autoComplete="new-password"
                                         placeholder="••••••••"
-                                        className="block w-full rounded-md border border-[#D5D1C6] bg-white px-3.5 py-2.5 text-sm text-[#2B2F36] placeholder-[#2B2F36]/30 outline-none transition focus:border-[#2C4A5E] focus:ring-2 focus:ring-[#2C4A5E]/20"
+                                        className="block w-full rounded-md border border-[#D5D1C6] bg-white px-3.5 py-2.5 text-sm text-[#2B2F36] placeholder-[#2B2F36]/30 transition outline-none focus:border-[#2C4A5E] focus:ring-2 focus:ring-[#2C4A5E]/20"
                                     />
-                                    <InputError message={errors.password_confirmation} />
+                                    <InputError
+                                        message={errors.password_confirmation}
+                                    />
                                 </div>
 
                                 <button
                                     type="submit"
                                     disabled={processing}
                                     data-test="reset-password-button"
-                                    className="flex w-full items-center justify-center gap-2 rounded-md bg-[#2C4A5E] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#233B4B] focus:outline-none focus:ring-2 focus:ring-[#2C4A5E]/40 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+                                    className="flex w-full items-center justify-center gap-2 rounded-md bg-[#2C4A5E] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#233B4B] focus:ring-2 focus:ring-[#2C4A5E]/40 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
                                     style={{ fontFamily: FONT_BODY }}
                                 >
-                                    {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
+                                    {processing && (
+                                        <LoaderCircle className="h-4 w-4 animate-spin" />
+                                    )}
                                     Restablecer contraseña
                                 </button>
                             </>

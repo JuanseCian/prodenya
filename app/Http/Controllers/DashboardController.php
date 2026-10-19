@@ -11,7 +11,23 @@ class DashboardController extends Controller
 {
     public function __invoke(Request $request): Response
     {
+        $hoy = now();
+        $inicioMes = $hoy->copy()->startOfMonth();
+
         return Inertia::render('dashboard', [
+            'estadisticas' => [
+                'personasActivas' => Persona::where('activo', true)->count(),
+                'legajosAbiertos' => Persona::whereNotNull('numero_legajo')
+                    ->where('estado', 'Abierto')
+                    ->count(),
+                'riesgoPrioritario' => Persona::whereNotNull('numero_legajo')
+                    ->whereIn('nivel_riesgo', ['Alto', 'Critico'])
+                    ->count(),
+                'aperturasMes' => Persona::whereNotNull('numero_legajo')
+                    ->whereDate('fecha_apertura', '>=', $inicioMes)
+                    ->whereDate('fecha_apertura', '<=', $hoy)
+                    ->count(),
+            ],
             'personasRecientes' => Persona::with('localidad')
                 ->where('activo', true)
                 ->latest('creado_en')

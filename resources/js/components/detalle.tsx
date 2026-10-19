@@ -14,13 +14,21 @@ export const NIVEL_ESTILO: Record<string, string> = {
 
 export function NivelBadge({ nivel }: { nivel: string }) {
     return (
-        <Badge className={`border-0 ${NIVEL_ESTILO[nivel] ?? 'bg-[#EEF0ED] text-[#2B2F36]'}`}>
+        <Badge
+            className={`border-0 ${NIVEL_ESTILO[nivel] ?? 'bg-[#EEF0ED] text-[#2B2F36]'}`}
+        >
             {nivel === 'Critico' ? 'Crítico' : nivel}
         </Badge>
     );
 }
 
-export function Dato({ etiqueta, children }: { etiqueta: string; children?: ReactNode }) {
+export function Dato({
+    etiqueta,
+    children,
+}: {
+    etiqueta: string;
+    children?: ReactNode;
+}) {
     return (
         <div>
             <dt className="text-[0.68rem] font-bold tracking-[0.12em] text-[#6B8F71] uppercase">
@@ -34,7 +42,9 @@ export function Dato({ etiqueta, children }: { etiqueta: string; children?: Reac
 }
 
 export function AvisoEstado({ mensaje }: { mensaje?: string | null }) {
-    if (!mensaje) return null;
+    if (!mensaje) {
+return null;
+}
 
     return (
         <div

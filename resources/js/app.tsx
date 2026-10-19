@@ -15,9 +15,11 @@ createInertiaApp({
             case name === 'welcome':
                 return null;
             case name === 'dashboard':
+            case name.startsWith('estadisticas/'):
             case name === 'mailbox/index':
             case name.startsWith('personas/'):
             case name.startsWith('legajos/'):
+            case name.startsWith('intervenciones/'):
                 return null;
             case name.startsWith('auth/'):
                 return AuthLayout;

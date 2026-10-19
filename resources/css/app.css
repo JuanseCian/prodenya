@@ -132,6 +132,66 @@
     --sidebar-ring: #aaa4e5;
 }
 
+.stats-module-shell {
+    --stats-page: #f3f8fc;
+    --stats-surface: #ffffff;
+    --stats-surface-soft: #f7fbfd;
+    --stats-border: #dceaf3;
+    --stats-ink: #173247;
+    --stats-muted: #5a7890;
+    --stats-chart-grid: #ddecf3;
+    --stats-chart-label: #5a7890;
+    background-color: var(--stats-page);
+    color: var(--stats-ink);
+}
+
+.dark .stats-module-shell {
+    --stats-page: #0d1620;
+    --stats-surface: #152532;
+    --stats-surface-soft: #10202b;
+    --stats-border: #294252;
+    --stats-ink: #edf6fb;
+    --stats-muted: #9bb2c1;
+    --stats-chart-grid: #294252;
+    --stats-chart-label: #9bb2c1;
+}
+
+.stats-page-surface {
+    background-image: none;
+}
+
+.dark .stats-page-surface {
+    background-image: none;
+}
+
+.dark .stats-module-shell .stats-page-surface [class*='bg-white'] {
+    background-color: var(--stats-surface);
+}
+
+.dark .stats-module-shell .stats-page-surface [class*='bg-[#FFFAF2]'],
+.dark .stats-module-shell .stats-page-surface [class*='bg-[#FFF9EF]'] {
+        background-color: #362719;
+}
+
+.dark .stats-module-shell .stats-page-surface [class*='bg-[#F3FCF7]'],
+.dark .stats-module-shell .stats-page-surface [class*='bg-[#F9FCFD]'] {
+        background-color: #142e28;
+}
+
+.dark .stats-module-shell .stats-page-surface [class*='text-[#173247]'] {
+    color: var(--stats-ink);
+}
+
+.dark .stats-module-shell .stats-page-surface [class*='text-[#2C4A5E]'] {
+    color: var(--stats-muted);
+}
+
+.dark .stats-module-shell .stats-page-surface [class*='border-[#DCEAF3]'],
+.dark .stats-module-shell .stats-page-surface [class*='ring-[#DCEAF3]'] {
+    border-color: var(--stats-border);
+    --tw-ring-color: var(--stats-border);
+}
+
 @layer base {
     * {
         @apply border-border;
@@ -139,5 +199,108 @@
 
     body {
         @apply bg-background text-foreground;
+    }
+}
+
+@keyframes prodenya-toast-in {
+    0% {
+        opacity: 0;
+        transform: translate3d(22px, -10px, 0) scale(0.96);
+        filter: blur(5px);
+    }
+
+    65% {
+        opacity: 1;
+        transform: translate3d(-2px, 1px, 0) scale(1.005);
+        filter: blur(0);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translate3d(0, 0, 0) scale(1);
+        filter: blur(0);
+    }
+}
+
+@keyframes prodenya-toast-out {
+    0% {
+        opacity: 1;
+        transform: translate3d(0, 0, 0) scale(1);
+        filter: blur(0);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translate3d(18px, -6px, 0) scale(0.97);
+        filter: blur(4px);
+    }
+}
+
+.prodenya-toast-motion {
+    animation: prodenya-toast-in 360ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    transform-origin: top right;
+}
+
+.prodenya-toast-motion-out {
+    animation: prodenya-toast-out 220ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+.prodenya-filter-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    column-gap: 0;
+    transition:
+        grid-template-columns 300ms cubic-bezier(0.22, 1, 0.36, 1),
+        column-gap 300ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.prodenya-filter-layout.is-open {
+    grid-template-columns: 260px minmax(0, 1fr);
+    column-gap: 1.5rem;
+}
+
+.prodenya-filter-panel {
+    min-width: 0;
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none;
+    transform: translate3d(-14px, 0, 0) scale(0.98);
+    transform-origin: top left;
+    transition:
+        max-height 300ms cubic-bezier(0.22, 1, 0.36, 1),
+        opacity 220ms ease,
+        transform 300ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.prodenya-filter-panel.is-visible {
+    max-height: 720px;
+    opacity: 1;
+    pointer-events: auto;
+    transform: translate3d(0, 0, 0) scale(1);
+}
+
+@media (max-width: 1023px) {
+    .prodenya-filter-layout {
+        display: block;
+    }
+
+    .prodenya-filter-layout.is-open {
+        display: block;
+    }
+
+    .prodenya-filter-panel {
+        margin-bottom: 0;
+        transform: translate3d(0, -10px) scale(0.985);
+        transition:
+            max-height 300ms cubic-bezier(0.22, 1, 0.36, 1),
+            margin-bottom 300ms cubic-bezier(0.22, 1, 0.36, 1),
+            opacity 220ms ease,
+            transform 300ms cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .prodenya-filter-panel.is-visible {
+        margin-bottom: 1.5rem;
+        transform: translate3d(0, 0, 0) scale(1);
     }
 }

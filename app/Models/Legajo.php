@@ -70,6 +70,14 @@ class Legajo extends Model
         return $this->hasMany(Documento::class, 'legajo_id');
     }
 
+    public function intervenciones(): HasMany
+    {
+        return $this->hasMany(Intervencion::class, 'legajo_id')
+            ->orderByDesc('fecha_intervencion')
+            ->orderByDesc('hora_intervencion')
+            ->orderByDesc('id');
+    }
+
     public function accesos(): HasMany
     {
         return $this->hasMany(AuditoriaAccesoLegajo::class, 'legajo_id');

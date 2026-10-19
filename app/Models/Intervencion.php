@@ -17,14 +17,27 @@ class Intervencion extends Model
         'tipo_intervencion_id',
         'profesional_id',
         'fecha_intervencion',
+        'hora_intervencion',
         'detalle',
+        'firma_nombre',
+        'firma_aclaracion',
+        'firmada_en',
+        'firma_archivo_path',
+        'firma_entrevistado_nombre',
+        'firma_entrevistado_aclaracion',
+        'firma_entrevistado_archivo_path',
+        'firma_entrevistado_en',
         'creado_por',
         'actualizado_por',
     ];
 
     protected function casts(): array
     {
-        return ['fecha_intervencion' => 'date'];
+        return [
+            'fecha_intervencion' => 'date',
+            'firmada_en' => 'datetime',
+            'firma_entrevistado_en' => 'datetime',
+        ];
     }
 
     public function legajo(): BelongsTo
@@ -40,5 +53,15 @@ class Intervencion extends Model
     public function profesional(): BelongsTo
     {
         return $this->belongsTo(User::class, 'profesional_id');
+    }
+
+    public function creadoPor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'creado_por');
+    }
+
+    public function actualizadoPor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'actualizado_por');
     }
 }

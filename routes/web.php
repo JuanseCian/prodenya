@@ -3,10 +3,20 @@
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AdminHomeController;
 use App\Http\Controllers\AdminCatalogController;
+use App\Http\Controllers\EstadisticasController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', DashboardController::class)->name('dashboard');
+    Route::controller(EstadisticasController::class)
+        ->prefix('estadisticas')
+        ->name('estadisticas')
+        ->group(function () {
+            Route::get('/', '__invoke')->name('');
+            Route::get('/legajos', 'legajos')->name('.legajos');
+            Route::get('/problematicas', 'problematicas')->name('.problematicas');
+            Route::get('/intervenciones', 'intervenciones')->name('.intervenciones');
+        });
 });
 
 Route::middleware(['auth', 'verified', 'rol:admin'])

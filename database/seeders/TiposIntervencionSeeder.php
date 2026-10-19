@@ -14,6 +14,14 @@ class TiposIntervencionSeeder extends Seeder
     public function run(): void
     {
         $tipos = [
+            'Denuncia',
+            'Oficio',
+            'Acta',
+            'Mail',
+            'Intervención en calle',
+            'Intervención domiciliaria',
+            'Intervención en sede',
+            'Sin intervención',
             'Entrevista',
             'Visita domiciliaria',
             'Llamado telefónico',

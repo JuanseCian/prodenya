@@ -42,7 +42,11 @@ const thClass =
     'px-4 py-3 text-left text-[0.68rem] font-bold tracking-[0.12em] text-[#6B8F71] uppercase whitespace-nowrap';
 const tdClass = 'px-4 py-3.5 align-top text-sm text-[#2B2F36]';
 
-export default function PersonasIndex({ personas, filtros, status }: PersonasIndexProps) {
+export default function PersonasIndex({
+    personas,
+    filtros,
+    status,
+}: PersonasIndexProps) {
     const [buscar, setBuscar] = useState(filtros.buscar ?? '');
 
     useEffect(() => {
@@ -51,11 +55,10 @@ export default function PersonasIndex({ personas, filtros, status }: PersonasInd
         }
 
         const timeout = setTimeout(() => {
-            router.get(
-                '/personas',
-                buscar ? { buscar } : {},
-                { preserveState: true, replace: true },
-            );
+            router.get('/personas', buscar ? { buscar } : {}, {
+                preserveState: true,
+                replace: true,
+            });
         }, 350);
 
         return () => clearTimeout(timeout);
@@ -97,7 +100,7 @@ export default function PersonasIndex({ personas, filtros, status }: PersonasInd
                         </Link>
                         <Link
                             href="/personas/nueva"
-                            className="inline-flex h-11 items-center gap-2 rounded-md bg-[#2C4A5E] px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#1F394B]"
+                            className="inline-flex h-11 items-center gap-2 rounded-md bg-[#2C4A5E] px-5 text-sm font-semibold text-white transition hover:bg-[#1F394B]"
                         >
                             <UserPlus size={16} />
                             Registrar persona
@@ -123,7 +126,9 @@ export default function PersonasIndex({ personas, filtros, status }: PersonasInd
                             />
                             <Input
                                 value={buscar}
-                                onChange={(event) => setBuscar(event.target.value)}
+                                onChange={(event) =>
+                                    setBuscar(event.target.value)
+                                }
                                 placeholder="Buscar por nombre, apellido o DNI…"
                                 className="h-11 border-[#D5D1C6] bg-white pl-10 text-[#2B2F36] shadow-none focus-visible:border-[#2C4A5E] focus-visible:ring-[#2C4A5E]/20"
                             />
@@ -155,8 +160,12 @@ export default function PersonasIndex({ personas, filtros, status }: PersonasInd
                                             <th className={thClass}>Persona</th>
                                             <th className={thClass}>DNI</th>
                                             <th className={thClass}>Edad</th>
-                                            <th className={thClass}>Domicilio</th>
-                                            <th className={thClass}>Contacto</th>
+                                            <th className={thClass}>
+                                                Domicilio
+                                            </th>
+                                            <th className={thClass}>
+                                                Contacto
+                                            </th>
                                             <th className={thClass}>Legajo</th>
                                             <th className={thClass}></th>
                                         </tr>
@@ -169,14 +178,18 @@ export default function PersonasIndex({ personas, filtros, status }: PersonasInd
                                             >
                                                 <td className={tdClass}>
                                                     <p className="font-semibold text-[#173247]">
-                                                        {persona.apellido}, {persona.nombre}
+                                                        {persona.apellido},{' '}
+                                                        {persona.nombre}
                                                     </p>
                                                     <p className="mt-0.5 text-xs text-[#2B2F36]/55">
-                                                        {GENERO_LABEL[persona.genero] ??
-                                                            persona.genero}
+                                                        {GENERO_LABEL[
+                                                            persona.genero
+                                                        ] ?? persona.genero}
                                                     </p>
                                                 </td>
-                                                <td className={`${tdClass} font-mono`}>
+                                                <td
+                                                    className={`${tdClass} font-mono`}
+                                                >
                                                     {persona.dni}
                                                 </td>
                                                 <td className={tdClass}>
@@ -185,7 +198,10 @@ export default function PersonasIndex({ personas, filtros, status }: PersonasInd
                                                         : '—'}
                                                 </td>
                                                 <td className={tdClass}>
-                                                    <p>{persona.localidad ?? '—'}</p>
+                                                    <p>
+                                                        {persona.localidad ??
+                                                            '—'}
+                                                    </p>
                                                     {persona.barrio && (
                                                         <p className="mt-0.5 text-xs text-[#2B2F36]/55">
                                                             {persona.barrio}
@@ -193,7 +209,10 @@ export default function PersonasIndex({ personas, filtros, status }: PersonasInd
                                                     )}
                                                 </td>
                                                 <td className={tdClass}>
-                                                    <p>{persona.telefono ?? '—'}</p>
+                                                    <p>
+                                                        {persona.telefono ??
+                                                            '—'}
+                                                    </p>
                                                     {persona.email && (
                                                         <p className="mt-0.5 text-xs text-[#2B2F36]/55">
                                                             {persona.email}
@@ -201,16 +220,21 @@ export default function PersonasIndex({ personas, filtros, status }: PersonasInd
                                                     )}
                                                 </td>
                                                 <td className={tdClass}>
-                                                    {persona.legajos.length > 0 ? (
+                                                    {persona.legajos.length >
+                                                    0 ? (
                                                         <div className="flex flex-wrap gap-1.5">
-                                                            {persona.legajos.map((numero) => (
-                                                                <Badge
-                                                                    key={numero}
-                                                                    className="border-0 bg-[#EDF3EF] font-mono text-[#2C4A5E]"
-                                                                >
-                                                                    {numero}
-                                                                </Badge>
-                                                            ))}
+                                                            {persona.legajos.map(
+                                                                (numero) => (
+                                                                    <Badge
+                                                                        key={
+                                                                            numero
+                                                                        }
+                                                                        className="border-0 bg-[#EDF3EF] font-mono text-[#2C4A5E]"
+                                                                    >
+                                                                        {numero}
+                                                                    </Badge>
+                                                                ),
+                                                            )}
                                                         </div>
                                                     ) : (
                                                         <span className="text-xs text-[#2B2F36]/45">
@@ -218,14 +242,18 @@ export default function PersonasIndex({ personas, filtros, status }: PersonasInd
                                                         </span>
                                                     )}
                                                 </td>
-                                                <td className={`${tdClass} whitespace-nowrap text-right`}>
+                                                <td
+                                                    className={`${tdClass} text-right whitespace-nowrap`}
+                                                >
                                                     <Link
                                                         href={`/personas/${persona.id}`}
                                                         className="text-sm font-semibold text-[#2C4A5E] hover:underline"
                                                     >
                                                         Ver
                                                     </Link>
-                                                    <span className="mx-2 text-[#B4C1B8]">·</span>
+                                                    <span className="mx-2 text-[#B4C1B8]">
+                                                        ·
+                                                    </span>
                                                     <Link
                                                         href={`/personas/${persona.id}/edit`}
                                                         className="text-sm font-semibold text-[#2C4A5E] hover:underline"
