@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Uso en rutas: ->middleware('rol:admin,operador')
+ * Uso en rutas: ->middleware('rol:admin,coordinador')
  * Responde 403 si el usuario está inactivo o su rol no está en la lista.
  */
 class EnsureRol

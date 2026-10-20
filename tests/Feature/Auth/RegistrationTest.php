@@ -34,12 +34,17 @@ test('new users can register', function () {
     $response = $this->post(route('register.store'), [
         'name' => 'Test User',
         'email' => 'test@example.com',
+        'dni' => '30123456',
+        'telefono' => '3364000000',
+        'profesion' => 'Profesional',
         'password' => 'password',
         'password_confirmation' => 'password',
     ]);
 
-    $this->assertAuthenticated();
+    $this->assertGuest();
 
     $user = User::where('email', 'test@example.com')->first();
-    $response->assertRedirect(route('home'));
+    $response->assertRedirect(route('register.pending'));
+    expect($user->estado_cuenta)->toBe(User::ESTADO_PENDIENTE);
+    expect($user->activo)->toBeFalse();
 });

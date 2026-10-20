@@ -77,8 +77,26 @@
             </div>
 
 
+            @php
+                $usuariosPendientes = auth()->user()?->tieneRol('admin', 'coordinador')
+                    ? \App\Models\User::where('estado_cuenta', \App\Models\User::ESTADO_PENDIENTE)->count()
+                    : 0;
+            @endphp
+
             <nav class="flex-1 space-y-1 overflow-y-auto px-4 py-6" aria-label="Navegación administrativa">
-                <p class="mb-3 px-3 text-[0.65rem] font-bold tracking-[0.16em] text-slate-500 uppercase">Catálogos</p>
+                @if (auth()->user()?->tieneRol('admin', 'coordinador'))
+                    <p class="mb-3 px-3 text-[0.65rem] font-bold tracking-[0.16em] text-slate-500 uppercase">Gestión</p>
+                    <a href="{{ route('admin.usuarios.index') }}" class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-slate-300 transition hover:bg-slate-800 hover:text-white {{ request()->routeIs('admin.usuarios.*') ? 'bg-slate-800 text-white' : '' }}">
+                        <i class="bi bi-person-gear w-5"></i>
+                        <span class="flex-1">Usuarios</span>
+                        @if ($usuariosPendientes > 0)
+                            <span class="rounded-full bg-amber-400 px-2 py-0.5 text-[0.65rem] font-bold text-slate-950">{{ $usuariosPendientes > 99 ? '99+' : $usuariosPendientes }}</span>
+                        @endif
+                    </a>
+                @endif
+
+                @if (auth()->user()?->esAdmin())
+                    <p class="mt-7 mb-3 px-3 text-[0.65rem] font-bold tracking-[0.16em] text-slate-500 uppercase">Catálogos</p>
 
                 <a href="{{ route('admin.catalogos.index', ['catalog' => 'roles']) }}" class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-slate-300 transition hover:bg-slate-800 hover:text-white {{ request()->routeIs('admin.catalogos.*') && request()->route('catalog') === 'roles' ? 'bg-slate-800 text-white' : '' }}">
                     <i class="bi bi-shield-lock w-5"></i>
@@ -108,6 +126,7 @@
                     <i class="bi bi-journal-medical w-5"></i>
                     Problemáticas
                 </a>
+                @endif
             </nav>
 
 

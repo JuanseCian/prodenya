@@ -17,6 +17,10 @@ createInertiaApp({
             case name === 'dashboard':
             case name.startsWith('estadisticas/'):
             case name === 'mailbox/index':
+            case name === 'tareas/index':
+            case name === 'agenda/index':
+            case name === 'auditoria/index':
+            case name.startsWith('comunicacion/'):
             case name.startsWith('personas/'):
             case name.startsWith('legajos/'):
             case name.startsWith('intervenciones/'):

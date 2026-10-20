@@ -15,6 +15,14 @@ Route::middleware('guest')->group(function () {
     Route::post('register', [RegisteredUserController::class, 'store'])
         ->name('register.store');
 
+    Route::get('registro/pendiente', [RegisteredUserController::class, 'pending'])
+        ->name('register.pending');
+
+    Route::get('registro/verificar/{user}', [RegisteredUserController::class, 'verifyRegistration'])
+        ->middleware('signed')
+        ->whereNumber('user')
+        ->name('registration.verify-email');
+
     Route::get('login', [AuthenticatedSessionController::class, 'create'])
         ->name('login');
 

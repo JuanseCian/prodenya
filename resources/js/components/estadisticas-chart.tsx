@@ -1,11 +1,13 @@
-import type { Intervalo } from '@/components/estadisticas-types';
+import type { Intervalo, NombreTotal } from '@/components/estadisticas-types';
 
 export function TrendChart({
     intervals,
     values,
+    label = 'Evolución',
 }: {
     intervals: Intervalo[];
     values: number[];
+    label?: string;
 }) {
     if (intervals.length === 0) {
         return (
@@ -42,7 +44,7 @@ export function TrendChart({
                 viewBox={`0 0 ${width} ${height}`}
                 className="h-auto w-full min-w-[620px]"
                 role="img"
-                aria-label="Evolución de creación de legajos"
+                aria-label={label}
             >
                 {[0, 0.25, 0.5, 0.75, 1].map((fraction) => {
                     const y = height - paddingY - fraction * chartHeight;
@@ -118,6 +120,114 @@ export function TrendChart({
                     );
                 })}
             </svg>
+        </div>
+    );
+}
+
+export function BarsChart({ items }: { items: NombreTotal[] }) {
+    const max = Math.max(...items.map((item) => item.total), 1);
+
+    return (
+        <div className="space-y-3">
+            {items.length === 0 ? (
+                <p className="py-8 text-center text-sm text-[#697586]">
+                    No hay datos para este período.
+                </p>
+            ) : (
+                items.slice(0, 10).map((item) => (
+                    <div key={item.nombre}>
+                        <div className="mb-1 flex justify-between gap-3 text-sm">
+                            <span className="truncate font-semibold text-[#2C4A5E] dark:text-[#D8E2E8]">
+                                {item.nombre}
+                            </span>
+                            <strong className="text-[#5B559E]">
+                                {item.total.toLocaleString('es-AR')}
+                            </strong>
+                        </div>
+                        <div className="h-2 overflow-hidden rounded-full bg-[#EEEAF9] dark:bg-[#38385A]">
+                            <div
+                                className="h-full rounded-full bg-[#5B559E]"
+                                style={{
+                                    width: `${(item.total / max) * 100}%`,
+                                }}
+                            />
+                        </div>
+                    </div>
+                ))
+            )}
+        </div>
+    );
+}
+
+export function DonutChart({ items }: { items: NombreTotal[] }) {
+    const total = items.reduce((sum, item) => sum + item.total, 0);
+    const colors = ['#5B559E', '#23845B', '#C66A10', '#1670AD', '#7652C7'];
+
+    return (
+        <div className="flex flex-wrap items-center gap-6">
+            <svg
+                viewBox="0 0 42 42"
+                className="size-36 -rotate-90"
+                role="img"
+                aria-label="Distribución"
+            >
+                <circle
+                    cx="21"
+                    cy="21"
+                    r="15.9"
+                    fill="none"
+                    stroke="var(--stats-chart-grid)"
+                    strokeWidth="6"
+                />
+                {items.map((item, index) => {
+                    const length = total ? (item.total / total) * 100 : 0;
+                    const offset = items
+                        .slice(0, index)
+                        .reduce(
+                            (sum, previous) =>
+                                sum +
+                                (total ? (previous.total / total) * 100 : 0),
+                            0,
+                        );
+                    const circle = (
+                        <circle
+                            key={item.nombre}
+                            cx="21"
+                            cy="21"
+                            r="15.9"
+                            fill="none"
+                            stroke={colors[index % colors.length]}
+                            strokeWidth="6"
+                            strokeDasharray={`${length} ${100 - length}`}
+                            strokeDashoffset={-offset}
+                        />
+                    );
+
+                    return circle;
+                })}
+            </svg>
+            <div className="min-w-[150px] space-y-2 text-sm">
+                {items.map((item, index) => (
+                    <div
+                        key={item.nombre}
+                        className="flex items-center justify-between gap-4"
+                    >
+                        <span className="flex min-w-0 items-center gap-2">
+                            <span
+                                className="size-2.5 shrink-0 rounded-full"
+                                style={{
+                                    backgroundColor:
+                                        colors[index % colors.length],
+                                }}
+                            />
+                            <span className="truncate text-[#2C4A5E] dark:text-[#D8E2E8]">
+                                {item.nombre}
+                            </span>
+                        </span>
+                        <strong>{item.total.toLocaleString('es-AR')}</strong>
+                    </div>
+                ))}
+            </div>
         </div>
     );
 }

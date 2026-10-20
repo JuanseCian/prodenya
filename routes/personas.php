@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth'])->group(function () {
     // Legajos es la única experiencia visible. Estas rutas mantienen enlaces antiguos funcionando.
-    Route::middleware('rol:admin,operador')->group(function () {
+    Route::middleware('rol:admin,operador,coordinador,administrativo')->group(function () {
         Route::get('personas/nueva', fn () => redirect()->route('legajos.create'))->name('personas.create');
         Route::get('legajos/create', [LegajoController::class, 'create'])->name('legajos.create');
         Route::post('legajos', [LegajoController::class, 'store'])->name('legajos.store');
@@ -18,6 +18,9 @@ Route::middleware(['auth'])->group(function () {
         Route::put('/legajos/{legajo}', [LegajoController::class, 'update'])->name('legajos.update')->whereNumber('legajo');
         Route::patch('/legajos/{legajo}/cerrar', [LegajoController::class, 'cerrar'])->name('legajos.cerrar')->whereNumber('legajo');
         Route::patch('/legajos/{legajo}/reabrir', [LegajoController::class, 'reabrir'])->name('legajos.reabrir')->whereNumber('legajo');
+    });
+
+    Route::middleware('rol:admin,operador,coordinador,profesional')->group(function () {
         Route::get('/legajos/{legajo}/intervenciones/create', [IntervencionController::class, 'create'])->name('legajos.intervenciones.create')->whereNumber('legajo');
         Route::post('/legajos/{legajo}/intervenciones', [IntervencionController::class, 'store'])->name('legajos.intervenciones.store')->whereNumber('legajo');
         Route::get('/legajos/{legajo}/intervenciones/{intervencion}/edit', [IntervencionController::class, 'edit'])->name('legajos.intervenciones.edit')->whereNumber(['legajo', 'intervencion']);
@@ -25,7 +28,7 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // ── Lectura: admin, operador y consulta ─────────────────────────────
-    Route::middleware('rol:admin,operador,consulta')->group(function () {
+    Route::middleware('rol:admin,operador,consulta,oficios,coordinador,profesional,administrativo')->group(function () {
         Route::get('/personas', fn () => redirect()->route('legajos.index'))->name('personas.index');
         Route::get('/personas/{persona}', fn (Persona $persona) => redirect()->route('legajos.show', $persona->id))
             ->name('personas.show')->whereNumber('persona');

@@ -1,7 +1,9 @@
-import { Link } from '@inertiajs/react';
+import { Link, router } from '@inertiajs/react';
 import {
     BarChart3,
     ChevronRight,
+    ClipboardCheck,
+    Download,
     FolderOpen,
     HeartPulse,
     LayoutDashboard,
@@ -13,14 +15,19 @@ import {
     TriangleAlert,
     X,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import type { ReactNode } from 'react';
 
 import { useAppearance } from '@/hooks/use-appearance';
 
-type EstadisticasModulo =
-    'resumen' | 'legajos' | 'problematicas' | 'intervenciones';
+export type EstadisticasModulo =
+    | 'resumen'
+    | 'legajos'
+    | 'problematicas'
+    | 'intervenciones'
+    | 'tareas'
+    | 'agenda';
 
 const modulos: Array<{
     key: EstadisticasModulo;
@@ -52,23 +59,45 @@ const modulos: Array<{
         href: '/estadisticas/intervenciones',
         icon: HeartPulse,
     },
+    {
+        key: 'tareas',
+        label: 'Tareas',
+        href: '/estadisticas/tareas',
+        icon: ClipboardCheck,
+    },
+    {
+        key: 'agenda',
+        label: 'Agenda',
+        href: '/estadisticas/agenda',
+        icon: LayoutDashboard,
+    },
 ];
 
 export default function EstadisticasShell({
     active,
     title,
     subtitle,
+    modulosDisponibles,
     children,
 }: {
     active: EstadisticasModulo;
     title: string;
     subtitle: string;
+    modulosDisponibles?: EstadisticasModulo[];
     children: ReactNode;
 }) {
     const [collapsed, setCollapsed] = useState(false);
     const [mobileOpen, setMobileOpen] = useState(false);
     const { resolvedAppearance, updateAppearance } = useAppearance();
     const isDark = resolvedAppearance === 'dark';
+
+    useEffect(() => {
+        const refresh = window.setInterval(() => {
+            router.reload({ preserveUrl: true });
+        }, 60_000);
+
+        return () => window.clearInterval(refresh);
+    }, []);
 
     return (
         <div className="stats-module-shell min-h-screen bg-[#F7F8FA] text-[#243140] dark:bg-[#1B2028] dark:text-[#EDF1F5]">
@@ -116,7 +145,13 @@ export default function EstadisticasShell({
                         className="mt-3 space-y-1.5"
                         aria-label="Módulos de estadísticas"
                     >
-                        {modulos.map((modulo) => {
+                        {modulos
+                            .filter(
+                                (modulo) =>
+                                    !modulosDisponibles ||
+                                    modulosDisponibles.includes(modulo.key),
+                            )
+                            .map((modulo) => {
                             const Icon = modulo.icon;
                             const isActive = active === modulo.key;
 
@@ -148,7 +183,7 @@ export default function EstadisticasShell({
                                     )}
                                 </Link>
                             );
-                        })}
+                            })}
                     </nav>
                 </div>
 
@@ -204,6 +239,23 @@ export default function EstadisticasShell({
                             </div>
                         </div>
                         <div className="flex items-center gap-2">
+                            <a
+                                href={`/estadisticas/exportar${window.location.search}`}
+                                className="hidden size-10 place-items-center rounded-md border border-[#DFE4EA] bg-white text-[#5B559E] transition hover:border-[#AAA4E5] sm:grid dark:border-[#3B4552] dark:bg-[#2C333E] dark:text-[#AAA4E5]"
+                                aria-label="Exportar estadísticas en CSV"
+                                title="Exportar CSV"
+                            >
+                                <Download size={17} />
+                            </a>
+                            <button
+                                type="button"
+                                onClick={() => window.print()}
+                                className="hidden size-10 place-items-center rounded-md border border-[#DFE4EA] bg-white text-[#5B559E] transition hover:border-[#AAA4E5] sm:grid dark:border-[#3B4552] dark:bg-[#2C333E] dark:text-[#AAA4E5]"
+                                aria-label="Imprimir estadísticas"
+                                title="Vista imprimible / PDF"
+                            >
+                                <span className="text-sm font-bold">PDF</span>
+                            </button>
                             <button
                                 type="button"
                                 onClick={() =>

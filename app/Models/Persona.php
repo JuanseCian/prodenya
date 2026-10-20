@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Concerns\RegistraAutor;
+use App\Models\Concerns\Auditable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -10,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Persona extends Model
 {
-    use RegistraAutor;
+    use RegistraAutor, Auditable;
 
     protected $table = 'personas';
 
@@ -39,6 +40,7 @@ class Persona extends Model
         'origen_derivacion',
         'profesional_id',
         'fecha_apertura',
+        'fecha_cierre',
         'estado',
         'observaciones_legajo',
         'motivo_ingreso_id',
@@ -50,6 +52,7 @@ class Persona extends Model
             'fecha_nacimiento' => 'date',
             'activo' => 'boolean',
             'fecha_apertura' => 'date',
+            'fecha_cierre' => 'date',
         ];
     }
 

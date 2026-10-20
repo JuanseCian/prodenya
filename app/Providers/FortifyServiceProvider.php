@@ -10,9 +10,12 @@ use App\Http\Responses\RegisterResponse;
 use App\Http\Responses\TwoFactorLoginResponse;
 use App\Http\Responses\VerifyEmailResponse;
 use App\Models\TeamInvitation;
+use App\Models\User;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -55,6 +58,36 @@ class FortifyServiceProvider extends ServiceProvider
     {
         Fortify::resetUserPasswordsUsing(ResetUserPassword::class);
         Fortify::createUsersUsing(CreateNewUser::class);
+        Fortify::authenticateUsing(function (Request $request): ?User {
+            $email = strtolower((string) $request->input('email'));
+            $user = User::query()->where('email', $email)->first();
+
+            if ($user && ! $user->email_verified_at) {
+                throw ValidationException::withMessages([
+                    'email' => 'Primero verificá tu correo electrónico desde el enlace que recibiste.',
+                ]);
+            }
+
+            if ($user && ($user->estado_cuenta !== User::ESTADO_APROBADO || ! $user->activo)) {
+                $message = match ($user->estado_cuenta) {
+                    User::ESTADO_PENDIENTE => 'Tu solicitud todavía está pendiente de aprobación.',
+                    User::ESTADO_RECHAZADO => 'Tu solicitud de acceso fue rechazada.',
+                    User::ESTADO_SUSPENDIDO => 'Tu cuenta está suspendida. Comunicate con la administración.',
+                    User::ESTADO_ARCHIVADO => 'Tu cuenta está archivada y no puede ingresar.',
+                    default => 'Tu cuenta no está habilitada para ingresar.',
+                };
+
+                throw ValidationException::withMessages(['email' => $message]);
+            }
+
+            if ($user && Hash::check((string) $request->input('password'), $user->password)) {
+                $user->updateQuietly(['ultimo_acceso' => now()]);
+
+                return $user;
+            }
+
+            return null;
+        });
     }
 
     /**

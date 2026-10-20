@@ -3,24 +3,28 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Notifications\RegistroUsuarioNotification;
+use Illuminate\Auth\Events\Verified;
 use App\Models\User;
-use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\View\View;
 use Illuminate\Validation\Rules;
-use Inertia\Inertia;
-use Inertia\Response;
+use App\Models\TeamInvitation;
 
 class RegisteredUserController extends Controller
 {
     /**
      * Muestra la página de registro.
      */
-    public function create(): Response
+    public function create(Request $request): View
     {
-        return Inertia::render('auth/register');
+        return view('auth.access', [
+            'teamInvitation' => $this->teamInvitation($request),
+            'showRegister' => true,
+        ]);
     }
 
     /**
@@ -28,22 +32,76 @@ class RegisteredUserController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        $request->merge([
+            'dni' => preg_replace('/\D+/', '', (string) $request->input('dni')),
+        ]);
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
+            'dni' => ['required', 'digits_between:7,12', 'unique:'.User::class],
+            'telefono' => ['nullable', 'string', 'max:40'],
+            'profesion' => ['nullable', 'string', 'max:100'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
         $user = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
+            'dni' => $validated['dni'],
+            'telefono' => $validated['telefono'] ?? null,
+            'profesion' => $validated['profesion'] ?? null,
             'password' => Hash::make($validated['password']),
         ]);
+        $user->forceFill([
+            'estado_cuenta' => User::ESTADO_PENDIENTE,
+            'activo' => false,
+        ])->saveQuietly();
 
-        event(new Registered($user));
+        $user->notify(new RegistroUsuarioNotification('verificacion'));
 
-        Auth::login($user);
+        Auth::logout();
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        return redirect()->route('register.pending');
+    }
+
+    public function pending(): View
+    {
+        return view('auth.registration-pending');
+    }
+
+    public function verifyRegistration(Request $request, User $user): View
+    {
+        abort_unless(hash_equals(sha1($user->email), (string) $request->query('hash')), 403);
+
+        if (! $user->hasVerifiedEmail()) {
+            $user->forceFill(['email_verified_at' => now()])->saveQuietly();
+            event(new Verified($user));
+        }
+
+        return view('auth.registration-verified', compact('user'));
+    }
+
+    private function teamInvitation(Request $request): ?array
+    {
+        $invitationCode = $request->query('invitation');
+
+        if (! is_string($invitationCode)) {
+            return null;
+        }
+
+        $invitation = TeamInvitation::query()
+            ->with('team')
+            ->where('code', $invitationCode)
+            ->whereNull('accepted_at')
+            ->where(fn ($query) => $query
+                ->whereNull('expires_at')
+                ->orWhere('expires_at', '>=', now()))
+            ->first();
+
+        return $invitation ? [
+            'code' => $invitation->code,
+            'teamName' => $invitation->team->name,
+        ] : null;
     }
 }

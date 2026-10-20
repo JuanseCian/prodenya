@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Concerns\RegistraAutor;
+use App\Models\Concerns\Auditable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -10,10 +11,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Support\Carbon;
 
 class Legajo extends Model
 {
-    use RegistraAutor;
+    use RegistraAutor, Auditable;
 
     protected $table = 'legajos';
 
@@ -28,6 +30,7 @@ class Legajo extends Model
         'origen_derivacion',
         'profesional_id',
         'fecha_apertura',
+        'fecha_cierre',
         'estado',
         'observaciones',
         'creado_por',
@@ -37,7 +40,28 @@ class Legajo extends Model
     {
         return [
             'fecha_apertura' => 'date',
+            'fecha_cierre' => 'date',
+            'retencion_hasta' => 'date',
+            'archivado_legal_en' => 'datetime',
+            'eliminacion_autorizada_en' => 'datetime',
         ];
+    }
+
+    /**
+     * Conserva el legajo como mínimo hasta diez años después de cumplir 18.
+     */
+    public function fechaMinimaRetencion(): ?Carbon
+    {
+        return $this->persona?->fecha_nacimiento?->copy()->addYears(28);
+    }
+
+    public function puedeEliminarse(): bool
+    {
+        $retencion = $this->retencion_hasta ?? $this->fechaMinimaRetencion();
+
+        return $this->eliminacion_autorizada_en !== null
+            && $retencion !== null
+            && $retencion->isPast();
     }
 
     public function problematicas(): BelongsToMany

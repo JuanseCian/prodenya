@@ -42,6 +42,7 @@ export default function EstadisticasLegajos(props: EstadisticasData) {
                 active="legajos"
                 title="Legajos"
                 subtitle="Aperturas y estados"
+                modulosDisponibles={props.modulosDisponibles}
             >
                 <div className="stats-page-surface min-h-[calc(100vh-77px)] px-4 py-7 sm:px-7 sm:py-9 lg:px-10">
                     <div className="mx-auto max-w-7xl">
@@ -56,14 +57,16 @@ export default function EstadisticasLegajos(props: EstadisticasData) {
 
                         <EstadisticasFiltros
                             filtros={props.filtros}
+                            rango={props.rango}
                             problematicas={props.problematicas}
+                            catalogos={props.catalogos}
                         />
 
                         <div className="grid gap-4 pt-7 sm:grid-cols-2 xl:grid-cols-4">
                             <EstadisticaKpi
                                 label="Registrados"
                                 value={props.kpis.totalLegajos}
-                                detail={props.rango.descripcion}
+                                detail="Legajo.fecha_apertura"
                                 icon={FolderOpen}
                                 tone="blue"
                             />
@@ -76,8 +79,8 @@ export default function EstadisticasLegajos(props: EstadisticasData) {
                             />
                             <EstadisticaKpi
                                 label="Cerrados"
-                                value={props.kpis.legajosCerrados}
-                                detail="Finalizados en el período"
+                                value={props.kpis.legajosBajas}
+                                detail="Legajo.fecha_cierre"
                                 icon={Clock3}
                                 tone="violet"
                             />
@@ -98,7 +101,7 @@ export default function EstadisticasLegajos(props: EstadisticasData) {
                                             className="mt-1 text-xl font-semibold text-[#173247]"
                                             style={{ fontFamily: FONT_HEADING }}
                                         >
-                                            Aperturas
+                                            Aperturas y bajas
                                         </h2>
                                     </div>
                                     <span className="rounded-full bg-[#E8F5FF] px-3 py-1.5 text-xs font-semibold text-[#1670AD]">
@@ -106,10 +109,18 @@ export default function EstadisticasLegajos(props: EstadisticasData) {
                                     </span>
                                 </div>
                                 <div className="mt-6">
-                                    <TrendChart
-                                        intervals={props.intervalos}
-                                        values={props.legajosPorPeriodo}
-                                    />
+                                    <div className="grid gap-6 sm:grid-cols-2">
+                                        <TrendChart
+                                            intervals={props.intervalos}
+                                            values={props.legajosPorPeriodo}
+                                            label="Aperturas de legajos"
+                                        />
+                                        <TrendChart
+                                            intervals={props.intervalos}
+                                            values={props.bajasPorPeriodo}
+                                            label="Bajas de legajos"
+                                        />
+                                    </div>
                                 </div>
                             </article>
 

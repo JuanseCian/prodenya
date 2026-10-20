@@ -8,6 +8,9 @@ export default function Register() {
     const { data, setData, post, processing, errors, reset } = useForm({
         name: '',
         email: '',
+        dni: '',
+        telefono: '',
+        profesion: '',
         password: '',
         password_confirmation: '',
     });
@@ -94,6 +97,25 @@ export default function Register() {
                                     {errors.name}
                                 </p>
                             )}
+                        </div>
+
+                        <div className="grid gap-4 sm:grid-cols-2">
+                            <div>
+                                <label htmlFor="dni" className="mb-1.5 block text-sm font-medium text-[#2B2F36]" style={{ fontFamily: FONT_BODY }}>DNI</label>
+                                <input id="dni" type="text" name="dni" value={data.dni} inputMode="numeric" onChange={(e) => setData('dni', e.target.value)} className="block w-full rounded-md border border-[#D5D1C6] bg-white px-3.5 py-2.5 text-sm text-[#2B2F36] outline-none focus:border-[#2C4A5E] focus:ring-2 focus:ring-[#2C4A5E]/20" placeholder="Sin puntos" required />
+                                {errors.dni && <p className="mt-1.5 text-sm text-[#B1553F]">{errors.dni}</p>}
+                            </div>
+                            <div>
+                                <label htmlFor="telefono" className="mb-1.5 block text-sm font-medium text-[#2B2F36]" style={{ fontFamily: FONT_BODY }}>Teléfono</label>
+                                <input id="telefono" type="tel" name="telefono" value={data.telefono} onChange={(e) => setData('telefono', e.target.value)} className="block w-full rounded-md border border-[#D5D1C6] bg-white px-3.5 py-2.5 text-sm text-[#2B2F36] outline-none focus:border-[#2C4A5E] focus:ring-2 focus:ring-[#2C4A5E]/20" placeholder="Opcional" />
+                                {errors.telefono && <p className="mt-1.5 text-sm text-[#B1553F]">{errors.telefono}</p>}
+                            </div>
+                        </div>
+
+                        <div>
+                            <label htmlFor="profesion" className="mb-1.5 block text-sm font-medium text-[#2B2F36]" style={{ fontFamily: FONT_BODY }}>Profesión</label>
+                            <input id="profesion" type="text" name="profesion" value={data.profesion} onChange={(e) => setData('profesion', e.target.value)} className="block w-full rounded-md border border-[#D5D1C6] bg-white px-3.5 py-2.5 text-sm text-[#2B2F36] outline-none focus:border-[#2C4A5E] focus:ring-2 focus:ring-[#2C4A5E]/20" placeholder="Opcional" />
+                            {errors.profesion && <p className="mt-1.5 text-sm text-[#B1553F]">{errors.profesion}</p>}
                         </div>
 
                         <div>

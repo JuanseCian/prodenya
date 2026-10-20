@@ -267,7 +267,10 @@ class LegajoController extends Controller
     private function cambiarEstado(Persona $legajo, string $estado, string $mensaje)
     {
         try {
-            $legajo->update(['estado' => $estado]);
+            $legajo->update([
+                'estado' => $estado,
+                'fecha_cierre' => $estado === 'Cerrado' ? today() : null,
+            ]);
             $this->sincronizarLegajoReal($legajo->fresh());
         } catch (Throwable $e) {
             report($e);
@@ -307,6 +310,7 @@ class LegajoController extends Controller
             'origen_derivacion' => $persona->origen_derivacion,
             'profesional_id' => $persona->profesional_id,
             'fecha_apertura' => $persona->fecha_apertura ?? now()->toDateString(),
+            'fecha_cierre' => $persona->fecha_cierre,
             'estado' => $persona->estado ?: 'Abierto',
             'observaciones' => $persona->observaciones_legajo,
         ];

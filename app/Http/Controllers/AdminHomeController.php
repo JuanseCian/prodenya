@@ -18,6 +18,7 @@ class AdminHomeController extends Controller
         $usuariosActivos = User::where(function ($query) {
             $query->where('activo', true)->orWhereNull('activo');
         })->count();
+        $usuariosPendientes = User::where('estado_cuenta', User::ESTADO_PENDIENTE)->count();
         $mensajesNoLeidos = MailMessage::where('is_read', false)->count();
 
         $legajosRecientes = Persona::query()
@@ -30,6 +31,7 @@ class AdminHomeController extends Controller
             'legajosActivos',
             'legajosRegistrados',
             'usuariosActivos',
+            'usuariosPendientes',
             'mensajesNoLeidos',
             'legajosRecientes',
         ));

@@ -374,6 +374,38 @@
                                             @error('email') <p class="field-error">{{ $message }}</p> @enderror
                                         </div>
 
+                                        <div class="row g-2">
+                                            <div class="col-6">
+                                                <div class="field mb-0">
+                                                    <label for="register-dni">DNI</label>
+                                                    <div class="input-wrap">
+                                                        <span class="ico-left"><i class="bi bi-card-text"></i></span>
+                                                        <input type="text" id="register-dni" name="dni" value="{{ old('dni') }}" placeholder="Sin puntos" inputmode="numeric" autocomplete="off" required>
+                                                    </div>
+                                                    @error('dni') <p class="field-error">{{ $message }}</p> @enderror
+                                                </div>
+                                            </div>
+                                            <div class="col-6">
+                                                <div class="field mb-0">
+                                                    <label for="register-telefono">Teléfono</label>
+                                                    <div class="input-wrap">
+                                                        <span class="ico-left"><i class="bi bi-telephone"></i></span>
+                                                        <input type="tel" id="register-telefono" name="telefono" value="{{ old('telefono') }}" placeholder="Opcional" autocomplete="tel">
+                                                    </div>
+                                                    @error('telefono') <p class="field-error">{{ $message }}</p> @enderror
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="field mt-3">
+                                            <label for="register-profesion">Profesión</label>
+                                            <div class="input-wrap">
+                                                <span class="ico-left"><i class="bi bi-briefcase"></i></span>
+                                                <input type="text" id="register-profesion" name="profesion" value="{{ old('profesion') }}" placeholder="Opcional" autocomplete="organization-title">
+                                            </div>
+                                            @error('profesion') <p class="field-error">{{ $message }}</p> @enderror
+                                        </div>
+
                                         <div class="row g-2 mb-0">
                                             <div class="col-6">
                                                 <div class="field mb-0">

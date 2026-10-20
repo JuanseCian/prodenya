@@ -164,6 +164,22 @@
     background-image: none;
 }
 
+@media print {
+    .stats-module-shell aside,
+    .stats-module-shell header {
+        display: none !important;
+    }
+
+    .stats-module-shell > div {
+        margin-left: 0 !important;
+    }
+
+    .stats-module-shell .stats-page-surface {
+        min-height: auto !important;
+        padding: 0 !important;
+    }
+}
+
 .dark .stats-module-shell .stats-page-surface [class*='bg-white'] {
     background-color: var(--stats-surface);
 }

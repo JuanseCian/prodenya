@@ -73,7 +73,7 @@
                 <h2 id="admin-stats-title" class="admin-section-title">Resumen operativo</h2>
                 <p class="admin-section-copy">Los datos principales del sistema en un solo vistazo.</p>
             </div>
-            <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
                 <div class="admin-stat admin-stat-purple">
                     <div class="admin-stat-icon"><i class="bi bi-people"></i></div>
                     <div class="admin-stat-label">Legajos activos</div>
@@ -88,6 +88,11 @@
                     <div class="admin-stat-icon"><i class="bi bi-person-check"></i></div>
                     <div class="admin-stat-label">Usuarios activos</div>
                     <div class="admin-stat-value">{{ number_format($usuariosActivos, 0, ',', '.') }}</div>
+                </div>
+                <div class="admin-stat admin-stat-amber">
+                    <div class="admin-stat-icon"><i class="bi bi-person-exclamation"></i></div>
+                    <div class="admin-stat-label">Solicitudes pendientes</div>
+                    <div class="admin-stat-value">{{ number_format($usuariosPendientes, 0, ',', '.') }}</div>
                 </div>
                 <div class="admin-stat admin-stat-amber">
                     <div class="admin-stat-icon"><i class="bi bi-envelope"></i></div>
@@ -119,6 +124,20 @@
                             <span class="admin-action-icon"><i class="bi bi-envelope"></i></span>
                             <span><strong>Ver Mailbox</strong><span>Revisá la bandeja institucional</span></span>
                             <i class="bi bi-arrow-up-right"></i>
+                        </a>
+                    @endif
+                    @if (Route::has('admin.usuarios.index'))
+                        <a href="{{ route('admin.usuarios.index') }}" class="admin-action">
+                            <span class="admin-action-icon"><i class="bi bi-person-gear"></i></span>
+                            <span><strong>Gestionar usuarios</strong><span>{{ $usuariosPendientes }} solicitudes pendientes</span></span>
+                            <i class="bi bi-arrow-up-right"></i>
+                        </a>
+                    @endif
+                    @if (Route::has('admin.auditoria.index'))
+                        <a href="{{ route('admin.auditoria.index') }}" class="admin-action">
+                            <i class="bi bi-clipboard2-check" aria-hidden="true"></i>
+                            <span><strong>Auditoría</strong><small>Revisar historial de acciones y cambios.</small></span>
+                            <i class="bi bi-arrow-right admin-action-arrow" aria-hidden="true"></i>
                         </a>
                     @endif
                 </div>

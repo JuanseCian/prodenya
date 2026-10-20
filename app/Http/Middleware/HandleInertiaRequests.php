@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -18,7 +19,7 @@ class HandleInertiaRequests extends Middleware
 
     public function rootView(Request $request)
     {
-        if ($request->routeIs('legajos.*', 'mayores18.*', 'mailbox.index')) {
+        if ($request->routeIs('legajos.*', 'mayores18.*', 'mailbox.index', 'comunicacion.*', 'tareas.*', 'agenda.*')) {
             return 'layouts.frontend';
         }
 
@@ -53,8 +54,19 @@ class HandleInertiaRequests extends Middleware
                 'user' => $user,
             ],
             'can' => [
-                'accessMailbox' => $user?->tieneRol('admin') ?? false,
+                'accessMailbox' => $user?->tieneRol('admin', 'oficios', 'coordinador') ?? false,
             ],
+            'comunicacionNoLeidos' => $user
+                ? (int) DB::table('mensajes')
+                    ->join('conversacion_usuario', 'conversacion_usuario.conversacion_id', '=', 'mensajes.conversacion_id')
+                    ->where('conversacion_usuario.usuario_id', $user->id)
+                    ->where('mensajes.usuario_id', '!=', $user->id)
+                    ->where(function ($query) {
+                        $query->whereNull('conversacion_usuario.ultimo_leido_en')
+                            ->orWhereColumn('mensajes.created_at', '>', 'conversacion_usuario.ultimo_leido_en');
+                    })
+                    ->count()
+                : 0,
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
     }

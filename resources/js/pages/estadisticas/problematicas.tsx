@@ -10,14 +10,18 @@ import type { EstadisticasData } from '@/components/estadisticas-types';
 const FONT_HEADING = 'inherit';
 
 function queryFor(filtros: EstadisticasData['filtros'], problematica?: number) {
-    const query = new URLSearchParams({
-        periodo: filtros.periodo,
-        anio: String(filtros.anio),
-        mes: String(filtros.mes),
+    const query = new URLSearchParams();
+
+    Object.entries(filtros).forEach(([key, value]) => {
+        if (value !== null && value !== '' && value !== 'ninguno') {
+            query.set(key, String(value));
+        }
     });
 
     if (problematica) {
         query.set('problematica', String(problematica));
+    } else {
+        query.delete('problematica');
     }
 
     return `/estadisticas/problematicas?${query.toString()}`;
@@ -33,6 +37,7 @@ export default function EstadisticasProblematicas(props: EstadisticasData) {
                 active="problematicas"
                 title="Problemáticas"
                 subtitle="Casos por categoría"
+                modulosDisponibles={props.modulosDisponibles}
             >
                 <div className="stats-page-surface min-h-[calc(100vh-77px)] px-4 py-7 sm:px-7 sm:py-9 lg:px-10">
                     <div className="mx-auto max-w-7xl">
@@ -47,7 +52,9 @@ export default function EstadisticasProblematicas(props: EstadisticasData) {
 
                         <EstadisticasFiltros
                             filtros={props.filtros}
+                            rango={props.rango}
                             problematicas={props.problematicas}
+                            catalogos={props.catalogos}
                         />
 
                         <div className="grid gap-4 pt-7 sm:grid-cols-2 xl:grid-cols-3">
