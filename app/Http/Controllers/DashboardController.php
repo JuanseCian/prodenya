@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Persona;
+use App\Models\TeamInvitation;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -53,7 +54,24 @@ class DashboardController extends Controller
                     'riesgo' => $persona->nivel_riesgo,
                     'estado' => $persona->estado,
                     'fechaApertura' => $persona->fecha_apertura?->format('d/m/Y'),
-                    'motivo' => $persona->motivo_ingreso,
+                     'motivo' => $persona->motivo_ingreso,
+                 ]),
+            'pendingInvitations' => TeamInvitation::query()
+                ->with(['team', 'inviter'])
+                ->where('email', $request->user()->email)
+                ->whereNull('accepted_at')
+                ->where(function ($query) {
+                    $query->whereNull('expires_at')
+                        ->orWhere('expires_at', '>', now());
+                })
+                ->get()
+                ->map(fn (TeamInvitation $invitation) => [
+                    'code' => $invitation->code,
+                    'inviterName' => $invitation->inviter->name,
+                    'team' => [
+                        'name' => $invitation->team->name,
+                        'slug' => $invitation->team->slug,
+                    ],
                 ]),
         ]);
     }

@@ -35,7 +35,7 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
     const activeHref = toUrl(activeItem.href);
 
     return (
-        <div className="min-h-full bg-[#f5f9f7] px-4 py-6 text-[#173247] sm:px-6 sm:py-8 lg:px-8 lg:py-10">
+        <div className="account-settings-shell min-h-full bg-[#f5f9f7] px-4 py-6 text-[#173247] sm:px-6 sm:py-8 lg:px-8 lg:py-10">
             <div className="mx-auto max-w-7xl">
                 <header className="mb-7 max-w-3xl">
                     <p className="mb-2 text-xs font-bold tracking-[0.16em] text-[#5d9b7a] uppercase">
