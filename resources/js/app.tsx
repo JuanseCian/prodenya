@@ -1,4 +1,4 @@
-import { createInertiaApp } from '@inertiajs/react';
+import { createInertiaApp, router } from '@inertiajs/react';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { initializeTheme } from '@/hooks/use-appearance';
@@ -44,8 +44,23 @@ createInertiaApp({
         );
     },
     progress: {
-        color: '#4B5563',
+        color: '#9ce0bf',
+        delay: 120,
+        showSpinner: false,
     },
+});
+
+router.on('start', () => {
+    document.documentElement.classList.add('is-navigating');
+});
+
+router.on('finish', () => {
+    const root = document.documentElement;
+    root.classList.remove('is-navigating', 'is-page-entering');
+    requestAnimationFrame(() => {
+        root.classList.add('is-page-entering');
+        window.setTimeout(() => root.classList.remove('is-page-entering'), 220);
+    });
 });
 
 // This will set light / dark mode on load...

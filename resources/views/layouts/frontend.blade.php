@@ -491,7 +491,7 @@
          .site-sidebar-close { border-radius: 11px; }
          .site-sidebar-nav { gap: 0; padding: 22px 16px 12px; }
          .site-sidebar-group + .site-sidebar-group { margin-top: 20px; padding-top: 19px; }
-         .site-sidebar-label { align-items: center; display: flex; gap: 8px; font-size: 0.65rem; font-weight: 800; letter-spacing: 0.13em; padding: 0 10px 9px; }
+         .site-sidebar-label { align-items: center; color: #5f737d; display: flex; gap: 8px; font-size: 0.65rem; font-weight: 800; letter-spacing: 0.13em; padding: 0 10px 9px; }
          .site-sidebar-label::before { background: #8fc8a8; border-radius: 999px; content: ''; height: 6px; width: 6px; }
          .site-sidebar-link {
              border-color: transparent;
@@ -528,7 +528,7 @@
          .site-sidebar-account-copy small { color: #4c8b6c; font-size: 0.69rem; margin-top: 5px; }
          .site-sidebar-account-chevron { margin-right: 3px; }
          .site-sidebar-account-options { border-top-color: #d5e8dc; margin-top: 7px; padding: 9px 4px 2px; }
-         .site-sidebar-account-email { color: #71828a; margin: 0 8px 6px; }
+         .site-sidebar-account-email { color: #5d707a; margin: 0 8px 6px; }
          .site-sidebar-account-link { border-radius: 10px; min-height: 40px; }
          .site-sidebar-account-link:hover, .site-sidebar-account-link:focus-visible { background: rgba(255, 255, 255, 0.82); }
          .site-sidebar-logout-form { border-top-color: #d5e8dc; }
@@ -541,12 +541,41 @@
              .site-header-brand .brand-mark { flex-basis: 38px; height: 38px; width: 38px; }
              .site-sidebar { bottom: 8px; max-height: calc(100dvh - 16px); right: 8px; top: 8px; width: min(344px, calc(100vw - 16px)); }
          }
-         @media (max-width: 480px) {
-             .site-header-brand { gap: 9px; }
-             .site-header-brand .brand-name { font-size: 0.91rem; }
-             .site-sidebar { border-radius: 18px; }
-             .site-sidebar-header { border-radius: 18px 18px 0 0; }
+          @media (max-width: 480px) {
+              .site-header-brand { gap: 9px; }
+              .site-header-brand .brand-name { font-size: 0.91rem; }
+              .site-sidebar { border-radius: 18px; }
+              .site-sidebar-header { border-radius: 18px 18px 0 0; }
+          }
+         .dark .site-sidebar {
+             background: linear-gradient(180deg, #152532 0%, #10202b 100%);
+             border-color: #294252;
+             color: #edf6fb;
          }
+         .dark .site-sidebar-header { background: linear-gradient(135deg, #1b303f 0%, #152a37 100%); border-color: #294252; }
+         .dark .site-sidebar-header h2 { color: #edf6fb; }
+         .dark .site-sidebar-header h2::before { color: #9ce0bf; }
+         .dark .site-sidebar-close { color: #a8bbc5; }
+         .dark .site-sidebar-close:hover, .dark .site-sidebar-close:focus-visible { background: #203746; border-color: #3a596b; color: #fff; }
+         .dark .site-sidebar-group + .site-sidebar-group { border-color: #294252; }
+         .dark .site-sidebar-label { color: #a8bbc5; }
+         .dark .site-sidebar-label::before { background: #9ce0bf; }
+         .dark .site-sidebar-link { color: #c2d1d8; }
+         .dark .site-sidebar-link i { background: #1c3544; border-color: #315063; color: #9ccfb2; }
+         .dark .site-sidebar-link:hover, .dark .site-sidebar-link:focus-visible { background: #1c3544; border-color: #315063; color: #fff; }
+         .dark .site-sidebar-link:hover i, .dark .site-sidebar-link:focus-visible i { background: #285143; border-color: #40775f; color: #b9e8cc; }
+         .dark .site-sidebar-link.is-active { background: linear-gradient(105deg, #214537 0%, #1c3544 100%); border-color: #40775f; color: #fff; }
+         .dark .site-sidebar-link.is-active i { background: #2c6249; border-color: #4a916f; color: #c5f0d6; }
+         .dark .site-sidebar-account { background: rgba(28, 53, 68, 0.85); border-color: #315063; }
+         .dark .site-sidebar-account-trigger:hover, .dark .site-sidebar-account-trigger:focus-visible { background: rgba(255, 255, 255, 0.08); }
+         .dark .site-sidebar-account .site-user-avatar { background: #285143; border-color: #40775f; color: #c5f0d6; }
+         .dark .site-sidebar-account-copy h2 { color: #edf6fb; }
+         .dark .site-sidebar-account-copy small, .dark .site-sidebar-account-email { color: #a8caba; }
+         .dark .site-sidebar-account-chevron { color: #a8bbc5; }
+         .dark .site-sidebar-account-options, .dark .site-sidebar-logout-form { border-color: #315063; }
+         .dark .site-sidebar-account-link { color: #c2d1d8; }
+         .dark .site-sidebar-account-link:hover, .dark .site-sidebar-account-link:focus-visible { background: rgba(255, 255, 255, 0.08); color: #fff; }
+         .dark .site-sidebar-account-link i { color: #9ccfb2; }
      </style>
 
     @stack('styles')

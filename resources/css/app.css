@@ -218,6 +218,55 @@
     }
 }
 
+#nprogress {
+    pointer-events: none;
+}
+
+#nprogress .bar {
+    background: #9ce0bf;
+    box-shadow: 0 0 12px rgba(156, 224, 191, 0.7);
+    height: 3px;
+    left: 0;
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 9999;
+}
+
+#nprogress .peg {
+    box-shadow: 0 0 10px #9ce0bf, 0 0 5px #9ce0bf;
+    display: block;
+    height: 100%;
+    opacity: 1;
+    position: absolute;
+    right: 0;
+    transform: rotate(3deg) translate(0, -4px);
+    width: 100px;
+}
+
+@keyframes prodenya-page-enter {
+    from {
+        opacity: 0;
+        transform: translate3d(0, 5px, 0) scale(0.998);
+    }
+
+    to {
+        opacity: 1;
+        transform: translate3d(0, 0, 0) scale(1);
+    }
+}
+
+.prodenya-page-transition {
+    animation: prodenya-page-enter 180ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    min-height: 100%;
+    transform-origin: top center;
+}
+
+.is-page-entering .site-main {
+    animation: prodenya-page-enter 180ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    transform-origin: top center;
+}
+
 @keyframes prodenya-toast-in {
     0% {
         opacity: 0;
@@ -253,12 +302,12 @@
 }
 
 .prodenya-toast-motion {
-    animation: prodenya-toast-in 360ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation: prodenya-toast-in 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
     transform-origin: top right;
 }
 
 .prodenya-toast-motion-out {
-    animation: prodenya-toast-out 220ms cubic-bezier(0.4, 0, 1, 1) both;
+    animation: prodenya-toast-out 160ms cubic-bezier(0.4, 0, 1, 1) both;
 }
 
 .prodenya-filter-layout {
@@ -266,8 +315,8 @@
     grid-template-columns: minmax(0, 1fr);
     column-gap: 0;
     transition:
-        grid-template-columns 300ms cubic-bezier(0.22, 1, 0.36, 1),
-        column-gap 300ms cubic-bezier(0.22, 1, 0.36, 1);
+        grid-template-columns 220ms cubic-bezier(0.22, 1, 0.36, 1),
+        column-gap 220ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .prodenya-filter-layout.is-open {
@@ -283,10 +332,10 @@
     pointer-events: none;
     transform: translate3d(-14px, 0, 0) scale(0.98);
     transform-origin: top left;
-    transition:
-        max-height 300ms cubic-bezier(0.22, 1, 0.36, 1),
-        opacity 220ms ease,
-        transform 300ms cubic-bezier(0.22, 1, 0.36, 1);
+        transition:
+        max-height 220ms cubic-bezier(0.22, 1, 0.36, 1),
+        opacity 160ms ease,
+        transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .prodenya-filter-panel.is-visible {
@@ -294,6 +343,20 @@
     opacity: 1;
     pointer-events: auto;
     transform: translate3d(0, 0, 0) scale(1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #nprogress .peg,
+    .prodenya-page-transition,
+    .prodenya-toast-motion,
+    .prodenya-toast-motion-out {
+        animation: none !important;
+    }
+
+    .prodenya-filter-layout,
+    .prodenya-filter-panel {
+        transition: none !important;
+    }
 }
 
 @media (max-width: 1023px) {
@@ -319,4 +382,70 @@
         margin-bottom: 1.5rem;
         transform: translate3d(0, 0, 0) scale(1);
     }
+}
+
+/* Account settings surfaces use the same dark palette as the application shell. */
+.account-settings-shell [class*='text-[#63757e]'] {
+    color: #526873;
+}
+
+.account-settings-shell [class*='text-[#71828a]'] {
+    color: #5d707a;
+}
+
+.account-settings-shell [class*='text-[#819197]'] {
+    color: #5f737d;
+}
+
+.dark .account-settings-shell {
+    background: #0d1620;
+    color: #edf6fb;
+}
+
+.dark .account-settings-shell [class*='bg-white'] {
+    background-color: #152532;
+}
+
+.dark .account-settings-shell [class*='bg-[#f5f9f7]'],
+.dark .account-settings-shell [class*='bg-[#f8fcf9]'],
+.dark .account-settings-shell [class*='bg-[#f7fbf8]'],
+.dark .account-settings-shell [class*='bg-[#fbfdfc]'] {
+    background-color: #10202b;
+}
+
+.dark .account-settings-shell [class*='bg-[#fff9e8]'] {
+    background-color: #352b1b;
+}
+
+.dark .account-settings-shell [class*='bg-[#fffaf0]'] {
+    background-color: #352b1b;
+}
+
+.dark .account-settings-shell [class*='text-[#173247]'] {
+    color: #edf6fb;
+}
+
+.dark .account-settings-shell [class*='text-[#31505d]'],
+.dark .account-settings-shell [class*='text-[#5d4825]'] {
+    color: #d4e3e9;
+}
+
+.dark .account-settings-shell [class*='text-[#63757e]'],
+.dark .account-settings-shell [class*='text-[#71828a]'],
+.dark .account-settings-shell [class*='text-[#819197]'],
+.dark .account-settings-shell [class*='text-[#806c4b]'] {
+    color: #a8bbc5;
+}
+
+.dark .account-settings-shell [class*='border-[#d7e5dd]'],
+.dark .account-settings-shell [class*='border-[#dcebe2]'],
+.dark .account-settings-shell [class*='border-[#e2eee7]'],
+.dark .account-settings-shell [class*='border-[#e5eee8]'] {
+    border-color: #294252;
+}
+
+.dark .account-settings-shell [class*='border-[#f0dfc2]'],
+.dark .account-settings-shell [class*='border-[#f1dfb4]'],
+.dark .account-settings-shell [class*='border-[#e7d3a9]'] {
+    border-color: #6d5930;
 }

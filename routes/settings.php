@@ -35,6 +35,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::inertia('settings/appearance', 'settings/appearance')->name('appearance.edit');
 
+    Route::post('invitations/{invitation}/accept', [TeamInvitationController::class, 'accept'])
+        ->name('invitations.accept');
+    Route::delete('invitations/{invitation}/decline', [TeamInvitationController::class, 'decline'])
+        ->name('invitations.decline');
+
     Route::get('settings/teams', [TeamController::class, 'index'])->name('teams.index');
     Route::post('settings/teams', [TeamController::class, 'store'])->name('teams.store');
 
