@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Legajo;
 use App\Models\TipoIntervencion;
 use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
@@ -36,6 +37,12 @@ class GuardarIntervencionRequest extends FormRequest
             'firma_entrevistado_archivo' => ['nullable', 'file', 'mimes:png,jpg,jpeg,pdf', 'max:5120'],
             'archivos' => ['nullable', 'array', 'max:10'],
             'archivos.*' => ['file', 'mimes:pdf,jpg,jpeg,png', 'max:10240'],
+            'legajos_destino_ids' => ['nullable', 'array', 'max:10'],
+            'legajos_destino_ids.*' => [
+                'integer',
+                'distinct',
+                Rule::exists(Legajo::class, 'id'),
+            ],
         ];
     }
 

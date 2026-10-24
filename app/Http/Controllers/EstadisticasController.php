@@ -7,9 +7,10 @@ use App\Models\AuditoriaEvento;
 use App\Models\Intervencion;
 use App\Models\Persona;
 use App\Models\Problematica;
-use App\Models\TipoIntervencion;
 use App\Models\Tarea;
+use App\Models\TipoIntervencion;
 use App\Models\User;
+use App\Services\MapboxGeocodingService;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
@@ -21,6 +22,8 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class EstadisticasController extends Controller
 {
+    public function __construct(private MapboxGeocodingService $mapboxGeocoding) {}
+
     public function __invoke(Request $request): Response
     {
         return Inertia::render('estadisticas/index', $this->datos($request));
@@ -247,10 +250,13 @@ class EstadisticasController extends Controller
             'agendaPorTipo' => $this->agrupacion(clone $agenda, 'tipo'),
             'agendaPorEstado' => $this->agrupacion(clone $agenda, 'estado'),
             'barrios' => $this->barrios($legajos),
-            'mapaBarrios' => [
-                'disponible' => false,
-                'mensaje' => 'Mapa no disponible: no se incorporó geometría pública segura de barrios.',
-            ],
+            'mapaBarrios' => $request->routeIs('estadisticas')
+                ? $this->mapaBarrios($legajos)
+                : [
+                    'disponible' => false,
+                    'mensaje' => 'El mapa está disponible en el resumen de estadísticas.',
+                    'zonas' => [],
+                ],
             'modificacionesTimeline' => $this->modificacionesTimeline($desde, $hasta),
             'actividadTimeline' => $this->actividadTimeline($desde, $hasta, $filtros),
             'agendaTimeline' => (clone $agenda)->with('creador')->latest('fecha_inicio')->limit(12)->get()->map(fn (AgendaEvento $evento) => [
@@ -400,6 +406,111 @@ class EstadisticasController extends Controller
             ->map(fn ($barrio) => ['id' => $barrio->id, 'nombre' => $barrio->nombre, 'total' => (int) $barrio->total])
             ->values()
             ->all();
+    }
+
+    /**
+     * @return array{disponible: bool, mensaje: string, zonas: array<int, array<string, mixed>>}
+     */
+    private function mapaBarrios(Builder $legajos): array
+    {
+        $sinDatos = [
+            'disponible' => false,
+            'mensaje' => 'El mapa necesita configurar MAPBOX_ACCESS_TOKEN para geocodificar las direcciones.',
+            'zonas' => [],
+        ];
+
+        if (! $this->mapboxGeocoding->configured()) {
+            return $sinDatos;
+        }
+
+        $personas = (clone $legajos)
+            ->whereHas('localidad', fn (Builder $query) => $query->where('nombre', 'like', 'San Nicol%'))
+            ->with(['localidad', 'barrio.localidad', 'problematicas:id,nombre'])
+            ->get([
+                'id',
+                'direccion_calle',
+                'direccion_numero',
+                'localidad_id',
+                'barrio_id',
+                'latitud',
+                'longitud',
+                'geocodificacion_precision',
+                'geocodificacion_consulta_hash',
+            ]);
+
+        if ($personas->isEmpty()) {
+            return [
+                'disponible' => true,
+                'mensaje' => 'No hay casos geolocalizables en el período seleccionado.',
+                'zonas' => [],
+            ];
+        }
+
+        $personasCoordenadas = $this->mapboxGeocoding->geocodePeople($personas);
+        $barrios = $personas->pluck('barrio')->filter()->unique('id')->values();
+        $barriosCoordenadas = $this->mapboxGeocoding->geocodeBarrios($barrios);
+        $zonas = [];
+
+        foreach ($personas as $persona) {
+            $coordenada = $personasCoordenadas[$persona->id]
+                ?? ($persona->barrio ? ($barriosCoordenadas[$persona->barrio->id] ?? null) : null);
+
+            if ($coordenada === null) {
+                continue;
+            }
+
+            $latitud = round($coordenada['latitude'], 3);
+            $longitud = round($coordenada['longitude'], 3);
+            $clave = sprintf('%.3f:%.3f', $latitud, $longitud);
+
+            if (! isset($zonas[$clave])) {
+                $zonas[$clave] = [
+                    'id' => $clave,
+                    'latitud' => $latitud,
+                    'longitud' => $longitud,
+                    'total' => 0,
+                    'problematicas' => [],
+                ];
+            }
+
+            $zonas[$clave]['total']++;
+
+            foreach ($persona->problematicas as $problematica) {
+                $problematicaId = (string) $problematica->id;
+
+                if (! isset($zonas[$clave]['problematicas'][$problematicaId])) {
+                    $zonas[$clave]['problematicas'][$problematicaId] = [
+                        'id' => $problematica->id,
+                        'nombre' => $problematica->nombre,
+                        'total' => 0,
+                    ];
+                }
+
+                $zonas[$clave]['problematicas'][$problematicaId]['total']++;
+            }
+        }
+
+        $zonas = collect($zonas)
+            ->filter(fn (array $zona): bool => $zona['total'] >= 3)
+            ->map(function (array $zona): array {
+                $zona['problematicas'] = collect($zona['problematicas'])
+                    ->sortByDesc('total')
+                    ->values()
+                    ->all();
+
+                return $zona;
+            })
+            ->sortByDesc('total')
+            ->values()
+            ->all();
+
+        return [
+            'disponible' => true,
+            'mensaje' => $zonas === []
+                ? 'No hay zonas con al menos 3 casos para mostrar de forma agregada.'
+                : 'Las zonas se agrupan y no muestran personas ni domicilios individuales.',
+            'zonas' => $zonas,
+        ];
     }
 
     private function modificacionDates(CarbonInterface $desde, CarbonInterface $hasta, array $filtros): Collection

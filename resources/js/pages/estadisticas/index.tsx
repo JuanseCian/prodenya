@@ -19,6 +19,7 @@ import {
 } from '@/components/estadisticas-chart';
 import EstadisticasFiltros from '@/components/estadisticas-filtros';
 import { EstadisticaKpi } from '@/components/estadisticas-kpi';
+import EstadisticasMapa from '@/components/estadisticas-mapa';
 import EstadisticasShell from '@/components/estadisticas-shell';
 import type { EstadisticasData } from '@/components/estadisticas-types';
 
@@ -190,6 +191,20 @@ export default function EstadisticasResumen(props: EstadisticasData) {
                             </Card>
                         </section>
 
+                        <section className="pt-5">
+                            <Card title="Mapa de zonas más recurridas">
+                                <p className="mt-1 text-xs text-[#697586] dark:text-[#B7C9D4]">
+                                    Distribución agregada por zona y problemática, respetando los filtros seleccionados.
+                                </p>
+                                <div className="mt-5">
+                                    <EstadisticasMapa
+                                        data={props.mapaBarrios}
+                                        problematicas={props.problematicas}
+                                    />
+                                </div>
+                            </Card>
+                        </section>
+
                         <section className="grid gap-5 pt-5 xl:grid-cols-2">
                             <Card title="Distribución por barrio · San Nicolás">
                                 <div className="mt-5">
@@ -201,9 +216,7 @@ export default function EstadisticasResumen(props: EstadisticasData) {
                                         className="mt-0.5 shrink-0 text-[#5B559E]"
                                     />
                                     <span>
-                                        {props.mapaBarrios.mensaje} Se expone el
-                                        ranking de barrios sin inventar
-                                        coordenadas.
+                                        Se expone el ranking de barrios como complemento del mapa agregado.
                                     </span>
                                 </div>
                             </Card>

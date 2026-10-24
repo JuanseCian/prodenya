@@ -17,7 +17,7 @@ class RolesSeeder extends Seeder
      */
     public function run(): void
     {
-        DB::table('roles')->insertOrIgnore([
+        foreach ([
             ['id' => 1, 'nombre' => 'admin', 'descripcion' => 'Acceso total al sistema', 'creado_en' => '2026-08-14 00:08:47'],
             ['id' => 2, 'nombre' => 'operador', 'descripcion' => 'Carga y edición de personas y documentos', 'creado_en' => '2026-08-14 00:08:47'],
             ['id' => 3, 'nombre' => 'consulta', 'descripcion' => 'Solo lectura y descarga de documentos', 'creado_en' => '2026-08-14 00:08:47'],
@@ -25,6 +25,11 @@ class RolesSeeder extends Seeder
             ['nombre' => 'coordinador', 'descripcion' => 'Supervisión, agenda, tareas y avisos.', 'creado_en' => '2026-10-20 00:00:00'],
             ['nombre' => 'profesional', 'descripcion' => 'Intervenciones, seguimiento y firmas profesionales.', 'creado_en' => '2026-10-20 00:00:00'],
             ['nombre' => 'administrativo', 'descripcion' => 'Carga y organización de información operativa.', 'creado_en' => '2026-10-20 00:00:00'],
-        ]);
+        ] as $rol) {
+            DB::table('roles')->updateOrInsert(
+                ['nombre' => $rol['nombre']],
+                $rol,
+            );
+        }
     }
 }

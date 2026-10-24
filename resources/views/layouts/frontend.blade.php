@@ -9,6 +9,14 @@
     <title>@yield('title', 'PRODENYA')</title>
     <meta name="description" content="@yield('description', 'Sistema de Promoción y Protección de los Derechos de Niños, Niñas y Adolescentes')">
 
+    @if (isset($page))
+        <script>
+            window.setTimeout(function () {
+                document.getElementById('initial-page-loader')?.classList.add('is-visible');
+            }, 450);
+        </script>
+    @endif
+
     <script src="https://cdn.tailwindcss.com"></script>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
@@ -582,6 +590,14 @@
 </head>
 
 <body>
+    @if (isset($page))
+        <div id="initial-page-loader" role="status" aria-label="Cargando Prodenya">
+            <div class="initial-page-loader-card">
+                <span class="initial-page-loader-mark" aria-hidden="true">P</span>
+                <span>Preparando Prodenya</span>
+            </div>
+        </div>
+    @endif
     <div class="site-shell" id="site-shell">
         <aside class="site-sidebar" id="site-sidebar" role="dialog" aria-modal="true" aria-labelledby="site-menu-title" aria-hidden="true">
             <div class="site-sidebar-header">

@@ -92,7 +92,21 @@ export interface EstadisticasData {
     agendaPorTipo: NombreTotal[];
     agendaPorEstado: NombreTotal[];
     barrios: Array<{ id: number; nombre: string; total: number }>;
-    mapaBarrios: { disponible: boolean; mensaje: string };
+    mapaBarrios: {
+        disponible: boolean;
+        mensaje: string;
+        zonas: Array<{
+            id: string;
+            latitud: number;
+            longitud: number;
+            total: number;
+            problematicas: Array<{
+                id: number;
+                nombre: string;
+                total: number;
+            }>;
+        }>;
+    };
     modificacionesTimeline: TimelineItem[];
     actividadTimeline: TimelineItem[];
     agendaTimeline: TimelineItem[];

@@ -7,10 +7,13 @@ use App\Models\Intervencion;
 use App\Models\Legajo;
 use App\Models\TipoIntervencion;
 use App\Models\User;
+use App\Models\VinculoFamiliar;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 use RuntimeException;
@@ -29,19 +32,32 @@ class IntervencionController extends Controller
             'profesionalPorDefecto' => $request->user()->id,
             'hoy' => now()->toDateString(),
             'horaAhora' => now()->format('H:i'),
+            'legajosRelacionados' => $request->user()->tieneRol('admin', 'coordinador', 'profesional', 'administrativo')
+                ? $this->legajosRelacionados($legajo)
+                : [],
         ]);
     }
 
     public function store(GuardarIntervencionRequest $request, Legajo $legajo)
     {
         $datos = $request->validated();
+        $legajosDestino = $this->legajosDestinoValidos($legajo, $datos['legajos_destino_ids'] ?? []);
+
+        if ($legajosDestino->count() !== count($datos['legajos_destino_ids'] ?? [])) {
+            throw ValidationException::withMessages([
+                'legajos_destino_ids' => 'Solo podés copiar la intervención a legajos vinculados y habilitados.',
+            ]);
+        }
+
+        $grupoCopiaId = $legajosDestino->isNotEmpty() ? (string) Str::uuid() : null;
         $rutas = [];
         $rutasObsoletas = [];
 
         try {
-            DB::transaction(function () use ($request, $legajo, $datos, &$rutas, &$rutasObsoletas) {
+            DB::transaction(function () use ($request, $legajo, $datos, $legajosDestino, $grupoCopiaId, &$rutas, &$rutasObsoletas) {
                 $intervencion = Intervencion::create([
                     'legajo_id' => $legajo->id,
+                    'grupo_copia_id' => $grupoCopiaId,
                     'tipo_intervencion_id' => $datos['tipo_intervencion_id'],
                     'profesional_id' => $datos['profesional_id'],
                     'fecha_intervencion' => $datos['fecha_intervencion'],
@@ -56,6 +72,22 @@ class IntervencionController extends Controller
 
                 $this->guardarArchivos($request, $legajo, $intervencion, $rutas);
                 $this->guardarFirmas($request, $intervencion, $rutas, $rutasObsoletas);
+
+                foreach ($legajosDestino as $legajoDestino) {
+                    $copia = Intervencion::create([
+                        'legajo_id' => $legajoDestino->id,
+                        'grupo_copia_id' => $grupoCopiaId,
+                        'intervencion_origen_id' => $intervencion->id,
+                        'tipo_intervencion_id' => $datos['tipo_intervencion_id'],
+                        'profesional_id' => $datos['profesional_id'],
+                        'fecha_intervencion' => $datos['fecha_intervencion'],
+                        'hora_intervencion' => $datos['hora_intervencion'],
+                        'detalle' => $datos['detalle'],
+                        'creado_por' => $request->user()->id,
+                    ]);
+
+                    $this->copiarAdjuntos($intervencion, $legajoDestino, $copia, $request->user()->id, $rutas);
+                }
             });
             Storage::disk(self::DISCO)->delete($rutasObsoletas);
         } catch (Throwable $e) {
@@ -67,8 +99,11 @@ class IntervencionController extends Controller
             ]);
         }
 
-        return redirect()->route('legajos.show', $legajo->persona_id)
-            ->with('status', 'Intervención registrada correctamente.');
+        $mensaje = $legajosDestino->isEmpty()
+            ? 'Intervención registrada correctamente.'
+            : 'Intervención registrada y copiada en los legajos vinculados seleccionados.';
+
+        return redirect()->route('legajos.show', $legajo->persona_id)->with('status', $mensaje);
     }
 
     public function edit(Legajo $legajo, Intervencion $intervencion): Response
@@ -99,6 +134,7 @@ class IntervencionController extends Controller
             'profesionales' => $this->profesionales(),
             'hoy' => now()->toDateString(),
             'horaAhora' => now()->format('H:i'),
+            'legajosRelacionados' => [],
         ]);
     }
 
@@ -314,6 +350,79 @@ class IntervencionController extends Controller
                 'tamanio' => $adjunto->tamanio_bytes,
             ])
             ->all();
+    }
+
+    private function legajosRelacionados(Legajo $legajo): array
+    {
+        $personaIds = VinculoFamiliar::query()
+            ->whereNull('desvinculado_en')
+            ->where(function ($query) use ($legajo) {
+                $query->where('persona_id', $legajo->persona_id)
+                    ->orWhere('persona_relacionada_id', $legajo->persona_id);
+            })
+            ->get(['persona_id', 'persona_relacionada_id'])
+            ->flatMap(fn (VinculoFamiliar $vinculo) => [$vinculo->persona_id, $vinculo->persona_relacionada_id])
+            ->reject(fn (int $personaId) => $personaId === $legajo->persona_id)
+            ->unique()
+            ->values();
+
+        return Legajo::query()
+            ->with('persona')
+            ->whereIn('persona_id', $personaIds)
+            ->get()
+            ->map(fn (Legajo $relacionado) => [
+                'id' => $relacionado->id,
+                'numero_legajo' => $relacionado->numero_legajo,
+                'persona' => $relacionado->persona
+                    ? "{$relacionado->persona->apellido}, {$relacionado->persona->nombre}"
+                    : null,
+            ])
+            ->values()
+            ->all();
+    }
+
+    private function legajosDestinoValidos(Legajo $legajo, array $ids): Collection
+    {
+        if ($ids === []) {
+            return collect();
+        }
+
+        $permitidos = collect($this->legajosRelacionados($legajo))->pluck('id');
+
+        return Legajo::query()
+            ->with('persona')
+            ->whereIn('id', $permitidos->intersect($ids))
+            ->get();
+    }
+
+    private function copiarAdjuntos(Intervencion $origen, Legajo $legajo, Intervencion $copia, int $usuarioId, array &$rutas): void
+    {
+        $adjuntos = DB::table('documentos')
+            ->where('intervencion_id', $origen->id)
+            ->where('activo', 1)
+            ->get();
+
+        foreach ($adjuntos as $adjunto) {
+            $nombre = basename($adjunto->ruta_archivo);
+            $ruta = "legajos/{$legajo->id}/intervenciones/{$copia->id}/{$nombre}";
+
+            if (! Storage::disk(self::DISCO)->copy($adjunto->ruta_archivo, $ruta)) {
+                throw new RuntimeException('No se pudo copiar uno de los adjuntos.');
+            }
+
+            $rutas[] = $ruta;
+
+            DB::table('documentos')->insert([
+                'persona_id' => $legajo->persona_id,
+                'legajo_id' => $legajo->id,
+                'intervencion_id' => $copia->id,
+                'tipo_documento_id' => $adjunto->tipo_documento_id,
+                'nombre_archivo' => $adjunto->nombre_archivo,
+                'ruta_archivo' => $ruta,
+                'tamanio_bytes' => $adjunto->tamanio_bytes,
+                'subido_por' => $usuarioId,
+            ]);
+        }
     }
 
     private function resumenLegajo(Legajo $legajo): array

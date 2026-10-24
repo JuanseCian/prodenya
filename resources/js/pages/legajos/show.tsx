@@ -1,5 +1,16 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
-import { ArrowLeft, Clock3, Lock, LockOpen, Pencil, Plus } from 'lucide-react';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
+import {
+    ArrowLeft,
+    Clock3,
+    Link2,
+    Lock,
+    LockOpen,
+    Pencil,
+    Plus,
+    Unlink,
+    UsersRound,
+} from 'lucide-react';
+import type { FormEvent } from 'react';
 
 import {
     AvisoEstado,
@@ -48,11 +59,31 @@ interface Intervencion {
     tiene_firma_entrevistado: boolean;
 }
 
+interface Vinculo {
+    id: number;
+    tipo: string;
+    grupo: string | null;
+    persona: {
+        id: number;
+        nombre: string;
+        numero_legajo: string | null;
+    };
+}
+
+interface PersonaDisponible {
+    id: number;
+    nombre: string;
+    numero_legajo: string | null;
+}
+
 interface Props {
     legajo: LegajoDetalle;
     status?: string | null;
     intervenciones?: Intervencion[];
     puedeGestionarIntervenciones?: boolean;
+    puedeVerVinculos?: boolean;
+    vinculos?: Vinculo[];
+    personasDisponibles?: PersonaDisponible[];
 }
 
 const tituloCard = 'text-base font-semibold text-[#2C4A5E]';
@@ -62,9 +93,16 @@ export default function LegajoShow({
     status,
     intervenciones = [],
     puedeGestionarIntervenciones = false,
+    puedeVerVinculos = false,
+    vinculos = [],
+    personasDisponibles = [],
 }: Props) {
     const errors = (usePage().props.errors ?? {}) as Record<string, string>;
     const cerrado = legajo.estado === 'Cerrado';
+    const vinculoForm = useForm({
+        persona_relacionada_id: '',
+        tipo_vinculo: 'hermano/a',
+    });
 
     const cambiarEstado = () => {
         const accion = cerrado ? 'reabrir' : 'cerrar';
@@ -80,6 +118,24 @@ export default function LegajoShow({
                 { preserveScroll: true },
             );
         }
+    };
+
+    const agregarVinculo = (event: FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        vinculoForm.post(`/legajos/${legajo.id}/vinculos`, {
+            preserveScroll: true,
+            onSuccess: () => vinculoForm.reset(),
+        });
+    };
+
+    const quitarVinculo = (id: number) => {
+        if (!window.confirm('¿Querés desvincular estas personas?')) {
+            return;
+        }
+
+        router.delete(`/legajos/${legajo.id}/vinculos/${id}`, {
+            preserveScroll: true,
+        });
     };
 
     return (
@@ -240,6 +296,89 @@ export default function LegajoShow({
                             </dl>
                         </CardContent>
                     </Card>
+
+                    {puedeVerVinculos && (
+                        <Card className="border-[#DCE3DF] !bg-white py-0 shadow-[0_14px_35px_rgba(23,50,71,0.06)] lg:col-span-2">
+                            <CardHeader className="border-b border-[#E4E8E5] bg-[#F8FAF9] px-5 py-4">
+                                <div className="flex items-center gap-2">
+                                    <UsersRound size={18} className="text-[#6B8F71]" />
+                                    <CardTitle className={tituloCard} style={{ fontFamily: FONT_HEADING }}>
+                                        Vínculos familiares
+                                    </CardTitle>
+                                </div>
+                                <p className="mt-1 text-sm text-[#2B2F36]/60">
+                                    Relacioná este legajo con otros sin mezclar sus historiales.
+                                </p>
+                            </CardHeader>
+                            <CardContent className="space-y-5 px-5 py-5">
+                                {vinculos.length > 0 ? (
+                                    <div className="grid gap-3 sm:grid-cols-2">
+                                        {vinculos.map((vinculo) => (
+                                            <div key={vinculo.id} className="flex items-center justify-between gap-3 rounded-lg border border-[#DCE3DF] bg-[#FBFCFB] p-3">
+                                                <div className="min-w-0">
+                                                    <div className="flex items-center gap-2 text-xs font-semibold text-[#6B8F71]">
+                                                        <Link2 size={13} />
+                                                        {vinculo.tipo}
+                                                    </div>
+                                                    <Link href={`/legajos/${vinculo.persona.id}`} className="mt-1 block truncate text-sm font-semibold text-[#2C4A5E] hover:underline">
+                                                        {vinculo.persona.nombre}
+                                                    </Link>
+                                                    <p className="mt-1 font-mono text-xs text-[#697586]">
+                                                        {vinculo.persona.numero_legajo ?? 'Sin número de legajo'}
+                                                    </p>
+                                                </div>
+                                                <button type="button" onClick={() => quitarVinculo(vinculo.id)} className="shrink-0 rounded-md p-2 text-[#8A6A63] transition hover:bg-[#FFF1EF] hover:text-[#A8493C]" aria-label={`Desvincular a ${vinculo.persona.nombre}`}>
+                                                    <Unlink size={16} />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <p className="rounded-lg border border-dashed border-[#DCE3DF] bg-[#FAFBFA] px-4 py-5 text-sm text-[#697586]">
+                                        Todavía no hay vínculos registrados.
+                                    </p>
+                                )}
+
+                                {personasDisponibles.length > 0 && (
+                                    <form onSubmit={agregarVinculo} className="grid gap-3 border-t border-[#E4E8E5] pt-5 sm:grid-cols-[minmax(0,1fr)_190px_auto] sm:items-end">
+                                        <div>
+                                            <label htmlFor="persona_relacionada_id" className="text-xs font-semibold text-[#2C4A5E]">Legajo relacionado</label>
+                                            <select id="persona_relacionada_id" value={vinculoForm.data.persona_relacionada_id} onChange={(event) => vinculoForm.setData('persona_relacionada_id', event.target.value)} className="mt-2 h-10 w-full rounded-lg border border-[#D5D1C6] bg-white px-3 text-sm text-[#2B2F36] outline-none focus:border-[#2C4A5E] focus:ring-2 focus:ring-[#2C4A5E]/20" required>
+                                                <option value="">Seleccionar persona...</option>
+                                                {personasDisponibles.map((persona) => (
+                                                    <option key={persona.id} value={persona.id}>
+                                                        {persona.nombre} · {persona.numero_legajo}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label htmlFor="tipo_vinculo" className="text-xs font-semibold text-[#2C4A5E]">Tipo de vínculo</label>
+                                            <select id="tipo_vinculo" value={vinculoForm.data.tipo_vinculo} onChange={(event) => vinculoForm.setData('tipo_vinculo', event.target.value)} className="mt-2 h-10 w-full rounded-lg border border-[#D5D1C6] bg-white px-3 text-sm text-[#2B2F36] outline-none focus:border-[#2C4A5E] focus:ring-2 focus:ring-[#2C4A5E]/20">
+                                                <option>hermano/a</option>
+                                                <option>primo/a</option>
+                                                <option>tío/a</option>
+                                                <option>sobrino/a</option>
+                                                <option>madre</option>
+                                                <option>padre</option>
+                                                <option>hijo/a</option>
+                                                <option>abuelo/a</option>
+                                                <option>nieto/a</option>
+                                                <option>tutor/a</option>
+                                                <option>referente afectivo</option>
+                                                <option>pareja</option>
+                                                <option>otro familiar</option>
+                                            </select>
+                                        </div>
+                                        <button type="submit" disabled={vinculoForm.processing} className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-[#2C4A5E] px-4 text-sm font-semibold text-white transition hover:bg-[#1F394B] disabled:cursor-not-allowed disabled:opacity-60">
+                                            <Plus size={15} />
+                                            {vinculoForm.processing ? 'Guardando...' : 'Agregar'}
+                                        </button>
+                                    </form>
+                                )}
+                            </CardContent>
+                        </Card>
+                    )}
                 </div>
 
                 <Card className="mt-6 border-[#DCE3DF] !bg-white py-0 shadow-[0_14px_35px_rgba(23,50,71,0.06)]">

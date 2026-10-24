@@ -4,12 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StorePersonaRequest;
 use App\Http\Requests\UpdateLegajoRequest;
+use App\Models\Intervencion;
 use App\Models\Legajo;
-use App\Models\Persona;
 use App\Models\MotivoIngreso;
+use App\Models\Persona;
 use App\Models\Problematica;
 use App\Models\Provincia;
 use App\Models\User;
+use App\Models\VinculoFamiliar;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -156,6 +158,51 @@ class LegajoController extends Controller
         $legajo->load(['problematicas', 'profesional', 'motivoIngreso']);
         $legajoReal = $this->sincronizarLegajoReal($legajo);
         $legajoReal->load(['intervenciones.tipo', 'intervenciones.profesional', 'intervenciones.creadoPor']);
+        $puedeVerVinculos = $request->user()->tieneRol('admin', 'coordinador', 'profesional', 'administrativo');
+        $vinculos = [];
+        $personasDisponibles = [];
+
+        if ($puedeVerVinculos) {
+            $vinculos = VinculoFamiliar::query()
+                ->with(['grupo', 'persona', 'personaRelacionada'])
+                ->whereNull('desvinculado_en')
+                ->where(function ($query) use ($legajo) {
+                    $query->where('persona_id', $legajo->id)
+                        ->orWhere('persona_relacionada_id', $legajo->id);
+                })
+                ->latest()
+                ->get()
+                ->map(fn (VinculoFamiliar $vinculo) => [
+                    'id' => $vinculo->id,
+                    'tipo' => $vinculo->tipo_vinculo,
+                    'grupo' => $vinculo->grupo?->nombre,
+                    'persona' => ($otraPersona = $vinculo->persona_id === $legajo->id
+                        ? $vinculo->personaRelacionada
+                        : $vinculo->persona) ? [
+                            'id' => $otraPersona->id,
+                            'nombre' => "{$otraPersona->apellido}, {$otraPersona->nombre}",
+                            'numero_legajo' => $otraPersona->numero_legajo,
+                        ] : null,
+                ])
+                ->filter(fn (array $vinculo) => $vinculo['persona'] !== null)
+                ->values()
+                ->all();
+
+            $personasDisponibles = Persona::query()
+                ->where('activo', true)
+                ->whereNotNull('numero_legajo')
+                ->where('id', '!=', $legajo->id)
+                ->orderBy('apellido')
+                ->orderBy('nombre')
+                ->get(['id', 'nombre', 'apellido', 'numero_legajo'])
+                ->map(fn (Persona $persona) => [
+                    'id' => $persona->id,
+                    'nombre' => "{$persona->apellido}, {$persona->nombre}",
+                    'numero_legajo' => $persona->numero_legajo,
+                ])
+                ->values()
+                ->all();
+        }
 
         return Inertia::render('legajos/show', [
             'legajo' => [
@@ -181,7 +228,10 @@ class LegajoController extends Controller
             ],
             'status' => session('status'),
             'puedeGestionarIntervenciones' => $request->user()->tieneRol('admin', 'operador'),
-            'intervenciones' => $legajoReal->intervenciones->map(fn (\App\Models\Intervencion $intervencion) => [
+            'puedeVerVinculos' => $puedeVerVinculos,
+            'vinculos' => $vinculos,
+            'personasDisponibles' => $personasDisponibles,
+            'intervenciones' => $legajoReal->intervenciones->map(fn (Intervencion $intervencion) => [
                 'id' => $intervencion->id,
                 'fecha' => $intervencion->fecha_intervencion?->format('d/m/Y'),
                 'hora' => $intervencion->hora_intervencion,

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\GrupoFamiliarController;
 use App\Http\Controllers\IntervencionController;
 use App\Http\Controllers\LegajoController;
 use App\Models\Barrio;
@@ -25,6 +26,13 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/legajos/{legajo}/intervenciones', [IntervencionController::class, 'store'])->name('legajos.intervenciones.store')->whereNumber('legajo');
         Route::get('/legajos/{legajo}/intervenciones/{intervencion}/edit', [IntervencionController::class, 'edit'])->name('legajos.intervenciones.edit')->whereNumber(['legajo', 'intervencion']);
         Route::put('/legajos/{legajo}/intervenciones/{intervencion}', [IntervencionController::class, 'update'])->name('legajos.intervenciones.update')->whereNumber(['legajo', 'intervencion']);
+    });
+
+    Route::middleware('rol:admin,coordinador,profesional,administrativo')->group(function () {
+        Route::post('/legajos/{legajo}/vinculos', [GrupoFamiliarController::class, 'store'])
+            ->name('legajos.vinculos.store')->whereNumber('legajo');
+        Route::delete('/legajos/{legajo}/vinculos/{vinculo}', [GrupoFamiliarController::class, 'destroy'])
+            ->name('legajos.vinculos.destroy')->whereNumber(['legajo', 'vinculo']);
     });
 
     // ── Lectura: admin, operador y consulta ─────────────────────────────

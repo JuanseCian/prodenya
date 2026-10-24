@@ -78,7 +78,8 @@ test('statistics are role protected and expose the redesigned data contract', fu
             ->has('kpis.legajosAltas')
             ->has('kpis.legajosBajas')
             ->has('intervencionesPorTipo')
-            ->where('mapaBarrios.disponible', false));
+            ->where('mapaBarrios.disponible', false)
+            ->has('mapaBarrios.zonas'));
 
     $this->actingAs($consulta)
         ->get(route('estadisticas.exportar', ['preset' => 'hoy']))

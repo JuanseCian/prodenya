@@ -29,6 +29,11 @@
                 background-color: oklch(0.145 0 0);
             }
         </style>
+        <script>
+            window.setTimeout(function () {
+                document.getElementById('initial-page-loader')?.classList.add('is-visible');
+            }, 450);
+        </script>
 
         <link rel="icon" href="/favicon.ico" sizes="any">
         <link rel="icon" href="/favicon.svg" type="image/svg+xml">
@@ -48,6 +53,12 @@
         </x-inertia::head>
     </head>
     <body class="font-sans antialiased">
+        <div id="initial-page-loader" role="status" aria-label="Cargando Prodenya">
+            <div class="initial-page-loader-card">
+                <span class="initial-page-loader-mark" aria-hidden="true">P</span>
+                <span>Preparando Prodenya</span>
+            </div>
+        </div>
         <x-inertia::app />
     </body>
 </html>
