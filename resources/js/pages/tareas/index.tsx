@@ -13,6 +13,7 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import tareasRoutes from '@/routes/tareas';
 
 interface Tarea {
     id: number;
@@ -52,7 +53,7 @@ export default function Tareas({ tareas, responsables }: Props) {
 
     const crearTarea = () => {
         router.post(
-            '/tareas',
+            tareasRoutes.store.url(),
             {
                 titulo,
                 prioridad,
@@ -72,7 +73,7 @@ export default function Tareas({ tareas, responsables }: Props) {
     };
 
     const cambiarEstado = (tarea: Tarea) => {
-        router.patch(`/tareas/${tarea.id}`, {
+        router.patch(tareasRoutes.update.url(tarea.id), {
             estado: tarea.estado === 'completada' ? 'pendiente' : 'completada',
         }, { preserveScroll: true });
     };

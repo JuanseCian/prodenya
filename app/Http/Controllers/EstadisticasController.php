@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\AgendaEvento;
 use App\Models\AuditoriaEvento;
 use App\Models\Intervencion;
+use App\Models\Legajo;
 use App\Models\Persona;
 use App\Models\Problematica;
 use App\Models\Tarea;
@@ -206,7 +207,8 @@ class EstadisticasController extends Controller
         $personasAltas = (clone $personas)->count();
         $legajosAltas = (clone $legajos)->count();
         $legajosBajas = (clone $this->legajosBaseQuery($filtros))
-            ->whereBetween('fecha_cierre', [$desde->toDateString(), $hasta->toDateString()])
+            ->whereDate('fecha_cierre', '>=', $desde->toDateString())
+            ->whereDate('fecha_cierre', '<=', $hasta->toDateString())
             ->count();
         $modificacionDates = $this->modificacionDates($desde, $hasta, $filtros);
 
@@ -234,7 +236,8 @@ class EstadisticasController extends Controller
             'legajosPorPeriodo' => $this->agruparFechas((clone $legajos)->pluck('fecha_apertura'), $intervalos),
             'bajasPorPeriodo' => $this->agruparFechas(
                 (clone $this->legajosBaseQuery($filtros))
-                    ->whereBetween('fecha_cierre', [$desde->toDateString(), $hasta->toDateString()])
+                    ->whereDate('fecha_cierre', '>=', $desde->toDateString())
+                    ->whereDate('fecha_cierre', '<=', $hasta->toDateString())
                     ->pluck('fecha_cierre'),
                 $intervalos,
             ),
@@ -279,7 +282,8 @@ class EstadisticasController extends Controller
     private function legajosQuery(CarbonInterface $desde, CarbonInterface $hasta, array $filtros): Builder
     {
         return $this->legajosBaseQuery($filtros)
-            ->whereBetween('fecha_apertura', [$desde->toDateString(), $hasta->toDateString()]);
+            ->whereDate('legajos.fecha_apertura', '>=', $desde->toDateString())
+            ->whereDate('legajos.fecha_apertura', '<=', $hasta->toDateString());
     }
 
     private function personasBaseQuery(array $filtros): Builder
@@ -294,7 +298,13 @@ class EstadisticasController extends Controller
 
     private function legajosBaseQuery(array $filtros): Builder
     {
-        return $this->personasBaseQuery($filtros)->whereNotNull('numero_legajo');
+        return Legajo::query()
+            ->when($filtros['estado'], fn (Builder $query, string $estado) => $query->where('estado', $estado))
+            ->when($filtros['problematica'], fn (Builder $query, int $id) => $query->whereHas('problematicas', fn ($relation) => $relation->whereKey($id)))
+            ->when($filtros['profesional'], fn (Builder $query, int $id) => $query->where('profesional_id', $id))
+            ->when($filtros['genero'] || $filtros['edad'], fn (Builder $query) => $query->whereHas('persona', function ($persona) use ($filtros) {
+                $this->aplicarAtributosPersona($persona, $filtros);
+            }));
     }
 
     private function intervencionesQuery(CarbonInterface $desde, CarbonInterface $hasta, array $filtros): Builder
@@ -394,11 +404,12 @@ class EstadisticasController extends Controller
     private function barrios(Builder $legajos): array
     {
         return (clone $legajos)
+            ->join('personas', 'personas.id', '=', 'legajos.persona_id')
             ->join('barrios', 'barrios.id', '=', 'personas.barrio_id')
             ->join('localidades', 'localidades.id', '=', 'personas.localidad_id')
             ->where('localidades.nombre', 'like', 'San Nicol%')
             ->select('barrios.id', 'barrios.nombre')
-            ->selectRaw('COUNT(DISTINCT personas.id) as total')
+            ->selectRaw('COUNT(DISTINCT legajos.id) as total')
             ->groupBy('barrios.id', 'barrios.nombre')
             ->orderByDesc('total')
             ->orderBy('barrios.nombre')
@@ -423,7 +434,8 @@ class EstadisticasController extends Controller
             return $sinDatos;
         }
 
-        $personas = (clone $legajos)
+        $personas = Persona::query()
+            ->whereIn('id', (clone $legajos)->select('persona_id'))
             ->whereHas('localidad', fn (Builder $query) => $query->where('nombre', 'like', 'San Nicol%'))
             ->with(['localidad', 'barrio.localidad', 'problematicas:id,nombre'])
             ->get([
@@ -565,11 +577,12 @@ class EstadisticasController extends Controller
 
         $eventos = $eventos->merge(
             $this->legajosBaseQuery($filtros)
-                ->whereBetween('fecha_apertura', [$desde->toDateString(), $hasta->toDateString()])
+                ->whereDate('fecha_apertura', '>=', $desde->toDateString())
+                ->whereDate('fecha_apertura', '<=', $hasta->toDateString())
                 ->get(['id', 'fecha_apertura'])
-                ->map(fn (Persona $persona) => [
-                    'id' => "legajo-alta-{$persona->id}",
-                    'fecha' => $persona->fecha_apertura?->toIso8601String(),
+                ->map(fn (Legajo $legajo) => [
+                    'id' => "legajo-alta-{$legajo->id}",
+                    'fecha' => $legajo->fecha_apertura?->toIso8601String(),
                     'evento' => 'Apertura de legajo',
                     'tipo' => 'Legajo',
                     'usuario' => 'Sistema',
@@ -578,11 +591,12 @@ class EstadisticasController extends Controller
 
         $eventos = $eventos->merge(
             $this->legajosBaseQuery($filtros)
-                ->whereBetween('fecha_cierre', [$desde->toDateString(), $hasta->toDateString()])
+                ->whereDate('fecha_cierre', '>=', $desde->toDateString())
+                ->whereDate('fecha_cierre', '<=', $hasta->toDateString())
                 ->get(['id', 'fecha_cierre'])
-                ->map(fn (Persona $persona) => [
-                    'id' => "legajo-baja-{$persona->id}",
-                    'fecha' => $persona->fecha_cierre?->toIso8601String(),
+                ->map(fn (Legajo $legajo) => [
+                    'id' => "legajo-baja-{$legajo->id}",
+                    'fecha' => $legajo->fecha_cierre?->toIso8601String(),
                     'evento' => 'Cierre de legajo',
                     'tipo' => 'Legajo',
                     'usuario' => 'Sistema',

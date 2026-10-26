@@ -2,24 +2,25 @@
 
 namespace App\Models;
 
-use App\Models\Concerns\RegistraAutor;
 use App\Models\Concerns\Auditable;
+use App\Models\Concerns\RegistraAutor;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use Illuminate\Support\Carbon;
 
 class Legajo extends Model
 {
-    use RegistraAutor, Auditable;
+    use Auditable, RegistraAutor;
 
     protected $table = 'legajos';
 
     const CREATED_AT = 'creado_en';
+
     const UPDATED_AT = 'actualizado_en';
 
     protected $fillable = [
@@ -105,6 +106,21 @@ class Legajo extends Model
     public function accesos(): HasMany
     {
         return $this->hasMany(AuditoriaAccesoLegajo::class, 'legajo_id');
+    }
+
+    public function derivaciones(): HasMany
+    {
+        return $this->hasMany(DerivacionCaso::class, 'legajo_id')->latest();
+    }
+
+    public function responsables(): HasMany
+    {
+        return $this->hasMany(CasoResponsable::class, 'legajo_id');
+    }
+
+    public function responsablesActivos(): HasMany
+    {
+        return $this->responsables()->where('activo', true);
     }
 
     /**

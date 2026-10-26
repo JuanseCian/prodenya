@@ -1,5 +1,4 @@
 import { createInertiaApp, router } from '@inertiajs/react';
-import { NavigationFeedback } from '@/components/navigation-feedback';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { initializeTheme } from '@/hooks/use-appearance';
@@ -39,9 +38,8 @@ createInertiaApp({
     withApp(app) {
         return (
             <TooltipProvider delayDuration={0}>
-                <div className="prodenya-page-transition-shell">{app}</div>
+                {app}
                 <Toaster />
-                <NavigationFeedback />
             </TooltipProvider>
         );
     },

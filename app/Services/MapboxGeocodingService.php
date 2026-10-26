@@ -15,7 +15,9 @@ class MapboxGeocodingService
 
     public function configured(): bool
     {
-        return filled(config('services.mapbox.token'));
+        $token = config('services.mapbox.token');
+
+        return filled($token) && $token !== 'tu_token_de_mapbox';
     }
 
     /**

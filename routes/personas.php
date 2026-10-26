@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\DerivacionCasoController;
 use App\Http\Controllers\GrupoFamiliarController;
 use App\Http\Controllers\IntervencionController;
 use App\Http\Controllers\LegajoController;
@@ -35,6 +36,17 @@ Route::middleware(['auth'])->group(function () {
             ->name('legajos.vinculos.destroy')->whereNumber(['legajo', 'vinculo']);
     });
 
+    Route::middleware('rol:admin,operador,oficios,coordinador,profesional,administrativo')->group(function () {
+        Route::post('/legajos/{legajo}/derivaciones', [DerivacionCasoController::class, 'store'])
+            ->name('legajos.derivaciones.store')->whereNumber('legajo');
+        Route::patch('/derivaciones/{derivacion}/aceptar', [DerivacionCasoController::class, 'aceptar'])
+            ->name('derivaciones.aceptar')->whereNumber('derivacion');
+        Route::patch('/derivaciones/{derivacion}/rechazar', [DerivacionCasoController::class, 'rechazar'])
+            ->name('derivaciones.rechazar')->whereNumber('derivacion');
+        Route::patch('/derivaciones/{derivacion}/cancelar', [DerivacionCasoController::class, 'cancelar'])
+            ->name('derivaciones.cancelar')->whereNumber('derivacion');
+    });
+
     // ── Lectura: admin, operador y consulta ─────────────────────────────
     Route::middleware('rol:admin,operador,consulta,oficios,coordinador,profesional,administrativo')->group(function () {
         Route::get('/personas', fn () => redirect()->route('legajos.index'))->name('personas.index');
@@ -42,6 +54,8 @@ Route::middleware(['auth'])->group(function () {
             ->name('personas.show')->whereNumber('persona');
         Route::get('/legajos', [LegajoController::class, 'index'])->name('legajos.index');
         Route::get('/mayores-18', [LegajoController::class, 'mayores18'])->name('mayores18.index');
+        Route::get('/legajos/{legajo}/estadisticas', [LegajoController::class, 'estadisticas'])
+            ->name('legajos.estadisticas')->whereNumber('legajo');
         Route::get('/legajos/{legajo}', [LegajoController::class, 'show'])->name('legajos.show')->whereNumber('legajo');
         Route::get('/intervenciones/documentos/{documento}/descargar', [IntervencionController::class, 'descargarAdjunto'])
             ->name('intervenciones.documentos.descargar')->whereNumber('documento');

@@ -20,6 +20,8 @@ import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 
 import { useAppearance } from '@/hooks/use-appearance';
+import { estadisticas as estadisticasRoute } from '@/routes';
+import estadisticas from '@/routes/estadisticas';
 
 export type EstadisticasModulo =
     | 'resumen'
@@ -38,37 +40,37 @@ const modulos: Array<{
     {
         key: 'resumen',
         label: 'Resumen',
-        href: '/estadisticas',
+        href: estadisticasRoute().url,
         icon: LayoutDashboard,
     },
     {
         key: 'legajos',
         label: 'Legajos',
-        href: '/estadisticas/legajos',
+        href: estadisticas.legajos.url(),
         icon: FolderOpen,
     },
     {
         key: 'problematicas',
         label: 'Problemáticas',
-        href: '/estadisticas/problematicas',
+        href: estadisticas.problematicas.url(),
         icon: TriangleAlert,
     },
     {
         key: 'intervenciones',
         label: 'Intervenciones',
-        href: '/estadisticas/intervenciones',
+        href: estadisticas.intervenciones.url(),
         icon: HeartPulse,
     },
     {
         key: 'tareas',
         label: 'Tareas',
-        href: '/estadisticas/tareas',
+        href: estadisticas.tareas.url(),
         icon: ClipboardCheck,
     },
     {
         key: 'agenda',
         label: 'Agenda',
-        href: '/estadisticas/agenda',
+        href: estadisticas.agenda.url(),
         icon: LayoutDashboard,
     },
 ];
@@ -112,7 +114,7 @@ export default function EstadisticasShell({
             >
                 <div className="flex items-center justify-between border-b border-[#DFE4EA] px-4 py-5 dark:border-[#3B4552]">
                     <Link
-                        href="/estadisticas"
+                        href={estadisticasRoute().url}
                         className={`flex min-w-0 items-center gap-3 ${collapsed ? 'lg:mx-auto' : ''}`}
                         onClick={() => setMobileOpen(false)}
                     >

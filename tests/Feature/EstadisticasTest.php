@@ -82,10 +82,32 @@ test('statistics are role protected and expose the redesigned data contract', fu
             ->has('mapaBarrios.zonas'));
 
     $this->actingAs($consulta)
+        ->get(route('estadisticas.legajos', ['preset' => 'hoy']))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('estadisticas/legajos')
+            ->where('kpis.totalLegajos', 1)
+            ->where('legajosPorEstado.abiertos', 1));
+
+    $this->actingAs($consulta)
         ->get(route('estadisticas.exportar', ['preset' => 'hoy']))
         ->assertDownload('estadisticas-'.today()->toDateString().'.csv');
 
     $sinRol = User::factory()->create(['rol_id' => null]);
 
     $this->actingAs($sinRol)->get(route('estadisticas'))->assertForbidden();
+});
+
+test('a legajo has an independent statistics page', function () {
+    $consulta = User::factory()->create(['rol_id' => 3]);
+    [$persona] = crearPersonaConLegajo($consulta);
+
+    $this->actingAs($consulta)
+        ->get(route('legajos.estadisticas', $persona))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('legajos/estadisticas')
+            ->where('legajo.numero_legajo', 'PRA-ANA-222')
+            ->has('estadisticas.intervenciones')
+            ->has('estadisticas.derivaciones'));
 });

@@ -1,15 +1,20 @@
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import {
     ArrowLeft,
+    BarChart3,
+    CheckCircle2,
     Clock3,
     Link2,
     Lock,
     LockOpen,
     Pencil,
     Plus,
+    Send,
+    XCircle,
     Unlink,
     UsersRound,
 } from 'lucide-react';
+import { useState } from 'react';
 import type { FormEvent } from 'react';
 
 import {
@@ -22,10 +27,21 @@ import {
 import ResumenErrores from '@/components/resumen-errores';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import derivacionesRoutes from '@/routes/derivaciones';
+import legajosRoutes from '@/routes/legajos';
 
 interface LegajoDetalle {
     id: number;
     intervenciones_legajo_id: number;
+    derivaciones_legajo_id: number;
     numero_legajo: string;
     motivo_ingreso: string | null;
     nivel_riesgo: string;
@@ -76,11 +92,43 @@ interface PersonaDisponible {
     numero_legajo: string | null;
 }
 
+interface ResponsableDisponible {
+    id: number;
+    name: string;
+    profesion: string | null;
+    rol: string | null;
+}
+
+interface Responsable {
+    id: number;
+    usuario_id: number;
+    nombre: string | null;
+    es_principal: boolean;
+}
+
+interface Derivacion {
+    id: number;
+    estado: string;
+    modo: string;
+    motivo: string;
+    detalle: string | null;
+    fecha_limite: string | null;
+    destinatario_id: number;
+    destinatario: string | null;
+    solicitante: string | null;
+    motivo_rechazo: string | null;
+}
+
 interface Props {
     legajo: LegajoDetalle;
     status?: string | null;
     intervenciones?: Intervencion[];
     puedeGestionarIntervenciones?: boolean;
+    puedeGestionarDerivaciones?: boolean;
+    usuarioActualId: number;
+    responsablesDisponibles?: ResponsableDisponible[];
+    responsables?: Responsable[];
+    derivaciones?: Derivacion[];
     puedeVerVinculos?: boolean;
     vinculos?: Vinculo[];
     personasDisponibles?: PersonaDisponible[];
@@ -93,15 +141,28 @@ export default function LegajoShow({
     status,
     intervenciones = [],
     puedeGestionarIntervenciones = false,
+    puedeGestionarDerivaciones = false,
+    usuarioActualId,
+    responsablesDisponibles = [],
+    responsables = [],
+    derivaciones = [],
     puedeVerVinculos = false,
     vinculos = [],
     personasDisponibles = [],
 }: Props) {
     const errors = (usePage().props.errors ?? {}) as Record<string, string>;
     const cerrado = legajo.estado === 'Cerrado';
+    const [derivacionesOpen, setDerivacionesOpen] = useState(false);
     const vinculoForm = useForm({
         persona_relacionada_id: '',
         tipo_vinculo: 'hermano/a',
+    });
+    const derivacionForm = useForm({
+        destinatario_id: '',
+        modo: 'adicional',
+        motivo: '',
+        detalle: '',
+        fecha_limite: '',
     });
 
     const cambiarEstado = () => {
@@ -136,6 +197,36 @@ export default function LegajoShow({
         router.delete(`/legajos/${legajo.id}/vinculos/${id}`, {
             preserveScroll: true,
         });
+    };
+
+    const crearDerivacion = (event: FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        derivacionForm.post(
+            legajosRoutes.derivaciones.store.url(legajo.derivaciones_legajo_id),
+            {
+                preserveScroll: true,
+                onSuccess: () => derivacionForm.reset(),
+            },
+        );
+    };
+
+    const actualizarDerivacion = (
+        id: number,
+        accion: 'aceptar' | 'rechazar' | 'cancelar',
+    ) => {
+        const motivoRechazo = accion === 'rechazar'
+            ? window.prompt('Indicá el motivo del rechazo:')
+            : null;
+
+        if (accion === 'rechazar' && !motivoRechazo?.trim()) {
+            return;
+        }
+
+        router.patch(
+            derivacionesRoutes[accion].url(id),
+            accion === 'rechazar' ? { motivo_rechazo: motivoRechazo } : {},
+            { preserveScroll: true },
+        );
     };
 
     return (
@@ -178,6 +269,23 @@ export default function LegajoShow({
                             <Pencil size={15} />
                             Editar
                         </Link>
+                        <a
+                            href={legajosRoutes.estadisticas.url(legajo.id)}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex h-11 items-center gap-2 rounded-md border border-[#DCE3DF] bg-white px-4 text-sm font-semibold text-[#2C4A5E] transition hover:border-[#2C4A5E]/40"
+                        >
+                            <BarChart3 size={15} />
+                            Estadísticas
+                        </a>
+                        <button
+                            type="button"
+                            onClick={() => setDerivacionesOpen(true)}
+                            className="inline-flex h-11 items-center gap-2 rounded-md border border-[#DCE3DF] bg-white px-4 text-sm font-semibold text-[#2C4A5E] transition hover:border-[#2C4A5E]/40"
+                        >
+                            <Send size={15} />
+                            Derivaciones
+                        </button>
                         <button
                             type="button"
                             onClick={cambiarEstado}
@@ -379,6 +487,106 @@ export default function LegajoShow({
                             </CardContent>
                         </Card>
                     )}
+
+                    <Dialog open={derivacionesOpen} onOpenChange={setDerivacionesOpen}>
+                        <DialogContent className="max-h-[90vh] overflow-y-auto border-[#DCE3DF] bg-[#FBFCFB] sm:max-w-2xl">
+                            <DialogHeader>
+                            <div className="flex items-center gap-2">
+                                <Send size={18} className="text-[#6B8F71]" />
+                                <DialogTitle className={tituloCard} style={{ fontFamily: FONT_HEADING }}>
+                                    Derivaciones y responsables
+                                </DialogTitle>
+                            </div>
+                            <DialogDescription className="mt-1 text-sm text-[#2B2F36]/60">
+                                Enviá el caso a otro profesional y conservá el historial de decisiones.
+                            </DialogDescription>
+                            </DialogHeader>
+                        <div className="space-y-5 px-1 py-2">
+                            {responsables.length > 0 && (
+                                <div className="flex flex-wrap gap-2">
+                                    {responsables.map((responsable) => (
+                                        <Badge key={responsable.id} className="border-0 bg-[#EDF3EF] text-[#2C4A5E]">
+                                            {responsable.nombre ?? 'Responsable'}{responsable.es_principal ? ' · principal' : ''}
+                                        </Badge>
+                                    ))}
+                                </div>
+                            )}
+
+                            {derivaciones.length > 0 ? (
+                                <div className="space-y-3">
+                                    {derivaciones.map((derivacion) => (
+                                        <article key={derivacion.id} className="rounded-lg border border-[#DCE3DF] bg-[#FBFCFB] p-4">
+                                            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                                                <div>
+                                                    <div className="flex flex-wrap items-center gap-2">
+                                                        <Badge className="border-0 bg-[#F2F7FB] text-[#35627A]">{derivacion.estado}</Badge>
+                                                        <span className="text-xs text-[#697586]">{derivacion.modo}</span>
+                                                    </div>
+                                                    <p className="mt-2 text-sm font-semibold text-[#173247]">{derivacion.motivo}</p>
+                                                    <p className="mt-1 text-xs text-[#697586]">Para {derivacion.destinatario ?? 'sin destinatario'} · solicitó {derivacion.solicitante ?? 'sin datos'}</p>
+                                                    {derivacion.detalle && <p className="mt-3 whitespace-pre-line text-sm leading-6 text-[#2B2F36]/75">{derivacion.detalle}</p>}
+                                                </div>
+                                                <div className="flex shrink-0 gap-2">
+                                                    {derivacion.estado === 'pendiente' && derivacion.destinatario_id === usuarioActualId && (
+                                                        <>
+                                                            <button type="button" onClick={() => actualizarDerivacion(derivacion.id, 'aceptar')} className="inline-flex items-center gap-1.5 rounded-md border border-[#C7DED0] bg-[#F2F9F4] px-3 py-2 text-xs font-semibold text-[#397461]">
+                                                                <CheckCircle2 size={14} /> Aceptar
+                                                            </button>
+                                                            <button type="button" onClick={() => actualizarDerivacion(derivacion.id, 'rechazar')} className="inline-flex items-center gap-1.5 rounded-md border border-[#E8D7DA] bg-[#FCF1F3] px-3 py-2 text-xs font-semibold text-[#9B5964]">
+                                                                <XCircle size={14} /> Rechazar
+                                                            </button>
+                                                        </>
+                                                    )}
+                                                    {derivacion.estado === 'pendiente' && puedeGestionarDerivaciones && (
+                                                        <button type="button" onClick={() => actualizarDerivacion(derivacion.id, 'cancelar')} className="inline-flex items-center gap-1.5 rounded-md border border-[#E8D7DA] bg-[#FCF1F3] px-3 py-2 text-xs font-semibold text-[#9B5964]">
+                                                            <XCircle size={14} /> Cancelar
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            {derivacion.motivo_rechazo && <p className="mt-3 text-xs text-[#9B5964]">Motivo del rechazo: {derivacion.motivo_rechazo}</p>}
+                                        </article>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="rounded-lg border border-dashed border-[#DCE3DF] bg-[#FAFBFA] px-4 py-5 text-sm text-[#697586]">Todavía no hay derivaciones registradas.</p>
+                            )}
+
+                            {puedeGestionarDerivaciones && (
+                                <form onSubmit={crearDerivacion} className="grid gap-3 border-t border-[#E4E8E5] pt-5">
+                                    <div className="grid gap-3 sm:grid-cols-2">
+                                        <label className="grid gap-2 text-xs font-semibold text-[#2C4A5E]">Destinatario
+                                            <select value={derivacionForm.data.destinatario_id} onChange={(event) => derivacionForm.setData('destinatario_id', event.target.value)} className="h-10 rounded-lg border border-[#D5D1C6] bg-white px-3 text-sm font-normal text-[#2B2F36]" required>
+                                                <option value="">Seleccionar profesional...</option>
+                                                {responsablesDisponibles.filter((responsable) => responsable.id !== usuarioActualId).map((responsable) => <option key={responsable.id} value={responsable.id}>{responsable.name}{responsable.profesion ? ` · ${responsable.profesion}` : ''}</option>)}
+                                            </select>
+                                        </label>
+                                        <label className="grid gap-2 text-xs font-semibold text-[#2C4A5E]">Modo
+                                            <select value={derivacionForm.data.modo} onChange={(event) => derivacionForm.setData('modo', event.target.value)} className="h-10 rounded-lg border border-[#D5D1C6] bg-white px-3 text-sm font-normal text-[#2B2F36]">
+                                                <option value="adicional">Sumar responsable</option>
+                                                <option value="reemplazo">Reemplazar responsables</option>
+                                            </select>
+                                        </label>
+                                    </div>
+                                    <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_180px]">
+                                        <label className="grid gap-2 text-xs font-semibold text-[#2C4A5E]">Motivo
+                                            <Input value={derivacionForm.data.motivo} onChange={(event) => derivacionForm.setData('motivo', event.target.value)} placeholder="Ej. Seguimiento especializado" className="h-10 border-[#D5D1C6] bg-white text-sm font-normal" required />
+                                        </label>
+                                        <label className="grid gap-2 text-xs font-semibold text-[#2C4A5E]">Fecha límite
+                                            <Input type="date" value={derivacionForm.data.fecha_limite} onChange={(event) => derivacionForm.setData('fecha_limite', event.target.value)} className="h-10 border-[#D5D1C6] bg-white text-sm font-normal" />
+                                        </label>
+                                    </div>
+                                    <label className="grid gap-2 text-xs font-semibold text-[#2C4A5E]">Detalle
+                                        <textarea value={derivacionForm.data.detalle} onChange={(event) => derivacionForm.setData('detalle', event.target.value)} rows={3} className="rounded-lg border border-[#D5D1C6] bg-white px-3 py-2 text-sm font-normal text-[#2B2F36] outline-none focus:border-[#2C4A5E]" placeholder="Información que la otra persona necesita para tomar el caso." />
+                                    </label>
+                                    <button type="submit" disabled={derivacionForm.processing} className="inline-flex h-10 w-fit items-center gap-2 rounded-md bg-[#2C4A5E] px-4 text-sm font-semibold text-white transition hover:bg-[#1F394B] disabled:opacity-60">
+                                        <Send size={15} /> {derivacionForm.processing ? 'Enviando...' : 'Enviar derivación'}
+                                    </button>
+                                </form>
+                            )}
+                        </div>
+                        </DialogContent>
+                    </Dialog>
                 </div>
 
                 <Card className="mt-6 border-[#DCE3DF] !bg-white py-0 shadow-[0_14px_35px_rgba(23,50,71,0.06)]">

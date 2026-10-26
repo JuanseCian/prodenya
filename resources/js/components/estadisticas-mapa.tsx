@@ -68,7 +68,7 @@ export default function EstadisticasMapa({ data, problematicas }: Props) {
         layers.current?.remove();
         layers.current = L.layerGroup().addTo(map.current);
         const activeIds = new Set(visibleIds);
-        const bounds: L.LatLngExpression[] = [];
+        const bounds: L.LatLngTuple[] = [];
 
         data.zonas.forEach((zona) => {
             const zoneProblems = zona.problematicas.filter((problematica) =>
