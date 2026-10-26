@@ -6,6 +6,7 @@ use App\Http\Controllers\AdminCatalogController;
 use App\Http\Controllers\AuditoriaController;
 use App\Http\Controllers\AdminUserController;
 use App\Http\Controllers\EstadisticasController;
+
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'verified'])->group(function () {
