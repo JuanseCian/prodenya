@@ -4,6 +4,8 @@ use App\Enums\TeamRole;
 use App\Models\Team;
 use App\Models\TeamInvitation;
 use App\Models\User;
+use App\Notifications\RegistroUsuarioNotification;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\URL;
 
 test('registration screen can be rendered', function () {
@@ -32,6 +34,8 @@ test('registration screen includes team invitation context', function () {
 });
 
 test('new users can register', function () {
+    Notification::fake();
+
     $response = $this->post(route('register.store'), [
         'name' => 'Test User',
         'email' => 'test@example.com',
@@ -48,6 +52,36 @@ test('new users can register', function () {
     $response->assertRedirect(route('register.pending'));
     expect($user->estado_cuenta)->toBe(User::ESTADO_PENDIENTE);
     expect($user->activo)->toBeFalse();
+    Notification::assertSentTo($user, RegistroUsuarioNotification::class);
+});
+
+test('pending users can request another verification email', function () {
+    Notification::fake();
+
+    $user = User::factory()->unverified()->create([
+        'estado_cuenta' => User::ESTADO_PENDIENTE,
+        'activo' => false,
+    ]);
+
+    $this->post(route('registration.verification.resend'), [
+        'email' => $user->email,
+    ])->assertRedirect(route('register.pending'))
+        ->assertSessionHas('status', 'verification-link-sent');
+
+    Notification::assertSentTo($user, RegistroUsuarioNotification::class);
+});
+
+test('verification resend does not disclose verified accounts', function () {
+    Notification::fake();
+
+    $user = User::factory()->create();
+
+    $this->post(route('registration.verification.resend'), [
+        'email' => $user->email,
+    ])->assertRedirect(route('register.pending'))
+        ->assertSessionHas('status', 'verification-link-sent');
+
+    Notification::assertNothingSent();
 });
 
 test('registration verification works even when the link is opened in another session', function () {

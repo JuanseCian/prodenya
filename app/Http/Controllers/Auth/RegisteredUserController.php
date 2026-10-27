@@ -3,16 +3,16 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\TeamInvitation;
+use App\Models\User;
 use App\Notifications\RegistroUsuarioNotification;
 use Illuminate\Auth\Events\Verified;
-use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\View\View;
 use Illuminate\Validation\Rules;
-use App\Models\TeamInvitation;
+use Illuminate\View\View;
 
 class RegisteredUserController extends Controller
 {
@@ -62,12 +62,38 @@ class RegisteredUserController extends Controller
 
         Auth::logout();
 
-        return redirect()->route('register.pending');
+        return redirect()->route('register.pending')
+            ->with('registration_email', $user->email);
     }
 
-    public function pending(): View
+    public function pending(Request $request): View
     {
-        return view('auth.registration-pending');
+        return view('auth.registration-pending', [
+            'email' => $request->session()->get('registration_email'),
+            'status' => $request->session()->get('status'),
+        ]);
+    }
+
+    public function resendVerification(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'email' => ['required', 'string', 'email', 'max:255'],
+        ]);
+
+        $email = strtolower($validated['email']);
+        $user = User::query()
+            ->where('email', $email)
+            ->whereNull('email_verified_at')
+            ->where('estado_cuenta', User::ESTADO_PENDIENTE)
+            ->first();
+
+        if ($user) {
+            $user->notify(new RegistroUsuarioNotification('verificacion'));
+        }
+
+        return redirect()->route('register.pending')
+            ->with('registration_email', $email)
+            ->with('status', 'verification-link-sent');
     }
 
     public function verifyRegistration(Request $request, User $user): View

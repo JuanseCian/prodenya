@@ -11,6 +11,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $showRegister ? 'Crear cuenta' : 'Iniciar sesión' }} | PRODENYA</title>
+    @viteReactRefresh
+    @vite(['resources/css/app.css', 'resources/js/auth/access.tsx'])
 
     <style>
         :root {
@@ -314,6 +316,8 @@
                     @if ($errors->has('email') || $errors->has('password'))
                         <div class="notice notice--error" role="alert">{{ $errors->first('email') ?: $errors->first('password') }}</div>
                     @endif
+
+                    <div class="biometric-login" data-biometric-login aria-label="Acceso con el dispositivo"></div>
 
                     <form class="auth-form" method="POST" action="{{ route('login.store') }}" id="loginForm">
                         @csrf
