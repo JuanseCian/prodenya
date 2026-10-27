@@ -1,16 +1,24 @@
 import { Head, Link, usePage } from '@inertiajs/react';
 import {
     Activity,
+    BarChart3,
     CalendarDays,
     ClipboardList,
     FileText,
+    FolderOpen,
     LogOut,
+    Mail,
     Plus,
     ShieldAlert,
     UserRound,
     UsersRound,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+
+import agenda from '@/routes/agenda';
+import estadisticasRoutes from '@/routes/estadisticas';
+import mailbox from '@/routes/mailbox';
+import tareas from '@/routes/tareas';
 
 interface PersonaReciente {
     id: number;
@@ -150,7 +158,15 @@ export default function Dashboard({
     personasRecientes,
     legajosRecientes,
 }: DashboardProps) {
-    const { auth } = usePage<{ auth: { user: AuthUser | null } }>().props;
+    const { auth, can } = usePage<{
+        auth: { user: AuthUser | null };
+        can: {
+            accessMailbox: boolean;
+            accessStatistics: boolean;
+            accessTasks: boolean;
+            accessAgenda: boolean;
+        };
+    }>().props;
 
     return (
         <>
@@ -243,13 +259,53 @@ export default function Dashboard({
                                 Nueva persona
                             </Link>
                             <Link
-                                href="/legajos/nuevo"
+                                href="/legajos"
                                 className="inline-flex items-center gap-2 rounded-md border border-[#DCE3DF] bg-white px-4 py-2 text-sm font-semibold text-[#2B2F36] transition hover:border-[#B9C5BD] hover:bg-[#F4F6F5]"
                                 style={{ fontFamily: FONT_BODY }}
                             >
-                                <ClipboardList size={16} />
-                                Nuevo legajo
+                                <FolderOpen size={16} />
+                                Consultar legajos
                             </Link>
+                            {can.accessAgenda && (
+                                <Link
+                                    href={agenda.index().url}
+                                    className="inline-flex items-center gap-2 rounded-md border border-[#DCE3DF] bg-white px-4 py-2 text-sm font-semibold text-[#2B2F36] transition hover:border-[#B9C5BD] hover:bg-[#F4F6F5]"
+                                    style={{ fontFamily: FONT_BODY }}
+                                >
+                                    <CalendarDays size={16} />
+                                    Agenda
+                                </Link>
+                            )}
+                            {can.accessStatistics && (
+                                <Link
+                                    href={estadisticasRoutes.legajos.url()}
+                                    className="inline-flex items-center gap-2 rounded-md border border-[#DCE3DF] bg-white px-4 py-2 text-sm font-semibold text-[#2B2F36] transition hover:border-[#B9C5BD] hover:bg-[#F4F6F5]"
+                                    style={{ fontFamily: FONT_BODY }}
+                                >
+                                    <BarChart3 size={16} />
+                                    Estadísticas de legajos
+                                </Link>
+                            )}
+                            {can.accessTasks && (
+                                <Link
+                                    href={tareas.index().url}
+                                    className="inline-flex items-center gap-2 rounded-md border border-[#DCE3DF] bg-white px-4 py-2 text-sm font-semibold text-[#2B2F36] transition hover:border-[#B9C5BD] hover:bg-[#F4F6F5]"
+                                    style={{ fontFamily: FONT_BODY }}
+                                >
+                                    <ClipboardList size={16} />
+                                    Tareas y derivaciones
+                                </Link>
+                            )}
+                            {can.accessMailbox && (
+                                <Link
+                                    href={mailbox.index().url}
+                                    className="inline-flex items-center gap-2 rounded-md border border-[#DCE3DF] bg-white px-4 py-2 text-sm font-semibold text-[#2B2F36] transition hover:border-[#B9C5BD] hover:bg-[#F4F6F5]"
+                                    style={{ fontFamily: FONT_BODY }}
+                                >
+                                    <Mail size={16} />
+                                    Derivar comunicaciones
+                                </Link>
+                            )}
                         </div>
                     </div>
 
@@ -419,7 +475,7 @@ export default function Dashboard({
                                     </p>
                                 </div>
                                 <Link
-                                    href="/legajos/nuevo"
+                                    href="/legajos/create"
                                     className="shrink-0 text-xs font-semibold text-[#2C4A5E] underline-offset-4 hover:underline"
                                     style={{ fontFamily: FONT_BODY }}
                                 >

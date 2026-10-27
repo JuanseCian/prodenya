@@ -1,8 +1,11 @@
 <?php
 
-use App\Models\User;
+use App\Models\DerivacionCaso;
+use App\Models\Legajo;
 use App\Models\MailMessage;
+use App\Models\Persona;
 use App\Models\Tarea;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
 beforeEach(function () {
@@ -27,6 +30,37 @@ test('oficios can classify a message and derive it as a task', function () {
 
     $oficios = User::factory()->create(['rol_id' => 4]);
     $responsable = User::factory()->create(['rol_id' => 2]);
+    $provincia = DB::table('provincias')->insertGetId(['nombre' => 'Buenos Aires']);
+    $localidad = DB::table('localidades')->insertGetId([
+        'nombre' => 'San Nicolás de los Arroyos',
+        'provincia_id' => $provincia,
+        'codigo_postal' => 2900,
+    ]);
+    $persona = Persona::create([
+        'nombre' => 'Ana',
+        'apellido' => 'Derivada',
+        'dni' => '30111222',
+        'fecha_nacimiento' => '2010-01-01',
+        'genero' => 'F',
+        'localidad_id' => $localidad,
+        'numero_legajo' => 'DER-ANA-222',
+        'fecha_apertura' => today(),
+        'motivo_ingreso' => 'Derivación institucional',
+        'nivel_riesgo' => 'Bajo',
+        'origen_derivacion' => 'Juzgado',
+        'estado' => 'Abierto',
+        'activo' => true,
+    ]);
+    $legajo = Legajo::create([
+        'persona_id' => $persona->id,
+        'numero_legajo' => 'DER-ANA-222',
+        'fecha_apertura' => today(),
+        'motivo_ingreso' => 'Derivación institucional',
+        'nivel_riesgo' => 'Bajo',
+        'origen_derivacion' => 'Juzgado',
+        'estado' => 'Abierto',
+        'creado_por' => $oficios->id,
+    ]);
     $mail = MailMessage::create([
         'from_email' => 'juzgado@example.test',
         'subject' => 'Oficio de seguimiento',
@@ -38,9 +72,25 @@ test('oficios can classify a message and derive it as a task', function () {
             'estado' => 'Derivado',
             'asignado_a' => $responsable->id,
             'fecha_limite' => today()->addDays(5)->toDateString(),
+            'legajo_ids' => [$legajo->id],
         ])
         ->assertRedirect();
 
     expect($mail->fresh()->estado)->toBe('Derivado');
-    expect(Tarea::where('mail_message_id', $mail->id)->firstOrFail()->asignado_a)->toBe($responsable->id);
+    $tarea = Tarea::where('mail_message_id', $mail->id)->firstOrFail();
+
+    expect($tarea->asignado_a)->toBe($responsable->id)
+        ->and($tarea->legajo_id)->toBe($legajo->id);
+    expect($tarea->recursos()->where('tipo_recurso', 'legajo')->where('recurso_id', $legajo->id)->exists())->toBeTrue();
+    expect(DerivacionCaso::where('mail_message_id', $mail->id)->where('legajo_id', $legajo->id)->where('destinatario_id', $responsable->id)->exists())->toBeTrue();
+
+    $this->actingAs($oficios)
+        ->patch(route('mailbox.classify', $mail), [
+            'estado' => 'Clasificado',
+            'legajo_ids' => [$legajo->id],
+        ])
+        ->assertRedirect();
+
+    expect($tarea->fresh()->estado)->toBe('cancelada');
+    expect(DerivacionCaso::where('mail_message_id', $mail->id)->where('estado', 'cancelada')->exists())->toBeTrue();
 });

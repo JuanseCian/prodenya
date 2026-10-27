@@ -1,0 +1,122 @@
+<?php
+
+use App\Models\CasoResponsable;
+use App\Models\DerivacionCaso;
+use App\Models\Legajo;
+use App\Models\Persona;
+use App\Models\User;
+use Illuminate\Support\Facades\DB;
+
+beforeEach(function () {
+    DB::table('roles')->insert([
+        ['id' => 1, 'nombre' => 'admin', 'descripcion' => 'Acceso total', 'creado_en' => now()],
+        ['id' => 4, 'nombre' => 'coordinador', 'descripcion' => 'Supervisión', 'creado_en' => now()],
+        ['id' => 5, 'nombre' => 'profesional', 'descripcion' => 'Intervenciones', 'creado_en' => now()],
+    ]);
+});
+
+function crearLegajoParaDerivacion(User $creador): Legajo
+{
+    $provincia = DB::table('provincias')->insertGetId(['nombre' => 'Buenos Aires']);
+    $localidad = DB::table('localidades')->insertGetId([
+        'nombre' => 'San Nicolás de los Arroyos',
+        'provincia_id' => $provincia,
+        'codigo_postal' => 2900,
+    ]);
+    $persona = Persona::create([
+        'nombre' => 'Ana',
+        'apellido' => 'Derivada',
+        'dni' => '30111222',
+        'fecha_nacimiento' => '2010-01-01',
+        'genero' => 'F',
+        'localidad_id' => $localidad,
+        'numero_legajo' => 'DER-ANA-222',
+        'fecha_apertura' => today(),
+        'motivo_ingreso' => 'Seguimiento',
+        'nivel_riesgo' => 'Bajo',
+        'origen_derivacion' => 'Institución',
+        'estado' => 'Abierto',
+        'activo' => true,
+    ]);
+
+    return Legajo::create([
+        'persona_id' => $persona->id,
+        'numero_legajo' => 'DER-ANA-222',
+        'fecha_apertura' => today(),
+        'motivo_ingreso' => 'Seguimiento',
+        'nivel_riesgo' => 'Bajo',
+        'origen_derivacion' => 'Institución',
+        'estado' => 'Abierto',
+        'creado_por' => $creador->id,
+    ]);
+}
+
+test('a professional can accept a legajo derivation and become responsible', function () {
+    $coordinador = User::factory()->create(['rol_id' => 4]);
+    $profesional = User::factory()->create(['rol_id' => 5]);
+    $legajo = crearLegajoParaDerivacion($coordinador);
+
+    $this->actingAs($coordinador)
+        ->post(route('legajos.derivaciones.store', $legajo), [
+            'destinatario_id' => $profesional->id,
+            'modo' => 'reemplazo',
+            'motivo' => 'Seguimiento especializado',
+            'detalle' => 'Revisar la situación integral.',
+            'fecha_limite' => today()->addWeek()->toDateString(),
+        ])
+        ->assertRedirect();
+
+    $derivacion = DerivacionCaso::firstOrFail();
+    expect($derivacion->estado)->toBe(DerivacionCaso::ESTADO_PENDIENTE);
+
+    $this->actingAs($profesional)
+        ->patch(route('derivaciones.aceptar', $derivacion))
+        ->assertRedirect();
+
+    expect($derivacion->fresh()->estado)->toBe(DerivacionCaso::ESTADO_ACEPTADA)
+        ->and(CasoResponsable::where('legajo_id', $legajo->id)->where('usuario_id', $profesional->id)->where('activo', true)->exists())->toBeTrue()
+        ->and($legajo->fresh()->profesional_id)->toBe($profesional->id);
+});
+
+test('legajo detail exposes individual statistics and derivations', function () {
+    $coordinador = User::factory()->create(['rol_id' => 4]);
+    $profesional = User::factory()->create(['rol_id' => 5]);
+    $legajo = crearLegajoParaDerivacion($coordinador);
+
+    DerivacionCaso::create([
+        'legajo_id' => $legajo->id,
+        'solicitado_por' => $coordinador->id,
+        'destinatario_id' => $profesional->id,
+        'modo' => DerivacionCaso::MODO_ADICIONAL,
+        'motivo' => 'Revisión',
+    ]);
+
+    $this->actingAs($coordinador)
+        ->get(route('legajos.show', $legajo->persona_id))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('legajos/show')
+            ->where('estadisticas.derivaciones.total', 1)
+            ->has('estadisticas.intervenciones')
+            ->has('derivaciones', 1));
+});
+
+test('only the recipient or a coordinator can accept a derivation', function () {
+    $coordinador = User::factory()->create(['rol_id' => 4]);
+    $profesional = User::factory()->create(['rol_id' => 5]);
+    $otroProfesional = User::factory()->create(['rol_id' => 5]);
+    $legajo = crearLegajoParaDerivacion($coordinador);
+    $derivacion = DerivacionCaso::create([
+        'legajo_id' => $legajo->id,
+        'solicitado_por' => $coordinador->id,
+        'destinatario_id' => $profesional->id,
+        'modo' => DerivacionCaso::MODO_ADICIONAL,
+        'motivo' => 'Revisión',
+    ]);
+
+    $this->actingAs($otroProfesional)
+        ->patch(route('derivaciones.aceptar', $derivacion))
+        ->assertForbidden();
+
+    expect($derivacion->fresh()->estado)->toBe(DerivacionCaso::ESTADO_PENDIENTE);
+});

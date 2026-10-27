@@ -12,9 +12,27 @@ class Barrio extends Model
     use SoftDeletes;
 
     protected $table = 'barrios';
+
     public $timestamps = false;
 
-    protected $fillable = ['nombre', 'localidad_id'];
+    protected $fillable = [
+        'nombre',
+        'localidad_id',
+        'latitud',
+        'longitud',
+        'geocodificacion_precision',
+        'geocodificacion_consulta_hash',
+        'geocodificado_en',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'latitud' => 'float',
+            'longitud' => 'float',
+            'geocodificado_en' => 'datetime',
+        ];
+    }
 
     public function localidad(): BelongsTo
     {

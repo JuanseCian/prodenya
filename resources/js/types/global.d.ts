@@ -18,6 +18,9 @@ declare module '@inertiajs/core' {
             teams: Team[];
             can: {
                 accessMailbox: boolean;
+                accessStatistics: boolean;
+                accessTasks: boolean;
+                accessAgenda: boolean;
             };
             [key: string]: unknown;
         };

@@ -1,5 +1,14 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Home, LayoutGrid, Mail, Menu, Search, UserRound } from 'lucide-react';
+import {
+    BarChart3,
+    ClipboardCheck,
+    Home,
+    LayoutGrid,
+    Mail,
+    Menu,
+    Search,
+    UserRound,
+} from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import AppLogoIcon from '@/components/app-logo-icon';
 import { Breadcrumbs } from '@/components/breadcrumbs';
@@ -34,7 +43,9 @@ import { UserMenuContent } from '@/components/user-menu-content';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import { useInitials } from '@/hooks/use-initials';
 import { cn, toUrl } from '@/lib/utils';
-import { dashboard } from '@/routes';
+import { dashboard, estadisticas as estadisticasRoute } from '@/routes';
+import mailbox from '@/routes/mailbox';
+import tareas from '@/routes/tareas';
 import type { BreadcrumbItem, NavItem } from '@/types';
 
 type Props = {
@@ -62,7 +73,7 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
     const { auth, currentTeam } = page.props;
     const getInitials = useInitials();
     const { isCurrentUrl, whenCurrentUrl } = useCurrentUrl();
-    const dashboardUrl = currentTeam ? dashboard(currentTeam.slug) : '/';
+    const dashboardUrl = currentTeam ? dashboard().url : '/';
 
     const mainNavItems: NavItem[] = [
         {
@@ -70,8 +81,14 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
             href: dashboardUrl,
             icon: LayoutGrid,
         },
+        ...(page.props.can?.accessStatistics
+            ? [{ title: 'Estadísticas', href: estadisticasRoute().url, icon: BarChart3 }]
+            : []),
+        ...(page.props.can?.accessTasks
+            ? [{ title: 'Tareas', href: tareas.index().url, icon: ClipboardCheck }]
+            : []),
         ...(page.props.can?.accessMailbox
-            ? [{ title: 'Mailbox', href: '/mailbox', icon: Mail }]
+            ? [{ title: 'Mailbox', href: mailbox.index().url, icon: Mail }]
             : []),
     ];
 

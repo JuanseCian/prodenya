@@ -24,6 +24,7 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import mailbox from '@/routes/mailbox';
 
 interface Mensaje {
     id: number;
@@ -34,6 +35,10 @@ interface Mensaje {
     is_read: boolean;
     estado: string;
     legajos: { id: number; numero_legajo: string }[];
+    derivacion: {
+        asignado_a: number | null;
+        fecha_limite: string | null;
+    } | null;
     preview: string;
 }
 
@@ -108,7 +113,7 @@ export default function Mailbox({
 
         const timeout = setTimeout(() => {
             router.get(
-                '/mailbox',
+                mailbox.index.url(),
                 {
                     ...(buscar ? { buscar } : {}),
                     ...(noLeidosFiltro ? { no_leidos: 1 } : {}),
@@ -134,7 +139,11 @@ export default function Mailbox({
         }
 
         const timeout = setTimeout(() => {
-            fetch(`/mailbox/legajos/buscar?buscar=${encodeURIComponent(legajoQuery)}`)
+            fetch(
+                mailbox.legajos.buscar.url({
+                    query: { buscar: legajoQuery },
+                }),
+            )
                 .then((response) => response.json())
                 .then((result: LegajoResultado[]) => setLegajosEncontrados(result))
                 .catch(() => setLegajosEncontrados([]));
@@ -144,14 +153,14 @@ export default function Mailbox({
     }, [legajoQuery, mensajeSeleccionado]);
 
     const marcarLeido = (id: number) => {
-        router.patch(`/mailbox/${id}/read`, {}, { preserveScroll: true });
+        router.patch(mailbox.read.url(id), {}, { preserveScroll: true });
     };
 
     const abrirClasificacion = (mensaje: Mensaje) => {
         setMensajeSeleccionado(mensaje);
         setEstado(mensaje.estado === 'Nuevo' ? 'Clasificado' : mensaje.estado);
-        setAsignadoA('');
-        setFechaLimite('');
+        setAsignadoA(mensaje.derivacion?.asignado_a?.toString() ?? '');
+        setFechaLimite(mensaje.derivacion?.fecha_limite ?? '');
         setLegajoQuery('');
         setLegajosEncontrados([]);
         setLegajosSeleccionados(
@@ -179,7 +188,7 @@ export default function Mailbox({
         }
 
         router.patch(
-            `/mailbox/${mensajeSeleccionado.id}/clasificar`,
+            mailbox.classify.url(mensajeSeleccionado.id),
             {
                 estado,
                 legajo_ids: legajosSeleccionados.map((legajo) => legajo.id),

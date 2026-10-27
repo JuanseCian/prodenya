@@ -55,6 +55,29 @@ class HandleInertiaRequests extends Middleware
             ],
             'can' => [
                 'accessMailbox' => $user?->tieneRol('admin', 'oficios', 'coordinador') ?? false,
+                'accessStatistics' => $user?->tieneRol(
+                    'admin',
+                    'operador',
+                    'consulta',
+                    'oficios',
+                    'coordinador',
+                    'profesional',
+                    'administrativo',
+                ) ?? false,
+                'accessTasks' => $user?->tieneRol(
+                    'admin',
+                    'operador',
+                    'oficios',
+                    'coordinador',
+                    'profesional',
+                    'administrativo',
+                ) ?? false,
+                'accessAgenda' => $user?->tieneRol(
+                    'admin',
+                    'coordinador',
+                    'profesional',
+                    'administrativo',
+                ) ?? false,
             ],
             'comunicacionNoLeidos' => $user
                 ? (int) DB::table('mensajes')

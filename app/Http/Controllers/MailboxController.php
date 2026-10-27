@@ -2,21 +2,34 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Legajo;
 use App\Models\AuditoriaEvento;
+use App\Models\DerivacionCaso;
+use App\Models\Legajo;
 use App\Models\MailMessage;
 use App\Models\Tarea;
 use App\Models\User;
-use Illuminate\Http\Request;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class MailboxController extends Controller
 {
+    /** @var array<int, string> */
+    private const RESPONSABLE_ROLES = [
+        'admin',
+        'oficios',
+        'coordinador',
+        'profesional',
+        'administrativo',
+        'operador',
+    ];
+
     public function index(Request $request): Response
     {
         $buscar = trim((string) $request->query('buscar', ''));
@@ -35,7 +48,15 @@ class MailboxController extends Controller
             })
             ->when($soloNoLeidos, fn ($query) => $query->where('is_read', false))
             ->when(in_array($estado, $estados, true), fn ($query) => $query->where('estado', $estado))
-            ->with('legajos')
+            ->with([
+                'legajos',
+                'tareas' => fn ($query) => $query
+                    ->whereNotIn('estado', ['completada', 'cancelada'])
+                    ->latest(),
+                'derivaciones' => fn ($query) => $query
+                    ->whereNotIn('estado', ['rechazada', 'cancelada'])
+                    ->latest(),
+            ])
             ->orderByDesc('received_at')
             ->orderByDesc('id')
             ->paginate(20)
@@ -52,6 +73,13 @@ class MailboxController extends Controller
                     'id' => $legajo->id,
                     'numero_legajo' => $legajo->numero_legajo,
                 ])->values()->all(),
+                'derivacion' => ($derivacion = $mensaje->derivaciones->first()) ? [
+                    'asignado_a' => $derivacion->destinatario_id,
+                    'fecha_limite' => $derivacion->fecha_limite?->toDateString(),
+                ] : ($mensaje->tareas->first() ? [
+                    'asignado_a' => $mensaje->tareas->first()->asignado_a,
+                    'fecha_limite' => $mensaje->tareas->first()->fecha_limite?->toDateString(),
+                ] : null),
                 'preview' => str($mensaje->body_text)->squish()->limit(180)->toString(),
             ]);
 
@@ -67,9 +95,7 @@ class MailboxController extends Controller
             'responsables' => User::query()
                 ->with('rol')
                 ->where('activo', true)
-                ->whereHas('rol', fn ($query) => $query->whereIn('nombre', [
-                    'admin', 'coordinador', 'profesional', 'operador', 'administrativo',
-                ]))
+                ->whereHas('rol', fn ($query) => $query->whereIn('nombre', self::RESPONSABLE_ROLES))
                 ->orderBy('name')
                 ->get(['id', 'name', 'profesion', 'rol_id'])
                 ->map(fn (User $user) => [
@@ -119,7 +145,7 @@ class MailboxController extends Controller
         return response()->json($legajos->map(fn (Legajo $legajo) => [
             'id' => $legajo->id,
             'numero_legajo' => $legajo->numero_legajo,
-            'nombre' => trim(($legajo->persona?->apellido ?? '') . ', ' . ($legajo->persona?->nombre ?? '')),
+            'nombre' => trim(($legajo->persona?->apellido ?? '').', '.($legajo->persona?->nombre ?? '')),
             'dni' => $legajo->persona?->dni,
         ])->values());
     }
@@ -137,6 +163,14 @@ class MailboxController extends Controller
 
         if ($datos['estado'] === 'Derivado' && empty($datos['asignado_a'])) {
             return back()->withErrors(['asignado_a' => 'Seleccioná una persona responsable para derivar el oficio.']);
+        }
+
+        if ($datos['estado'] === 'Derivado' && empty($datos['legajo_ids'])) {
+            return back()->withErrors(['legajo_ids' => 'Vinculá al menos un legajo antes de derivar el oficio.']);
+        }
+
+        if ($datos['estado'] === 'Derivado' && ! $this->responsablesQuery()->whereKey($datos['asignado_a'])->exists()) {
+            return back()->withErrors(['asignado_a' => 'La persona seleccionada no está habilitada para recibir derivaciones.']);
         }
 
         DB::transaction(function () use ($datos, $mailMessage, $request) {
@@ -158,6 +192,19 @@ class MailboxController extends Controller
             }
 
             if ($datos['estado'] !== 'Derivado') {
+                $mailMessage->tareas()
+                    ->whereNotIn('estado', ['completada', 'cancelada'])
+                    ->update([
+                        'estado' => 'cancelada',
+                        'completada_en' => null,
+                    ]);
+                $mailMessage->derivaciones()
+                    ->whereIn('estado', [DerivacionCaso::ESTADO_PENDIENTE, DerivacionCaso::ESTADO_ACEPTADA])
+                    ->update([
+                        'estado' => DerivacionCaso::ESTADO_CANCELADA,
+                        'cancelada_en' => now(),
+                    ]);
+
                 return;
             }
 
@@ -169,7 +216,7 @@ class MailboxController extends Controller
             if (! $tarea) {
                 $tarea = Tarea::create([
                     'tipo' => 'oficio',
-                    'titulo' => 'Revisar: ' . ($mailMessage->subject ?: 'comunicación sin asunto'),
+                    'titulo' => 'Revisar: '.($mailMessage->subject ?: 'comunicación sin asunto'),
                     'descripcion' => $mailMessage->body_text,
                     'prioridad' => 'normal',
                     'estado' => 'pendiente',
@@ -198,8 +245,63 @@ class MailboxController extends Controller
                 'tipo_recurso' => 'mail',
                 'recurso_id' => $mailMessage->id,
             ]);
+
+            $derivacionesActivas = $mailMessage->derivaciones()
+                ->whereIn('estado', [DerivacionCaso::ESTADO_PENDIENTE, DerivacionCaso::ESTADO_ACEPTADA])
+                ->get();
+
+            foreach ($derivacionesActivas as $derivacion) {
+                if (! in_array($derivacion->legajo_id, $legajoIds, true)) {
+                    $derivacion->update([
+                        'estado' => DerivacionCaso::ESTADO_CANCELADA,
+                        'cancelada_en' => now(),
+                    ]);
+                }
+            }
+
+            foreach ($legajoIds as $legajoId) {
+                $derivacion = $derivacionesActivas->firstWhere('legajo_id', $legajoId);
+
+                if ($derivacion?->estado === DerivacionCaso::ESTADO_ACEPTADA) {
+                    continue;
+                }
+
+                if ($derivacion) {
+                    $derivacion->update([
+                        'destinatario_id' => $datos['asignado_a'],
+                        'motivo' => str($mailMessage->subject ?: 'Comunicación sin asunto')->limit(120)->toString(),
+                        'detalle' => $mailMessage->body_text,
+                        'fecha_limite' => $datos['fecha_limite'] ?? null,
+                    ]);
+
+                    continue;
+                }
+
+                DerivacionCaso::create([
+                    'legajo_id' => $legajoId,
+                    'solicitado_por' => $request->user()->id,
+                    'destinatario_id' => $datos['asignado_a'],
+                    'modo' => DerivacionCaso::MODO_ADICIONAL,
+                    'estado' => DerivacionCaso::ESTADO_PENDIENTE,
+                    'motivo' => str($mailMessage->subject ?: 'Comunicación sin asunto')->limit(120)->toString(),
+                    'detalle' => $mailMessage->body_text,
+                    'grupo_derivacion_id' => (string) Str::uuid(),
+                    'fecha_limite' => $datos['fecha_limite'] ?? null,
+                    'mail_message_id' => $mailMessage->id,
+                ]);
+            }
         });
 
         return back()->with('status', 'Clasificación y derivación guardadas.');
+    }
+
+    /**
+     * @return Builder<User>
+     */
+    private function responsablesQuery(): Builder
+    {
+        return User::query()
+            ->where('activo', true)
+            ->whereHas('rol', fn ($query) => $query->whereIn('nombre', self::RESPONSABLE_ROLES));
     }
 }

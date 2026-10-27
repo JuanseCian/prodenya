@@ -4,12 +4,16 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StorePersonaRequest;
 use App\Http\Requests\UpdateLegajoRequest;
+use App\Models\Intervencion;
 use App\Models\Legajo;
-use App\Models\Persona;
+use App\Models\MailMessage;
 use App\Models\MotivoIngreso;
+use App\Models\Persona;
 use App\Models\Problematica;
 use App\Models\Provincia;
+use App\Models\Tarea;
 use App\Models\User;
+use App\Models\VinculoFamiliar;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -151,16 +155,93 @@ class LegajoController extends Controller
         return redirect()->route('legajos.index');
     }
 
+    public function estadisticas(Persona $legajo): Response
+    {
+        $legajoReal = $this->sincronizarLegajoReal($legajo);
+        $legajoReal->load(['intervenciones.tipo', 'derivaciones']);
+
+        return Inertia::render('legajos/estadisticas', [
+            'legajo' => [
+                'id' => $legajo->id,
+                'numero_legajo' => $legajo->numero_legajo,
+                'nombre' => "{$legajo->apellido}, {$legajo->nombre}",
+                'estado' => $legajo->estado,
+            ],
+            'estadisticas' => $this->estadisticasDelLegajo($legajoReal),
+        ]);
+    }
+
     public function show(Request $request, Persona $legajo): Response
     {
         $legajo->load(['problematicas', 'profesional', 'motivoIngreso']);
         $legajoReal = $this->sincronizarLegajoReal($legajo);
-        $legajoReal->load(['intervenciones.tipo', 'intervenciones.profesional', 'intervenciones.creadoPor']);
+        $legajoReal->load([
+            'intervenciones.tipo',
+            'intervenciones.profesional',
+            'intervenciones.creadoPor',
+            'derivaciones.destinatario',
+            'derivaciones.solicitante',
+            'responsablesActivos.usuario',
+        ]);
+        $puedeVerVinculos = $request->user()->tieneRol('admin', 'coordinador', 'profesional', 'administrativo');
+        $puedeGestionarDerivaciones = $request->user()->tieneRol(
+            'admin',
+            'operador',
+            'oficios',
+            'coordinador',
+            'profesional',
+            'administrativo',
+        );
+        $vinculos = [];
+        $personasDisponibles = [];
+
+        if ($puedeVerVinculos) {
+            $vinculos = VinculoFamiliar::query()
+                ->with(['grupo', 'persona', 'personaRelacionada'])
+                ->whereNull('desvinculado_en')
+                ->where(function ($query) use ($legajo) {
+                    $query->where('persona_id', $legajo->id)
+                        ->orWhere('persona_relacionada_id', $legajo->id);
+                })
+                ->latest()
+                ->get()
+                ->map(fn (VinculoFamiliar $vinculo) => [
+                    'id' => $vinculo->id,
+                    'tipo' => $vinculo->tipo_vinculo,
+                    'grupo' => $vinculo->grupo?->nombre,
+                    'persona' => ($otraPersona = $vinculo->persona_id === $legajo->id
+                        ? $vinculo->personaRelacionada
+                        : $vinculo->persona) ? [
+                            'id' => $otraPersona->id,
+                            'nombre' => "{$otraPersona->apellido}, {$otraPersona->nombre}",
+                            'numero_legajo' => $otraPersona->numero_legajo,
+                        ] : null,
+                ])
+                ->filter(fn (array $vinculo) => $vinculo['persona'] !== null)
+                ->values()
+                ->all();
+
+            $personasDisponibles = Persona::query()
+                ->where('activo', true)
+                ->whereNotNull('numero_legajo')
+                ->where('id', '!=', $legajo->id)
+                ->orderBy('apellido')
+                ->orderBy('nombre')
+                ->get(['id', 'nombre', 'apellido', 'numero_legajo'])
+                ->map(fn (Persona $persona) => [
+                    'id' => $persona->id,
+                    'nombre' => "{$persona->apellido}, {$persona->nombre}",
+                    'numero_legajo' => $persona->numero_legajo,
+                ])
+                ->values()
+                ->all();
+        }
 
         return Inertia::render('legajos/show', [
             'legajo' => [
                 'id' => $legajo->id,
                 'intervenciones_legajo_id' => $legajoReal->id,
+                'derivaciones_legajo_id' => $legajoReal->id,
                 'numero_legajo' => $legajo->numero_legajo,
                 'motivo_ingreso' => $legajo->motivo_ingreso,
                 'motivo_ingreso_id' => $legajo->motivo_ingreso_id,
@@ -180,8 +261,14 @@ class LegajoController extends Controller
                 ],
             ],
             'status' => session('status'),
+            'usuarioActualId' => $request->user()->id,
             'puedeGestionarIntervenciones' => $request->user()->tieneRol('admin', 'operador'),
-            'intervenciones' => $legajoReal->intervenciones->map(fn (\App\Models\Intervencion $intervencion) => [
+            'puedeGestionarDerivaciones' => $puedeGestionarDerivaciones,
+            'responsablesDisponibles' => $puedeGestionarDerivaciones ? $this->responsablesActivos() : [],
+            'puedeVerVinculos' => $puedeVerVinculos,
+            'vinculos' => $vinculos,
+            'personasDisponibles' => $personasDisponibles,
+            'intervenciones' => $legajoReal->intervenciones->map(fn (Intervencion $intervencion) => [
                 'id' => $intervencion->id,
                 'fecha' => $intervencion->fecha_intervencion?->format('d/m/Y'),
                 'hora' => $intervencion->hora_intervencion,
@@ -196,6 +283,25 @@ class LegajoController extends Controller
                 'firma_entrevistado_aclaracion' => $intervencion->firma_entrevistado_aclaracion,
                 'tiene_firma_entrevistado' => filled($intervencion->firma_entrevistado_archivo_path),
             ])->values(),
+            'responsables' => $legajoReal->responsablesActivos->map(fn ($responsable) => [
+                'id' => $responsable->id,
+                'usuario_id' => $responsable->usuario_id,
+                'nombre' => $responsable->usuario?->name,
+                'es_principal' => $responsable->es_principal,
+            ])->values(),
+            'derivaciones' => $legajoReal->derivaciones->map(fn ($derivacion) => [
+                'id' => $derivacion->id,
+                'estado' => $derivacion->estado,
+                'modo' => $derivacion->modo,
+                'motivo' => $derivacion->motivo,
+                'detalle' => $derivacion->detalle,
+                'fecha_limite' => $derivacion->fecha_limite?->toDateString(),
+                'destinatario_id' => $derivacion->destinatario_id,
+                'destinatario' => $derivacion->destinatario?->name,
+                'solicitante' => $derivacion->solicitante?->name,
+                'motivo_rechazo' => $derivacion->motivo_rechazo,
+            ])->values(),
+            'estadisticas' => $this->estadisticasDelLegajo($legajoReal),
         ]);
     }
 
@@ -387,5 +493,65 @@ class LegajoController extends Controller
         return User::where('activo', true)
             ->orderBy('name')
             ->get(['id', 'name as nombre_usuario', 'email']);
+    }
+
+    private function responsablesActivos()
+    {
+        return User::query()
+            ->with('rol')
+            ->where('activo', true)
+            ->whereHas('rol', fn ($query) => $query->whereIn('nombre', [
+                'admin',
+                'oficios',
+                'coordinador',
+                'profesional',
+                'administrativo',
+                'operador',
+            ]))
+            ->orderBy('name')
+            ->get(['id', 'name', 'profesion', 'rol_id'])
+            ->map(fn (User $user) => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'profesion' => $user->profesion,
+                'rol' => $user->rol?->nombre,
+            ])
+            ->values()
+            ->all();
+    }
+
+    /** @return array<string, mixed> */
+    private function estadisticasDelLegajo(Legajo $legajo): array
+    {
+        $intervenciones = $legajo->intervenciones;
+        $tareas = Tarea::query()->where('legajo_id', $legajo->id)->get(['estado']);
+        $derivaciones = $legajo->derivaciones;
+
+        return [
+            'intervenciones' => [
+                'total' => $intervenciones->count(),
+                'firmadas' => $intervenciones->filter(fn (Intervencion $intervencion) => filled($intervencion->firma_archivo_path) || filled($intervencion->firma_nombre))->count(),
+                'por_tipo' => $intervenciones->groupBy(fn (Intervencion $intervencion) => $intervencion->tipo?->nombre ?: 'Sin tipo')
+                    ->map(fn ($items, string $nombre) => ['nombre' => $nombre, 'total' => $items->count()])
+                    ->sortByDesc('total')
+                    ->values(),
+            ],
+            'tareas' => [
+                'total' => $tareas->count(),
+                'pendientes' => $tareas->whereIn('estado', ['pendiente', 'en_progreso'])->count(),
+                'completadas' => $tareas->where('estado', 'completada')->count(),
+                'canceladas' => $tareas->where('estado', 'cancelada')->count(),
+            ],
+            'derivaciones' => [
+                'total' => $derivaciones->count(),
+                'pendientes' => $derivaciones->where('estado', 'pendiente')->count(),
+                'aceptadas' => $derivaciones->where('estado', 'aceptada')->count(),
+                'rechazadas' => $derivaciones->where('estado', 'rechazada')->count(),
+                'canceladas' => $derivaciones->where('estado', 'cancelada')->count(),
+            ],
+            'documentos' => $legajo->documentos()->count(),
+            'mensajes' => MailMessage::query()->whereHas('legajos', fn ($query) => $query->whereKey($legajo->id))->count(),
+            'accesos' => $legajo->accesos()->count(),
+        ];
     }
 }

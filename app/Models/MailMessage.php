@@ -6,6 +6,7 @@ use App\Models\Concerns\Auditable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class MailMessage extends Model
 {
@@ -46,5 +47,15 @@ class MailMessage extends Model
     public function clasificadoPor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'clasificado_por');
+    }
+
+    public function tareas(): HasMany
+    {
+        return $this->hasMany(Tarea::class, 'mail_message_id');
+    }
+
+    public function derivaciones(): HasMany
+    {
+        return $this->hasMany(DerivacionCaso::class, 'mail_message_id');
     }
 }

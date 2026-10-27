@@ -9,6 +9,7 @@ import {
     Save,
     ShieldCheck,
     UserRound,
+    UsersRound,
 } from 'lucide-react';
 import type { FormEvent } from 'react';
 
@@ -41,6 +42,12 @@ interface Adjunto {
     tamanio: number | null;
 }
 
+interface LegajoRelacionado {
+    id: number;
+    numero_legajo: string;
+    persona: string | null;
+}
+
 export interface IntervencionInicial {
     id: number;
     fecha_intervencion: string;
@@ -65,6 +72,7 @@ interface Props {
     horaAhora: string;
     intervencion?: IntervencionInicial;
     adjuntos?: Adjunto[];
+    legajosRelacionados?: LegajoRelacionado[];
 }
 
 interface FormData {
@@ -82,6 +90,7 @@ interface FormData {
     firma_entrevistado_dibujo: string;
     firma_entrevistado_archivo: File | null;
     archivos: File[];
+    legajos_destino_ids: string[];
 }
 
 const ETIQUETAS: Record<string, string> = {
@@ -108,6 +117,7 @@ export default function IntervencionForm({
     horaAhora,
     intervencion,
     adjuntos = [],
+    legajosRelacionados = [],
 }: Props) {
     const editando = Boolean(intervencion);
     const { data, setData, post, put, processing, errors } = useForm<FormData>({
@@ -131,6 +141,7 @@ export default function IntervencionForm({
         firma_entrevistado_dibujo: '',
         firma_entrevistado_archivo: null,
         archivos: [],
+        legajos_destino_ids: [],
     });
 
     const submit = (event: FormEvent<HTMLFormElement>) => {
@@ -356,6 +367,58 @@ export default function IntervencionForm({
                                         </div>
                                     </CardContent>
                                 </Card>
+
+                                {!editando && legajosRelacionados.length > 0 && (
+                                    <Card className="overflow-hidden border-[#DCE3DF] !bg-white py-0 shadow-[0_18px_45px_rgba(23,50,71,0.07)]">
+                                        <CardHeader className="border-b border-[#E4E8E5] bg-[#F8FAF9] px-5 py-4 sm:px-6">
+                                            <div className="flex items-start gap-3">
+                                                <UsersRound size={19} className="mt-0.5 text-[#6B8F71]" />
+                                                <div>
+                                                    <CardTitle className="text-base text-[#2C4A5E]">
+                                                        Copiar en otros legajos
+                                                    </CardTitle>
+                                                    <p className="mt-1 text-xs leading-5 text-[#697586]">
+                                                        Se creará una copia independiente, sin sus firmas.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </CardHeader>
+                                        <CardContent className="px-5 py-5 sm:px-6">
+                                            <div className="grid gap-2 sm:grid-cols-2">
+                                                {legajosRelacionados.map((relacionado) => {
+                                                    const value = String(relacionado.id);
+                                                    const checked = data.legajos_destino_ids.includes(value);
+
+                                                    return (
+                                                        <label key={relacionado.id} className="flex cursor-pointer items-center gap-3 rounded-lg border border-[#DCE3DF] bg-[#FBFCFB] px-3 py-3 transition hover:border-[#2C4A5E]/40">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={checked}
+                                                                onChange={() =>
+                                                                    setData(
+                                                                        'legajos_destino_ids',
+                                                                        checked
+                                                                            ? data.legajos_destino_ids.filter((id) => id !== value)
+                                                                            : [...data.legajos_destino_ids, value],
+                                                                    )
+                                                                }
+                                                                className="h-4 w-4 rounded border-[#B9C5BD] text-[#2C4A5E] focus:ring-[#2C4A5E]/30"
+                                                            />
+                                                            <span className="min-w-0">
+                                                                <span className="block truncate text-sm font-semibold text-[#2C4A5E]">
+                                                                    {relacionado.persona ?? 'Persona sin nombre'}
+                                                                </span>
+                                                                <span className="mt-0.5 block font-mono text-xs text-[#697586]">
+                                                                    {relacionado.numero_legajo}
+                                                                </span>
+                                                            </span>
+                                                        </label>
+                                                    );
+                                                })}
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                )}
 
                                 <Card className="overflow-hidden border-[#DCE3DF] !bg-white py-0 shadow-[0_18px_45px_rgba(23,50,71,0.07)]">
                                     <CardHeader className="border-b border-[#E4E8E5] bg-[#F8FAF9] px-5 py-4 sm:px-6">

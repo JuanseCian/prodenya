@@ -10,12 +10,17 @@
     @endphp
 
     <div class="home-page">
-        @if (session('status'))
-            <div class="home-container home-status-alert" role="status">
-                <i class="bi bi-check-circle" aria-hidden="true"></i>
-                <span>{{ session('status') }}</span>
-            </div>
-        @endif
+        <div class="home-toast-region" id="home-toast-region" aria-live="polite" aria-atomic="true">
+            @if (session('status'))
+                <div class="home-status-alert home-toast home-toast--success" data-home-toast role="status">
+                    <i class="bi bi-check-circle" aria-hidden="true"></i>
+                    <span>{{ session('status') }}</span>
+                    <button type="button" data-home-toast-close aria-label="Cerrar notificación">
+                        <i class="bi bi-x-lg" aria-hidden="true"></i>
+                    </button>
+                </div>
+            @endif
+        </div>
 
         <main class="home-container">
             <h1 class="sr-only">Inicio</h1>
@@ -166,10 +171,17 @@
     </aside>
 
     <style>
-        .home-page { background: #f4f7fb; color: #173247; min-height: calc(100vh - 164px); }
+        .home-page { animation: home-page-enter 520ms cubic-bezier(0.22, 1, 0.36, 1) both; background: #f4f7fb; color: #173247; min-height: calc(100vh - 164px); }
         .home-container { margin: 0 auto; max-width: 1180px; padding-left: 24px; padding-right: 24px; }
-        .home-status-alert { align-items: center; background: #e8f7ef; border: 1px solid #bde3cb; border-radius: 12px; box-shadow: 0 8px 20px rgba(35, 113, 72, 0.07); color: #267148; display: flex; font-size: 0.85rem; font-weight: 700; gap: 9px; margin-top: 20px; padding: 12px 15px; }
-        .home-overview { align-items: center; border-bottom: 1px solid #dce7ed; display: flex; gap: 24px; justify-content: space-between; min-height: 182px; padding: 42px 0 36px; }
+        .home-toast-region { display: grid; gap: 10px; position: fixed; right: 22px; top: 22px; width: min(calc(100vw - 32px), 390px); z-index: 80; }
+        .home-status-alert { align-items: center; background: #e8f7ef; border: 1px solid #bde3cb; border-radius: 14px; box-shadow: 0 16px 34px rgba(35, 113, 72, 0.14); color: #267148; display: flex; font-size: 0.85rem; font-weight: 700; gap: 9px; margin: 0; padding: 13px 14px; }
+        .home-toast { animation: home-toast-enter 360ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+        .home-toast.is-leaving { animation: home-toast-leave 180ms ease both; }
+        .home-toast > span { flex: 1; }
+        .home-toast button { align-items: center; background: transparent; border: 0; border-radius: 8px; color: currentColor; cursor: pointer; display: inline-flex; height: 28px; justify-content: center; opacity: 0.6; padding: 0; width: 28px; }
+        .home-toast button:hover { background: rgba(38, 113, 72, 0.1); opacity: 1; }
+        .home-toast--error { background: #fff1ef; border-color: #f1c5bf; color: #a8493c; }
+        .home-overview { align-items: center; animation: home-section-enter 560ms 80ms cubic-bezier(0.22, 1, 0.36, 1) both; border-bottom: 1px solid #dce7ed; display: flex; gap: 24px; justify-content: space-between; min-height: 182px; padding: 42px 0 36px; }
         .home-overview-copy { min-width: 0; }
         .home-overview-date { align-items: center; color: #526873; display: flex; font-size: 0.9rem; gap: 8px; margin: 10px 0 0; text-transform: capitalize; }
         .home-overview-date i { color: #397461; }
@@ -183,7 +195,7 @@
         .home-panel-launch strong { font-size: 0.88rem; }
         .home-panel-launch small { color: rgba(255, 255, 255, 0.67); font-size: 0.72rem; }
         .home-panel-launch > i { color: #b9e8cc; font-size: 0.85rem; }
-        .home-shortcuts { border-top: 1px solid #dce7ed; padding: 34px 0 100px; }
+        .home-shortcuts { animation: home-section-enter 560ms 160ms cubic-bezier(0.22, 1, 0.36, 1) both; border-top: 1px solid #dce7ed; padding: 34px 0 100px; }
         .home-section-heading h2 { color: #173247; font-size: 1.45rem; font-weight: 700; letter-spacing: -0.03em; margin: 9px 0 22px; }
         .home-shortcut-grid { display: grid; gap: 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
         .home-shortcut { align-items: center; background: #fff; border: 1px solid #dce7ed; border-radius: 14px; box-shadow: 0 7px 18px rgba(37, 65, 84, 0.04); color: #2c4a5e; display: flex; gap: 13px; min-height: 88px; padding: 16px; text-decoration: none; transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease; }
@@ -193,7 +205,7 @@
         .home-shortcut strong { font-size: 0.88rem; font-weight: 700; }
         .home-shortcut small { color: #5d727e; font-size: 0.74rem; line-height: 1.35; }
         .home-shortcut-arrow { color: #8fa4b1; font-size: 0.8rem; }
-        .home-daily-preview { border: 1px solid #dce7ed; border-radius: 18px; background: #fff; box-shadow: 0 10px 24px rgba(37, 65, 84, 0.04); margin-bottom: 80px; padding: 22px; }
+        .home-daily-preview { animation: home-section-enter 560ms 240ms cubic-bezier(0.22, 1, 0.36, 1) both; border: 1px solid #dce7ed; border-radius: 18px; background: #fff; box-shadow: 0 10px 24px rgba(37, 65, 84, 0.04); margin-bottom: 80px; padding: 22px; }
         .home-daily-header { align-items: flex-start; display: flex; gap: 16px; justify-content: space-between; }
         .home-daily-header h2 { color: #173247; font-size: 1.25rem; font-weight: 750; letter-spacing: -0.03em; margin: 8px 0 0; }
         .home-daily-date { color: #397461; font-size: 0.78rem; font-weight: 750; text-align: right; text-transform: capitalize; }
@@ -258,6 +270,10 @@
         .home-obligation-link { color: #8ba1ad; font-size: 0.8rem; padding: 6px; }
         .home-obligation-link:hover { color: #397461; }
         .home-control-empty { color: #5b707a; font-size: 0.78rem; padding: 18px 0 8px; }
+        @keyframes home-page-enter { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes home-section-enter { from { opacity: 0; transform: translateY(13px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes home-toast-enter { from { opacity: 0; transform: translate3d(18px, -8px, 0) scale(0.96); } to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); } }
+        @keyframes home-toast-leave { from { opacity: 1; transform: translate3d(0, 0, 0) scale(1); } to { opacity: 0; transform: translate3d(18px, -6px, 0) scale(0.97); } }
         @keyframes home-skeleton-shimmer { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
         @keyframes home-panel-spin { to { transform: rotate(360deg); } }
 
@@ -305,6 +321,7 @@
             .home-preview-summary strong { font-size: 1.2rem; }
         }
         @media (prefers-reduced-motion: reduce) {
+            .home-page, .home-toast, .home-overview, .home-shortcuts, .home-daily-preview { animation: none; }
             .home-panel-backdrop, .home-control-panel, .home-panel-launch, .home-shortcut { transition: none; }
             .home-skeleton { animation: none; background: #e9f1ec; }
             .dark .home-skeleton { background: #1c3544; }
@@ -333,12 +350,44 @@
                  let panelRequest = null;
                 const focusableSelector = 'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
-                const text = (tag, className, value) => {
-                    const element = document.createElement(tag);
-                    element.className = className;
-                    element.textContent = value;
-                    return element;
-                };
+                 const text = (tag, className, value) => {
+                     const element = document.createElement(tag);
+                     element.className = className;
+                     element.textContent = value;
+                     return element;
+                 };
+
+                 const toastRegion = document.getElementById('home-toast-region');
+                 const dismissToast = (toast) => {
+                     toast.classList.add('is-leaving');
+                     window.setTimeout(() => toast.remove(), 180);
+                 };
+                 const showToast = (message) => {
+                     if (!toastRegion) return;
+
+                     const toast = document.createElement('div');
+                     toast.className = 'home-toast home-toast--error';
+                     toast.setAttribute('role', 'alert');
+                     toast.append(text('i', 'bi bi-exclamation-circle', ''));
+                     toast.append(text('span', '', message));
+                     const close = document.createElement('button');
+                     close.type = 'button';
+                     close.setAttribute('aria-label', 'Cerrar notificación');
+                     close.append(text('i', 'bi bi-x-lg', ''));
+                     close.addEventListener('click', () => dismissToast(toast));
+                     toast.append(close);
+                     toastRegion.append(toast);
+                     window.setTimeout(() => {
+                         if (toast.isConnected) dismissToast(toast);
+                     }, 6000);
+                 };
+
+                 document.querySelectorAll('[data-home-toast]').forEach((toast) => {
+                     toast.querySelector('[data-home-toast-close]')?.addEventListener('click', () => dismissToast(toast));
+                     window.setTimeout(() => {
+                         if (toast.isConnected) dismissToast(toast);
+                     }, 6000);
+                 });
 
                 const renderEmpty = (container, message) => {
                     container.replaceChildren(text('p', 'home-control-empty', message));
@@ -421,13 +470,14 @@
                             if (previewLoading) previewLoading.hidden = true;
                             if (previewContent) previewContent.hidden = false;
                         })
-                        .catch(() => {
-                            loading.hidden = true;
-                            error.hidden = false;
-                            if (previewLoading) {
-                                previewLoading.textContent = 'No pudimos cargar la información.';
-                            }
-                        })
+                         .catch(() => {
+                             loading.hidden = true;
+                             error.hidden = false;
+                             if (previewLoading) {
+                                 previewLoading.textContent = 'No pudimos cargar la información.';
+                             }
+                             showToast('No pudimos cargar tu panel. Intentá nuevamente.');
+                         })
                         .finally(() => {
                             panelRequest = null;
                         });

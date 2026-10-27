@@ -160,6 +160,32 @@
     background-image: none;
 }
 
+.stats-map-popup {
+    display: grid;
+    gap: 4px;
+    min-width: 180px;
+}
+
+.stats-map-popup strong {
+    color: #173247;
+    font-size: 0.8rem;
+}
+
+.stats-map-popup span,
+.stats-map-popup small {
+    color: #697586;
+    font-size: 0.72rem;
+}
+
+.dark .stats-map-popup strong {
+    color: #edf6fb;
+}
+
+.dark .stats-map-popup span,
+.dark .stats-map-popup small {
+    color: #b7c9d4;
+}
+
 .dark .stats-page-surface {
     background-image: none;
 }
@@ -257,7 +283,7 @@
 }
 
 .prodenya-page-transition {
-    animation: prodenya-page-enter 180ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation: prodenya-page-enter 280ms cubic-bezier(0.22, 1, 0.36, 1) both;
     min-height: 100%;
     transform-origin: top center;
 }

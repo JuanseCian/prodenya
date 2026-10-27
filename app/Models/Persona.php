@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use App\Models\Concerns\RegistraAutor;
 use App\Models\Concerns\Auditable;
+use App\Models\Concerns\RegistraAutor;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Persona extends Model
 {
-    use RegistraAutor, Auditable;
+    use Auditable, RegistraAutor;
 
     protected $table = 'personas';
 
@@ -28,6 +28,11 @@ class Persona extends Model
         'direccion_calle',
         'direccion_numero',
         'direccion_piso_depto',
+        'latitud',
+        'longitud',
+        'geocodificacion_precision',
+        'geocodificacion_consulta_hash',
+        'geocodificado_en',
         'barrio_id',
         'localidad_id',
         'telefono',
@@ -53,6 +58,9 @@ class Persona extends Model
             'activo' => 'boolean',
             'fecha_apertura' => 'date',
             'fecha_cierre' => 'date',
+            'latitud' => 'float',
+            'longitud' => 'float',
+            'geocodificado_en' => 'datetime',
         ];
     }
 
@@ -100,6 +108,22 @@ class Persona extends Model
     public function documentos(): HasMany
     {
         return $this->hasMany(Documento::class, 'persona_id');
+    }
+
+    public function gruposFamiliares(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            GrupoFamiliar::class,
+            'grupo_familiar_miembros',
+            'persona_id',
+            'grupo_familiar_id',
+        )->wherePivotNull('desvinculado_en');
+    }
+
+    public function vinculosFamiliares(): HasMany
+    {
+        return $this->hasMany(VinculoFamiliar::class, 'persona_id')
+            ->whereNull('desvinculado_en');
     }
 
     public function getEdadAttribute(): int

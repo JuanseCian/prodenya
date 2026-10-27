@@ -5,11 +5,13 @@ namespace App\Http\Controllers;
 use App\Models\AgendaEvento;
 use App\Models\AuditoriaEvento;
 use App\Models\Intervencion;
+use App\Models\Legajo;
 use App\Models\Persona;
 use App\Models\Problematica;
-use App\Models\TipoIntervencion;
 use App\Models\Tarea;
+use App\Models\TipoIntervencion;
 use App\Models\User;
+use App\Services\MapboxGeocodingService;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
@@ -21,6 +23,8 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class EstadisticasController extends Controller
 {
+    public function __construct(private MapboxGeocodingService $mapboxGeocoding) {}
+
     public function __invoke(Request $request): Response
     {
         return Inertia::render('estadisticas/index', $this->datos($request));
@@ -203,7 +207,8 @@ class EstadisticasController extends Controller
         $personasAltas = (clone $personas)->count();
         $legajosAltas = (clone $legajos)->count();
         $legajosBajas = (clone $this->legajosBaseQuery($filtros))
-            ->whereBetween('fecha_cierre', [$desde->toDateString(), $hasta->toDateString()])
+            ->whereDate('fecha_cierre', '>=', $desde->toDateString())
+            ->whereDate('fecha_cierre', '<=', $hasta->toDateString())
             ->count();
         $modificacionDates = $this->modificacionDates($desde, $hasta, $filtros);
 
@@ -231,7 +236,8 @@ class EstadisticasController extends Controller
             'legajosPorPeriodo' => $this->agruparFechas((clone $legajos)->pluck('fecha_apertura'), $intervalos),
             'bajasPorPeriodo' => $this->agruparFechas(
                 (clone $this->legajosBaseQuery($filtros))
-                    ->whereBetween('fecha_cierre', [$desde->toDateString(), $hasta->toDateString()])
+                    ->whereDate('fecha_cierre', '>=', $desde->toDateString())
+                    ->whereDate('fecha_cierre', '<=', $hasta->toDateString())
                     ->pluck('fecha_cierre'),
                 $intervalos,
             ),
@@ -247,10 +253,13 @@ class EstadisticasController extends Controller
             'agendaPorTipo' => $this->agrupacion(clone $agenda, 'tipo'),
             'agendaPorEstado' => $this->agrupacion(clone $agenda, 'estado'),
             'barrios' => $this->barrios($legajos),
-            'mapaBarrios' => [
-                'disponible' => false,
-                'mensaje' => 'Mapa no disponible: no se incorporó geometría pública segura de barrios.',
-            ],
+            'mapaBarrios' => $request->routeIs('estadisticas')
+                ? $this->mapaBarrios($legajos)
+                : [
+                    'disponible' => false,
+                    'mensaje' => 'El mapa está disponible en el resumen de estadísticas.',
+                    'zonas' => [],
+                ],
             'modificacionesTimeline' => $this->modificacionesTimeline($desde, $hasta),
             'actividadTimeline' => $this->actividadTimeline($desde, $hasta, $filtros),
             'agendaTimeline' => (clone $agenda)->with('creador')->latest('fecha_inicio')->limit(12)->get()->map(fn (AgendaEvento $evento) => [
@@ -273,7 +282,8 @@ class EstadisticasController extends Controller
     private function legajosQuery(CarbonInterface $desde, CarbonInterface $hasta, array $filtros): Builder
     {
         return $this->legajosBaseQuery($filtros)
-            ->whereBetween('fecha_apertura', [$desde->toDateString(), $hasta->toDateString()]);
+            ->whereDate('legajos.fecha_apertura', '>=', $desde->toDateString())
+            ->whereDate('legajos.fecha_apertura', '<=', $hasta->toDateString());
     }
 
     private function personasBaseQuery(array $filtros): Builder
@@ -288,7 +298,13 @@ class EstadisticasController extends Controller
 
     private function legajosBaseQuery(array $filtros): Builder
     {
-        return $this->personasBaseQuery($filtros)->whereNotNull('numero_legajo');
+        return Legajo::query()
+            ->when($filtros['estado'], fn (Builder $query, string $estado) => $query->where('estado', $estado))
+            ->when($filtros['problematica'], fn (Builder $query, int $id) => $query->whereHas('problematicas', fn ($relation) => $relation->whereKey($id)))
+            ->when($filtros['profesional'], fn (Builder $query, int $id) => $query->where('profesional_id', $id))
+            ->when($filtros['genero'] || $filtros['edad'], fn (Builder $query) => $query->whereHas('persona', function ($persona) use ($filtros) {
+                $this->aplicarAtributosPersona($persona, $filtros);
+            }));
     }
 
     private function intervencionesQuery(CarbonInterface $desde, CarbonInterface $hasta, array $filtros): Builder
@@ -388,11 +404,12 @@ class EstadisticasController extends Controller
     private function barrios(Builder $legajos): array
     {
         return (clone $legajos)
+            ->join('personas', 'personas.id', '=', 'legajos.persona_id')
             ->join('barrios', 'barrios.id', '=', 'personas.barrio_id')
             ->join('localidades', 'localidades.id', '=', 'personas.localidad_id')
             ->where('localidades.nombre', 'like', 'San Nicol%')
             ->select('barrios.id', 'barrios.nombre')
-            ->selectRaw('COUNT(DISTINCT personas.id) as total')
+            ->selectRaw('COUNT(DISTINCT legajos.id) as total')
             ->groupBy('barrios.id', 'barrios.nombre')
             ->orderByDesc('total')
             ->orderBy('barrios.nombre')
@@ -400,6 +417,112 @@ class EstadisticasController extends Controller
             ->map(fn ($barrio) => ['id' => $barrio->id, 'nombre' => $barrio->nombre, 'total' => (int) $barrio->total])
             ->values()
             ->all();
+    }
+
+    /**
+     * @return array{disponible: bool, mensaje: string, zonas: array<int, array<string, mixed>>}
+     */
+    private function mapaBarrios(Builder $legajos): array
+    {
+        $sinDatos = [
+            'disponible' => false,
+            'mensaje' => 'El mapa necesita configurar MAPBOX_ACCESS_TOKEN para geocodificar las direcciones.',
+            'zonas' => [],
+        ];
+
+        if (! $this->mapboxGeocoding->configured()) {
+            return $sinDatos;
+        }
+
+        $personas = Persona::query()
+            ->whereIn('id', (clone $legajos)->select('persona_id'))
+            ->whereHas('localidad', fn (Builder $query) => $query->where('nombre', 'like', 'San Nicol%'))
+            ->with(['localidad', 'barrio.localidad', 'problematicas:id,nombre'])
+            ->get([
+                'id',
+                'direccion_calle',
+                'direccion_numero',
+                'localidad_id',
+                'barrio_id',
+                'latitud',
+                'longitud',
+                'geocodificacion_precision',
+                'geocodificacion_consulta_hash',
+            ]);
+
+        if ($personas->isEmpty()) {
+            return [
+                'disponible' => true,
+                'mensaje' => 'No hay casos geolocalizables en el período seleccionado.',
+                'zonas' => [],
+            ];
+        }
+
+        $personasCoordenadas = $this->mapboxGeocoding->geocodePeople($personas);
+        $barrios = $personas->pluck('barrio')->filter()->unique('id')->values();
+        $barriosCoordenadas = $this->mapboxGeocoding->geocodeBarrios($barrios);
+        $zonas = [];
+
+        foreach ($personas as $persona) {
+            $coordenada = $personasCoordenadas[$persona->id]
+                ?? ($persona->barrio ? ($barriosCoordenadas[$persona->barrio->id] ?? null) : null);
+
+            if ($coordenada === null) {
+                continue;
+            }
+
+            $latitud = round($coordenada['latitude'], 3);
+            $longitud = round($coordenada['longitude'], 3);
+            $clave = sprintf('%.3f:%.3f', $latitud, $longitud);
+
+            if (! isset($zonas[$clave])) {
+                $zonas[$clave] = [
+                    'id' => $clave,
+                    'latitud' => $latitud,
+                    'longitud' => $longitud,
+                    'total' => 0,
+                    'problematicas' => [],
+                ];
+            }
+
+            $zonas[$clave]['total']++;
+
+            foreach ($persona->problematicas as $problematica) {
+                $problematicaId = (string) $problematica->id;
+
+                if (! isset($zonas[$clave]['problematicas'][$problematicaId])) {
+                    $zonas[$clave]['problematicas'][$problematicaId] = [
+                        'id' => $problematica->id,
+                        'nombre' => $problematica->nombre,
+                        'total' => 0,
+                    ];
+                }
+
+                $zonas[$clave]['problematicas'][$problematicaId]['total']++;
+            }
+        }
+
+        $zonas = collect($zonas)
+            ->filter(fn (array $zona): bool => $zona['total'] >= 3)
+            ->map(function (array $zona): array {
+                $zona['problematicas'] = collect($zona['problematicas'])
+                    ->sortByDesc('total')
+                    ->values()
+                    ->all();
+
+                return $zona;
+            })
+            ->sortByDesc('total')
+            ->values()
+            ->all();
+
+        return [
+            'disponible' => true,
+            'mensaje' => $zonas === []
+                ? 'No hay zonas con al menos 3 casos para mostrar de forma agregada.'
+                : 'Las zonas se agrupan y no muestran personas ni domicilios individuales.',
+            'zonas' => $zonas,
+        ];
     }
 
     private function modificacionDates(CarbonInterface $desde, CarbonInterface $hasta, array $filtros): Collection
@@ -454,11 +577,12 @@ class EstadisticasController extends Controller
 
         $eventos = $eventos->merge(
             $this->legajosBaseQuery($filtros)
-                ->whereBetween('fecha_apertura', [$desde->toDateString(), $hasta->toDateString()])
+                ->whereDate('fecha_apertura', '>=', $desde->toDateString())
+                ->whereDate('fecha_apertura', '<=', $hasta->toDateString())
                 ->get(['id', 'fecha_apertura'])
-                ->map(fn (Persona $persona) => [
-                    'id' => "legajo-alta-{$persona->id}",
-                    'fecha' => $persona->fecha_apertura?->toIso8601String(),
+                ->map(fn (Legajo $legajo) => [
+                    'id' => "legajo-alta-{$legajo->id}",
+                    'fecha' => $legajo->fecha_apertura?->toIso8601String(),
                     'evento' => 'Apertura de legajo',
                     'tipo' => 'Legajo',
                     'usuario' => 'Sistema',
@@ -467,11 +591,12 @@ class EstadisticasController extends Controller
 
         $eventos = $eventos->merge(
             $this->legajosBaseQuery($filtros)
-                ->whereBetween('fecha_cierre', [$desde->toDateString(), $hasta->toDateString()])
+                ->whereDate('fecha_cierre', '>=', $desde->toDateString())
+                ->whereDate('fecha_cierre', '<=', $hasta->toDateString())
                 ->get(['id', 'fecha_cierre'])
-                ->map(fn (Persona $persona) => [
-                    'id' => "legajo-baja-{$persona->id}",
-                    'fecha' => $persona->fecha_cierre?->toIso8601String(),
+                ->map(fn (Legajo $legajo) => [
+                    'id' => "legajo-baja-{$legajo->id}",
+                    'fecha' => $legajo->fecha_cierre?->toIso8601String(),
                     'evento' => 'Cierre de legajo',
                     'tipo' => 'Legajo',
                     'usuario' => 'Sistema',
