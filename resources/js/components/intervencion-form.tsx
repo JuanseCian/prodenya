@@ -34,6 +34,7 @@ interface Opcion {
 interface Profesional {
     id: number;
     name: string;
+    profesion: string | null;
 }
 
 interface Adjunto {
@@ -334,7 +335,7 @@ export default function IntervencionForm({
                                                                 key={profesional.id}
                                                                 value={profesional.id}
                                                             >
-                                                                {profesional.name}
+                                                                {profesional.name}{profesional.profesion ? ` · ${profesional.profesion}` : ''}
                                                             </option>
                                                         ),
                                                     )}

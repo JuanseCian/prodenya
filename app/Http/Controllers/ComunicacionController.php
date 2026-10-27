@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Conversacion;
 use App\Models\AuditoriaEvento;
+use App\Models\Conversacion;
 use App\Models\Documento;
 use App\Models\Intervencion;
 use App\Models\Legajo;
@@ -323,7 +323,7 @@ class ComunicacionController extends Controller
                 ->where('id', '!=', $usuario->id)
                 ->whereHas('rol', fn ($query) => $query->whereIn('nombre', self::ROLES))
                 ->orderBy('name')
-                ->get(['id', 'name', 'email']),
+                ->get(['id', 'name', 'email', 'profesion']),
         ]);
     }
 

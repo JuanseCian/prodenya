@@ -50,6 +50,7 @@ interface Usuario {
     id: number;
     name: string;
     email: string;
+    profesion: string | null;
 }
 
 interface Props {
@@ -250,7 +251,7 @@ export default function Comunicacion({
                                         <option value="">Seleccionar usuario…</option>
                                         {usuarios.map((usuario) => (
                                             <option key={usuario.id} value={usuario.id}>
-                                                {usuario.name}
+                                                {usuario.name}{usuario.profesion ? ` · ${usuario.profesion}` : ''}
                                             </option>
                                         ))}
                                     </select>

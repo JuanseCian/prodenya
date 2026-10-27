@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-         Schema::create('problematica', function (Blueprint $table) {
+        Schema::create('problematica', function (Blueprint $table) {
             $table->id();
 
             $table->string('nombre', 190);
@@ -29,7 +29,7 @@ return new class extends Migration
         });
 
         Schema::table('legajos', function (Blueprint $table) {
-            $table->enum('nivel_riesgo', ['Bajo', 'Medio', 'Alto', 'Critico'])->after('motivo_ingreso');
+            $table->enum('nivel_riesgo', ['Bajo', 'Medio', 'Alto', 'Critico'])->after('observaciones');
             $table->string('origen_derivacion', 255)->after('nivel_riesgo');
             $table->unsignedInteger('profesional_id')->nullable()->after('origen_derivacion');
 
@@ -39,7 +39,7 @@ return new class extends Migration
 
         Schema::create('legajo_problematica', function (Blueprint $table) {
             $table->unsignedInteger('legajo_id');
-            $table->unsignedBigInteger('problematica_id');  
+            $table->unsignedBigInteger('problematica_id');
 
             $table->primary(['legajo_id', 'problematica_id']);
             $table->foreign('legajo_id')->references('id')->on('legajos')

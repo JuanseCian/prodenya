@@ -5,14 +5,14 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Concerns\HasTeams;
 use Database\Factories\UserFactory;
+use Illuminate\Auth\MustVerifyEmail as MustVerifyEmailTrait;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Auth\MustVerifyEmail as MustVerifyEmailTrait;
-use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
@@ -54,10 +54,24 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     protected $table = 'users';
 
     public const ESTADO_PENDIENTE = 'pendiente';
+
     public const ESTADO_APROBADO = 'aprobado';
+
     public const ESTADO_RECHAZADO = 'rechazado';
+
     public const ESTADO_SUSPENDIDO = 'suspendido';
+
     public const ESTADO_ARCHIVADO = 'archivado';
+
+    /** @var array<int, string> */
+    public const PROFESIONES = [
+        'ts',
+        'psicologo',
+        'abogado',
+        'psicopedagogo',
+        'acompanante terapeurico',
+    ];
+
     /** @var array<int, string> */
     protected $appends = ['avatar'];
 

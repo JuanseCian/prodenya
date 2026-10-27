@@ -238,7 +238,7 @@ export default function EstadisticasFiltros({
                                         <option value="">Todos</option>
                                         {catalogos.profesionales.map((item) => (
                                             <option key={item.id} value={item.id}>
-                                                {item.name}
+                                                {item.name}{item.profesion ? ` · ${item.profesion}` : ''}
                                             </option>
                                         ))}
                                     </SelectField>
@@ -274,7 +274,7 @@ export default function EstadisticasFiltros({
                                         <option value="">Todos</option>
                                         {catalogos.responsables.map((item) => (
                                             <option key={item.id} value={item.id}>
-                                                {item.name}
+                                                {item.name}{item.profesion ? ` · ${item.profesion}` : ''}
                                             </option>
                                         ))}
                                     </SelectField>

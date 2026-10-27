@@ -34,6 +34,7 @@ interface Profesional {
     id: number;
     nombre_usuario: string;
     email: string;
+    profesion: string | null;
 }
 
 interface CreatePersonaProps {
@@ -1077,6 +1078,9 @@ export default function CreatePersona({
                                                                     {
                                                                         profesional.nombre_usuario
                                                                     }
+                                                                    {profesional.profesion
+                                                                        ? ` · ${profesional.profesion}`
+                                                                        : ''}
                                                                 </option>
                                                             ),
                                                         )}

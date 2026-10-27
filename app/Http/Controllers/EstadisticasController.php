@@ -130,8 +130,12 @@ class EstadisticasController extends Controller
             'intervalos' => $intervalos,
             'comparacion' => $comparacion,
             'catalogos' => [
-                'profesionales' => User::query()->where('activo', true)->orderBy('name')->get(['id', 'name']),
-                'responsables' => User::query()->where('activo', true)->orderBy('name')->get(['id', 'name']),
+                'profesionales' => User::query()
+                    ->where('activo', true)
+                    ->whereHas('rol', fn ($query) => $query->where('nombre', 'profesional'))
+                    ->orderBy('name')
+                    ->get(['id', 'name', 'profesion']),
+                'responsables' => User::query()->where('activo', true)->orderBy('name')->get(['id', 'name', 'profesion']),
                 'tiposIntervencion' => TipoIntervencion::query()->where('activo', true)->orderBy('nombre')->get(['id', 'nombre']),
                 'generos' => [
                     ['value' => 'M', 'label' => 'Masculino'],

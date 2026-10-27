@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Tarea;
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -12,7 +13,7 @@ use Inertia\Response;
 
 class TareaController extends Controller
 {
-    public function index(Request $request): Response|\Illuminate\Http\JsonResponse
+    public function index(Request $request): Response|JsonResponse
     {
         $tareas = Tarea::query()
             ->with(['asignado', 'legajo'])
@@ -44,7 +45,7 @@ class TareaController extends Controller
             'responsables' => User::query()
                 ->where('activo', true)
                 ->orderBy('name')
-                ->get(['id', 'name']),
+                ->get(['id', 'name', 'profesion']),
         ]);
     }
 

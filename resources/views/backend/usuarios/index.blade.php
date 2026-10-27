@@ -161,7 +161,7 @@
                 <section class="users-detail-section"><h3>Datos de la cuenta</h3><dl class="users-detail-grid"><div><dt>DNI</dt><dd>{{ $seleccionado->dni ?: '—' }}</dd></div><div><dt>Teléfono</dt><dd>{{ $seleccionado->telefono ?: '—' }}</dd></div><div><dt>Profesión</dt><dd>{{ $seleccionado->profesion ?: '—' }}</dd></div><div><dt>Correo</dt><dd>{{ $seleccionado->hasVerifiedEmail() ? 'Verificado' : 'Sin verificar' }}</dd></div><div><dt>Registro</dt><dd>{{ $seleccionado->created_at?->format('d/m/Y H:i') ?: '—' }}</dd></div><div><dt>Último acceso</dt><dd>{{ $seleccionado->ultimo_acceso?->format('d/m/Y H:i') ?: 'Nunca' }}</dd></div></dl></section>
 
                 @if ($seleccionado->estado_cuenta === 'pendiente')
-                    <section class="users-detail-section"><h3>Resolver solicitud</h3><div class="users-action-box"><h4>Aprobar y asignar rol</h4><form method="POST" action="{{ route('admin.usuarios.aprobar', $seleccionado) }}" class="flex gap-2">@csrf<select name="rol_id" required class="min-w-0 flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm"><option value="">Elegir rol</option>@foreach ($roles as $role)<option value="{{ $role->id }}">{{ ucfirst($role->nombre) }}</option>@endforeach</select><button class="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-bold text-white hover:bg-emerald-700">Aprobar</button></form></div><div class="users-action-box"><h4>Rechazar solicitud</h4><form method="POST" action="{{ route('admin.usuarios.rechazar', $seleccionado) }}">@csrf<textarea name="motivo" required rows="3" placeholder="Motivo obligatorio" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"></textarea><button class="mt-2 rounded-lg bg-rose-600 px-3 py-2 text-xs font-bold text-white hover:bg-rose-700">Rechazar</button></form></div></section>
+                    <section class="users-detail-section"><h3>Resolver solicitud</h3><div class="users-action-box"><h4>Aprobar y asignar rol</h4><form method="POST" action="{{ route('admin.usuarios.aprobar', $seleccionado) }}" class="grid gap-3" data-profession-role-form>@csrf<label class="grid gap-1 text-xs font-bold text-slate-600">Rol<select name="rol_id" required class="min-w-0 rounded-lg border border-slate-200 px-3 py-2 text-sm" data-profession-role><option value="">Elegir rol</option>@foreach ($roles as $role)<option value="{{ $role->id }}" data-role-name="{{ $role->nombre }}">{{ ucfirst($role->nombre) }}</option>@endforeach</select></label><label class="grid gap-1 text-xs font-bold text-slate-600" data-profession-field>Profesión<select name="profesion" class="min-w-0 rounded-lg border border-slate-200 px-3 py-2 text-sm" data-profession-select><option value="">Seleccionar profesión</option>@foreach ($profesiones as $profesion)<option value="{{ $profesion }}" @selected($seleccionado->profesion === $profesion)>{{ $profesion }}</option>@endforeach</select><span class="text-[11px] font-normal text-slate-400">Obligatoria para el rol Profesional.</span></label><button class="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-bold text-white hover:bg-emerald-700">Aprobar</button></form></div><div class="users-action-box"><h4>Rechazar solicitud</h4><form method="POST" action="{{ route('admin.usuarios.rechazar', $seleccionado) }}">@csrf<textarea name="motivo" required rows="3" placeholder="Motivo obligatorio" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"></textarea><button class="mt-2 rounded-lg bg-rose-600 px-3 py-2 text-xs font-bold text-white hover:bg-rose-700">Rechazar</button></form></div></section>
                 @endif
 
                 @if ($seleccionado->estado_cuenta === 'rechazado')
@@ -169,7 +169,7 @@
                 @endif
 
                 @if ($seleccionado->estado_cuenta === 'aprobado')
-                    <section class="users-detail-section"><h3>Permisos</h3><div class="users-action-box"><h4>Cambiar rol</h4><form method="POST" action="{{ route('admin.usuarios.rol', $seleccionado) }}" class="flex gap-2">@csrf @method('PATCH')<select name="rol_id" required class="min-w-0 flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm">@foreach ($roles as $role)<option value="{{ $role->id }}" @selected($seleccionado->rol_id === $role->id)>{{ ucfirst($role->nombre) }}</option>@endforeach</select><button class="rounded-lg bg-indigo-600 px-3 py-2 text-xs font-bold text-white hover:bg-indigo-700">Guardar</button></form></div></section>
+                    <section class="users-detail-section"><h3>Permisos</h3><div class="users-action-box"><h4>Cambiar rol</h4><form method="POST" action="{{ route('admin.usuarios.rol', $seleccionado) }}" class="grid gap-3" data-profession-role-form>@csrf @method('PATCH')<label class="grid gap-1 text-xs font-bold text-slate-600">Rol<select name="rol_id" required class="min-w-0 rounded-lg border border-slate-200 px-3 py-2 text-sm" data-profession-role>@foreach ($roles as $role)<option value="{{ $role->id }}" data-role-name="{{ $role->nombre }}" @selected($seleccionado->rol_id === $role->id)>{{ ucfirst($role->nombre) }}</option>@endforeach</select></label><label class="grid gap-1 text-xs font-bold text-slate-600" data-profession-field>Profesión<select name="profesion" class="min-w-0 rounded-lg border border-slate-200 px-3 py-2 text-sm" data-profession-select><option value="">Seleccionar profesión</option>@foreach ($profesiones as $profesion)<option value="{{ $profesion }}" @selected($seleccionado->profesion === $profesion)>{{ $profesion }}</option>@endforeach</select><span class="text-[11px] font-normal text-slate-400">Obligatoria para el rol Profesional.</span></label><button class="rounded-lg bg-indigo-600 px-3 py-2 text-xs font-bold text-white hover:bg-indigo-700">Guardar</button></form></div></section>
                 @endif
 
                 @if ($seleccionado->motivo_suspension)
@@ -193,6 +193,23 @@
                 const close = () => { if (backdrop) window.location.href = @json($detailUrl()); };
                 backdrop?.addEventListener('click', close);
                 document.addEventListener('keydown', (event) => { if (event.key === 'Escape') close(); });
+
+                document.querySelectorAll('[data-profession-role-form]').forEach((form) => {
+                    const role = form.querySelector('[data-profession-role]');
+                    const field = form.querySelector('[data-profession-field]');
+                    const select = form.querySelector('[data-profession-select]');
+                    const refresh = () => {
+                        const isProfessional = role?.selectedOptions[0]?.dataset.roleName === 'profesional';
+                        field?.classList.toggle('hidden', !isProfessional);
+                        if (select) {
+                            select.required = isProfessional;
+                            select.disabled = !isProfessional;
+                        }
+                    };
+
+                    role?.addEventListener('change', refresh);
+                    refresh();
+                });
             })();
         </script>
     @endif

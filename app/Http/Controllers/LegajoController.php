@@ -491,8 +491,9 @@ class LegajoController extends Controller
     private function profesionalesActivos()
     {
         return User::where('activo', true)
+            ->whereHas('rol', fn ($query) => $query->where('nombre', 'profesional'))
             ->orderBy('name')
-            ->get(['id', 'name as nombre_usuario', 'email']);
+            ->get(['id', 'name as nombre_usuario', 'email', 'profesion']);
     }
 
     private function responsablesActivos()

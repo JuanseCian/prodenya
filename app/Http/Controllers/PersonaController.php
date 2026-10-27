@@ -4,9 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StorePersonaRequest;
 use App\Http\Requests\UpdatePersonaRequest;
+use App\Models\MotivoIngreso;
 use App\Models\Persona;
 use App\Models\Problematica;
-use App\Models\MotivoIngreso;
 use App\Models\Provincia;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -70,8 +70,9 @@ class PersonaController extends Controller
     {
         $profesionales = User::query()
             ->when(Schema::hasColumn('users', 'activo'), fn ($query) => $query->where('activo', true))
+            ->whereHas('rol', fn ($query) => $query->where('nombre', 'profesional'))
             ->orderBy('name')
-            ->get(['id', 'name as nombre_usuario', 'email']);
+            ->get(['id', 'name as nombre_usuario', 'email', 'profesion']);
 
         return Inertia::render('personas/create', [
             'provincias' => Provincia::orderBy('nombre')->get(['id', 'nombre']),
