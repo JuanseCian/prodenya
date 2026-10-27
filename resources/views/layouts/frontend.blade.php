@@ -9,8 +9,7 @@
     <title>@yield('title', 'PRODENYA')</title>
     <meta name="description" content="@yield('description', 'Sistema de Promoción y Protección de los Derechos de Niños, Niñas y Adolescentes')">
 
-    <script src="https://cdn.tailwindcss.com"></script>
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
         @if (isset($page))
             @viteReactRefresh
@@ -39,6 +38,7 @@
             background: var(--page);
             color: var(--ink);
             font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            margin: 0;
             min-height: 100vh;
         }
 
