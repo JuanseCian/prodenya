@@ -6,8 +6,21 @@
 @section('page-title', ($editing ? 'Editar ' : 'Nuevo ').$definition['singular'])
 @section('page-description', 'Completá los datos del catálogo administrativo.')
 
+@push('styles')
+    <style>
+        .catalog-form { color: #162b3a; }
+        .catalog-form .catalog-form-card { border-color: #dce8e3; box-shadow: 0 14px 34px rgba(21, 52, 72, 0.06); }
+        .catalog-form .catalog-form-head, .catalog-form .catalog-form-actions { background: #f3f8f5; border-color: #e1ece6; }
+        .catalog-form .catalog-kicker { color: #397461; }
+        .catalog-form h2 { color: #162b3a; }
+        .catalog-form input:focus, .catalog-form select:focus, .catalog-form textarea:focus { border-color: #7db493 !important; box-shadow: 0 0 0 3px rgba(125, 180, 147, 0.18) !important; }
+        .catalog-form .catalog-submit { background: #397461; }
+        .catalog-form .catalog-submit:hover { background: #286047; }
+    </style>
+@endpush
+
 @section('content')
-    <div class="mx-auto max-w-3xl">
+    <div class="catalog-form mx-auto max-w-3xl">
         <div class="mb-6 flex items-center gap-3 text-sm text-slate-500">
             <a href="{{ route('admin.catalogos.index', ['catalog' => $catalog]) }}" class="transition hover:text-indigo-600">{{ $definition['title'] }}</a>
             <i class="bi bi-chevron-right text-xs"></i>
@@ -20,14 +33,14 @@
             </div>
         @endif
 
-        <form method="POST" action="{{ $editing ? route('admin.catalogos.update', ['catalog' => $catalog, 'item' => $item->getKey()]) : route('admin.catalogos.store', ['catalog' => $catalog]) }}" class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <form method="POST" action="{{ $editing ? route('admin.catalogos.update', ['catalog' => $catalog, 'item' => $item->getKey()]) : route('admin.catalogos.store', ['catalog' => $catalog]) }}" class="catalog-form-card overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
             @csrf
             @if ($editing)
                 @method('PUT')
             @endif
 
-            <div class="border-b border-slate-100 bg-slate-50 px-6 py-5">
-                <p class="text-xs font-bold tracking-[0.15em] text-indigo-500 uppercase">Datos del catálogo</p>
+            <div class="catalog-form-head border-b border-slate-100 bg-slate-50 px-6 py-5">
+                <p class="catalog-kicker text-xs font-bold tracking-[0.15em] text-indigo-500 uppercase">Datos del catálogo</p>
                 <h2 class="mt-2 text-xl font-bold text-slate-900">{{ $editing ? 'Actualizar registro' : 'Crear registro' }}</h2>
             </div>
 
@@ -69,9 +82,9 @@
                 @endforeach
             </div>
 
-            <div class="flex flex-col-reverse gap-3 border-t border-slate-100 bg-slate-50 px-6 py-5 sm:flex-row sm:justify-end">
+            <div class="catalog-form-actions flex flex-col-reverse gap-3 border-t border-slate-100 bg-slate-50 px-6 py-5 sm:flex-row sm:justify-end">
                 <a href="{{ route('admin.catalogos.index', ['catalog' => $catalog]) }}" class="inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-sm font-bold text-slate-500 transition hover:bg-slate-100">Cancelar</a>
-                <button type="submit" class="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-indigo-700">
+                <button type="submit" class="catalog-submit inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-indigo-700">
                     <i class="bi bi-check2"></i>
                     {{ $editing ? 'Guardar cambios' : 'Crear registro' }}
                 </button>

@@ -13,6 +13,7 @@ export default defineConfig({
                 'resources/css/app.css',
                 'resources/js/app.tsx',
                 'resources/js/auth/access.tsx',
+                'resources/js/site-header.tsx',
             ],
             refresh: true,
             fonts: [

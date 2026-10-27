@@ -4,8 +4,24 @@
 @section('page-title', $definition['title'])
 @section('page-description', 'Administrá los valores disponibles para el sistema.')
 
+@push('styles')
+    <style>
+        .catalog-page { color: #162b3a; }
+        .catalog-page .catalog-hero { background: rgba(255, 255, 255, 0.9); border-color: #dce8e3; box-shadow: 0 10px 28px rgba(21, 52, 72, 0.045); }
+        .catalog-page .catalog-kicker { color: #397461; }
+        .catalog-page h2 { color: #162b3a; }
+        .catalog-page input:focus { border-color: #7db493 !important; box-shadow: 0 0 0 3px rgba(125, 180, 147, 0.18) !important; }
+        .catalog-page .catalog-primary { background: #397461; }
+        .catalog-page .catalog-primary:hover { background: #286047; }
+        .catalog-page .catalog-table { border-color: #dce8e3; box-shadow: 0 10px 28px rgba(21, 52, 72, 0.045); }
+        .catalog-page .catalog-table thead { background: #f3f8f5; }
+        .catalog-page .catalog-table tbody tr:hover { background: #f6fbf8; }
+        .catalog-page .catalog-table a:hover { color: #397461; }
+    </style>
+@endpush
+
 @section('content')
-    <div class="space-y-6">
+    <div class="catalog-page space-y-6">
         @if (session('success'))
             <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
                 <i class="bi bi-check-circle mr-2"></i>{{ session('success') }}
@@ -18,14 +34,14 @@
             </div>
         @endif
 
-        <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-6">
+        <section class="catalog-hero rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-6">
             <div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
                 <div>
-                    <p class="text-xs font-bold tracking-[0.15em] text-indigo-500 uppercase">Catálogo administrativo</p>
+                    <p class="catalog-kicker text-xs font-bold tracking-[0.15em] text-indigo-500 uppercase">Catálogo administrativo</p>
                     <h2 class="mt-2 text-2xl font-bold tracking-tight text-slate-900">{{ $definition['title'] }}</h2>
                     <p class="mt-1 text-sm text-slate-500">{{ $items->total() }} {{ $items->total() === 1 ? 'registro disponible' : 'registros disponibles' }}.</p>
                 </div>
-                <a href="{{ route('admin.catalogos.create', ['catalog' => $catalog]) }}" class="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-indigo-700">
+                    <a href="{{ route('admin.catalogos.create', ['catalog' => $catalog]) }}" class="catalog-primary inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-indigo-700">
                     <i class="bi bi-plus-lg"></i>
                     Nuevo {{ strtolower($definition['singular']) }}
                 </a>
@@ -44,7 +60,7 @@
             </form>
         </section>
 
-        <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <section class="catalog-table overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-slate-100 text-left">
                     <thead class="bg-slate-50">
