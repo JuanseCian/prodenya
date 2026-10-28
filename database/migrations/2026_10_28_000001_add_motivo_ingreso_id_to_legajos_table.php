@@ -42,8 +42,14 @@ return new class extends Migration
     public function down(): void
     {
         if (Schema::hasColumn('legajos', 'motivo_ingreso_id')) {
-            Schema::table('legajos', function (Blueprint $table) {
-                $table->dropForeign(['motivo_ingreso_id']);
+            $tieneForeign = collect(Schema::getForeignKeys('legajos'))
+                ->contains(fn (array $fk) => $fk['columns'] === ['motivo_ingreso_id']);
+
+            Schema::table('legajos', function (Blueprint $table) use ($tieneForeign) {
+                if ($tieneForeign) {
+                    $table->dropForeign(['motivo_ingreso_id']);
+                }
+
                 $table->dropColumn('motivo_ingreso_id');
             });
         }

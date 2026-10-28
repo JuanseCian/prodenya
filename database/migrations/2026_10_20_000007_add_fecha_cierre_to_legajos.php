@@ -27,14 +27,20 @@ return new class extends Migration
     {
         if (Schema::hasTable('legajos') && Schema::hasColumn('legajos', 'fecha_cierre')) {
             Schema::table('legajos', function (Blueprint $table) {
-                $table->dropIndex('idx_legajo_fecha_cierre');
+                if (Schema::hasIndex('legajos', 'idx_legajo_fecha_cierre')) {
+                    $table->dropIndex('idx_legajo_fecha_cierre');
+                }
+
                 $table->dropColumn('fecha_cierre');
             });
         }
 
         if (Schema::hasColumn('personas', 'fecha_cierre')) {
             Schema::table('personas', function (Blueprint $table) {
-                $table->dropIndex('idx_persona_fecha_cierre');
+                if (Schema::hasIndex('personas', 'idx_persona_fecha_cierre')) {
+                    $table->dropIndex('idx_persona_fecha_cierre');
+                }
+
                 $table->dropColumn('fecha_cierre');
             });
         }
