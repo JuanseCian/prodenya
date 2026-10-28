@@ -13,10 +13,12 @@ use App\Models\Provincia;
 use App\Models\Tarea;
 use App\Models\User;
 use App\Models\VinculoFamiliar;
+use App\Services\LegajoWordExportService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Throwable;
 
 class LegajoController extends Controller
@@ -300,6 +302,13 @@ class LegajoController extends Controller
             ])->values(),
             'estadisticas' => $this->estadisticasDelLegajo($legajo),
         ]);
+    }
+
+    public function exportarWord(Legajo $legajo, LegajoWordExportService $exportador): BinaryFileResponse
+    {
+        $ruta = $exportador->generar($legajo);
+
+        return response()->download($ruta, "legajo-{$legajo->numero_legajo}.docx")->deleteFileAfterSend();
     }
 
     public function edit(Legajo $legajo): Response
