@@ -30,9 +30,17 @@ class StoreVinculoFamiliarRequest extends FormRequest
                 'required',
                 'integer',
                 'different:persona_id',
-                Rule::exists(Persona::class, 'id')
-                    ->where('activo', true)
-                    ->whereNotNull('numero_legajo'),
+                function (string $attribute, mixed $value, \Closure $fail) {
+                    $valida = Persona::query()
+                        ->whereKey($value)
+                        ->where('activo', true)
+                        ->whereHas('legajos')
+                        ->exists();
+
+                    if (! $valida) {
+                        $fail('La persona seleccionada no es válida.');
+                    }
+                },
             ],
             'tipo_vinculo' => ['required', 'string', Rule::in(VinculoFamiliar::TIPOS)],
         ];

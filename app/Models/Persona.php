@@ -39,16 +39,6 @@ class Persona extends Model
         'email',
         'observaciones',
         'activo',
-        'numero_legajo',
-        'motivo_ingreso',
-        'nivel_riesgo',
-        'origen_derivacion',
-        'profesional_id',
-        'fecha_apertura',
-        'fecha_cierre',
-        'estado',
-        'observaciones_legajo',
-        'motivo_ingreso_id',
     ];
 
     protected function casts(): array
@@ -56,8 +46,6 @@ class Persona extends Model
         return [
             'fecha_nacimiento' => 'date',
             'activo' => 'boolean',
-            'fecha_apertura' => 'date',
-            'fecha_cierre' => 'date',
             'latitud' => 'float',
             'longitud' => 'float',
             'geocodificado_en' => 'datetime',
@@ -85,24 +73,9 @@ class Persona extends Model
             ->where('fecha_vencimiento', '>=', now());
     }
 
-    public function problematicas(): BelongsToMany
+    public function legajos(): HasMany
     {
-        return $this->belongsToMany(
-            Problematica::class,
-            'persona_problematica',
-            'persona_id',
-            'problematica_id',
-        );
-    }
-
-    public function profesional(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'profesional_id');
-    }
-
-    public function motivoIngreso(): BelongsTo
-    {
-        return $this->belongsTo(MotivoIngreso::class, 'motivo_ingreso_id');
+        return $this->hasMany(Legajo::class, 'persona_id');
     }
 
     public function documentos(): HasMany
@@ -129,28 +102,5 @@ class Persona extends Model
     public function getEdadAttribute(): int
     {
         return $this->fecha_nacimiento->age;
-    }
-
-    public static function generarNumeroLegajo(self $persona): string
-    {
-        $soloLetras = static fn (string $texto): string => (string) str($texto)
-            ->ascii()
-            ->upper()
-            ->replaceMatches('/[^A-Z]/', '');
-        $base = sprintf(
-            '%s-%s-%s',
-            str_pad(substr($soloLetras($persona->apellido), 0, 3), 3, 'X'),
-            str_pad(substr($soloLetras($persona->nombre), 0, 3), 3, 'X'),
-            str_pad(substr(preg_replace('/\D/', '', (string) $persona->dni), -3), 3, '0', STR_PAD_LEFT),
-        );
-
-        $numero = $base;
-        $sufijo = 1;
-
-        while (static::where('numero_legajo', $numero)->exists()) {
-            $numero = "{$base}-".++$sufijo;
-        }
-
-        return $numero;
     }
 }

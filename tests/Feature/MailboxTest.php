@@ -43,12 +43,6 @@ test('oficios can classify a message and derive it as a task', function () {
         'fecha_nacimiento' => '2010-01-01',
         'genero' => 'F',
         'localidad_id' => $localidad,
-        'numero_legajo' => 'DER-ANA-222',
-        'fecha_apertura' => today(),
-        'motivo_ingreso' => 'Derivación institucional',
-        'nivel_riesgo' => 'Bajo',
-        'origen_derivacion' => 'Juzgado',
-        'estado' => 'Abierto',
         'activo' => true,
     ]);
     $legajo = Legajo::create([

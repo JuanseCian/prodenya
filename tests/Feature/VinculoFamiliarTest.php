@@ -9,7 +9,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
 
-function crearPersonaConLegajoParaVinculo(string $sufijo, int $usuarioId): Persona
+/** @return array{0: Persona, 1: Legajo} */
+function crearPersonaConLegajoParaVinculo(string $sufijo, int $usuarioId): array
 {
     $provinciaId = DB::table('provincias')->insertGetId(['nombre' => "Provincia {$sufijo}"]);
     $localidadId = DB::table('localidades')->insertGetId([
@@ -25,27 +26,21 @@ function crearPersonaConLegajoParaVinculo(string $sufijo, int $usuarioId): Perso
         'fecha_nacimiento' => '2010-01-01',
         'genero' => 'X',
         'localidad_id' => $localidadId,
+        'activo' => true,
+    ]);
+
+    $legajo = Legajo::create([
+        'persona_id' => $persona->id,
         'numero_legajo' => "LEG-{$sufijo}",
         'motivo_ingreso' => 'Acompañamiento familiar',
         'nivel_riesgo' => 'Bajo',
         'origen_derivacion' => 'Test',
         'fecha_apertura' => now()->toDateString(),
         'estado' => 'Abierto',
-        'activo' => true,
-    ]);
-
-    Legajo::create([
-        'persona_id' => $persona->id,
-        'numero_legajo' => $persona->numero_legajo,
-        'motivo_ingreso' => 'Acompañamiento familiar',
-        'nivel_riesgo' => 'Bajo',
-        'origen_derivacion' => 'Test',
-        'fecha_apertura' => $persona->fecha_apertura,
-        'estado' => 'Abierto',
         'creado_por' => $usuarioId,
     ]);
 
-    return $persona;
+    return [$persona, $legajo];
 }
 
 function crearRol(string $nombre): int
@@ -59,11 +54,11 @@ function crearRol(string $nombre): int
 
 test('authorized users can link and unlink legajos without merging histories', function () {
     $admin = User::factory()->create(['rol_id' => crearRol('admin')]);
-    $personaA = crearPersonaConLegajoParaVinculo('A', $admin->id);
-    $personaB = crearPersonaConLegajoParaVinculo('B', $admin->id);
+    [$personaA, $legajoA] = crearPersonaConLegajoParaVinculo('A', $admin->id);
+    [$personaB, $legajoB] = crearPersonaConLegajoParaVinculo('B', $admin->id);
 
     $this->actingAs($admin)
-        ->post(route('legajos.vinculos.store', $personaA), [
+        ->post(route('legajos.vinculos.store', $legajoA), [
             'persona_relacionada_id' => $personaB->id,
             'tipo_vinculo' => 'hermano/a',
         ])
@@ -79,19 +74,19 @@ test('authorized users can link and unlink legajos without merging histories', f
     $this->assertDatabaseCount('intervenciones', 0);
 
     $response = $this->actingAs($admin)
-        ->get(route('legajos.show', $personaA))
+        ->get(route('legajos.show', $legajoA))
         ->assertOk();
 
     $response->assertInertia(fn (Assert $page) => $page
         ->has('vinculos', 1)
-        ->where('vinculos.0.persona.id', $personaB->id)
+        ->where('vinculos.0.persona.id', $legajoB->id)
         ->where('vinculos.0.tipo', 'hermano/a'),
     );
 
     $vinculoId = DB::table('vinculos_familiares')->value('id');
 
     $this->actingAs($admin)
-        ->delete(route('legajos.vinculos.destroy', [$personaA, $vinculoId]))
+        ->delete(route('legajos.vinculos.destroy', [$legajoA, $vinculoId]))
         ->assertRedirect();
 
     $this->assertDatabaseMissing('vinculos_familiares', [
@@ -102,11 +97,11 @@ test('authorized users can link and unlink legajos without merging histories', f
 
 test('consulta users cannot manage family links', function () {
     $consulta = User::factory()->create(['rol_id' => crearRol('consulta')]);
-    $personaA = crearPersonaConLegajoParaVinculo('C', $consulta->id);
-    $personaB = crearPersonaConLegajoParaVinculo('D', $consulta->id);
+    [, $legajoA] = crearPersonaConLegajoParaVinculo('C', $consulta->id);
+    [$personaB] = crearPersonaConLegajoParaVinculo('D', $consulta->id);
 
     $this->actingAs($consulta)
-        ->post(route('legajos.vinculos.store', $personaA), [
+        ->post(route('legajos.vinculos.store', $legajoA), [
             'persona_relacionada_id' => $personaB->id,
             'tipo_vinculo' => 'primo/a',
         ])
@@ -117,12 +112,10 @@ test('an intervention can be copied to linked legajos without copying signatures
     Storage::fake('local');
 
     $admin = User::factory()->create(['rol_id' => crearRol('admin')]);
-    $personaA = crearPersonaConLegajoParaVinculo('E', $admin->id);
-    $personaB = crearPersonaConLegajoParaVinculo('F', $admin->id);
-    $legajoA = Legajo::where('persona_id', $personaA->id)->firstOrFail();
-    $legajoB = Legajo::where('persona_id', $personaB->id)->firstOrFail();
+    [$personaA, $legajoA] = crearPersonaConLegajoParaVinculo('E', $admin->id);
+    [$personaB, $legajoB] = crearPersonaConLegajoParaVinculo('F', $admin->id);
 
-    $this->actingAs($admin)->post(route('legajos.vinculos.store', $personaA), [
+    $this->actingAs($admin)->post(route('legajos.vinculos.store', $legajoA), [
         'persona_relacionada_id' => $personaB->id,
         'tipo_vinculo' => 'hermano/a',
     ])->assertRedirect();
@@ -146,7 +139,7 @@ test('an intervention can be copied to linked legajos without copying signatures
         'legajos_destino_ids' => [$legajoB->id],
     ]);
 
-    $response->assertRedirect(route('legajos.show', $personaA));
+    $response->assertRedirect(route('legajos.show', $legajoA));
 
     $intervenciones = Intervencion::orderBy('id')->get();
     $source = $intervenciones->first();

@@ -40,8 +40,6 @@ import legajosRoutes from '@/routes/legajos';
 
 interface LegajoDetalle {
     id: number;
-    intervenciones_legajo_id: number;
-    derivaciones_legajo_id: number;
     numero_legajo: string;
     motivo_ingreso: string | null;
     nivel_riesgo: string;
@@ -202,7 +200,7 @@ export default function LegajoShow({
     const crearDerivacion = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         derivacionForm.post(
-            legajosRoutes.derivaciones.store.url(legajo.derivaciones_legajo_id),
+            legajosRoutes.derivaciones.store.url(legajo.id),
             {
                 preserveScroll: true,
                 onSuccess: () => derivacionForm.reset(),
@@ -605,7 +603,7 @@ export default function LegajoShow({
                         </div>
                         {puedeGestionarIntervenciones && (
                             <Link
-                                href={`/legajos/${legajo.intervenciones_legajo_id}/intervenciones/create`}
+                                href={`/legajos/${legajo.id}/intervenciones/create`}
                                 className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-[#2C4A5E] px-4 text-sm font-semibold text-white transition hover:bg-[#1F394B]"
                             >
                                 <Plus size={16} />
@@ -654,7 +652,7 @@ export default function LegajoShow({
                                             </div>
                                             {puedeGestionarIntervenciones && (
                                                 <Link
-                                                    href={`/legajos/${legajo.intervenciones_legajo_id}/intervenciones/${intervencion.id}/edit`}
+                                                    href={`/legajos/${legajo.id}/intervenciones/${intervencion.id}/edit`}
                                                     className="inline-flex shrink-0 items-center gap-1.5 text-sm font-semibold text-[#2C4A5E] hover:underline"
                                                 >
                                                     <Pencil size={14} />
@@ -686,7 +684,7 @@ export default function LegajoShow({
                                                     : 'Sin firma'}
                                                 {intervencion.tiene_firma_responsable && (
                                                     <a
-                                                        href={`/legajos/${legajo.intervenciones_legajo_id}/intervenciones/${intervencion.id}/firma/responsable/descargar`}
+                                                        href={`/legajos/${legajo.id}/intervenciones/${intervencion.id}/firma/responsable/descargar`}
                                                         className="ml-1 underline"
                                                     >
                                                         (descargar)
@@ -702,7 +700,7 @@ export default function LegajoShow({
                                                     : 'Sin firma'}
                                                 {intervencion.tiene_firma_entrevistado && (
                                                     <a
-                                                        href={`/legajos/${legajo.intervenciones_legajo_id}/intervenciones/${intervencion.id}/firma/entrevistado/descargar`}
+                                                        href={`/legajos/${legajo.id}/intervenciones/${intervencion.id}/firma/entrevistado/descargar`}
                                                         className="ml-1 underline"
                                                     >
                                                         (descargar)

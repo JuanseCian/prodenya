@@ -103,7 +103,7 @@ class IntervencionController extends Controller
             ? 'Intervención registrada correctamente.'
             : 'Intervención registrada y copiada en los legajos vinculados seleccionados.';
 
-        return redirect()->route('legajos.show', $legajo->persona_id)->with('status', $mensaje);
+        return redirect()->route('legajos.show', $legajo->id)->with('status', $mensaje);
     }
 
     public function edit(Legajo $legajo, Intervencion $intervencion): Response
@@ -188,7 +188,7 @@ class IntervencionController extends Controller
             ]);
         }
 
-        return redirect()->route('legajos.show', $legajo->persona_id)
+        return redirect()->route('legajos.show', $legajo->id)
             ->with('status', 'Intervención actualizada correctamente.');
     }
 

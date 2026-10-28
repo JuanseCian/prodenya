@@ -30,12 +30,6 @@ function crearLegajoParaDerivacion(User $creador): Legajo
         'fecha_nacimiento' => '2010-01-01',
         'genero' => 'F',
         'localidad_id' => $localidad,
-        'numero_legajo' => 'DER-ANA-222',
-        'fecha_apertura' => today(),
-        'motivo_ingreso' => 'Seguimiento',
-        'nivel_riesgo' => 'Bajo',
-        'origen_derivacion' => 'Institución',
-        'estado' => 'Abierto',
         'activo' => true,
     ]);
 
@@ -92,7 +86,7 @@ test('legajo detail exposes individual statistics and derivations', function () 
     ]);
 
     $this->actingAs($coordinador)
-        ->get(route('legajos.show', $legajo->persona_id))
+        ->get(route('legajos.show', $legajo))
         ->assertOk()
         ->assertInertia(fn ($page) => $page
             ->component('legajos/show')

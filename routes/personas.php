@@ -50,8 +50,13 @@ Route::middleware(['auth'])->group(function () {
     // ── Lectura: admin, operador y consulta ─────────────────────────────
     Route::middleware('rol:admin,operador,consulta,oficios,coordinador,profesional,administrativo')->group(function () {
         Route::get('/personas', fn () => redirect()->route('legajos.index'))->name('personas.index');
-        Route::get('/personas/{persona}', fn (Persona $persona) => redirect()->route('legajos.show', $persona->id))
-            ->name('personas.show')->whereNumber('persona');
+        Route::get('/personas/{persona}', function (Persona $persona) {
+            $legajo = $persona->legajos()->latest('fecha_apertura')->first();
+
+            abort_unless($legajo, 404);
+
+            return redirect()->route('legajos.show', $legajo);
+        })->name('personas.show')->whereNumber('persona');
         Route::get('/legajos', [LegajoController::class, 'index'])->name('legajos.index');
         Route::get('/mayores-18', [LegajoController::class, 'mayores18'])->name('mayores18.index');
         Route::get('/legajos/{legajo}/estadisticas', [LegajoController::class, 'estadisticas'])

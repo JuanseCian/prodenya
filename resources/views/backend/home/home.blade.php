@@ -165,18 +165,18 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach ($legajosRecientes as $persona)
+                                @foreach ($legajosRecientes as $legajo)
                                     <tr>
                                         <td>
                                             @if (Route::has('legajos.show'))
-                                                <a href="{{ route('legajos.show', ['legajo' => $persona->id]) }}">{{ $persona->apellido }}, {{ $persona->nombre }}</a>
+                                                <a href="{{ route('legajos.show', ['legajo' => $legajo->id]) }}">{{ $legajo->persona?->apellido }}, {{ $legajo->persona?->nombre }}</a>
                                             @else
-                                                {{ $persona->apellido }}, {{ $persona->nombre }}
+                                                {{ $legajo->persona?->apellido }}, {{ $legajo->persona?->nombre }}
                                             @endif
                                         </td>
-                                        <td>{{ $persona->numero_legajo ?: '—' }}</td>
-                                        <td><span class="admin-pill">{{ $persona->estado ?: 'Registrada' }}</span></td>
-                                        <td>{{ $persona->creado_en?->format('d/m/Y') ?: '—' }}</td>
+                                        <td>{{ $legajo->numero_legajo ?: '—' }}</td>
+                                        <td><span class="admin-pill">{{ $legajo->estado ?: 'Registrada' }}</span></td>
+                                        <td>{{ $legajo->creado_en?->format('d/m/Y') ?: '—' }}</td>
                                     </tr>
                                 @endforeach
                             </tbody>

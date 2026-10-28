@@ -252,8 +252,8 @@ class ComunicacionController extends Controller
         abort_unless($recurso, 404);
 
         return match ($tipo) {
-            'legajo' => redirect()->route('legajos.show', $recurso->persona_id),
-            'intervencion' => redirect()->route('legajos.show', $recurso->legajo->persona_id),
+            'legajo' => redirect()->route('legajos.show', $recurso->id),
+            'intervencion' => redirect()->route('legajos.show', $recurso->legajo_id),
             'documento' => redirect()->route('intervenciones.documentos.descargar', $recurso),
             'mail' => redirect()->route('mailbox.index', ['buscar' => $recurso->subject ?: $recurso->from_email]),
             default => abort(404),

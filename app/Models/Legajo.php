@@ -27,6 +27,7 @@ class Legajo extends Model
         'persona_id',
         'numero_legajo',
         'motivo_ingreso',
+        'motivo_ingreso_id',
         'nivel_riesgo',
         'origen_derivacion',
         'profesional_id',
@@ -78,6 +79,11 @@ class Legajo extends Model
     public function persona(): BelongsTo
     {
         return $this->belongsTo(Persona::class, 'persona_id');
+    }
+
+    public function motivoIngreso(): BelongsTo
+    {
+        return $this->belongsTo(MotivoIngreso::class, 'motivo_ingreso_id');
     }
 
     public function creadoPor(): BelongsTo

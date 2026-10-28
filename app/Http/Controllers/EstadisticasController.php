@@ -289,9 +289,9 @@ class EstadisticasController extends Controller
     private function personasBaseQuery(array $filtros): Builder
     {
         return Persona::query()
-            ->when($filtros['estado'], fn (Builder $query, string $estado) => $query->where('estado', $estado))
-            ->when($filtros['problematica'], fn (Builder $query, int $id) => $query->whereHas('problematicas', fn ($relation) => $relation->whereKey($id)))
-            ->when($filtros['profesional'], fn (Builder $query, int $id) => $query->where('profesional_id', $id))
+            ->when($filtros['estado'], fn (Builder $query, string $estado) => $query->whereHas('legajos', fn ($legajo) => $legajo->where('estado', $estado)))
+            ->when($filtros['problematica'], fn (Builder $query, int $id) => $query->whereHas('legajos.problematicas', fn ($relation) => $relation->whereKey($id)))
+            ->when($filtros['profesional'], fn (Builder $query, int $id) => $query->whereHas('legajos', fn ($legajo) => $legajo->where('profesional_id', $id)))
             ->when($filtros['genero'], fn (Builder $query, string $genero) => $query->where('genero', $genero))
             ->when($filtros['edad'], fn (Builder $query, string $edad) => $this->aplicarEdad($query, $edad));
     }
@@ -313,7 +313,7 @@ class EstadisticasController extends Controller
             ->whereBetween('fecha_intervencion', [$desde->toDateString(), $hasta->toDateString()])
             ->when($filtros['tipo_intervencion'], fn (Builder $query, int $id) => $query->where('tipo_intervencion_id', $id))
             ->when($filtros['profesional'], fn (Builder $query, int $id) => $query->where('profesional_id', $id))
-            ->when($filtros['problematica'], fn (Builder $query, int $id) => $query->whereHas('legajo.persona.problematicas', fn ($relation) => $relation->whereKey($id)))
+            ->when($filtros['problematica'], fn (Builder $query, int $id) => $query->whereHas('legajo.problematicas', fn ($relation) => $relation->whereKey($id)))
             ->when($filtros['estado'], fn (Builder $query, string $estado) => $query->whereHas('legajo', fn ($legajo) => $legajo->where('estado', $estado)))
             ->when($filtros['genero'] || $filtros['edad'], fn (Builder $query) => $query->whereHas('legajo.persona', function ($persona) use ($filtros) {
                 $this->aplicarAtributosPersona($persona, $filtros);
@@ -326,7 +326,7 @@ class EstadisticasController extends Controller
             ->whereBetween('created_at', [$desde->startOfDay(), $hasta->endOfDay()])
             ->when($filtros['tarea_estado'], fn (Builder $query, string $estado) => $query->where('estado', $estado))
             ->when($filtros['responsable'], fn (Builder $query, int $id) => $query->where('asignado_a', $id))
-            ->when($filtros['problematica'], fn (Builder $query, int $id) => $query->whereHas('legajo.persona.problematicas', fn ($relation) => $relation->whereKey($id)))
+            ->when($filtros['problematica'], fn (Builder $query, int $id) => $query->whereHas('legajo.problematicas', fn ($relation) => $relation->whereKey($id)))
             ->when($filtros['profesional'], fn (Builder $query, int $id) => $query->whereHas('legajo', fn ($legajo) => $legajo->where('profesional_id', $id)));
     }
 
@@ -437,7 +437,7 @@ class EstadisticasController extends Controller
         $personas = Persona::query()
             ->whereIn('id', (clone $legajos)->select('persona_id'))
             ->whereHas('localidad', fn (Builder $query) => $query->where('nombre', 'like', 'San Nicol%'))
-            ->with(['localidad', 'barrio.localidad', 'problematicas:id,nombre'])
+            ->with(['localidad', 'barrio.localidad', 'legajos.problematicas:id,nombre'])
             ->get([
                 'id',
                 'direccion_calle',
@@ -487,7 +487,9 @@ class EstadisticasController extends Controller
 
             $zonas[$clave]['total']++;
 
-            foreach ($persona->problematicas as $problematica) {
+            $problematicasPersona = $persona->legajos->flatMap(fn ($legajo) => $legajo->problematicas)->unique('id');
+
+            foreach ($problematicasPersona as $problematica) {
                 $problematicaId = (string) $problematica->id;
 
                 if (! isset($zonas[$clave]['problematicas'][$problematicaId])) {

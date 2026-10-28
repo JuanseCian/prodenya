@@ -28,12 +28,6 @@ function crearPersonaConLegajo(User $usuario): array
         'fecha_nacimiento' => '2010-01-01',
         'genero' => 'F',
         'localidad_id' => $localidad,
-        'numero_legajo' => 'PRA-ANA-222',
-        'fecha_apertura' => today(),
-        'motivo_ingreso' => 'Prueba',
-        'nivel_riesgo' => 'Bajo',
-        'origen_derivacion' => 'Prueba',
-        'estado' => 'Abierto',
         'activo' => true,
     ]);
     $legajo = Legajo::create([
@@ -50,19 +44,17 @@ function crearPersonaConLegajo(User $usuario): array
     return [$persona, $legajo];
 }
 
-test('closing and reopening a legajo synchronizes closure dates', function () {
+test('closing and reopening a legajo updates its closure date', function () {
     $usuario = User::factory()->create(['rol_id' => 1]);
-    [$persona, $legajo] = crearPersonaConLegajo($usuario);
+    [, $legajo] = crearPersonaConLegajo($usuario);
 
-    $this->actingAs($usuario)->patch(route('legajos.cerrar', $persona));
+    $this->actingAs($usuario)->patch(route('legajos.cerrar', $legajo));
 
-    expect($persona->fresh()->fecha_cierre?->toDateString())->toBe(today()->toDateString())
-        ->and($legajo->fresh()->fecha_cierre?->toDateString())->toBe(today()->toDateString());
+    expect($legajo->fresh()->fecha_cierre?->toDateString())->toBe(today()->toDateString());
 
-    $this->actingAs($usuario)->patch(route('legajos.reabrir', $persona));
+    $this->actingAs($usuario)->patch(route('legajos.reabrir', $legajo));
 
-    expect($persona->fresh()->fecha_cierre)->toBeNull()
-        ->and($legajo->fresh()->fecha_cierre)->toBeNull();
+    expect($legajo->fresh()->fecha_cierre)->toBeNull();
 });
 
 test('statistics are role protected and expose the redesigned data contract', function () {
@@ -100,10 +92,10 @@ test('statistics are role protected and expose the redesigned data contract', fu
 
 test('a legajo has an independent statistics page', function () {
     $consulta = User::factory()->create(['rol_id' => 3]);
-    [$persona] = crearPersonaConLegajo($consulta);
+    [, $legajo] = crearPersonaConLegajo($consulta);
 
     $this->actingAs($consulta)
-        ->get(route('legajos.estadisticas', $persona))
+        ->get(route('legajos.estadisticas', $legajo))
         ->assertOk()
         ->assertInertia(fn ($page) => $page
             ->component('legajos/estadisticas')
