@@ -446,7 +446,11 @@ class IntervencionController extends Controller
 
     private function profesionales()
     {
-        return User::where('activo', true)->orderBy('name')->get(['id', 'name']);
+        return User::query()
+            ->where('activo', true)
+            ->whereHas('rol', fn ($query) => $query->where('nombre', 'profesional'))
+            ->orderBy('name')
+            ->get(['id', 'name', 'profesion']);
     }
 
     private function mensajeError(Throwable $e, string $base): string

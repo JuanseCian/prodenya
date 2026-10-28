@@ -18,8 +18,16 @@ export interface Problematica {
 }
 
 export interface Catalogos {
-    profesionales: Array<{ id: number; name: string }>;
-    responsables: Array<{ id: number; name: string }>;
+    profesionales: Array<{
+        id: number;
+        name: string;
+        profesion: string | null;
+    }>;
+    responsables: Array<{
+        id: number;
+        name: string;
+        profesion: string | null;
+    }>;
     tiposIntervencion: Array<{ id: number; nombre: string }>;
     generos: Array<{ value: string; label: string }>;
     edades: Array<{ value: string; label: string }>;
@@ -87,7 +95,11 @@ export interface EstadisticasData {
     problematicas: Problematica[];
     problematicaSeleccionada: { id: number; nombre: string } | null;
     intervencionesPorTipo: Array<{ id: number; nombre: string; total: number }>;
-    intervencionesPorProfesional: Array<{ id: number | null; nombre: string; total: number }>;
+    intervencionesPorProfesional: Array<{
+        id: number | null;
+        nombre: string;
+        total: number;
+    }>;
     tareasPorEstado: NombreTotal[];
     agendaPorTipo: NombreTotal[];
     agendaPorEstado: NombreTotal[];

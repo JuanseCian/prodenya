@@ -30,6 +30,7 @@ interface Tarea {
 interface Responsable {
     id: number;
     name: string;
+    profesion: string | null;
 }
 
 interface Props {
@@ -139,7 +140,7 @@ export default function Tareas({ tareas, responsables }: Props) {
                             <label className="grid gap-2 text-sm font-semibold text-[#2B2F36]">Prioridad<select value={prioridad} onChange={(event) => setPrioridad(event.target.value)} className="h-10 rounded-md border border-[#D5D1C6] bg-white px-3 text-sm font-normal"><option value="baja">Baja</option><option value="normal">Normal</option><option value="alta">Alta</option><option value="urgente">Urgente</option></select></label>
                             <label className="grid gap-2 text-sm font-semibold text-[#2B2F36]">Vencimiento<Input type="date" value={fechaLimite} onChange={(event) => setFechaLimite(event.target.value)} className="h-10 border-[#D5D1C6] bg-white font-normal" /></label>
                         </div>
-                        <label className="grid gap-2 text-sm font-semibold text-[#2B2F36]">Responsable<select value={asignadoA} onChange={(event) => setAsignadoA(event.target.value)} className="h-10 rounded-md border border-[#D5D1C6] bg-white px-3 text-sm font-normal"><option value="">Sin asignar</option>{responsables.map((responsable) => <option key={responsable.id} value={responsable.id}>{responsable.name}</option>)}</select></label>
+                            <label className="grid gap-2 text-sm font-semibold text-[#2B2F36]">Responsable<select value={asignadoA} onChange={(event) => setAsignadoA(event.target.value)} className="h-10 rounded-md border border-[#D5D1C6] bg-white px-3 text-sm font-normal"><option value="">Sin asignar</option>{responsables.map((responsable) => <option key={responsable.id} value={responsable.id}>{responsable.name}{responsable.profesion ? ` · ${responsable.profesion}` : ''}</option>)}</select></label>
                     </div>
                     <DialogFooter><Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancelar</Button><Button type="button" disabled={!titulo.trim()} onClick={crearTarea} className="bg-[#2C4A5E] hover:bg-[#173247]">Crear tarea</Button></DialogFooter>
                 </DialogContent>

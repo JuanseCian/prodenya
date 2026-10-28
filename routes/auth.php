@@ -18,6 +18,10 @@ Route::middleware('guest')->group(function () {
     Route::get('registro/pendiente', [RegisteredUserController::class, 'pending'])
         ->name('register.pending');
 
+    Route::post('registro/verificar/reenviar', [RegisteredUserController::class, 'resendVerification'])
+        ->middleware('throttle:6,1')
+        ->name('registration.verification.resend');
+
     Route::get('login', [AuthenticatedSessionController::class, 'create'])
         ->name('login');
 

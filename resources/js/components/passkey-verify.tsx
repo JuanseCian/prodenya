@@ -1,11 +1,11 @@
 import type { UrlMethodPair } from '@inertiajs/core';
-import { router } from '@inertiajs/react';
 import { usePasskeyVerify } from '@laravel/passkeys/react';
 import { KeyRound } from 'lucide-react';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Spinner } from '@/components/ui/spinner';
+import { cn } from '@/lib/utils';
 
 type Props = {
     routes?: {
@@ -15,6 +15,7 @@ type Props = {
     label?: string;
     loadingLabel?: string;
     separator?: string;
+    buttonClassName?: string;
 };
 
 export default function PasskeyVerify({
@@ -22,6 +23,7 @@ export default function PasskeyVerify({
     label,
     loadingLabel,
     separator,
+    buttonClassName,
 }: Props = {}) {
     const { verify, isLoading, error, isSupported } = usePasskeyVerify({
         ...(routes && {
@@ -31,7 +33,7 @@ export default function PasskeyVerify({
             },
         }),
         onSuccess: (response) => {
-            router.visit(response.redirect ?? '/dashboard');
+            window.location.replace(response.redirect ?? '/');
         },
     });
 
@@ -45,14 +47,14 @@ export default function PasskeyVerify({
                 <Button
                     type="button"
                     variant="outline"
-                    className="w-full"
+                    className={cn('w-full', buttonClassName)}
                     onClick={verify}
                     disabled={isLoading}
                 >
                     {isLoading ? <Spinner /> : <KeyRound className="h-4 w-4" />}
                     {isLoading
                         ? (loadingLabel ?? 'Authenticating...')
-                        : (label ?? 'Sign in with a passkey')}
+                        : (label ?? 'Ingresar con huella o rostro')}
                 </Button>
                 {error && (
                     <InputError message={error} className="text-center" />

@@ -27,6 +27,7 @@ interface Profesional {
     id: number;
     nombre_usuario: string;
     email: string;
+    profesion: string | null;
 }
 
 interface CreateLegajoProps {
@@ -427,6 +428,9 @@ export default function CreateLegajo({
                                         {profesionales.map((p) => (
                                             <option key={p.id} value={p.id}>
                                                 {p.nombre_usuario}
+                                                {p.profesion
+                                                    ? ` · ${p.profesion}`
+                                                    : ''}
                                             </option>
                                         ))}
                                     </select>

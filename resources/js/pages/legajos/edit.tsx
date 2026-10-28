@@ -18,6 +18,7 @@ interface Profesional {
     id: number;
     nombre_usuario: string;
     email: string;
+    profesion: string | null;
 }
 
 interface LegajoEditable {
@@ -289,6 +290,9 @@ export default function LegajoEdit({
                                                 value={profesional.id}
                                             >
                                                 {profesional.nombre_usuario}
+                                                {profesional.profesion
+                                                    ? ` · ${profesional.profesion}`
+                                                    : ''}
                                             </option>
                                         ))}
                                     </select>

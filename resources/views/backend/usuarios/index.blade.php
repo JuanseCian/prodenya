@@ -24,26 +24,27 @@
 
 @push('styles')
     <style>
-        .users-page { color: #26334a; }
-        .users-hero { background: radial-gradient(circle at 90% 0%, rgba(156, 224, 191, 0.23), transparent 28%), linear-gradient(125deg, #302b68, #514b9f); border-radius: 22px; color: #fff; overflow: hidden; padding: 25px; position: relative; }
+        .users-page { color: #162b3a; }
+        .users-hero { background: radial-gradient(circle at 90% 0%, rgba(156, 224, 191, 0.23), transparent 28%), linear-gradient(125deg, #123348, #2d735f); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 22px; box-shadow: 0 18px 40px rgba(21, 52, 72, 0.14); color: #fff; overflow: hidden; padding: 28px; position: relative; }
         .users-hero::after { border: 1px solid rgba(255, 255, 255, 0.13); border-radius: 50%; content: ''; height: 250px; position: absolute; right: -90px; top: -135px; width: 250px; }
         .users-hero-content { position: relative; z-index: 1; }
         .users-eyebrow { color: #bfead0; font-size: 0.67rem; font-weight: 800; letter-spacing: 0.15em; text-transform: uppercase; }
         .users-hero h2 { font-size: clamp(1.5rem, 3vw, 2rem); font-weight: 800; letter-spacing: -0.045em; margin: 8px 0 0; }
         .users-hero p { color: rgba(255, 255, 255, 0.7); font-size: 0.86rem; line-height: 1.55; margin: 9px 0 0; max-width: 570px; }
-        .users-stat { background: #fff; border: 1px solid #e7ebf2; border-radius: 16px; box-shadow: 0 8px 24px rgba(41, 52, 77, 0.04); padding: 15px; }
-        .users-stat strong { color: #26334a; display: block; font-size: 1.45rem; letter-spacing: -0.04em; }
-        .users-stat span { color: #7c879a; display: block; font-size: 0.7rem; font-weight: 700; margin-top: 4px; }
-        .users-filter { background: #fff; border: 1px solid #e7ebf2; border-radius: 18px; box-shadow: 0 8px 24px rgba(41, 52, 77, 0.035); }
+        .users-stat { background: rgba(255, 255, 255, 0.9); border: 1px solid #dce8e3; border-radius: 16px; box-shadow: 0 10px 24px rgba(21, 52, 72, 0.05); padding: 15px; }
+        .users-stat:hover { border-color: #b9d4c5; background: #f6fbf8; }
+        .users-stat strong { color: #162b3a; display: block; font-size: 1.45rem; letter-spacing: -0.04em; }
+        .users-stat span { color: #71828a; display: block; font-size: 0.7rem; font-weight: 700; margin-top: 4px; }
+        .users-filter { background: rgba(255, 255, 255, 0.9); border: 1px solid #dce8e3; border-radius: 18px; box-shadow: 0 10px 24px rgba(21, 52, 72, 0.035); }
         .users-status { border-radius: 999px; box-shadow: inset 0 0 0 1px; display: inline-flex; font-size: 0.65rem; font-weight: 800; padding: 5px 9px; }
-        .users-detail-backdrop { background: rgba(15, 23, 42, 0.42); inset: 0; opacity: 0; pointer-events: none; position: fixed; transition: opacity 180ms ease; z-index: 50; }
-        .users-detail { background: #fff; bottom: 0; box-shadow: -18px 0 50px rgba(15, 23, 42, 0.18); max-width: 520px; overflow-y: auto; position: fixed; right: 0; top: 0; transform: translateX(105%); transition: transform 220ms ease; width: min(100%, 520px); z-index: 51; }
+        .users-detail-backdrop { background: rgba(15, 36, 48, 0.48); inset: 0; opacity: 0; pointer-events: none; position: fixed; transition: opacity 180ms ease; z-index: 50; }
+        .users-detail { background: #fbfdfc; bottom: 0; box-shadow: -18px 0 50px rgba(21, 52, 72, 0.2); max-width: 520px; overflow-y: auto; position: fixed; right: 0; top: 0; transform: translateX(105%); transition: transform 220ms ease; width: min(100%, 520px); z-index: 51; }
         .users-detail.is-open { transform: translateX(0); }
         .users-detail-backdrop.is-open { opacity: 1; pointer-events: auto; }
-        .users-detail-header { align-items: flex-start; border-bottom: 1px solid #eef0f5; display: flex; gap: 14px; justify-content: space-between; padding: 24px; }
-        .users-detail-avatar { align-items: center; background: #efedff; border-radius: 15px; color: #5e56b0; display: flex; flex: 0 0 48px; font-size: 1.1rem; font-weight: 800; height: 48px; justify-content: center; }
-        .users-detail h2 { color: #26334a; font-size: 1.15rem; font-weight: 800; margin: 0; }
-        .users-detail-email { color: #7c879a; font-size: 0.78rem; margin-top: 4px; overflow-wrap: anywhere; }
+        .users-detail-header { align-items: flex-start; border-bottom: 1px solid #e1ece6; display: flex; gap: 14px; justify-content: space-between; padding: 24px; }
+        .users-detail-avatar { align-items: center; background: #e3f2e9; border-radius: 15px; color: #397461; display: flex; flex: 0 0 48px; font-size: 1.1rem; font-weight: 800; height: 48px; justify-content: center; }
+        .users-detail h2 { color: #162b3a; font-size: 1.15rem; font-weight: 800; margin: 0; }
+        .users-detail-email { color: #71828a; font-size: 0.78rem; margin-top: 4px; overflow-wrap: anywhere; }
         .users-detail-close { align-items: center; background: #f5f6fa; border: 0; border-radius: 9px; color: #647087; display: flex; height: 36px; justify-content: center; width: 36px; }
         .users-detail-close:hover { background: #eceef5; color: #26334a; }
         .users-detail-body { padding: 21px 24px 30px; }
@@ -52,13 +53,18 @@
         .users-detail-grid { display: grid; gap: 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
         .users-detail-grid dt { color: #9aa2b1; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; }
         .users-detail-grid dd { color: #3b4860; font-size: 0.8rem; margin: 4px 0 0; overflow-wrap: anywhere; }
-        .users-action-box { background: #f8f8fc; border: 1px solid #e8e9f2; border-radius: 13px; padding: 13px; }
+        .users-action-box { background: #f3f8f5; border: 1px solid #dce8e3; border-radius: 13px; padding: 13px; }
         .users-action-box + .users-action-box { margin-top: 10px; }
         .users-action-box h4 { color: #3b4860; font-size: 0.8rem; font-weight: 800; margin: 0 0 9px; }
         .users-timeline { display: grid; gap: 12px; }
         .users-timeline-item { border-left: 2px solid #d7e9dd; padding-left: 12px; }
         .users-timeline-item strong { color: #3b4860; display: block; font-size: 0.76rem; }
         .users-timeline-item small { color: #9aa2b1; display: block; font-size: 0.68rem; margin-top: 3px; }
+        .users-page .bg-indigo-600 { background-color: #397461 !important; }
+        .users-page .bg-indigo-600:hover { background-color: #286047 !important; }
+        .users-page .text-indigo-600 { color: #397461 !important; }
+        .users-page input:focus, .users-page select:focus, .users-page textarea:focus { border-color: #7db493 !important; box-shadow: 0 0 0 3px rgba(125, 180, 147, 0.18) !important; }
+
         @media (max-width: 700px) {
             .users-detail { max-width: none; }
             .users-hero { padding: 21px; }
@@ -161,7 +167,7 @@
                 <section class="users-detail-section"><h3>Datos de la cuenta</h3><dl class="users-detail-grid"><div><dt>DNI</dt><dd>{{ $seleccionado->dni ?: '—' }}</dd></div><div><dt>Teléfono</dt><dd>{{ $seleccionado->telefono ?: '—' }}</dd></div><div><dt>Profesión</dt><dd>{{ $seleccionado->profesion ?: '—' }}</dd></div><div><dt>Correo</dt><dd>{{ $seleccionado->hasVerifiedEmail() ? 'Verificado' : 'Sin verificar' }}</dd></div><div><dt>Registro</dt><dd>{{ $seleccionado->created_at?->format('d/m/Y H:i') ?: '—' }}</dd></div><div><dt>Último acceso</dt><dd>{{ $seleccionado->ultimo_acceso?->format('d/m/Y H:i') ?: 'Nunca' }}</dd></div></dl></section>
 
                 @if ($seleccionado->estado_cuenta === 'pendiente')
-                    <section class="users-detail-section"><h3>Resolver solicitud</h3><div class="users-action-box"><h4>Aprobar y asignar rol</h4><form method="POST" action="{{ route('admin.usuarios.aprobar', $seleccionado) }}" class="flex gap-2">@csrf<select name="rol_id" required class="min-w-0 flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm"><option value="">Elegir rol</option>@foreach ($roles as $role)<option value="{{ $role->id }}">{{ ucfirst($role->nombre) }}</option>@endforeach</select><button class="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-bold text-white hover:bg-emerald-700">Aprobar</button></form></div><div class="users-action-box"><h4>Rechazar solicitud</h4><form method="POST" action="{{ route('admin.usuarios.rechazar', $seleccionado) }}">@csrf<textarea name="motivo" required rows="3" placeholder="Motivo obligatorio" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"></textarea><button class="mt-2 rounded-lg bg-rose-600 px-3 py-2 text-xs font-bold text-white hover:bg-rose-700">Rechazar</button></form></div></section>
+                    <section class="users-detail-section"><h3>Resolver solicitud</h3><div class="users-action-box"><h4>Aprobar y asignar rol</h4><form method="POST" action="{{ route('admin.usuarios.aprobar', $seleccionado) }}" class="grid gap-3" data-profession-role-form>@csrf<label class="grid gap-1 text-xs font-bold text-slate-600">Rol<select name="rol_id" required class="min-w-0 rounded-lg border border-slate-200 px-3 py-2 text-sm" data-profession-role><option value="">Elegir rol</option>@foreach ($roles as $role)<option value="{{ $role->id }}" data-role-name="{{ $role->nombre }}">{{ ucfirst($role->nombre) }}</option>@endforeach</select></label><label class="grid gap-1 text-xs font-bold text-slate-600" data-profession-field>Profesión<select name="profesion" class="min-w-0 rounded-lg border border-slate-200 px-3 py-2 text-sm" data-profession-select><option value="">Seleccionar profesión</option>@foreach ($profesiones as $profesion)<option value="{{ $profesion }}" @selected($seleccionado->profesion === $profesion)>{{ $profesion }}</option>@endforeach</select><span class="text-[11px] font-normal text-slate-400">Obligatoria para el rol Profesional.</span></label><button class="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-bold text-white hover:bg-emerald-700">Aprobar</button></form></div><div class="users-action-box"><h4>Rechazar solicitud</h4><form method="POST" action="{{ route('admin.usuarios.rechazar', $seleccionado) }}">@csrf<textarea name="motivo" required rows="3" placeholder="Motivo obligatorio" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"></textarea><button class="mt-2 rounded-lg bg-rose-600 px-3 py-2 text-xs font-bold text-white hover:bg-rose-700">Rechazar</button></form></div></section>
                 @endif
 
                 @if ($seleccionado->estado_cuenta === 'rechazado')
@@ -169,7 +175,7 @@
                 @endif
 
                 @if ($seleccionado->estado_cuenta === 'aprobado')
-                    <section class="users-detail-section"><h3>Permisos</h3><div class="users-action-box"><h4>Cambiar rol</h4><form method="POST" action="{{ route('admin.usuarios.rol', $seleccionado) }}" class="flex gap-2">@csrf @method('PATCH')<select name="rol_id" required class="min-w-0 flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm">@foreach ($roles as $role)<option value="{{ $role->id }}" @selected($seleccionado->rol_id === $role->id)>{{ ucfirst($role->nombre) }}</option>@endforeach</select><button class="rounded-lg bg-indigo-600 px-3 py-2 text-xs font-bold text-white hover:bg-indigo-700">Guardar</button></form></div></section>
+                    <section class="users-detail-section"><h3>Permisos</h3><div class="users-action-box"><h4>Cambiar rol</h4><form method="POST" action="{{ route('admin.usuarios.rol', $seleccionado) }}" class="grid gap-3" data-profession-role-form>@csrf @method('PATCH')<label class="grid gap-1 text-xs font-bold text-slate-600">Rol<select name="rol_id" required class="min-w-0 rounded-lg border border-slate-200 px-3 py-2 text-sm" data-profession-role>@foreach ($roles as $role)<option value="{{ $role->id }}" data-role-name="{{ $role->nombre }}" @selected($seleccionado->rol_id === $role->id)>{{ ucfirst($role->nombre) }}</option>@endforeach</select></label><label class="grid gap-1 text-xs font-bold text-slate-600" data-profession-field>Profesión<select name="profesion" class="min-w-0 rounded-lg border border-slate-200 px-3 py-2 text-sm" data-profession-select><option value="">Seleccionar profesión</option>@foreach ($profesiones as $profesion)<option value="{{ $profesion }}" @selected($seleccionado->profesion === $profesion)>{{ $profesion }}</option>@endforeach</select><span class="text-[11px] font-normal text-slate-400">Obligatoria para el rol Profesional.</span></label><button class="rounded-lg bg-indigo-600 px-3 py-2 text-xs font-bold text-white hover:bg-indigo-700">Guardar</button></form></div></section>
                 @endif
 
                 @if ($seleccionado->motivo_suspension)
@@ -193,6 +199,23 @@
                 const close = () => { if (backdrop) window.location.href = @json($detailUrl()); };
                 backdrop?.addEventListener('click', close);
                 document.addEventListener('keydown', (event) => { if (event.key === 'Escape') close(); });
+
+                document.querySelectorAll('[data-profession-role-form]').forEach((form) => {
+                    const role = form.querySelector('[data-profession-role]');
+                    const field = form.querySelector('[data-profession-field]');
+                    const select = form.querySelector('[data-profession-select]');
+                    const refresh = () => {
+                        const isProfessional = role?.selectedOptions[0]?.dataset.roleName === 'profesional';
+                        field?.classList.toggle('hidden', !isProfessional);
+                        if (select) {
+                            select.required = isProfessional;
+                            select.disabled = !isProfessional;
+                        }
+                    };
+
+                    role?.addEventListener('change', refresh);
+                    refresh();
+                });
             })();
         </script>
     @endif

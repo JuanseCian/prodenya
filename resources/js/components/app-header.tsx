@@ -1,4 +1,4 @@
-import { Link, usePage } from '@inertiajs/react';
+import { Link, router, usePage } from '@inertiajs/react';
 import {
     BarChart3,
     ClipboardCheck,
@@ -20,12 +20,8 @@ import {
     DropdownMenuContent,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-    NavigationMenu,
-    NavigationMenuItem,
-    NavigationMenuList,
-    navigationMenuTriggerStyle,
-} from '@/components/ui/navigation-menu';
+import { LiquidNavbar, NimbusIcons } from '@/components/ui/liquid-glass-navbar';
+import type { LiquidNavItem } from '@/components/ui/liquid-glass-navbar';
 import {
     Sheet,
     SheetContent,
@@ -42,7 +38,7 @@ import {
 import { UserMenuContent } from '@/components/user-menu-content';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import { useInitials } from '@/hooks/use-initials';
-import { cn, toUrl } from '@/lib/utils';
+import { toUrl } from '@/lib/utils';
 import { dashboard, estadisticas as estadisticasRoute } from '@/routes';
 import mailbox from '@/routes/mailbox';
 import tareas from '@/routes/tareas';
@@ -65,14 +61,11 @@ const rightNavItems: NavItem[] = [
     },
 ];
 
-const activeItemStyles =
-    'text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100';
-
 export function AppHeader({ breadcrumbs = [] }: Props) {
     const page = usePage();
     const { auth, currentTeam } = page.props;
     const getInitials = useInitials();
-    const { isCurrentUrl, whenCurrentUrl } = useCurrentUrl();
+    const { isCurrentUrl } = useCurrentUrl();
     const dashboardUrl = currentTeam ? dashboard().url : '/';
 
     const mainNavItems: NavItem[] = [
@@ -82,15 +75,41 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
             icon: LayoutGrid,
         },
         ...(page.props.can?.accessStatistics
-            ? [{ title: 'Estadísticas', href: estadisticasRoute().url, icon: BarChart3 }]
+            ? [
+                  {
+                      title: 'Estadísticas',
+                      href: estadisticasRoute().url,
+                      icon: BarChart3,
+                  },
+              ]
             : []),
         ...(page.props.can?.accessTasks
-            ? [{ title: 'Tareas', href: tareas.index().url, icon: ClipboardCheck }]
+            ? [
+                  {
+                      title: 'Tareas',
+                      href: tareas.index().url,
+                      icon: ClipboardCheck,
+                  },
+              ]
             : []),
         ...(page.props.can?.accessMailbox
             ? [{ title: 'Mailbox', href: mailbox.index().url, icon: Mail }]
             : []),
     ];
+    const liquidNavItems: LiquidNavItem[] = mainNavItems.map((item, index) => ({
+        label: item.title,
+        icon:
+            [
+                NimbusIcons.home,
+                NimbusIcons.globe,
+                NimbusIcons.plane,
+                NimbusIcons.drop,
+            ][index] ?? NimbusIcons.home,
+        fx: ['glow', 'spin', 'wave', 'drop'][index] as LiquidNavItem['fx'],
+    }));
+    const activeNavIndex = mainNavItems.findIndex((item) =>
+        isCurrentUrl(item.href),
+    );
 
     return (
         <>
@@ -167,36 +186,20 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
 
                     {/* Desktop Navigation */}
                     <div className="ml-6 hidden h-full items-center space-x-6 lg:flex">
-                        <NavigationMenu className="flex h-full items-stretch">
-                            <NavigationMenuList className="flex h-full items-stretch space-x-2">
-                                {mainNavItems.map((item, index) => (
-                                    <NavigationMenuItem
-                                        key={index}
-                                        className="relative flex h-full items-center"
-                                    >
-                                        <Link
-                                            href={item.href}
-                                            className={cn(
-                                                navigationMenuTriggerStyle(),
-                                                whenCurrentUrl(
-                                                    item.href,
-                                                    activeItemStyles,
-                                                ),
-                                                'h-9 cursor-pointer px-3',
-                                            )}
-                                        >
-                                            {item.icon && (
-                                                <item.icon className="mr-2 h-4 w-4" />
-                                            )}
-                                            {item.title}
-                                        </Link>
-                                        {isCurrentUrl(item.href) && (
-                                            <div className="absolute bottom-0 left-0 h-0.5 w-full translate-y-px bg-black dark:bg-white"></div>
-                                        )}
-                                    </NavigationMenuItem>
-                                ))}
-                            </NavigationMenuList>
-                        </NavigationMenu>
+                        <LiquidNavbar
+                            items={liquidNavItems}
+                            active={activeNavIndex >= 0 ? activeNavIndex : 0}
+                            onChange={(index) => {
+                                const item = mainNavItems[index];
+
+                                if (item) {
+                                    router.visit(item.href);
+                                }
+                            }}
+                            compact={false}
+                            tone="dark"
+                            className="shadow-sm"
+                        />
                     </div>
 
                     <div className="ml-auto flex items-center space-x-2">
