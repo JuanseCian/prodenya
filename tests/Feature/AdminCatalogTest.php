@@ -49,7 +49,7 @@ test('non administrators cannot access catalog management', function () {
 test('all administrative catalogs are available', function () {
     $admin = User::factory()->create(['rol_id' => 1]);
 
-    foreach (['roles', 'provincias', 'localidades', 'barrios', 'tipos-documento', 'motivos-ingreso', 'problematicas'] as $catalog) {
+    foreach (['roles', 'provincias', 'localidades', 'barrios', 'tipos-documento', 'problematicas'] as $catalog) {
         $this->actingAs($admin)
             ->get(route('admin.catalogos.index', ['catalog' => $catalog]))
             ->assertOk();

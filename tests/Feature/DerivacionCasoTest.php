@@ -37,7 +37,6 @@ function crearLegajoParaDerivacion(User $creador): Legajo
         'persona_id' => $persona->id,
         'numero_legajo' => 'DER-ANA-222',
         'fecha_apertura' => today(),
-        'motivo_ingreso' => 'Seguimiento',
         'nivel_riesgo' => 'Bajo',
         'origen_derivacion' => 'Institución',
         'estado' => 'Abierto',

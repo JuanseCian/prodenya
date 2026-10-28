@@ -34,7 +34,6 @@ function crearPersonaConLegajo(User $usuario): array
         'persona_id' => $persona->id,
         'numero_legajo' => 'PRA-ANA-222',
         'fecha_apertura' => today(),
-        'motivo_ingreso' => 'Prueba',
         'nivel_riesgo' => 'Bajo',
         'origen_derivacion' => 'Prueba',
         'estado' => 'Abierto',

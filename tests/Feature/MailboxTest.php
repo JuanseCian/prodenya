@@ -49,7 +49,6 @@ test('oficios can classify a message and derive it as a task', function () {
         'persona_id' => $persona->id,
         'numero_legajo' => 'DER-ANA-222',
         'fecha_apertura' => today(),
-        'motivo_ingreso' => 'Derivación institucional',
         'nivel_riesgo' => 'Bajo',
         'origen_derivacion' => 'Juzgado',
         'estado' => 'Abierto',

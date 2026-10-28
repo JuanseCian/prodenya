@@ -4,7 +4,6 @@ namespace App\Http\Requests;
 
 use App\Models\Barrio;
 use App\Models\Localidad;
-use App\Models\MotivoIngreso;
 use App\Models\Persona;
 use App\Models\Problematica;
 use App\Models\Provincia;
@@ -49,8 +48,6 @@ class StorePersonaRequest extends FormRequest
             'observaciones' => ['nullable', 'string', 'max:2000'],
 
             'abrir_legajo' => ['boolean'],
-            'legajo_motivo_ingreso' => $conLegajo ? ['required', 'string', 'max:2000'] : ['nullable'],
-            'legajo_motivo_ingreso_id' => ['nullable', Rule::exists(MotivoIngreso::class, 'id')],
             'legajo_problematicas' => $conLegajo ? ['required', 'array', 'min:1'] : ['nullable', 'array'],
             'legajo_problematicas.*' => [Rule::exists(Problematica::class, 'id')],
             'legajo_nivel_riesgo' => $conLegajo ? ['required', 'in:Bajo,Medio,Alto,Critico'] : ['nullable'],
@@ -94,9 +91,6 @@ class StorePersonaRequest extends FormRequest
             'barrio_id.exists' => 'El barrio seleccionado no es válido.',
             'observaciones.max' => 'Las observaciones no pueden superar los 2000 caracteres.',
 
-            'legajo_motivo_ingreso.required' => 'Ingresá el motivo de ingreso para abrir el legajo.',
-            'legajo_motivo_ingreso.max' => 'El motivo de ingreso no puede superar los 2000 caracteres.',
-            'legajo_motivo_ingreso_id.exists' => 'El motivo de ingreso seleccionado no es válido.',
             'legajo_problematicas.required' => 'Seleccioná al menos una problemática para abrir el legajo.',
             'legajo_problematicas.min' => 'Seleccioná al menos una problemática para abrir el legajo.',
             'legajo_problematicas.*.exists' => 'Una de las problemáticas seleccionadas no es válida.',

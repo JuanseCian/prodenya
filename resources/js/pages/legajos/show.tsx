@@ -46,7 +46,6 @@ import legajosRoutes from '@/routes/legajos';
 interface LegajoDetalle {
     id: number;
     numero_legajo: string;
-    motivo_ingreso: string | null;
     nivel_riesgo: string;
     estado: string;
     origen_derivacion: string | null;
@@ -475,17 +474,8 @@ export default function LegajoShow({
                                 la intervención.
                             </p>
                         </CardHeader>
-                        <CardContent className="grid gap-4 px-5 py-5 lg:grid-cols-[1.15fr_0.85fr]">
-                            <div className="rounded-2xl border border-[#E4E8E5] bg-[#F8FAF9] p-4">
-                                <p className="text-[0.68rem] font-bold tracking-[0.12em] text-[#6B8F71] uppercase">
-                                    Motivo de ingreso
-                                </p>
-                                <p className="mt-2 text-sm leading-6 whitespace-pre-line text-[#2B2F36]">
-                                    {legajo.motivo_ingreso ||
-                                        'Sin detalle registrado.'}
-                                </p>
-                            </div>
-                            <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
+                        <CardContent className="px-5 py-5">
+                            <dl className="grid gap-4 sm:grid-cols-2">
                                 <Dato etiqueta="Problemáticas">
                                     {legajo.problematicas.length > 0 && (
                                         <span className="flex flex-wrap gap-1.5">

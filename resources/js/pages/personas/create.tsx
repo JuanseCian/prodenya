@@ -40,7 +40,6 @@ interface Profesional {
 interface CreatePersonaProps {
     provincias: Opcion[];
     problematicas: Opcion[];
-    motivosIngreso: Opcion[];
     profesionales: Profesional[];
     modoLegajo?: boolean;
 }
@@ -73,8 +72,6 @@ const FIELD_LABELS: Record<string, string> = {
     barrio_id: 'Barrio',
     observaciones: 'Observaciones',
     abrir_legajo: 'Abrir legajo',
-    legajo_motivo_ingreso: 'Detalle del motivo de ingreso',
-    legajo_motivo_ingreso_id: 'Tipo de motivo de ingreso',
     legajo_problematicas: 'Problemática',
     legajo_nivel_riesgo: 'Nivel de riesgo',
     legajo_profesional_id: 'Profesional asignado',
@@ -121,7 +118,6 @@ function SectionHeading({
 export default function CreatePersona({
     provincias,
     problematicas,
-    motivosIngreso,
     profesionales,
     modoLegajo = false,
 }: CreatePersonaProps) {
@@ -141,8 +137,6 @@ export default function CreatePersona({
         email: '',
         observaciones: '',
         abrir_legajo: modoLegajo,
-        legajo_motivo_ingreso: '',
-        legajo_motivo_ingreso_id: '',
         legajo_nivel_riesgo: '',
         legajo_origen_derivacion: '',
         legajo_profesional_id: '',
@@ -293,7 +287,6 @@ export default function CreatePersona({
             label: 'Legajo',
             complete: data.abrir_legajo
                 ? Boolean(
-                      data.legajo_motivo_ingreso &&
                       data.legajo_nivel_riesgo &&
                       data.legajo_problematicas.length,
                   )
@@ -879,79 +872,6 @@ export default function CreatePersona({
                                                     />
                                                 </div>
                                             )}
-                                            <div>
-                                                <Label
-                                                    htmlFor="legajo_motivo_ingreso_id"
-                                                    className={labelClass}
-                                                >
-                                                    Tipo de motivo de ingreso
-                                                </Label>
-                                                <select
-                                                    id="legajo_motivo_ingreso_id"
-                                                    className={`${inputClass} block w-full rounded-md border px-3 text-sm`}
-                                                    value={
-                                                        data.legajo_motivo_ingreso_id
-                                                    }
-                                                    onChange={(event) =>
-                                                        setData(
-                                                            'legajo_motivo_ingreso_id',
-                                                            event.target.value,
-                                                        )
-                                                    }
-                                                >
-                                                    <option value="">
-                                                        Sin clasificar
-                                                    </option>
-                                                    {motivosIngreso.map(
-                                                        (motivo) => (
-                                                            <option
-                                                                key={motivo.id}
-                                                                value={
-                                                                    motivo.id
-                                                                }
-                                                            >
-                                                                {motivo.nombre}
-                                                            </option>
-                                                        ),
-                                                    )}
-                                                </select>
-                                                <FieldError
-                                                    message={
-                                                        errors.legajo_motivo_ingreso_id
-                                                    }
-                                                />
-
-                                                <Label
-                                                    htmlFor="legajo_motivo_ingreso"
-                                                    className={`${labelClass} mt-4 block`}
-                                                >
-                                                    Detalle del motivo de
-                                                    ingreso{' '}
-                                                    <span className="text-[#A84635]">
-                                                        *
-                                                    </span>
-                                                </Label>
-                                                <textarea
-                                                    id="legajo_motivo_ingreso"
-                                                    rows={3}
-                                                    value={
-                                                        data.legajo_motivo_ingreso
-                                                    }
-                                                    onChange={(event) =>
-                                                        setData(
-                                                            'legajo_motivo_ingreso',
-                                                            event.target.value,
-                                                        )
-                                                    }
-                                                    className="mt-2 block w-full resize-y rounded-md border border-[#D5D1C6] bg-white px-3.5 py-3 text-sm text-[#2B2F36] transition outline-none placeholder:text-[#2B2F36]/35 focus:border-[#2C4A5E] focus:ring-2 focus:ring-[#2C4A5E]/20"
-                                                    placeholder="Describí brevemente por qué se abre el legajo…"
-                                                />
-                                                <FieldError
-                                                    message={
-                                                        errors.legajo_motivo_ingreso
-                                                    }
-                                                />
-                                            </div>
                                             <div>
                                                 <Label className={labelClass}>
                                                     Problematica{' '}

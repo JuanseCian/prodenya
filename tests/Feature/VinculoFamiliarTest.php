@@ -32,7 +32,6 @@ function crearPersonaConLegajoParaVinculo(string $sufijo, int $usuarioId): array
     $legajo = Legajo::create([
         'persona_id' => $persona->id,
         'numero_legajo' => "LEG-{$sufijo}",
-        'motivo_ingreso' => 'Acompañamiento familiar',
         'nivel_riesgo' => 'Bajo',
         'origen_derivacion' => 'Test',
         'fecha_apertura' => now()->toDateString(),

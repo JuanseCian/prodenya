@@ -49,7 +49,6 @@ interface LegajoReciente {
     riesgo: 'Bajo' | 'Medio' | 'Alto' | 'Critico';
     estado: 'Abierto' | 'Cerrado' | 'Archivado';
     fechaApertura: string;
-    motivo: string;
 }
 
 interface AuthUser {
@@ -533,10 +532,6 @@ export default function Dashboard({
                                                 <span className="flex items-center gap-1.5">
                                                     <UserRound size={13} /> DNI{' '}
                                                     {legajo.dni}
-                                                </span>
-                                                <span className="flex items-center gap-1.5">
-                                                    <FileText size={13} />{' '}
-                                                    {legajo.motivo}
                                                 </span>
                                             </div>
                                         </article>

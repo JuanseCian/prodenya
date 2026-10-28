@@ -7,7 +7,6 @@ use App\Http\Requests\UpdateLegajoRequest;
 use App\Models\Intervencion;
 use App\Models\Legajo;
 use App\Models\MailMessage;
-use App\Models\MotivoIngreso;
 use App\Models\Persona;
 use App\Models\Problematica;
 use App\Models\Provincia;
@@ -117,7 +116,6 @@ class LegajoController extends Controller
             'modoLegajo' => true,
             'provincias' => Provincia::orderBy('nombre')->get(['id', 'nombre']),
             'problematicas' => Problematica::orderBy('nombre')->get(['id', 'nombre']),
-            'motivosIngreso' => MotivoIngreso::where('activo', true)->orderBy('nombre')->get(['id', 'nombre']),
             'profesionales' => $this->profesionalesActivos(),
         ]);
     }
@@ -174,7 +172,6 @@ class LegajoController extends Controller
             'persona',
             'problematicas',
             'profesional',
-            'motivoIngreso',
             'intervenciones.tipo',
             'intervenciones.profesional',
             'intervenciones.creadoPor',
@@ -246,9 +243,6 @@ class LegajoController extends Controller
             'legajo' => [
                 'id' => $legajo->id,
                 'numero_legajo' => $legajo->numero_legajo,
-                'motivo_ingreso' => $legajo->motivo_ingreso,
-                'motivo_ingreso_id' => $legajo->motivo_ingreso_id,
-                'motivo_ingreso_nombre' => $legajo->motivoIngreso?->nombre,
                 'nivel_riesgo' => $legajo->nivel_riesgo,
                 'estado' => $legajo->estado,
                 'origen_derivacion' => $legajo->origen_derivacion,
@@ -317,8 +311,6 @@ class LegajoController extends Controller
                 'id' => $legajo->id,
                 'numero_legajo' => $legajo->numero_legajo,
                 'persona' => $legajo->persona ? "{$legajo->persona->apellido}, {$legajo->persona->nombre}" : null,
-                'motivo_ingreso' => $legajo->motivo_ingreso,
-                'motivo_ingreso_id' => $legajo->motivo_ingreso_id,
                 'nivel_riesgo' => $legajo->nivel_riesgo,
                 'origen_derivacion' => $legajo->origen_derivacion,
                 'profesional_id' => $legajo->profesional_id,
@@ -326,7 +318,6 @@ class LegajoController extends Controller
                 'problematicas' => $legajo->problematicas->pluck('id')->values(),
             ],
             'problematicas' => Problematica::orderBy('nombre')->get(['id', 'nombre']),
-            'motivosIngreso' => MotivoIngreso::where('activo', true)->orderBy('nombre')->get(['id', 'nombre']),
             'profesionales' => $this->profesionalesActivos(),
         ]);
     }
@@ -338,8 +329,6 @@ class LegajoController extends Controller
         try {
             DB::transaction(function () use ($legajo, $datos) {
                 $legajo->update([
-                    'motivo_ingreso' => $datos['motivo_ingreso'],
-                    'motivo_ingreso_id' => $datos['motivo_ingreso_id'] ?? null,
                     'nivel_riesgo' => $datos['nivel_riesgo'],
                     'origen_derivacion' => $datos['origen_derivacion'],
                     'profesional_id' => $datos['profesional_id'] ?? null,
@@ -452,8 +441,6 @@ class LegajoController extends Controller
     private function datosLegajo(array $datos): array
     {
         return [
-            'motivo_ingreso' => $datos['legajo_motivo_ingreso'],
-            'motivo_ingreso_id' => $datos['legajo_motivo_ingreso_id'] ?? null,
             'nivel_riesgo' => $datos['legajo_nivel_riesgo'],
             'origen_derivacion' => $datos['legajo_origen_derivacion'],
             'profesional_id' => $datos['legajo_profesional_id'] ?? null,

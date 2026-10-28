@@ -313,10 +313,6 @@
                     <i class="bi bi-card-text w-5"></i>
                     <span>Tipos de documento</span>
                 </a>
-                <a href="{{ route('admin.catalogos.index', ['catalog' => 'motivos-ingreso']) }}" title="Motivos de ingreso" class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-slate-300 transition hover:bg-slate-800 hover:text-white {{ request()->route('catalog') === 'motivos-ingreso' ? 'bg-slate-800 text-white' : '' }}">
-                    <i class="bi bi-box-arrow-in-right w-5"></i>
-                    <span>Motivos de ingreso</span>
-                </a>
                 <a href="{{ route('admin.catalogos.index', ['catalog' => 'problematicas']) }}" title="Problemáticas" class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-slate-300 transition hover:bg-slate-800 hover:text-white {{ request()->route('catalog') === 'problematicas' ? 'bg-slate-800 text-white' : '' }}">
                     <i class="bi bi-journal-medical w-5"></i>
                     <span>Problemáticas</span>

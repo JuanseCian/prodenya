@@ -33,7 +33,6 @@ interface Profesional {
 interface CreateLegajoProps {
     personas: PersonaOpcion[];
     problematicas: Opcion[];
-    motivosIngreso: Opcion[];
     profesionales: Profesional[];
 }
 
@@ -49,7 +48,6 @@ const GENERO_LABEL: Record<string, string> = {
 
 const ETIQUETAS: Record<string, string> = {
     persona_id: 'Persona',
-    motivo_ingreso: 'Motivo de ingreso',
     problematicas: 'Problemáticas',
     nivel_riesgo: 'Nivel de riesgo',
     profesional_id: 'Profesional interviniente',
@@ -60,13 +58,10 @@ const ETIQUETAS: Record<string, string> = {
 export default function CreateLegajo({
     personas,
     problematicas,
-    motivosIngreso,
     profesionales,
 }: CreateLegajoProps) {
     const { data, setData, post, processing, errors } = useForm({
         persona_id: '',
-        motivo_ingreso: '',
-        motivo_ingreso_id: '',
         nivel_riesgo: '',
         origen_derivacion: '',
         profesional_id: '',
@@ -257,71 +252,6 @@ export default function CreateLegajo({
                         </h3>
 
                         <div className="mt-4 space-y-4">
-                            <div>
-                                <label
-                                    htmlFor="motivo_ingreso_id"
-                                    className={labelClass}
-                                >
-                                    Tipo de motivo de ingreso
-                                </label>
-                                <select
-                                    id="motivo_ingreso_id"
-                                    className={`${inputClass} block w-full rounded-md border px-3 text-sm`}
-                                    value={data.motivo_ingreso_id}
-                                    onChange={(e) =>
-                                        setData(
-                                            'motivo_ingreso_id',
-                                            e.target.value,
-                                        )
-                                    }
-                                >
-                                    <option value="">Sin clasificar</option>
-                                    {motivosIngreso.map((motivo) => (
-                                        <option
-                                            key={motivo.id}
-                                            value={motivo.id}
-                                        >
-                                            {motivo.nombre}
-                                        </option>
-                                    ))}
-                                </select>
-
-                                <label
-                                    htmlFor="motivo_ingreso"
-                                    className={`${labelClass} mt-4 block`}
-                                >
-                                    Detalle del motivo de ingreso
-                                </label>
-                                <textarea
-                                    className={`${inputClass} ${errors.motivo_ingreso ? 'border-[#D59A8E] bg-[#FFF9F7]' : ''}`}
-                                    rows={3}
-                                    value={data.motivo_ingreso}
-                                    aria-invalid={Boolean(
-                                        errors.motivo_ingreso,
-                                    )}
-                                    aria-describedby={
-                                        errors.motivo_ingreso
-                                            ? 'motivo_ingreso-error'
-                                            : undefined
-                                    }
-                                    onChange={(e) =>
-                                        setData(
-                                            'motivo_ingreso',
-                                            e.target.value,
-                                        )
-                                    }
-                                    placeholder="Describí el motivo por el cual se abre el legajo…"
-                                />
-                                {errors.motivo_ingreso && (
-                                    <p
-                                        id="motivo_ingreso-error"
-                                        className={errorClass}
-                                    >
-                                        {errors.motivo_ingreso}
-                                    </p>
-                                )}
-                            </div>
-
                             <div>
                                 <label className={labelClass}>
                                     Problematica (podés elegir más de uno)

@@ -49,7 +49,6 @@ class DashboardController extends Controller
                     'riesgo' => $legajo->nivel_riesgo,
                     'estado' => $legajo->estado,
                     'fechaApertura' => $legajo->fecha_apertura?->format('d/m/Y'),
-                    'motivo' => $legajo->motivo_ingreso,
                 ]),
             'pendingInvitations' => TeamInvitation::query()
                 ->with(['team', 'inviter'])

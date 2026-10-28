@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StorePersonaRequest;
 use App\Http\Requests\UpdatePersonaRequest;
-use App\Models\MotivoIngreso;
 use App\Models\Persona;
 use App\Models\Problematica;
 use App\Models\Provincia;
@@ -76,7 +75,6 @@ class PersonaController extends Controller
         return Inertia::render('personas/create', [
             'provincias' => Provincia::orderBy('nombre')->get(['id', 'nombre']),
             'problematicas' => Problematica::orderBy('nombre')->get(['id', 'nombre']),
-            'motivosIngreso' => MotivoIngreso::where('activo', true)->orderBy('nombre')->get(['id', 'nombre']),
             // Se expone "name" con el alias "nombre_usuario" para no tocar el front.
             'profesionales' => $profesionales,
         ]);

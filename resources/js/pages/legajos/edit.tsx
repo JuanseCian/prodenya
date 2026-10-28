@@ -25,8 +25,6 @@ interface LegajoEditable {
     id: number;
     numero_legajo: string;
     persona: string | null;
-    motivo_ingreso: string | null;
-    motivo_ingreso_id: number | null;
     nivel_riesgo: string;
     origen_derivacion: string | null;
     profesional_id: number | null;
@@ -37,12 +35,10 @@ interface LegajoEditable {
 interface Props {
     legajo: LegajoEditable;
     problematicas: Opcion[];
-    motivosIngreso: Opcion[];
     profesionales: Profesional[];
 }
 
 const ETIQUETAS: Record<string, string> = {
-    motivo_ingreso: 'Motivo de ingreso',
     problematicas: 'Problemáticas',
     nivel_riesgo: 'Nivel de riesgo',
     origen_derivacion: 'Origen de la derivación',
@@ -60,14 +56,9 @@ const textareaClass =
 export default function LegajoEdit({
     legajo,
     problematicas,
-    motivosIngreso,
     profesionales,
 }: Props) {
     const { data, setData, put, processing, errors } = useForm({
-        motivo_ingreso: legajo.motivo_ingreso ?? '',
-        motivo_ingreso_id: legajo.motivo_ingreso_id
-            ? String(legajo.motivo_ingreso_id)
-            : '',
         nivel_riesgo: legajo.nivel_riesgo ?? '',
         origen_derivacion: legajo.origen_derivacion ?? '',
         profesional_id: legajo.profesional_id
@@ -137,65 +128,6 @@ export default function LegajoEdit({
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-5 px-5 py-6">
-                            <div>
-                                <Label
-                                    htmlFor="motivo_ingreso_id"
-                                    className={labelClass}
-                                >
-                                    Tipo de motivo de ingreso
-                                </Label>
-                                <select
-                                    id="motivo_ingreso_id"
-                                    className={selectClass}
-                                    value={data.motivo_ingreso_id}
-                                    onChange={(event) =>
-                                        setData(
-                                            'motivo_ingreso_id',
-                                            event.target.value,
-                                        )
-                                    }
-                                >
-                                    <option value="">Sin clasificar</option>
-                                    {motivosIngreso.map((motivo) => (
-                                        <option
-                                            key={motivo.id}
-                                            value={motivo.id}
-                                        >
-                                            {motivo.nombre}
-                                        </option>
-                                    ))}
-                                </select>
-                                {errors.motivo_ingreso_id && (
-                                    <p className={errorClass}>
-                                        {errors.motivo_ingreso_id}
-                                    </p>
-                                )}
-                                <Label
-                                    htmlFor="motivo_ingreso"
-                                    className={`${labelClass} mt-4 block`}
-                                >
-                                    Detalle del motivo de ingreso{' '}
-                                    <span className="text-[#A84635]">*</span>
-                                </Label>
-                                <textarea
-                                    id="motivo_ingreso"
-                                    rows={4}
-                                    value={data.motivo_ingreso}
-                                    onChange={(event) =>
-                                        setData(
-                                            'motivo_ingreso',
-                                            event.target.value,
-                                        )
-                                    }
-                                    className={textareaClass}
-                                />
-                                {errors.motivo_ingreso && (
-                                    <p className={errorClass}>
-                                        {errors.motivo_ingreso}
-                                    </p>
-                                )}
-                            </div>
-
                             <div>
                                 <Label className={labelClass}>
                                     Problemáticas{' '}
