@@ -22,17 +22,17 @@ class UserSeeder extends Seeder
             throw new RuntimeException('Falta el rol "admin": ejecutá RolesSeeder antes que UserSeeder.');
         }
 
-        $admin = User::firstOrNew(['email' => 'admin@prodenya.local']);
+        $admin = User::firstOrNew(['email' => 'admin@gmai.com']);
 
-        if (! $admin->exists) {
-            $admin->name = 'Administrador';
-            $admin->password = Hash::make('cambiar123'); // CAMBIAR después del primer login
-        }
-
-        // forceFill: rol_id y activo no están en el $fillable de User
+        // forceFill: los atributos de estado y rol no están en el $fillable de User.
         $admin->forceFill([
+            'name' => 'Administrador',
+            'password' => Hash::make('admin123'),
+            'email_verified_at' => now(),
             'rol_id' => $rolAdminId,
             'activo' => true,
+            'estado_cuenta' => User::ESTADO_APROBADO,
+            'aprobado_en' => now(),
         ])->save();
     }
 }
