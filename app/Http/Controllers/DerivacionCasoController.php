@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreDerivacionCasoRequest;
+use App\Models\AuditoriaEvento;
 use App\Models\CasoResponsable;
 use App\Models\DerivacionCaso;
 use App\Models\Legajo;
@@ -150,6 +151,20 @@ class DerivacionCasoController extends Controller
     {
         $idsReemplazados = $derivacion->responsables_reemplazados ?? [];
 
+        if ($derivacion->modo === DerivacionCaso::MODO_ADICIONAL) {
+            $yaActivo = CasoResponsable::query()
+                ->where('legajo_id', $derivacion->legajo_id)
+                ->where('usuario_id', $derivacion->destinatario_id)
+                ->where('activo', true)
+                ->exists();
+
+            abort_if(
+                ! $yaActivo && $derivacion->legajo->responsablesActivos()->count() >= CasoResponsable::MAX_ACTIVOS,
+                422,
+                'El legajo ya alcanzó el máximo de '.CasoResponsable::MAX_ACTIVOS.' responsables activos.',
+            );
+        }
+
         if ($derivacion->modo === DerivacionCaso::MODO_REEMPLAZO && $idsReemplazados !== []) {
             CasoResponsable::query()
                 ->where('legajo_id', $derivacion->legajo_id)
@@ -178,6 +193,18 @@ class DerivacionCasoController extends Controller
         if ($derivacion->modo === DerivacionCaso::MODO_REEMPLAZO) {
             $derivacion->legajo()->update(['profesional_id' => $derivacion->destinatario_id]);
         }
+
+        AuditoriaEvento::registrar(
+            'legajo.responsable_asignado',
+            $derivacion->legajo,
+            ['responsables_anteriores' => $idsReemplazados],
+            [
+                'derivacion_id' => $derivacion->id,
+                'modo' => $derivacion->modo,
+                'usuario_id' => $usuario->id,
+                'usuario' => $usuario->name,
+            ],
+        );
     }
 
     private function restaurarResponsablesReemplazados(DerivacionCaso $derivacion): void

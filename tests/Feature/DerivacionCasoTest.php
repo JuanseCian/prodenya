@@ -94,6 +94,62 @@ test('legajo detail exposes individual statistics and derivations', function () 
             ->has('derivaciones', 1));
 });
 
+test('cannot add a 4th active responsible to a legajo via an additional derivation', function () {
+    $coordinador = User::factory()->create(['rol_id' => 4]);
+    $legajo = crearLegajoParaDerivacion($coordinador);
+
+    foreach (User::factory()->count(3)->create(['rol_id' => 5]) as $responsable) {
+        CasoResponsable::create([
+            'legajo_id' => $legajo->id,
+            'usuario_id' => $responsable->id,
+            'activo' => true,
+            'asignado_en' => now(),
+        ]);
+    }
+
+    $nuevoProfesional = User::factory()->create(['rol_id' => 5]);
+
+    $this->actingAs($coordinador)
+        ->post(route('legajos.derivaciones.store', $legajo), [
+            'destinatario_id' => $nuevoProfesional->id,
+            'modo' => 'adicional',
+            'motivo' => 'Revisión conjunta',
+        ])
+        ->assertInvalid(['destinatario_id']);
+
+    expect(DerivacionCaso::count())->toBe(0);
+});
+
+test('accepting an additional derivation is blocked once the legajo already has the maximum of 3 active responsibles', function () {
+    $coordinador = User::factory()->create(['rol_id' => 4]);
+    $legajo = crearLegajoParaDerivacion($coordinador);
+    $destinatario = User::factory()->create(['rol_id' => 5]);
+
+    $derivacion = DerivacionCaso::create([
+        'legajo_id' => $legajo->id,
+        'solicitado_por' => $coordinador->id,
+        'destinatario_id' => $destinatario->id,
+        'modo' => DerivacionCaso::MODO_ADICIONAL,
+        'motivo' => 'Revisión',
+    ]);
+
+    foreach (User::factory()->count(3)->create(['rol_id' => 5]) as $responsable) {
+        CasoResponsable::create([
+            'legajo_id' => $legajo->id,
+            'usuario_id' => $responsable->id,
+            'activo' => true,
+            'asignado_en' => now(),
+        ]);
+    }
+
+    $this->actingAs($destinatario)
+        ->patch(route('derivaciones.aceptar', $derivacion))
+        ->assertStatus(422);
+
+    expect($derivacion->fresh()->estado)->toBe(DerivacionCaso::ESTADO_PENDIENTE)
+        ->and(CasoResponsable::where('legajo_id', $legajo->id)->where('usuario_id', $destinatario->id)->where('activo', true)->exists())->toBeFalse();
+});
+
 test('only the recipient or a coordinator can accept a derivation', function () {
     $coordinador = User::factory()->create(['rol_id' => 4]);
     $profesional = User::factory()->create(['rol_id' => 5]);

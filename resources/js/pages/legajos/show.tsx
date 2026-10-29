@@ -19,7 +19,7 @@ import {
     UserRound,
     UsersRound,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 
 import {
@@ -137,6 +137,7 @@ interface Props {
 }
 
 const tituloCard = 'text-base font-semibold text-[#2C4A5E]';
+const MAX_RESPONSABLES_ACTIVOS = 3;
 
 export default function LegajoShow({
     legajo,
@@ -154,6 +155,7 @@ export default function LegajoShow({
 }: Props) {
     const errors = (usePage().props.errors ?? {}) as Record<string, string>;
     const cerrado = legajo.estado === 'Cerrado';
+    const alcanzoMaximoResponsables = responsables.length >= MAX_RESPONSABLES_ACTIVOS;
     const [derivacionesOpen, setDerivacionesOpen] = useState(false);
     const vinculoForm = useForm({
         persona_relacionada_id: '',
@@ -166,6 +168,13 @@ export default function LegajoShow({
         detalle: '',
         fecha_limite: '',
     });
+
+    useEffect(() => {
+        if (alcanzoMaximoResponsables && derivacionForm.data.modo === 'adicional') {
+            derivacionForm.setData('modo', 'reemplazo');
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [alcanzoMaximoResponsables]);
 
     const cambiarEstado = () => {
         const accion = cerrado ? 'reabrir' : 'cerrar';
@@ -892,13 +901,31 @@ export default function LegajoShow({
                                                     }
                                                     className="h-10 rounded-lg border border-[#D5D1C6] bg-white px-3 text-sm font-normal text-[#2B2F36]"
                                                 >
-                                                    <option value="adicional">
+                                                    <option
+                                                        value="adicional"
+                                                        disabled={
+                                                            alcanzoMaximoResponsables
+                                                        }
+                                                    >
                                                         Sumar responsable
                                                     </option>
                                                     <option value="reemplazo">
                                                         Reemplazar responsables
                                                     </option>
                                                 </select>
+                                                {alcanzoMaximoResponsables && (
+                                                    <span className="text-xs font-normal text-[#B3541E]">
+                                                        Este legajo ya tiene{' '}
+                                                        {
+                                                            MAX_RESPONSABLES_ACTIVOS
+                                                        }{' '}
+                                                        responsables activos,
+                                                        el máximo permitido.
+                                                        Elegí "Reemplazar
+                                                        responsables" para
+                                                        sumar a otra persona.
+                                                    </span>
+                                                )}
                                             </label>
                                         </div>
                                         <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_180px]">

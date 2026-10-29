@@ -7,6 +7,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class CasoResponsable extends Model
 {
+    /**
+     * Cantidad máxima de responsables activos simultáneos por legajo.
+     */
+    public const MAX_ACTIVOS = 3;
+
     protected $table = 'caso_responsables';
 
     protected $fillable = [
