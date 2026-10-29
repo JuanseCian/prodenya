@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Conversacion;
 use App\Models\DerivacionCaso;
 use App\Models\Legajo;
 use App\Models\MailMessage;
@@ -76,6 +77,11 @@ test('oficios can classify a message and derive it as a task', function () {
         ->and($tarea->legajo_id)->toBe($legajo->id);
     expect($tarea->recursos()->where('tipo_recurso', 'legajo')->where('recurso_id', $legajo->id)->exists())->toBeTrue();
     expect(DerivacionCaso::where('mail_message_id', $mail->id)->where('legajo_id', $legajo->id)->where('destinatario_id', $responsable->id)->exists())->toBeTrue();
+    expect(Conversacion::query()
+        ->whereHas('usuarios', fn ($query) => $query->whereKey($oficios->id))
+        ->whereHas('usuarios', fn ($query) => $query->whereKey($responsable->id))
+        ->whereHas('mensajes', fn ($query) => $query->where('cuerpo', 'like', '%Nueva derivación%'))
+        ->exists())->toBeTrue();
 
     $this->actingAs($oficios)
         ->patch(route('mailbox.classify', $mail), [

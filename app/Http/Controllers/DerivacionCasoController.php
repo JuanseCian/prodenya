@@ -8,11 +8,14 @@ use App\Models\CasoResponsable;
 use App\Models\DerivacionCaso;
 use App\Models\Legajo;
 use App\Models\User;
+use App\Notifications\DerivacionCasoNotification;
+use App\Services\DerivacionNotificationService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Inertia\Inertia;
 
 class DerivacionCasoController extends Controller
 {
@@ -26,34 +29,38 @@ class DerivacionCasoController extends Controller
         'operador',
     ];
 
-    public function store(StoreDerivacionCasoRequest $request, Legajo $legajo): RedirectResponse
-    {
+    public function store(
+        StoreDerivacionCasoRequest $request,
+        Legajo $legajo,
+        DerivacionNotificationService $notificador,
+    ): RedirectResponse {
         $datos = $request->validated();
         $destinatario = $this->responsablesQuery()->with('rol')->findOrFail($datos['destinatario_id']);
 
         abort_if($destinatario->id === $request->user()->id, 422, 'Seleccioná a otra persona del equipo.');
         abort_unless($destinatario->activo && in_array($destinatario->rol?->nombre, self::RESPONSABLE_ROLES, true), 422, 'La persona seleccionada no puede recibir derivaciones.');
 
-        DB::transaction(function () use ($datos, $destinatario, $legajo, $request): void {
+        DB::transaction(function () use ($datos, $destinatario, $legajo, $request, $notificador): void {
             if (
-                $datos['modo'] === DerivacionCaso::MODO_REEMPLAZO
-                && $legajo->profesional_id !== null
-                && ! $legajo->responsablesActivos()->exists()
+                $legajo->profesional_id !== null
+                && ! $legajo->responsablesActivos()->where('usuario_id', $legajo->profesional_id)->exists()
             ) {
-                CasoResponsable::create([
-                    'legajo_id' => $legajo->id,
+                $responsableActual = $legajo->responsables()->firstOrNew([
                     'usuario_id' => $legajo->profesional_id,
+                ]);
+                $responsableActual->fill([
+                    'asignado_por' => $request->user()->id,
+                    'retirado_por' => null,
                     'es_principal' => true,
                     'activo' => true,
-                    'asignado_en' => now(),
-                ]);
+                    'asignado_en' => $responsableActual->asignado_en ?? now(),
+                    'retirado_en' => null,
+                ])->save();
             }
 
-            $responsablesReemplazados = $datos['modo'] === DerivacionCaso::MODO_REEMPLAZO
-                ? $this->responsablesActuales($legajo)
-                : [];
+            $responsablesReemplazados = $this->responsablesActuales($legajo);
 
-            DerivacionCaso::create([
+            $derivacion = DerivacionCaso::create([
                 'legajo_id' => $legajo->id,
                 'solicitado_por' => $request->user()->id,
                 'destinatario_id' => $destinatario->id,
@@ -65,9 +72,16 @@ class DerivacionCasoController extends Controller
                 'grupo_derivacion_id' => (string) Str::uuid(),
                 'fecha_limite' => $datos['fecha_limite'] ?? null,
             ]);
+
+            $notificador->notificar($derivacion, $legajo, $request->user(), $destinatario);
         });
 
-        return back()->with('status', "La derivación fue enviada a {$destinatario->name}.");
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => "La derivación fue enviada a {$destinatario->name}.",
+        ]);
+
+        return back();
     }
 
     public function aceptar(Request $request, DerivacionCaso $derivacion): RedirectResponse
@@ -82,9 +96,20 @@ class DerivacionCasoController extends Controller
             ]);
 
             $this->aplicarResponsabilidad($derivacion, $request->user());
+            $this->notificarSolicitante(
+                $derivacion,
+                'derivacion_aceptada',
+                'Derivación aceptada',
+                "{$request->user()->name} aceptó la derivación del legajo {$derivacion->legajo->numero_legajo}.",
+            );
         });
 
-        return back()->with('status', 'La derivación fue aceptada.');
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => 'La derivación fue aceptada y el responsable principal fue actualizado.',
+        ]);
+
+        return back();
     }
 
     public function rechazar(Request $request, DerivacionCaso $derivacion): RedirectResponse
@@ -96,13 +121,27 @@ class DerivacionCasoController extends Controller
             'motivo_rechazo' => ['required', 'string', 'max:1000'],
         ]);
 
-        $derivacion->update([
-            'estado' => DerivacionCaso::ESTADO_RECHAZADA,
-            'rechazada_en' => now(),
-            'motivo_rechazo' => $datos['motivo_rechazo'],
+        DB::transaction(function () use ($derivacion, $datos, $request): void {
+            $derivacion->update([
+                'estado' => DerivacionCaso::ESTADO_RECHAZADA,
+                'rechazada_en' => now(),
+                'motivo_rechazo' => $datos['motivo_rechazo'],
+            ]);
+
+            $this->notificarSolicitante(
+                $derivacion,
+                'derivacion_rechazada',
+                'Derivación rechazada',
+                "{$request->user()->name} rechazó la derivación del legajo {$derivacion->legajo->numero_legajo}.",
+            );
+        });
+
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => 'La derivación fue rechazada.',
         ]);
 
-        return back()->with('status', 'La derivación fue rechazada.');
+        return back();
     }
 
     public function cancelar(Request $request, DerivacionCaso $derivacion): RedirectResponse
@@ -144,7 +183,12 @@ class DerivacionCasoController extends Controller
     /** @return array<int, int> */
     private function responsablesActuales(Legajo $legajo): array
     {
-        return $legajo->responsablesActivos()->pluck('usuario_id')->map(fn ($id) => (int) $id)->all();
+        return $legajo->responsablesActivos()
+            ->orderByDesc('es_principal')
+            ->orderBy('id')
+            ->pluck('usuario_id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
     }
 
     private function aplicarResponsabilidad(DerivacionCaso $derivacion, User $usuario): void
@@ -184,15 +228,11 @@ class DerivacionCasoController extends Controller
         $responsable->fill([
             'asignado_por' => $derivacion->solicitado_por,
             'retirado_por' => null,
-            'es_principal' => $derivacion->modo === DerivacionCaso::MODO_REEMPLAZO,
+            'es_principal' => true,
             'activo' => true,
             'asignado_en' => $responsable->asignado_en ?? now(),
             'retirado_en' => null,
         ])->save();
-
-        if ($derivacion->modo === DerivacionCaso::MODO_REEMPLAZO) {
-            $derivacion->legajo()->update(['profesional_id' => $derivacion->destinatario_id]);
-        }
 
         AuditoriaEvento::registrar(
             'legajo.responsable_asignado',
@@ -205,30 +245,38 @@ class DerivacionCasoController extends Controller
                 'usuario' => $usuario->name,
             ],
         );
+
+        CasoResponsable::query()
+            ->where('legajo_id', $derivacion->legajo_id)
+            ->where('id', '!=', $responsable->id)
+            ->where('es_principal', true)
+            ->where('activo', true)
+            ->update(['es_principal' => false]);
+
+        $derivacion->legajo()->update(['profesional_id' => $derivacion->destinatario_id]);
     }
 
     private function restaurarResponsablesReemplazados(DerivacionCaso $derivacion): void
     {
-        if ($derivacion->modo !== DerivacionCaso::MODO_REEMPLAZO) {
-            return;
-        }
-
         CasoResponsable::query()
             ->where('legajo_id', $derivacion->legajo_id)
             ->whereIn('usuario_id', $derivacion->responsables_reemplazados ?? [])
             ->update([
                 'activo' => true,
+                'es_principal' => false,
                 'retirado_por' => null,
                 'retirado_en' => null,
             ]);
 
-        $principal = CasoResponsable::query()
-            ->where('legajo_id', $derivacion->legajo_id)
-            ->where('activo', true)
-            ->where('es_principal', true)
-            ->first();
+        $principalId = $derivacion->responsables_reemplazados[0] ?? null;
 
-        $derivacion->legajo()->update(['profesional_id' => $principal?->usuario_id]);
+        CasoResponsable::query()
+            ->where('legajo_id', $derivacion->legajo_id)
+            ->where('usuario_id', $principalId)
+            ->where('activo', true)
+            ->update(['es_principal' => true]);
+
+        $derivacion->legajo()->update(['profesional_id' => $principalId]);
     }
 
     private function autorizarDestinatario(Request $request, DerivacionCaso $derivacion): void
@@ -238,6 +286,24 @@ class DerivacionCasoController extends Controller
                 || $request->user()->tieneRol('admin', 'coordinador'),
             403,
         );
+    }
+
+    private function notificarSolicitante(
+        DerivacionCaso $derivacion,
+        string $evento,
+        string $titulo,
+        string $mensaje,
+    ): void {
+        $derivacion->loadMissing(['solicitante', 'legajo']);
+
+        $derivacion->solicitante?->notify(new DerivacionCasoNotification(
+            evento: $evento,
+            titulo: $titulo,
+            mensaje: $mensaje,
+            url: route('legajos.show', $derivacion->legajo),
+            legajoId: $derivacion->legajo_id,
+            derivacionId: $derivacion->id,
+        ));
     }
 
     /** @return Builder<User> */

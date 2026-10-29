@@ -41,9 +41,31 @@ test('the personal panel returns the user obligations and visible events', funct
         ->assertRedirect();
 
     $this->actingAs($user)
+        ->post(route('tareas.store'), [
+            'titulo' => 'Fuera de la ventana',
+            'prioridad' => 'normal',
+            'fecha_limite' => today()->addDays(4)->toDateString(),
+            'asignado_a' => $user->id,
+        ])
+        ->assertRedirect();
+
+    $this->actingAs($user)
+        ->post(route('agenda.store'), [
+            'titulo' => 'Evento fuera de la ventana',
+            'tipo' => 'reunion',
+            'visibilidad' => 'general',
+            'fecha_inicio' => now()->addDays(4)->setTime(10, 0)->toDateTimeString(),
+        ])
+        ->assertRedirect();
+
+    $this->actingAs($user)
         ->getJson(route('personal-panel'))
         ->assertOk()
         ->assertJsonPath('tareas.0.titulo', 'Revisar seguimiento')
+        ->assertJsonPath('tareas_proximas', 1)
+        ->assertJsonPath('eventos_proximos', 2)
         ->assertJsonFragment(['titulo' => 'Reunión general de equipo'])
-        ->assertJsonFragment(['titulo' => 'Nota personal']);
+        ->assertJsonFragment(['titulo' => 'Nota personal'])
+        ->assertJsonMissing(['titulo' => 'Fuera de la ventana'])
+        ->assertJsonMissing(['titulo' => 'Evento fuera de la ventana']);
 });

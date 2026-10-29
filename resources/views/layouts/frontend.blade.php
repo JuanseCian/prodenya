@@ -11,9 +11,10 @@
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
+        @vite('resources/css/app.css')
         @if (isset($page))
             @viteReactRefresh
-            @vite(['resources/css/app.css', 'resources/js/app.tsx', "resources/js/pages/{$page['component']}.tsx"])
+            @vite(['resources/js/app.tsx', "resources/js/pages/{$page['component']}.tsx"])
             <x-inertia::head />
         @endif
         @vite('resources/js/site-header.tsx')
@@ -46,11 +47,17 @@
         .site-shell { min-height: 100vh; }
 
         .site-header {
+            animation: site-header-enter 480ms cubic-bezier(0.22, 1, 0.36, 1) both;
             background: linear-gradient(135deg, var(--brand) 0%, var(--brand-dark) 100%);
             box-shadow: 0 5px 22px rgba(57, 51, 119, 0.2);
             color: #fff;
             position: relative;
             z-index: 10;
+        }
+
+        @keyframes site-header-enter {
+            from { opacity: 0; transform: translate3d(0, -8px, 0); }
+            to { opacity: 1; transform: translate3d(0, 0, 0); }
         }
 
         .site-header-inner {
@@ -201,6 +208,7 @@
         .site-footer strong { color: #fff; }
         .site-footer small { font-size: 0.78rem; }
         .footer-municipal-logo { height: 58px; object-fit: contain; object-position: left center; width: 225px; }
+        .site-mobile-bottom-nav { display: none; }
 
         @media (max-width: 560px) {
             .site-header-inner { padding-left: 16px; padding-right: 16px; }
@@ -256,7 +264,7 @@
         .site-sidebar-spacer { flex: 1; min-height: 28px; }
         .site-header { position: sticky; top: 0; }
         .site-header-inner { max-width: none; }
-         .site-sidebar-backdrop { background: rgba(15, 23, 32, 0.25); inset: 0; opacity: 0; pointer-events: none; position: fixed; transition: opacity 180ms ease; z-index: 35; }
+         .site-sidebar-backdrop { background: rgba(15, 23, 32, 0.25); inset: 0; opacity: 0; pointer-events: none; position: fixed; transition: opacity 360ms cubic-bezier(0.22, 1, 0.36, 1); z-index: 35; }
 
          @media (max-width: 1020px) {
              .site-page { margin-left: 0; }
@@ -328,11 +336,53 @@
               .site-liquid-nav { display: none; }
               .site-header-tools { gap: 2px; }
              .site-admin-link { display: none; }
-             .site-account-visible-name { display: none; }
-             .site-header-account { margin-left: 2px; }
-             .site-header-account::before { display: none; }
-              .site-header-account .site-account-menu { position: fixed; right: 16px; top: 64px; }
-         }
+              .site-account-visible-name { display: none; }
+              .site-header-account { margin-left: 2px; }
+              .site-header-account::before { display: none; }
+               .site-header-account .site-account-menu { position: fixed; right: 16px; top: 64px; }
+              .site-main { padding-bottom: calc(78px + env(safe-area-inset-bottom)); }
+              .site-footer { padding-bottom: calc(78px + env(safe-area-inset-bottom)); }
+              .site-mobile-bottom-nav {
+                  align-items: stretch;
+                  backdrop-filter: blur(18px) saturate(1.3);
+                  background: rgba(23, 50, 71, 0.96);
+                  border-top: 1px solid rgba(255, 255, 255, 0.14);
+                  bottom: 0;
+                  box-shadow: 0 -10px 28px rgba(23, 50, 71, 0.18);
+                  display: grid;
+                  gap: 3px;
+                  grid-auto-columns: minmax(0, 1fr);
+                  grid-auto-flow: column;
+                  left: 0;
+                  padding: 7px max(8px, env(safe-area-inset-right)) calc(7px + env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+                  position: fixed;
+                  right: 0;
+                  z-index: 39;
+              }
+              .site-mobile-bottom-link {
+                  align-items: center;
+                  border: 1px solid transparent;
+                  border-radius: 13px;
+                  color: rgba(255, 255, 255, 0.66);
+                  display: flex;
+                  flex-direction: column;
+                  font-size: 0.65rem;
+                  font-weight: 650;
+                  gap: 4px;
+                  justify-content: center;
+                  min-height: 54px;
+                  min-width: 0;
+                  padding: 6px 4px;
+                  text-decoration: none;
+                  transition: background-color 180ms ease, color 180ms ease, transform 180ms ease;
+              }
+              .site-mobile-bottom-link i { font-size: 1.12rem; line-height: 1; }
+              .site-mobile-bottom-link:hover, .site-mobile-bottom-link:focus-visible { background: rgba(255, 255, 255, 0.1); color: #fff; outline: none; }
+              .site-mobile-bottom-link:active { transform: scale(0.96); }
+              .site-mobile-bottom-link.is-active { background: rgba(156, 224, 191, 0.15); color: #b9e8cc; }
+              .site-mobile-bottom-link.is-active i { color: #9ce0bf; }
+              .site-mobile-bottom-link--more { background: transparent; cursor: pointer; font: inherit; }
+          }
          @media (max-width: 480px) {
              .site-header-inner { padding-left: 12px; padding-right: 12px; }
              .site-message-label { display: none; }
@@ -341,13 +391,17 @@
              .site-header-brand .brand-name { font-size: 0.92rem; letter-spacing: 0.07em; }
              .site-account-menu { max-width: calc(100vw - 24px); min-width: 248px; }
          }
-         @media (prefers-reduced-motion: reduce) {
+        @media (prefers-reduced-motion: reduce) {
+            .site-header {
+                animation: none;
+            }
+
               *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
          }
 
          .site-page { margin-left: 0; transition: margin-left 220ms ease; }
-          .site-sidebar { background: #fff; border-left: 1px solid #dce3df; box-shadow: -10px 0 28px rgba(23, 50, 71, 0.12); color: #2b2f36; max-height: 100dvh; overscroll-behavior: contain; padding: 0; transform: translateX(105%); transition: transform 220ms ease, visibility 220ms ease; visibility: hidden; width: 344px; }
-         .site-shell.sidebar-open .site-sidebar { transform: translateX(0); visibility: visible; }
+           .site-sidebar { background: #fff; border-left: 1px solid #dce3df; box-shadow: -10px 0 28px rgba(23, 50, 71, 0.12); color: #2b2f36; max-height: 100dvh; overscroll-behavior: contain; padding: 0; transform: translate3d(105%, 0, 0); transition: transform 380ms cubic-bezier(0.22, 1, 0.36, 1), visibility 0s linear 380ms; visibility: hidden; width: 344px; will-change: transform; }
+          .site-shell.sidebar-open .site-sidebar { transform: translate3d(0, 0, 0); transition-delay: 0s; visibility: visible; }
          .site-shell.sidebar-open .site-sidebar-backdrop { opacity: 1; pointer-events: auto; }
           .site-sidebar-header { align-items: center; border-bottom: 1px solid #e5ebe7; display: flex; justify-content: space-between; min-height: 72px; padding: 14px 20px; }
          .site-sidebar-header h2 { color: #173247; font-size: 1.05rem; font-weight: 700; letter-spacing: -0.01em; margin: 0; }
@@ -777,6 +831,21 @@
                 <div class="site-header-tools">
                     @auth
                         @php
+                            $headerNotifications = isset($page)
+                                ? data_get($page, 'props.notificaciones', [])
+                                : ($frontendNotificaciones ?? []);
+                            $headerNotificationsUnread = isset($page)
+                                ? data_get($page, 'props.notificacionesNoLeidas', 0)
+                                : ($frontendNotificacionesNoLeidas ?? 0);
+                        @endphp
+                        <div
+                            data-site-notification-center
+                            data-endpoint="{{ route('notificaciones.index') }}"
+                            data-mode="{{ isset($page) ? 'inertia' : 'standalone' }}"
+                            data-notifications='@json($headerNotifications)'
+                            data-notifications-unread="{{ $headerNotificationsUnread }}"
+                        ></div>
+                        @php
                             $headerUser = auth()->user();
                             $headerInitials = collect(explode(' ', trim($headerUser->name)))
                                 ->filter()
@@ -809,37 +878,69 @@
             @endif
         </main>
 
-        <footer class="site-footer">
-            <div class="site-footer-inner">
-                <div class="flex items-center gap-4">
-                    <img src="{{ asset('assets/img/municipalidad_logo.png') }}" class="footer-municipal-logo" alt="Municipalidad de San Nicolás de los Arroyos">
-                    <small><strong>PRODENYA</strong> · Promoción y Protección de Derechos</small>
+         <footer class="site-footer">
+             <div class="site-footer-inner">
+                 <div class="flex items-center gap-4">
+                     <img src="{{ asset('assets/img/municipalidad_logo.png') }}" class="footer-municipal-logo" alt="Municipalidad de San Nicolás de los Arroyos">
+                     <small><strong>PRODENYA</strong> · Promoción y Protección de Derechos</small>
                 </div>
                 <small>© {{ date('Y') }} · Uso institucional</small>
-            </div>
-        </footer>
-        </div>
+             </div>
+         </footer>
+         @auth
+             <nav class="site-mobile-bottom-nav" aria-label="Navegación principal móvil">
+                 <a href="{{ route('home') }}" class="site-mobile-bottom-link {{ request()->routeIs('home') ? 'is-active' : '' }}" @if (request()->routeIs('home')) aria-current="page" @endif>
+                     <i class="bi bi-house" aria-hidden="true"></i>
+                     <span>Inicio</span>
+                 </a>
+                 @if (Route::has('legajos.index') && auth()->user()->tieneRol('admin', 'operador', 'consulta', 'oficios', 'coordinador', 'profesional', 'administrativo'))
+                     <a href="{{ route('legajos.index') }}" class="site-mobile-bottom-link {{ request()->routeIs('legajos.*', 'mayores18.*') ? 'is-active' : '' }}" @if (request()->routeIs('legajos.*', 'mayores18.*')) aria-current="page" @endif>
+                         <i class="bi bi-folder2-open" aria-hidden="true"></i>
+                         <span>Legajos</span>
+                     </a>
+                 @endif
+                 @if (Route::has('tareas.index') && auth()->user()->tieneRol('admin', 'operador', 'oficios', 'coordinador', 'profesional', 'administrativo'))
+                     <a href="{{ route('tareas.index') }}" class="site-mobile-bottom-link {{ request()->routeIs('tareas.*') ? 'is-active' : '' }}" @if (request()->routeIs('tareas.*')) aria-current="page" @endif>
+                         <i class="bi bi-check2-square" aria-hidden="true"></i>
+                         <span>Tareas</span>
+                     </a>
+                 @endif
+                 @if (Route::has('agenda.index') && auth()->user()->tieneRol('admin', 'coordinador', 'profesional', 'administrativo'))
+                     <a href="{{ route('agenda.index') }}" class="site-mobile-bottom-link {{ request()->routeIs('agenda.*') ? 'is-active' : '' }}" @if (request()->routeIs('agenda.*')) aria-current="page" @endif>
+                         <i class="bi bi-calendar3" aria-hidden="true"></i>
+                         <span>Agenda</span>
+                     </a>
+                 @endif
+                 <button type="button" class="site-mobile-bottom-link site-mobile-bottom-link--more" data-sidebar-toggle aria-expanded="false" aria-controls="site-sidebar">
+                     <i class="bi bi-grid-1x2" aria-hidden="true"></i>
+                     <span>Más</span>
+                 </button>
+             </nav>
+         @endauth
+         </div>
     </div>
 
     @stack('scripts')
     <script>
         (() => {
-            const shell = document.getElementById('site-shell');
-            const sidebar = document.getElementById('site-sidebar');
-            const toggle = document.querySelector('[data-sidebar-toggle]');
-            const closeButtons = [...document.querySelectorAll('[data-sidebar-close]')];
+             const shell = document.getElementById('site-shell');
+             const sidebar = document.getElementById('site-sidebar');
+             const toggles = [...document.querySelectorAll('[data-sidebar-toggle]')];
+             const closeButtons = [...document.querySelectorAll('[data-sidebar-close]')];
 
-            if (!shell || !sidebar || !toggle || !closeButtons.length) return;
+             if (!shell || !sidebar || !toggles.length || !closeButtons.length) return;
 
              let lastFocus = null;
              let previousBodyOverflow = '';
              const focusableSelector = 'a[href], button:not([disabled]), summary, [tabindex]:not([tabindex="-1"])';
 
-            const setSidebarState = (isOpen) => {
-                shell.classList.toggle('sidebar-open', isOpen);
-                sidebar.setAttribute('aria-hidden', String(!isOpen));
-                toggle.setAttribute('aria-expanded', String(isOpen));
-                toggle.setAttribute('aria-label', isOpen ? 'Cerrar menú de navegación' : 'Abrir menú de navegación');
+                 const setSidebarState = (isOpen) => {
+                     shell.classList.toggle('sidebar-open', isOpen);
+                     sidebar.setAttribute('aria-hidden', String(!isOpen));
+                 toggles.forEach((toggle) => {
+                     toggle.setAttribute('aria-expanded', String(isOpen));
+                     toggle.setAttribute('aria-label', isOpen ? 'Cerrar menú de navegación' : 'Abrir menú de navegación');
+                 });
                 if (isOpen) {
                     lastFocus = document.activeElement;
                     previousBodyOverflow = document.body.style.overflow;
@@ -854,7 +955,7 @@
                 }
             };
             const closeSidebar = () => setSidebarState(false);
-            toggle.addEventListener('click', () => setSidebarState(!shell.classList.contains('sidebar-open')));
+             toggles.forEach((toggle) => toggle.addEventListener('click', () => setSidebarState(!shell.classList.contains('sidebar-open'))));
             closeButtons.forEach((button) => button.addEventListener('click', closeSidebar));
             sidebar.querySelectorAll('a, button[type="submit"]').forEach((link) => link.addEventListener('click', closeSidebar));
             document.addEventListener('keydown', (event) => {

@@ -31,11 +31,7 @@ return new class extends Migration
         // SQLite emula el DROP COLUMN copiando la tabla a una temporal y
         // renombrándola; eso falla mientras `vista_personas_completa`
         // siga apuntando a `personas`, así que la recreamos después.
-        $esSqlite = DB::getDriverName() === 'sqlite';
-
-        if ($esSqlite) {
-            DB::statement('DROP VIEW IF EXISTS `vista_personas_completa`');
-        }
+        DB::statement('DROP VIEW IF EXISTS vista_personas_completa');
 
         if (Schema::hasColumn('personas', 'motivo_ingreso_id')) {
             Schema::table('personas', function (Blueprint $table) {
@@ -43,19 +39,19 @@ return new class extends Migration
             });
         }
 
-        $presentes = array_filter(self::COLUMNAS, fn (string $columna) => Schema::hasColumn('personas', $columna));
-
-        if (in_array('numero_legajo', $presentes, true) && Schema::hasIndex('personas', 'personas_numero_legajo_unique')) {
+        if (Schema::hasIndex('personas', 'personas_numero_legajo_unique')) {
             Schema::table('personas', function (Blueprint $table) {
                 $table->dropUnique('personas_numero_legajo_unique');
             });
         }
 
-        if (in_array('fecha_cierre', $presentes, true) && Schema::hasIndex('personas', 'idx_persona_fecha_cierre')) {
+        if (Schema::hasIndex('personas', 'idx_persona_fecha_cierre')) {
             Schema::table('personas', function (Blueprint $table) {
                 $table->dropIndex('idx_persona_fecha_cierre');
             });
         }
+
+        $presentes = array_filter(self::COLUMNAS, fn (string $columna) => Schema::hasColumn('personas', $columna));
 
         if ($presentes !== []) {
             Schema::table('personas', function (Blueprint $table) use ($presentes) {
@@ -64,40 +60,7 @@ return new class extends Migration
         }
 
         Schema::dropIfExists('persona_problematica');
-
-        if ($esSqlite) {
-            DB::statement(<<<'SQL'
-                CREATE VIEW `vista_personas_completa` AS
-                SELECT
-                    p.id,
-                    p.nombre,
-                    p.apellido,
-                    p.dni,
-                    p.activo,
-                    CAST((julianday('now') - julianday(p.fecha_nacimiento)) / 365.2425 AS INTEGER) AS edad,
-                    b.nombre AS barrio,
-                    l.nombre AS localidad,
-                    pr.nombre AS provincia,
-                    c.numero_cud,
-                    c.fecha_vencimiento AS cud_vencimiento,
-                    CASE
-                        WHEN c.id IS NULL THEN 'Sin CUD'
-                        WHEN c.fecha_vencimiento >= date('now') THEN 'Vigente'
-                        ELSE 'Vencido'
-                    END AS estado_cud
-                FROM personas p
-                LEFT JOIN barrios b ON p.barrio_id = b.id
-                JOIN localidades l ON p.localidad_id = l.id
-                JOIN provincias pr ON l.provincia_id = pr.id
-                LEFT JOIN cud c ON c.id = (
-                    SELECT c2.id
-                    FROM cud c2
-                    WHERE c2.persona_id = p.id
-                    ORDER BY c2.fecha_vencimiento DESC, c2.id DESC
-                    LIMIT 1
-                )
-                SQL);
-        }
+        $this->recrearVistaPersonasCompleta();
     }
 
     public function down(): void
@@ -128,5 +91,74 @@ return new class extends Migration
                 $table->unique('numero_legajo', 'personas_numero_legajo_unique');
             });
         }
+
+        $this->recrearVistaPersonasCompleta();
+    }
+
+    private function recrearVistaPersonasCompleta(): void
+    {
+        $vista = DB::getDriverName() === 'sqlite' ? <<<'SQL'
+            CREATE VIEW vista_personas_completa AS
+            SELECT
+                p.id,
+                p.nombre,
+                p.apellido,
+                p.dni,
+                p.activo,
+                CAST((julianday('now') - julianday(p.fecha_nacimiento)) / 365.2425 AS INTEGER) AS edad,
+                b.nombre AS barrio,
+                l.nombre AS localidad,
+                pr.nombre AS provincia,
+                c.numero_cud,
+                c.fecha_vencimiento AS cud_vencimiento,
+                CASE
+                    WHEN c.id IS NULL THEN 'Sin CUD'
+                    WHEN c.fecha_vencimiento >= date('now') THEN 'Vigente'
+                    ELSE 'Vencido'
+                END AS estado_cud
+            FROM personas p
+            LEFT JOIN barrios b ON p.barrio_id = b.id
+            JOIN localidades l ON p.localidad_id = l.id
+            JOIN provincias pr ON l.provincia_id = pr.id
+            LEFT JOIN cud c ON c.id = (
+                SELECT c2.id
+                FROM cud c2
+                WHERE c2.persona_id = p.id
+                ORDER BY c2.fecha_vencimiento DESC, c2.id DESC
+                LIMIT 1
+            )
+        SQL : <<<'SQL'
+            CREATE SQL SECURITY INVOKER VIEW vista_personas_completa AS
+            SELECT
+                p.id,
+                p.nombre,
+                p.apellido,
+                p.dni,
+                p.activo,
+                TIMESTAMPDIFF(YEAR, p.fecha_nacimiento, CURDATE()) AS edad,
+                b.nombre AS barrio,
+                l.nombre AS localidad,
+                pr.nombre AS provincia,
+                c.numero_cud,
+                c.fecha_vencimiento AS cud_vencimiento,
+                CASE
+                    WHEN c.id IS NULL THEN 'Sin CUD'
+                    WHEN c.fecha_vencimiento >= CURDATE() THEN 'Vigente'
+                    ELSE 'Vencido'
+                END AS estado_cud
+            FROM personas p
+            LEFT JOIN barrios b ON p.barrio_id = b.id
+            JOIN localidades l ON p.localidad_id = l.id
+            JOIN provincias pr ON l.provincia_id = pr.id
+            LEFT JOIN cud c ON c.id = (
+                SELECT c2.id
+                FROM cud c2
+                WHERE c2.persona_id = p.id
+                ORDER BY c2.fecha_vencimiento DESC, c2.id DESC
+                LIMIT 1
+            )
+        SQL;
+
+        DB::statement($vista);
     }
 };

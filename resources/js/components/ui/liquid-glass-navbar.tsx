@@ -24,28 +24,66 @@ export type LiquidNavbarProps = {
   style?: React.CSSProperties
 }
 
-const I = (d: React.ReactNode) => (
-  <svg
-    viewBox="0 0 24 24"
-    width="18"
-    height="18"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.8"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    aria-hidden="true"
-  >
-    {d}
-  </svg>
-)
+const I = (d: React.ReactNode) =>
+  React.createElement(
+    'svg',
+    {
+      viewBox: '0 0 24 24',
+      width: '18',
+      height: '18',
+      fill: 'none',
+      stroke: 'currentColor',
+      strokeWidth: '1.8',
+      strokeLinecap: 'round',
+      strokeLinejoin: 'round',
+      'aria-hidden': true,
+    },
+    d,
+  )
 
 export const NimbusIcons = {
-  home: I(<><path d="M3.5 11.2 12 4l8.5 7.2" /><path d="M6 9.6V20h12V9.6" /><path className="nv-door" d="M10 20v-5h4v5Z" /></>),
-  globe: I(<><circle cx="12" cy="12" r="8.5" /><path d="M3.5 12h17M12 3.5c2.6 2.4 2.6 14.6 0 17M12 3.5c-2.6 2.4-2.6 14.6 0 17" /></>),
-  plane: I(<path d="M21 12.2 3.6 5.4l2.7 6.8-2.7 6.4L21 12.2Zm-14.7 0H13" />),
-  drop: I(<path d="M12 3.5s6 6.4 6 10.6a6 6 0 0 1-12 0C6 9.9 12 3.5 12 3.5Z" />),
-  user: I(<><circle cx="12" cy="8.5" r="3.8" /><path d="M4.8 20c1.2-3.4 4-5 7.2-5s6 1.6 7.2 5" /></>),
+  home: I(
+    React.createElement(
+      React.Fragment,
+      null,
+      React.createElement('path', { d: 'M3.5 11.2 12 4l8.5 7.2' }),
+      React.createElement('path', { d: 'M6 9.6V20h12V9.6' }),
+      React.createElement('path', {
+        className: 'nv-door',
+        d: 'M10 20v-5h4v5Z',
+      }),
+    ),
+  ),
+  globe: I(
+    React.createElement(
+      React.Fragment,
+      null,
+      React.createElement('circle', { cx: '12', cy: '12', r: '8.5' }),
+      React.createElement('path', {
+        d: 'M3.5 12h17M12 3.5c2.6 2.4 2.6 14.6 0 17M12 3.5c-2.6-2.4-2.6 14.6 0 17',
+      }),
+    ),
+  ),
+  plane: I(
+    React.createElement('path', {
+      d: 'M21 12.2 3.6 5.4l2.7 6.8-2.7 6.4L21 12.2Zm-14.7 0H13',
+    }),
+  ),
+  drop: I(
+    React.createElement('path', {
+      d: 'M12 3.5s6 6.4 6 10.6a6 6 0 0 1-12 0C6 9.9 12 3.5 12 3.5Z',
+    }),
+  ),
+  user: I(
+    React.createElement(
+      React.Fragment,
+      null,
+      React.createElement('circle', { cx: '12', cy: '8.5', r: '3.8' }),
+      React.createElement('path', {
+        d: 'M4.8 20c1.2-3.4 4-5 7.2-5s6 1.6 7.2 5',
+      }),
+    ),
+  ),
 }
 
 const DEFAULT_ITEMS: LiquidNavItem[] = [
@@ -66,7 +104,7 @@ const NIMBUS_CSS = `
 .nimbus-water{position:absolute;left:${-PAD}px;top:${-PAD}px;z-index:-1;pointer-events:none}.nimbus-nav[data-gl="off"] .nimbus-water{display:none}
 .nimbus-drop{display:none;position:absolute;top:6px;bottom:6px;left:0;border-radius:999px;z-index:-1;pointer-events:none;will-change:transform,width;background:radial-gradient(120% 140% at 30% 0%,rgba(255,255,255,.75),rgba(255,255,255,0) 55%),rgba(255,255,255,.38);box-shadow:inset 0 1px 1px rgba(255,255,255,.95),inset 0 -2px 6px rgba(0,162,255,.22),inset 0 0 0 1px rgba(255,255,255,.55),0 6px 16px -6px rgba(0,70,140,.45)}
 .nimbus-nav[data-gl="off"] .nimbus-drop{display:block}
-.nimbus-item{position:relative;z-index:1;display:inline-flex;align-items:center;gap:8px;height:42px;padding:0 16px;border:0;border-radius:999px;background:none;color:var(--n-fg-soft);font-family:inherit;font-weight:500;font-size:14px;line-height:1;letter-spacing:-.01em;text-decoration:none;cursor:pointer;transition:color .25s}.nimbus-item:hover,.nimbus-item[aria-current="page"]{color:var(--n-fg)}.nimbus-item:focus-visible{outline:2px solid #00A2FF;outline-offset:2px}.nimbus-badge{display:inline-flex;align-items:center;justify-content:center;min-width:16px;height:16px;padding:0 4px;border-radius:999px;background:#9ce0bf;color:#173247;font-size:10px;font-weight:700;line-height:1}
+.nimbus-item{position:relative;z-index:1;display:inline-flex;align-items:center;gap:8px;height:42px;padding:0 16px;border:0;border-radius:999px;background:none;color:var(--n-fg-soft);font-family:inherit;font-weight:500;font-size:14px;line-height:1;letter-spacing:-.01em;text-decoration:none;cursor:pointer;transition:color .32s cubic-bezier(.22,1,.36,1)}.nimbus-item:hover,.nimbus-item[aria-current="page"]{color:var(--n-fg)}.nimbus-item:focus-visible{outline:2px solid #00A2FF;outline-offset:2px}.nimbus-badge{display:inline-flex;align-items:center;justify-content:center;min-width:16px;height:16px;padding:0 4px;border-radius:999px;background:#9ce0bf;color:#173247;font-size:10px;font-weight:700;line-height:1}
 .nv-ico{position:relative;display:inline-flex;flex:none}.nv-ico svg{transition:transform .45s cubic-bezier(.3,1.6,.5,1)}.nimbus-item[aria-current="page"] .nv-ico svg{transform:translateY(-1px) scale(1.08)}.nv-door{fill:transparent}
 .nv-ico[data-fx="pop"] svg{animation:nvPop .5s cubic-bezier(.3,1.6,.5,1) both}@keyframes nvPop{0%{transform:scale(.72)}60%{transform:scale(1.2)}100%{transform:translateY(-1px) scale(1.08)}}
 .nv-ico[data-fx="plane"] svg{animation:nvPlane 1.15s cubic-bezier(.55,0,.3,1) both}@keyframes nvPlane{0%{transform:none}12%{transform:translate(-3px,2px) rotate(7deg)}42%{transform:translate(64px,-26px) rotate(-24deg) scale(.9);opacity:0}43%{transform:translate(-60px,16px) rotate(-12deg) scale(.9);opacity:0}58%{opacity:1}80%{transform:translate(3px,-1px) rotate(2deg)}100%{transform:translateY(-1px) scale(1.08)}}
@@ -230,7 +268,7 @@ export function LiquidNavbar({
     const s = st.current
     const T = s.t
     s.time += dt
-    s.q += (T.q - s.q) * Math.min(1, dt * 12)
+    s.q += (T.q - s.q) * (1 - Math.exp(-dt * 16))
     const bodies = [s.a, s.b]
     let still = true
 
@@ -242,8 +280,8 @@ export function LiquidNavbar({
     } else {
       bodies.forEach((B, i) => {
         const lead = i === s.lead
-        const k = lead ? 210 : 72
-        const c = lead ? 25 : 13
+        const k = lead ? 185 : 95
+        const c = lead ? 29 : 20
         const f = !lead && now < s.lagFrom ? 0.08 : 1
         B.v += (k * (T.x - B.x) - c * B.v) * dt * f
         B.x += B.v * dt
@@ -260,7 +298,7 @@ export function LiquidNavbar({
       })
       const L = bodies[s.lead]
       const syT = 1 - 0.2 * Math.min(Math.abs(L.v) / 1500, 1)
-      s.sy.v += (280 * (syT - s.sy.s) - 9 * s.sy.v) * dt
+      s.sy.v += (280 * (syT - s.sy.s) - 31 * s.sy.v) * dt
       s.sy.s += s.sy.v * dt
 
       if (Math.abs(s.sy.s - 1) > 0.002 || Math.abs(s.sy.v) > 0.02) still = false

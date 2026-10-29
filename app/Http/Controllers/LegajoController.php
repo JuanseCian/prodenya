@@ -179,7 +179,7 @@ class LegajoController extends Controller
             'intervenciones.creadoPor',
             'derivaciones.destinatario',
             'derivaciones.solicitante',
-            'responsablesActivos.usuario',
+            'responsablesActivos.usuario.rol',
         ]);
         $puedeVerVinculos = $request->user()->tieneRol('admin', 'coordinador', 'profesional', 'administrativo');
         $puedeGestionarDerivaciones = $request->user()->tieneRol(
@@ -286,6 +286,8 @@ class LegajoController extends Controller
                 'id' => $responsable->id,
                 'usuario_id' => $responsable->usuario_id,
                 'nombre' => $responsable->usuario?->name,
+                'profesion' => $responsable->usuario?->profesion,
+                'rol' => $responsable->usuario?->rol?->nombre,
                 'es_principal' => $responsable->es_principal,
             ])->values(),
             'derivaciones' => $legajo->derivaciones->map(fn ($derivacion) => [

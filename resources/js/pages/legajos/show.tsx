@@ -105,6 +105,8 @@ interface Responsable {
     id: number;
     usuario_id: number;
     nombre: string | null;
+    profesion: string | null;
+    rol: string | null;
     es_principal: boolean;
 }
 
@@ -698,19 +700,54 @@ export default function LegajoShow({
                             </DialogHeader>
                             <div className="space-y-5 px-1 py-2">
                                 {responsables.length > 0 && (
-                                    <div className="flex flex-wrap gap-2">
-                                        {responsables.map((responsable) => (
-                                            <Badge
-                                                key={responsable.id}
-                                                className="border-0 bg-[#EDF3EF] text-[#2C4A5E]"
-                                            >
-                                                {responsable.nombre ??
-                                                    'Responsable'}
-                                                {responsable.es_principal
-                                                    ? ' · principal'
-                                                    : ''}
-                                            </Badge>
-                                        ))}
+                                    <div className="overflow-x-auto rounded-xl border border-[#DCE3DF]">
+                                        <table className="w-full min-w-[560px] text-left text-sm">
+                                            <thead className="bg-[#F3F7F4] text-[0.68rem] font-bold tracking-[0.12em] text-[#6B8F71] uppercase">
+                                                <tr>
+                                                    <th className="px-4 py-3">
+                                                        Usuario
+                                                    </th>
+                                                    <th className="px-4 py-3">
+                                                        Profesión
+                                                    </th>
+                                                    <th className="px-4 py-3">
+                                                        Rol
+                                                    </th>
+                                                    <th className="px-4 py-3">
+                                                        Tipo
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-[#EEF0ED] bg-white">
+                                                {responsables.map(
+                                                    (responsable) => (
+                                                        <tr
+                                                            key={responsable.id}
+                                                        >
+                                                            <td className="px-4 py-3 font-semibold text-[#2C4A5E]">
+                                                                {responsable.nombre ??
+                                                                    'Usuario sin nombre'}
+                                                            </td>
+                                                            <td className="px-4 py-3 text-[#2B2F36]/75">
+                                                                {responsable.profesion ??
+                                                                    'Sin profesión'}
+                                                            </td>
+                                                            <td className="px-4 py-3 text-[#2B2F36]/75">
+                                                                {responsable.rol ??
+                                                                    'Sin rol'}
+                                                            </td>
+                                                            <td className="px-4 py-3">
+                                                                <Badge className="border-0 bg-[#EDF3EF] text-[#2C4A5E]">
+                                                                    {responsable.es_principal
+                                                                        ? 'Principal'
+                                                                        : 'Adicional'}
+                                                                </Badge>
+                                                            </td>
+                                                        </tr>
+                                                    ),
+                                                )}
+                                            </tbody>
+                                        </table>
                                     </div>
                                 )}
 
@@ -1071,7 +1108,7 @@ export default function LegajoShow({
                                                 </div>
                                                 {puedeGestionarIntervenciones && (
                                                     <Link
-                                                        href={`/legajos/${legajo.intervenciones_legajo_id}/intervenciones/${intervencion.id}/edit`}
+                                                        href={`/legajos/${legajo.id}/intervenciones/${intervencion.id}/edit`}
                                                         className="inline-flex shrink-0 items-center gap-1.5 text-sm font-semibold text-[#2C4A5E] hover:underline"
                                                     >
                                                         <Pencil size={14} />
@@ -1103,7 +1140,7 @@ export default function LegajoShow({
                                                         : 'Sin firma'}
                                                     {intervencion.tiene_firma_responsable && (
                                                         <a
-                                                            href={`/legajos/${legajo.intervenciones_legajo_id}/intervenciones/${intervencion.id}/firma/responsable/descargar`}
+                                                            href={`/legajos/${legajo.id}/intervenciones/${intervencion.id}/firma/responsable/descargar`}
                                                             className="ml-1 underline"
                                                         >
                                                             (descargar)
@@ -1119,7 +1156,7 @@ export default function LegajoShow({
                                                         : 'Sin firma'}
                                                     {intervencion.tiene_firma_entrevistado && (
                                                         <a
-                                                            href={`/legajos/${legajo.intervenciones_legajo_id}/intervenciones/${intervencion.id}/firma/entrevistado/descargar`}
+                                                            href={`/legajos/${legajo.id}/intervenciones/${intervencion.id}/firma/entrevistado/descargar`}
                                                             className="ml-1 underline"
                                                         >
                                                             (descargar)

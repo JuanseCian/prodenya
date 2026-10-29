@@ -8,6 +8,7 @@ use App\Models\Legajo;
 use App\Models\MailMessage;
 use App\Models\Tarea;
 use App\Models\User;
+use App\Services\DerivacionNotificationService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -150,8 +151,11 @@ class MailboxController extends Controller
         ])->values());
     }
 
-    public function classify(Request $request, MailMessage $mailMessage): RedirectResponse
-    {
+    public function classify(
+        Request $request,
+        MailMessage $mailMessage,
+        DerivacionNotificationService $notificador,
+    ): RedirectResponse {
         $estados = ['Nuevo', 'Clasificado', 'Derivado', 'Respondido', 'Desestimado'];
         $datos = $request->validate([
             'estado' => ['required', Rule::in($estados)],
@@ -173,7 +177,11 @@ class MailboxController extends Controller
             return back()->withErrors(['asignado_a' => 'La persona seleccionada no está habilitada para recibir derivaciones.']);
         }
 
-        DB::transaction(function () use ($datos, $mailMessage, $request) {
+        $destinatario = $datos['estado'] === 'Derivado'
+            ? User::findOrFail($datos['asignado_a'])
+            : null;
+
+        DB::transaction(function () use ($datos, $mailMessage, $request, $notificador, $destinatario) {
             $legajoIds = array_values(array_unique($datos['legajo_ids'] ?? []));
             $legajosAnteriores = $mailMessage->legajos()->pluck('legajos.id')->map(fn ($id) => (int) $id)->values()->all();
 
@@ -267,6 +275,7 @@ class MailboxController extends Controller
                 }
 
                 if ($derivacion) {
+                    $destinatarioCambio = $derivacion->destinatario_id !== $destinatario?->id;
                     $derivacion->update([
                         'destinatario_id' => $datos['asignado_a'],
                         'motivo' => str($mailMessage->subject ?: 'Comunicación sin asunto')->limit(120)->toString(),
@@ -274,10 +283,19 @@ class MailboxController extends Controller
                         'fecha_limite' => $datos['fecha_limite'] ?? null,
                     ]);
 
+                    if ($destinatarioCambio && $destinatario) {
+                        $notificador->notificar(
+                            $derivacion,
+                            Legajo::findOrFail($legajoId),
+                            $request->user(),
+                            $destinatario,
+                        );
+                    }
+
                     continue;
                 }
 
-                DerivacionCaso::create([
+                $derivacion = DerivacionCaso::create([
                     'legajo_id' => $legajoId,
                     'solicitado_por' => $request->user()->id,
                     'destinatario_id' => $datos['asignado_a'],
@@ -289,10 +307,24 @@ class MailboxController extends Controller
                     'fecha_limite' => $datos['fecha_limite'] ?? null,
                     'mail_message_id' => $mailMessage->id,
                 ]);
+
+                if ($destinatario) {
+                    $notificador->notificar(
+                        $derivacion,
+                        Legajo::findOrFail($legajoId),
+                        $request->user(),
+                        $destinatario,
+                    );
+                }
             }
         });
 
-        return back()->with('status', 'Clasificación y derivación guardadas.');
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => 'Clasificación y derivación guardadas.',
+        ]);
+
+        return back();
     }
 
     /**

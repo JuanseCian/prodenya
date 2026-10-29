@@ -233,7 +233,7 @@ export default function Dashboard({
                 </header>
 
                 {/* Contenido */}
-                <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
+                <main className="mx-auto max-w-6xl px-4 pt-8 pb-[calc(6rem+env(safe-area-inset-bottom))] sm:px-6 sm:pt-10 sm:pb-[calc(6rem+env(safe-area-inset-bottom))] lg:pb-10">
                     <h2
                         className="text-2xl font-semibold tracking-tight text-[#173247] sm:text-3xl"
                         style={{ fontFamily: FONT_HEADING }}

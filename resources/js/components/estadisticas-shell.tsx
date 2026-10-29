@@ -284,7 +284,9 @@ export default function EstadisticasShell({
                     </div>
                 </header>
 
-                <main>{children}</main>
+                <main className="pb-[calc(6rem+env(safe-area-inset-bottom))] lg:pb-0">
+                    {children}
+                </main>
             </div>
         </div>
     );

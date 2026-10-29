@@ -154,27 +154,31 @@ export default function Agenda({ eventos }: Props) {
                                         <Button type="button" variant="outline" size="icon" onClick={() => changeMonth(1)} aria-label="Mes siguiente"><ChevronRight className="size-4" /></Button>
                                     </div>
                                 </div>
-                                <div className="grid grid-cols-7 border-b border-[#EEF0ED] bg-[#FBFCFB]">
-                                    {weekDays.map((day) => <div key={day} className="px-1 py-3 text-center text-[10px] font-bold tracking-[0.08em] text-[#819197] uppercase sm:text-xs">{day}</div>)}
-                                </div>
-                                <div className="grid grid-cols-7">
-                                    {days.map((day) => {
-                                        const key = dateKey(day);
-                                        const dayEvents = eventsByDate.get(key) ?? [];
-                                        const isCurrentMonth = day.getMonth() === month.getMonth();
-                                        const isSelected = key === selectedDate;
-                                        const isToday = key === todayKey;
+                                <div className="overflow-x-auto">
+                                    <div className="min-w-[560px]">
+                                        <div className="grid grid-cols-7 border-b border-[#EEF0ED] bg-[#FBFCFB]">
+                                            {weekDays.map((day) => <div key={day} className="px-1 py-3 text-center text-[10px] font-bold tracking-[0.08em] text-[#819197] uppercase sm:text-xs">{day}</div>)}
+                                        </div>
+                                        <div className="grid grid-cols-7">
+                                            {days.map((day) => {
+                                                const key = dateKey(day);
+                                                const dayEvents = eventsByDate.get(key) ?? [];
+                                                const isCurrentMonth = day.getMonth() === month.getMonth();
+                                                const isSelected = key === selectedDate;
+                                                const isToday = key === todayKey;
 
-                                        return (
-                                            <button key={key} type="button" onClick={() => selectDate(day)} className={`min-h-24 border-b border-r border-[#EEF0ED] p-1.5 text-left transition last:border-r-0 hover:bg-[#F4F8F5] sm:min-h-28 sm:p-2 ${isSelected ? 'bg-[#EEF7F0] shadow-[inset_0_0_0_2px_#6B8F71]' : ''} ${!isCurrentMonth ? 'bg-[#FBFCFB] text-[#B4BFBC]' : ''}`} aria-label={`${key}${dayEvents.length ? `, ${dayEvents.length} eventos` : ''}`}>
-                                                <span className={`inline-flex size-7 items-center justify-center rounded-full text-xs font-semibold ${isToday ? 'bg-[#2C4A5E] text-white' : isSelected ? 'text-[#397461]' : isCurrentMonth ? 'text-[#49616D]' : 'text-[#B4BFBC]'}`}>{day.getDate()}</span>
-                                                <span className="mt-1 block space-y-1">
-                                                    {dayEvents.slice(0, 2).map((evento) => <span key={evento.id} className="block truncate rounded bg-[#EAF3ED] px-1 py-0.5 text-[10px] font-semibold text-[#397461]">{evento.titulo}</span>)}
-                                                    {dayEvents.length > 2 && <span className="block px-1 text-[10px] font-semibold text-[#697586]">+{dayEvents.length - 2} más</span>}
-                                                </span>
-                                            </button>
-                                        );
-                                    })}
+                                                return (
+                                                    <button key={key} type="button" onClick={() => selectDate(day)} className={`min-h-24 border-b border-r border-[#EEF0ED] p-1.5 text-left transition last:border-r-0 hover:bg-[#F4F8F5] sm:min-h-28 sm:p-2 ${isSelected ? 'bg-[#EEF7F0] shadow-[inset_0_0_0_2px_#6B8F71]' : ''} ${!isCurrentMonth ? 'bg-[#FBFCFB] text-[#B4BFBC]' : ''}`} aria-label={`${key}${dayEvents.length ? `, ${dayEvents.length} eventos` : ''}`}>
+                                                        <span className={`inline-flex size-7 items-center justify-center rounded-full text-xs font-semibold ${isToday ? 'bg-[#2C4A5E] text-white' : isSelected ? 'text-[#397461]' : isCurrentMonth ? 'text-[#49616D]' : 'text-[#B4BFBC]'}`}>{day.getDate()}</span>
+                                                        <span className="mt-1 block space-y-1">
+                                                            {dayEvents.slice(0, 2).map((evento) => <span key={evento.id} className="block truncate rounded bg-[#EAF3ED] px-1 py-0.5 text-[10px] font-semibold text-[#397461]">{evento.titulo}</span>)}
+                                                            {dayEvents.length > 2 && <span className="block px-1 text-[10px] font-semibold text-[#697586]">+{dayEvents.length - 2} más</span>}
+                                                        </span>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
                                 </div>
                             </CardContent>
                         </Card>

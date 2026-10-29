@@ -410,6 +410,17 @@
     }
 }
 
+@media (max-width: 767px) {
+    [data-slot='dialog-content'] {
+        max-height: calc(100svh - 1rem);
+        overflow-y: auto;
+    }
+
+    [data-slot='sheet-content'] {
+        padding-bottom: calc(1.5rem + env(safe-area-inset-bottom));
+    }
+}
+
 /* Account settings surfaces use the same dark palette as the application shell. */
 .account-settings-shell [class*='text-[#63757e]'] {
     color: #526873;

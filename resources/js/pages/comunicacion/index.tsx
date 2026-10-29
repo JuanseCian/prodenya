@@ -204,7 +204,7 @@ export default function Comunicacion({
                         </div>
                     </div>
 
-                    <div className="grid min-h-[650px] overflow-hidden rounded-2xl border border-[#D5E0DA] bg-white shadow-[0_22px_60px_rgba(23,50,71,0.1)] lg:grid-cols-[310px_minmax(0,1fr)]">
+                    <div className="grid min-h-[calc(100dvh-8rem)] overflow-hidden rounded-2xl border border-[#D5E0DA] bg-white shadow-[0_22px_60px_rgba(23,50,71,0.1)] lg:min-h-[650px] lg:grid-cols-[310px_minmax(0,1fr)]">
                         <aside className="border-b border-[#E4E8E5] bg-[#F8FAF9] lg:border-r lg:border-b-0">
                             <div className="flex items-center justify-between border-b border-[#E4E8E5] bg-white/70 px-4 py-4">
                                 <div>
@@ -270,7 +270,7 @@ export default function Comunicacion({
                                 </form>
                             )}
 
-                            <div className="max-h-[570px] overflow-y-auto p-2.5">
+                            <div className="max-h-[38dvh] overflow-y-auto p-2.5 lg:max-h-[570px]">
                                 {conversaciones.length === 0 ? (
                                     <div className="px-4 py-12 text-center">
                                         <MessageCircle className="mx-auto size-8 text-[#6B8F71]" />
@@ -318,7 +318,7 @@ export default function Comunicacion({
                             </div>
                         </aside>
 
-                        <section className="flex min-h-[650px] min-w-0 flex-col bg-white">
+                        <section className="flex min-h-[calc(100dvh-8rem)] min-w-0 flex-col bg-white lg:min-h-[650px]">
                             {conversacionSeleccionada ? (
                                 <>
                                     <header className="flex items-center justify-between gap-3 border-b border-[#E4E8E5] bg-white px-5 py-4 sm:px-7">
