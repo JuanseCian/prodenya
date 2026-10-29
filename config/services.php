@@ -39,4 +39,17 @@ return [
         'token' => env('MAPBOX_ACCESS_TOKEN'),
     ],
 
+    'hostinger_mailbox' => [
+        'enabled' => env('HOSTINGER_MAILBOX_ENABLED', false),
+        'host' => env('HOSTINGER_IMAP_HOST', 'imap.hostinger.com'),
+        'port' => (int) env('HOSTINGER_IMAP_PORT', 993),
+        'encryption' => env('HOSTINGER_IMAP_ENCRYPTION', 'ssl'),
+        'validate_cert' => env('HOSTINGER_IMAP_VALIDATE_CERT', true),
+        'username' => env('HOSTINGER_IMAP_USERNAME', 'contacto@desarrollohumanosn.com'),
+        'password' => env('HOSTINGER_IMAP_PASSWORD'),
+        'folder' => env('HOSTINGER_IMAP_FOLDER', 'INBOX'),
+        'sync_days' => max(1, (int) env('HOSTINGER_IMAP_SYNC_DAYS', 30)),
+        'to_email' => env('HOSTINGER_MAILBOX_ADDRESS', 'contacto@desarrollohumanosn.com'),
+    ],
+
 ];

@@ -24,6 +24,14 @@ test('only administrators can access the mailbox', function () {
     $this->actingAs($operador)->get(route('mailbox.index'))->assertForbidden();
 });
 
+test('the mailbox sync command fails safely when Hostinger credentials are missing', function () {
+    config(['services.hostinger_mailbox.password' => null]);
+
+    $this->artisan('mailbox:sync')
+        ->expectsOutput('Faltan las credenciales IMAP de Hostinger en el entorno.')
+        ->assertFailed();
+});
+
 test('oficios can classify a message and derive it as a task', function () {
     DB::table('roles')->insert([
         ['id' => 4, 'nombre' => 'oficios', 'descripcion' => 'Clasificación', 'creado_en' => now()],
