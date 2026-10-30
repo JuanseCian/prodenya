@@ -9,15 +9,20 @@ use App\Models\MailMessage;
 use App\Models\Tarea;
 use App\Models\User;
 use App\Services\DerivacionNotificationService;
+use App\Services\HostingerMailboxService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
+use Throwable;
 
 class MailboxController extends Controller
 {
@@ -31,8 +36,18 @@ class MailboxController extends Controller
         'operador',
     ];
 
-    public function index(Request $request): Response
+    public function index(Request $request, HostingerMailboxService $mailbox): Response
     {
+        $syncError = null;
+        if (config('services.hostinger_mailbox.enabled')) {
+            try {
+                $mailbox->sync();
+            } catch (Throwable $exception) {
+                report($exception);
+                $syncError = 'No se pudo sincronizar el buzón. Verificá la configuración de Hostinger.';
+            }
+        }
+
         $buscar = trim((string) $request->query('buscar', ''));
         $soloNoLeidos = $request->boolean('no_leidos');
         $estado = $request->query('estado');
@@ -64,12 +79,17 @@ class MailboxController extends Controller
             ->withQueryString()
             ->through(fn (MailMessage $mensaje) => [
                 'id' => $mensaje->id,
+                'direction' => $mensaje->direction,
                 'subject' => $mensaje->subject ?: '(Sin asunto)',
                 'from_name' => $mensaje->from_name,
                 'from_email' => $mensaje->from_email,
+                'to_email' => $mensaje->to_email,
                 'received_at' => $mensaje->received_at?->toIso8601String(),
+                'sent_at' => $mensaje->sent_at?->toIso8601String(),
                 'is_read' => $mensaje->is_read,
                 'estado' => $mensaje->estado,
+                'body_text' => $mensaje->body_text,
+                'attachments' => $mensaje->attachments ?? [],
                 'legajos' => $mensaje->legajos->map(fn (Legajo $legajo) => [
                     'id' => $legajo->id,
                     'numero_legajo' => $legajo->numero_legajo,
@@ -93,6 +113,7 @@ class MailboxController extends Controller
             ],
             'noLeidos' => MailMessage::where('is_read', false)->count(),
             'estados' => $estados,
+            'syncError' => $syncError,
             'responsables' => User::query()
                 ->with('rol')
                 ->where('activo', true)
@@ -108,6 +129,125 @@ class MailboxController extends Controller
                 ->values()
                 ->all(),
         ]);
+    }
+
+    public function sync(HostingerMailboxService $mailbox): RedirectResponse
+    {
+        try {
+            $synchronized = $mailbox->sync();
+            Inertia::flash('toast', [
+                'type' => 'success',
+                'message' => $synchronized === 1
+                    ? 'Se sincronizó 1 correo nuevo.'
+                    : "Se sincronizaron {$synchronized} correos nuevos.",
+            ]);
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return back()->withErrors(['mailbox' => 'No se pudo sincronizar el buzón. Verificá la configuración de Hostinger.']);
+        }
+
+        return back();
+    }
+
+    public function send(Request $request, HostingerMailboxService $mailbox): RedirectResponse
+    {
+        $data = $request->validate([
+            'to_email' => ['required', 'email', 'max:255'],
+            'subject' => ['required', 'string', 'max:255'],
+            'body' => ['required', 'string', 'max:100000'],
+            'attachments' => ['nullable', 'array', 'max:5'],
+            'attachments.*' => ['file', 'max:10240', 'mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png,txt,zip'],
+        ]);
+
+        $attachments = $this->storeAttachments($request);
+
+        try {
+            $mailbox->send($data['to_email'], $data['subject'], $data['body'], $attachments);
+        } catch (Throwable $exception) {
+            $this->deleteAttachments($attachments);
+            report($exception);
+
+            return back()->withErrors(['mailbox' => 'No se pudo enviar el correo. Verificá la configuración SMTP.']);
+        }
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => 'Correo enviado correctamente.']);
+
+        return back();
+    }
+
+    public function reply(Request $request, MailMessage $mailMessage, HostingerMailboxService $mailbox): RedirectResponse
+    {
+        $data = $request->validate([
+            'subject' => ['required', 'string', 'max:255'],
+            'body' => ['required', 'string', 'max:100000'],
+            'attachments' => ['nullable', 'array', 'max:5'],
+            'attachments.*' => ['file', 'max:10240', 'mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png,txt,zip'],
+        ]);
+
+        if (! filter_var($mailMessage->from_email, FILTER_VALIDATE_EMAIL)) {
+            return back()->withErrors(['mailbox' => 'El remitente no tiene una dirección válida para responder.']);
+        }
+
+        $attachments = $this->storeAttachments($request);
+
+        try {
+            $mailbox->send($mailMessage->from_email, $data['subject'], $data['body'], $attachments, $mailMessage);
+        } catch (Throwable $exception) {
+            $this->deleteAttachments($attachments);
+            report($exception);
+
+            return back()->withErrors(['mailbox' => 'No se pudo enviar la respuesta. Verificá la configuración SMTP.']);
+        }
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => 'Respuesta enviada correctamente.']);
+
+        return back();
+    }
+
+    public function downloadAttachment(MailMessage $mailMessage, int $attachment): StreamedResponse
+    {
+        abort_unless($mailMessage->attachments[$attachment] ?? null, 404);
+        $file = $mailMessage->attachments[$attachment];
+
+        abort_unless(Storage::disk('local')->exists($file['path']), 404);
+
+        return Storage::disk('local')->download($file['path'], $file['name'], [
+            'Content-Type' => $file['mime'],
+        ]);
+    }
+
+    /**
+     * @return array<int, array{path: string, name: string, mime: string, size: int}>
+     */
+    private function storeAttachments(Request $request): array
+    {
+        $attachments = [];
+
+        foreach ((array) $request->file('attachments', []) as $file) {
+            if (! $file instanceof UploadedFile) {
+                continue;
+            }
+
+            $attachments[] = [
+                'path' => $file->store('mail-attachments'),
+                'name' => $file->getClientOriginalName(),
+                'mime' => $file->getMimeType() ?: 'application/octet-stream',
+                'size' => (int) ($file->getSize() ?: 0),
+            ];
+        }
+
+        return $attachments;
+    }
+
+    /**
+     * @param  array<int, array{path: string, name: string, mime: string, size: int}>  $attachments
+     */
+    private function deleteAttachments(array $attachments): void
+    {
+        foreach ($attachments as $attachment) {
+            Storage::disk('local')->delete($attachment['path']);
+        }
     }
 
     public function markRead(MailMessage $mailMessage): RedirectResponse

@@ -2,16 +2,59 @@
 
 namespace App\Services;
 
+use App\Mail\MailboxMessage;
 use App\Models\MailMessage;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use RuntimeException;
 use Throwable;
 
 class HostingerMailboxService
 {
     /**
-     * Synchronize recent messages from Hostinger's IMAP inbox.
+     * Send an outgoing message through Hostinger and retain it in the mailbox.
+     *
+     * @param  array<int, array{path: string, name: string, mime: string, size: int}>  $attachments
+     */
+    public function send(
+        string $toEmail,
+        string $subject,
+        string $body,
+        array $attachments = [],
+        ?MailMessage $replyTo = null,
+    ): MailMessage {
+        Mail::mailer('hostinger')
+            ->to($toEmail)
+            ->send(new MailboxMessage($subject, $body, $attachments, $replyTo?->message_id));
+
+        return MailMessage::create([
+            'message_id' => '<'.Str::uuid().'@prodenya.local>',
+            'direction' => 'outgoing',
+            'thread_id' => $replyTo?->thread_id ?: $replyTo?->message_id,
+            'in_reply_to' => $replyTo?->message_id,
+            'from_name' => config('mail.from.name'),
+            'from_email' => config('services.hostinger_mailbox.address'),
+            'to_email' => $toEmail,
+            'subject' => $subject,
+            'body_text' => $body,
+            'body_html' => null,
+            'sent_at' => now(),
+            'received_at' => null,
+            'synced_at' => now(),
+            'is_read' => true,
+            'estado' => 'Respondido',
+            'attachments' => $attachments,
+        ]);
+    }
+
+    /**
+     * Synchronize messages from Hostinger's IMAP inbox.
+     *
+     * A null day range only fetches UIDs newer than the last synchronized
+     * message. Passing a day range is reserved for an explicit backfill.
      */
     public function sync(?int $days = null): int
     {
@@ -42,8 +85,11 @@ class HostingerMailboxService
         }
 
         try {
-            $since = now()->subDays($days ?? (int) $config['sync_days']);
-            $uids = imap_search($stream, 'SINCE "'.$since->format('d-M-Y').'"', SE_UID) ?: [];
+            $lastUid = (int) (MailMessage::query()->max('mailbox_uid') ?? 0);
+            $criteria = $days !== null
+                ? 'SINCE "'.now()->subDays($days)->format('d-M-Y').'"'
+                : ($lastUid > 0 ? 'UID '.($lastUid + 1).':*' : 'ALL');
+            $uids = imap_search($stream, $criteria, SE_UID) ?: [];
             sort($uids, SORT_NUMERIC);
             $synchronized = 0;
 
@@ -71,9 +117,9 @@ class HostingerMailboxService
         }
 
         $structure = imap_fetchstructure($stream, $uid, FT_UID);
-        [$bodyText, $bodyHtml] = $structure
+        [$bodyText, $bodyHtml, $attachments] = $structure
             ? $this->extractBodies($stream, $uid, $structure)
-            : ['', null];
+            : ['', null, []];
         $messageId = $this->decodeHeader($overview->message_id ?? '')
             ?: sprintf('<hostinger-%d@%s>', $uid, $config['host']);
         $sender = $this->sender($overview->from ?? '');
@@ -87,13 +133,18 @@ class HostingerMailboxService
         $message->fill([
             'message_id' => $messageId,
             'mailbox_uid' => $uid,
-            'thread_id' => $this->decodeHeader($overview->references ?? ''),
+            'direction' => 'incoming',
+            'thread_id' => $this->decodeHeader($overview->references ?? '')
+                ?: $this->decodeHeader($overview->in_reply_to ?? '')
+                    ?: $messageId,
+            'in_reply_to' => $this->decodeHeader($overview->in_reply_to ?? '') ?: null,
             'from_name' => $sender['name'],
             'from_email' => $sender['email'] ?: 'desconocido@hostinger.invalid',
             'to_email' => $config['to_email'],
             'subject' => $this->decodeHeader($overview->subject ?? ''),
             'body_text' => $bodyText,
             'body_html' => $bodyHtml,
+            'attachments' => $attachments,
             'received_at' => $this->messageDate($overview->date ?? null),
             'synced_at' => now(),
         ]);
@@ -135,7 +186,7 @@ class HostingerMailboxService
 
     /**
      * @param  resource  $stream
-     * @return array{0: string, 1: string|null}
+     * @return array{0: string, 1: string|null, 2: array<int, array{path: string, name: string, mime: string, size: int}>}
      */
     private function extractBodies($stream, int $uid, object $structure): array
     {
@@ -147,43 +198,98 @@ class HostingerMailboxService
             $bodyText = trim(strip_tags($bodyHtml));
         }
 
-        return [$bodyText, $bodyHtml];
+        return [$bodyText, $bodyHtml, $parts['attachments']];
     }
 
     /**
      * @param  resource  $stream
-     * @return array{text: string, html: string}
+     * @return array{text: string, html: string, attachments: array<int, array{path: string, name: string, mime: string, size: int}>}
      */
     private function extractParts($stream, int $uid, object $part, string $section = ''): array
     {
         if (isset($part->parts) && is_array($part->parts)) {
-            return array_reduce(
-                array_keys($part->parts),
-                function (array $bodies, int|string $index) use ($stream, $uid, $part, $section): array {
-                    $partSection = $section === '' ? (string) ((int) $index + 1) : $section.'.'.((int) $index + 1);
-                    $nested = $this->extractParts($stream, $uid, $part->parts[$index], $partSection);
+            $bodies = ['text' => '', 'html' => '', 'attachments' => []];
 
-                    return [
-                        'text' => $bodies['text'] !== '' ? $bodies['text'] : $nested['text'],
-                        'html' => $bodies['html'] !== '' ? $bodies['html'] : $nested['html'],
-                    ];
-                },
-                ['text' => '', 'html' => ''],
-            );
+            foreach (array_keys($part->parts) as $index) {
+                $partSection = $section === '' ? (string) ((int) $index + 1) : $section.'.'.((int) $index + 1);
+                $nested = $this->extractParts($stream, $uid, $part->parts[$index], $partSection);
+
+                if ($bodies['text'] === '' && $nested['text'] !== '') {
+                    $bodies['text'] = $nested['text'];
+                }
+                if ($bodies['html'] === '' && $nested['html'] !== '') {
+                    $bodies['html'] = $nested['html'];
+                }
+
+                $bodies['attachments'] = [...$bodies['attachments'], ...$nested['attachments']];
+            }
+
+            return $bodies;
         }
 
         $body = imap_fetchbody($stream, $uid, $section === '' ? '1' : $section, FT_UID);
         $body = $this->decodeBody($body, (int) ($part->encoding ?? 0));
+
+        $filename = $this->partFilename($part);
+        if ($filename !== '') {
+            $path = 'mail-attachments/'.Str::uuid().'-'.Str::slug(pathinfo($filename, PATHINFO_FILENAME));
+            $extension = pathinfo($filename, PATHINFO_EXTENSION);
+            if ($extension !== '') {
+                $path .= '.'.strtolower($extension);
+            }
+
+            Storage::disk('local')->put($path, $body);
+
+            return [
+                'text' => '',
+                'html' => '',
+                'attachments' => [[
+                    'path' => $path,
+                    'name' => $filename,
+                    'mime' => $this->partMime($part),
+                    'size' => strlen($body),
+                ]],
+            ];
+        }
+
         $body = $this->convertCharset($body, $this->partCharset($part));
 
         if ((int) ($part->type ?? -1) !== 0) {
-            return ['text' => '', 'html' => ''];
+            return ['text' => '', 'html' => '', 'attachments' => []];
         }
 
         return [
             'text' => strtolower((string) ($part->subtype ?? '')) === 'plain' ? $body : '',
             'html' => strtolower((string) ($part->subtype ?? '')) === 'html' ? $body : '',
+            'attachments' => [],
         ];
+    }
+
+    private function partFilename(object $part): string
+    {
+        foreach (array_merge($part->parameters ?? [], $part->dparameters ?? []) as $parameter) {
+            if (in_array(strtolower((string) ($parameter->attribute ?? '')), ['filename', 'name'], true)) {
+                return $this->decodeHeader((string) ($parameter->value ?? ''));
+            }
+        }
+
+        return '';
+    }
+
+    private function partMime(object $part): string
+    {
+        $types = [
+            0 => 'text',
+            1 => 'multipart',
+            2 => 'message',
+            3 => 'application',
+            4 => 'audio',
+            5 => 'image',
+            6 => 'video',
+            7 => 'application',
+        ];
+
+        return ($types[(int) ($part->type ?? 7)] ?? 'application').'/'.strtolower((string) ($part->subtype ?? 'octet-stream'));
     }
 
     private function decodeBody(string $body, int $encoding): string

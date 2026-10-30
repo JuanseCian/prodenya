@@ -2,13 +2,18 @@ import { Head, router } from '@inertiajs/react';
 import {
     Check,
     ChevronDown,
+    Eye,
     Mail,
+    Paperclip,
+    PenLine,
+    RefreshCw,
+    Reply,
     Search,
-    SlidersHorizontal,
     Tag,
     X,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import type { FormEvent } from 'react';
 
 import Paginacion from '@/components/paginacion-listado';
 import type { Paginador } from '@/components/paginacion-listado';
@@ -28,12 +33,17 @@ import mailbox from '@/routes/mailbox';
 
 interface Mensaje {
     id: number;
+    direction: 'incoming' | 'outgoing';
     subject: string;
     from_name: string | null;
     from_email: string;
+    to_email: string | null;
     received_at: string | null;
+    sent_at: string | null;
     is_read: boolean;
     estado: string;
+    body_text: string | null;
+    attachments: { path: string; name: string; mime: string; size: number }[];
     legajos: { id: number; numero_legajo: string }[];
     derivacion: {
         asignado_a: number | null;
@@ -48,6 +58,7 @@ interface Props {
     noLeidos: number;
     estados: string[];
     responsables: Responsable[];
+    syncError: string | null;
 }
 
 interface Responsable {
@@ -89,6 +100,7 @@ export default function Mailbox({
     noLeidos,
     estados,
     responsables,
+    syncError,
 }: Props) {
     const [buscar, setBuscar] = useState(filtros.buscar ?? '');
     const [noLeidosFiltro, setNoLeidosFiltro] = useState(filtros.no_leidos);
@@ -101,6 +113,14 @@ export default function Mailbox({
     const [legajoQuery, setLegajoQuery] = useState('');
     const [legajosEncontrados, setLegajosEncontrados] = useState<LegajoResultado[]>([]);
     const [legajosSeleccionados, setLegajosSeleccionados] = useState<LegajoResultado[]>([]);
+    const [composeOpen, setComposeOpen] = useState(false);
+    const [composeTo, setComposeTo] = useState('');
+    const [composeSubject, setComposeSubject] = useState('');
+    const [composeBody, setComposeBody] = useState('');
+    const [composeReplyId, setComposeReplyId] = useState<number | null>(null);
+    const [composeFiles, setComposeFiles] = useState<File[]>([]);
+    const [sending, setSending] = useState(false);
+    const [syncing, setSyncing] = useState(false);
 
     useEffect(() => {
         if (
@@ -202,6 +222,62 @@ export default function Mailbox({
         );
     };
 
+    const abrirNuevoCorreo = () => {
+        setComposeTo('');
+        setComposeSubject('');
+        setComposeBody('');
+        setComposeReplyId(null);
+        setComposeFiles([]);
+        setComposeOpen(true);
+    };
+
+    const abrirRespuesta = (mensaje: Mensaje) => {
+        setComposeTo(mensaje.from_email);
+        setComposeSubject(mensaje.subject.startsWith('Re:') ? mensaje.subject : `Re: ${mensaje.subject}`);
+        setComposeBody('');
+        setComposeReplyId(mensaje.id);
+        setComposeFiles([]);
+        setMensajeSeleccionado(null);
+        setComposeOpen(true);
+    };
+
+    const enviarCorreo = (event: FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+
+        const data = new FormData();
+        data.append('subject', composeSubject);
+        data.append('body', composeBody);
+
+        if (composeReplyId) {
+            composeFiles.forEach((file) => data.append('attachments[]', file));
+        } else {
+            data.append('to_email', composeTo);
+            composeFiles.forEach((file) => data.append('attachments[]', file));
+        }
+
+        setSending(true);
+        router.post(
+            composeReplyId
+                ? mailbox.reply.url(composeReplyId)
+                : mailbox.send.url(),
+            data,
+            {
+                forceFormData: true,
+                preserveScroll: true,
+                onSuccess: () => setComposeOpen(false),
+                onFinish: () => setSending(false),
+            },
+        );
+    };
+
+    const sincronizar = () => {
+        setSyncing(true);
+        router.post(mailbox.sync.url(), {}, {
+            preserveScroll: true,
+            onFinish: () => setSyncing(false),
+        });
+    };
+
     return (
         <>
             <Head title="Mailbox" />
@@ -219,15 +295,30 @@ export default function Mailbox({
                                 Bandeja institucional para la gestión de correos.
                             </p>
                         </div>
-                        {noLeidos > 0 && (
-                            <Badge className="w-fit border-0 bg-[#E8F7EF] text-[#267148]">
-                                {noLeidos}{' '}
-                                {noLeidos === 1
-                                    ? 'correo nuevo'
-                                    : 'correos nuevos'}
-                            </Badge>
-                        )}
+                        <div className="flex flex-wrap items-center gap-2">
+                            {noLeidos > 0 && (
+                                <Badge className="w-fit border-0 bg-[#E8F7EF] text-[#267148]">
+                                    {noLeidos}{' '}
+                                    {noLeidos === 1
+                                        ? 'correo nuevo'
+                                        : 'correos nuevos'}
+                                </Badge>
+                            )}
+                            <Button type="button" onClick={abrirNuevoCorreo} className="bg-[#2C4A5E] hover:bg-[#173247]">
+                                <PenLine className="size-4" />
+                                Nuevo correo
+                            </Button>
+                            <Button type="button" variant="outline" onClick={sincronizar} disabled={syncing} className="border-[#D5D1C6] bg-white text-[#2C4A5E]">
+                                <RefreshCw className={`size-4 ${syncing ? 'animate-spin' : ''}`} />
+                                Actualizar
+                            </Button>
+                        </div>
                     </div>
+                    {syncError && (
+                        <div className="mb-4 rounded-md border border-[#E8D7DA] bg-[#FCF1F3] px-4 py-3 text-sm text-[#9B5964]">
+                            No se pudo sincronizar Hostinger: {syncError}
+                        </div>
+                    )}
 
                     <Card className="overflow-hidden border-[#DCE3DF] !bg-white py-0 shadow-[0_14px_35px_rgba(23,50,71,0.06)]">
                         <div className="flex flex-col gap-3 border-b border-[#E4E8E5] bg-[#F8FAF9] px-5 py-4 sm:flex-row sm:items-center sm:px-6">
@@ -295,17 +386,15 @@ export default function Mailbox({
                                                         >
                                                             {mensaje.subject}
                                                         </p>
-                                                        <p className="mt-1 truncate text-xs text-[#2B2F36]/60">
-                                                            {mensaje.from_name
-                                                                ? `${mensaje.from_name} · `
-                                                                : ''}
-                                                            {mensaje.from_email}
-                                                        </p>
+                                                         <p className="mt-1 truncate text-xs text-[#2B2F36]/60">
+                                                             {mensaje.direction === 'outgoing' ? 'Para: ' : ''}
+                                                             {mensaje.direction === 'outgoing'
+                                                                 ? mensaje.to_email
+                                                                 : `${mensaje.from_name ? `${mensaje.from_name} · ` : ''}${mensaje.from_email}`}
+                                                         </p>
                                                     </div>
                                                     <time className="shrink-0 text-xs text-[#2B2F36]/50">
-                                                        {formatDate(
-                                                            mensaje.received_at,
-                                                        )}
+                                                         {formatDate(mensaje.received_at ?? mensaje.sent_at)}
                                                     </time>
                                                 </div>
                                                 <p className="mt-3 line-clamp-2 text-sm leading-6 text-[#2B2F36]/70">
@@ -323,14 +412,14 @@ export default function Mailbox({
                                                     ))}
                                                 </div>
                                             </div>
-                                            <button
-                                                type="button"
-                                                onClick={() => abrirClasificacion(mensaje)}
+                                             <button
+                                                 type="button"
+                                                 onClick={() => abrirClasificacion(mensaje)}
                                                 className="inline-flex h-9 shrink-0 items-center gap-1.5 self-start rounded-md border border-[#D5D1C6] bg-white px-3 text-xs font-semibold text-[#2C4A5E] transition hover:border-[#2C4A5E]/40"
                                             >
-                                                <SlidersHorizontal className="size-3.5" />
-                                                <span className="hidden sm:inline">Clasificar</span>
-                                            </button>
+                                                 <Eye className="size-3.5" />
+                                                 <span className="hidden sm:inline">Ver</span>
+                                             </button>
                                             {!mensaje.is_read && (
                                                 <button
                                                     type="button"
@@ -366,11 +455,29 @@ export default function Mailbox({
 
                     {mensajeSeleccionado && (
                         <div className="space-y-5">
-                            <div className="rounded-lg border border-[#E4E8E5] bg-white p-4">
-                                <p className="text-sm font-semibold text-[#173247]">{mensajeSeleccionado.subject}</p>
-                                <p className="mt-1 text-xs text-[#697586]">{mensajeSeleccionado.from_name || mensajeSeleccionado.from_email} · {mensajeSeleccionado.from_email}</p>
-                                <p className="mt-3 text-sm leading-6 text-[#2B2F36]/75">{mensajeSeleccionado.preview || 'Sin contenido de texto.'}</p>
-                            </div>
+                             <div className="rounded-lg border border-[#E4E8E5] bg-white p-4">
+                                 <p className="text-sm font-semibold text-[#173247]">{mensajeSeleccionado.subject}</p>
+                                 <p className="mt-1 text-xs text-[#697586]">
+                                     {mensajeSeleccionado.direction === 'outgoing' ? `Para: ${mensajeSeleccionado.to_email}` : `${mensajeSeleccionado.from_name || mensajeSeleccionado.from_email} · ${mensajeSeleccionado.from_email}`}
+                                 </p>
+                                 <p className="mt-3 max-h-52 overflow-y-auto whitespace-pre-wrap text-sm leading-6 text-[#2B2F36]/75">{mensajeSeleccionado.body_text || 'Sin contenido de texto.'}</p>
+                                 {mensajeSeleccionado.attachments.length > 0 && (
+                                     <div className="mt-4 flex flex-wrap gap-2">
+                                         {mensajeSeleccionado.attachments.map((attachment, index) => (
+                                             <a key={`${attachment.path}-${index}`} href={mailbox.attachment.url([mensajeSeleccionado.id, index])} download className="inline-flex items-center gap-1.5 rounded-md border border-[#D5D1C6] px-2.5 py-1.5 text-xs font-semibold text-[#2C4A5E] hover:bg-[#F4F6F5]">
+                                                 <Paperclip className="size-3.5" />
+                                                 {attachment.name}
+                                             </a>
+                                         ))}
+                                     </div>
+                                 )}
+                                 {mensajeSeleccionado.direction === 'incoming' && (
+                                     <Button type="button" variant="outline" onClick={() => abrirRespuesta(mensajeSeleccionado)} className="mt-4 border-[#D5D1C6] text-[#2C4A5E]">
+                                         <Reply className="size-4" />
+                                         Responder
+                                     </Button>
+                                 )}
+                             </div>
 
                             <label className="grid gap-2 text-sm font-semibold text-[#2B2F36]">
                                 Estado
@@ -438,6 +545,41 @@ export default function Mailbox({
                         <Button type="button" variant="outline" onClick={() => setMensajeSeleccionado(null)}>Cancelar</Button>
                         <Button type="button" onClick={guardarClasificacion} className="bg-[#2C4A5E] hover:bg-[#173247]">Guardar clasificación</Button>
                     </DialogFooter>
+                </DialogContent>
+            </Dialog>
+            <Dialog open={composeOpen} onOpenChange={setComposeOpen}>
+                <DialogContent className="border-[#DCE3DF] bg-[#FBFCFB] sm:max-w-xl">
+                    <DialogHeader>
+                        <DialogTitle className="text-[#173247]">{composeReplyId ? 'Responder correo' : 'Nuevo correo'}</DialogTitle>
+                        <DialogDescription className="text-[#697586]">El mensaje se enviará desde prodenya@desarrollohumanosn.com.</DialogDescription>
+                    </DialogHeader>
+                    <form onSubmit={enviarCorreo} className="grid gap-4">
+                        {!composeReplyId && (
+                            <label className="grid gap-2 text-sm font-semibold text-[#2B2F36]">
+                                Destinatario
+                                <Input type="email" required value={composeTo} onChange={(event) => setComposeTo(event.target.value)} placeholder="correo@ejemplo.com" className="border-[#D5D1C6] bg-white" />
+                            </label>
+                        )}
+                        <label className="grid gap-2 text-sm font-semibold text-[#2B2F36]">
+                            Asunto
+                            <Input required value={composeSubject} onChange={(event) => setComposeSubject(event.target.value)} className="border-[#D5D1C6] bg-white" />
+                        </label>
+                        <label className="grid gap-2 text-sm font-semibold text-[#2B2F36]">
+                            Mensaje
+                            <textarea required value={composeBody} onChange={(event) => setComposeBody(event.target.value)} rows={8} className="rounded-md border border-[#D5D1C6] bg-white px-3 py-2 text-sm font-normal outline-none focus:border-[#2C4A5E] focus:ring-2 focus:ring-[#2C4A5E]/15" />
+                        </label>
+                        <label className="grid gap-2 text-sm font-semibold text-[#2B2F36]">
+                            Adjuntos
+                            <Input type="file" multiple onChange={(event) => setComposeFiles(Array.from(event.target.files ?? []))} className="border-[#D5D1C6] bg-white text-sm font-normal" />
+                        </label>
+                        <DialogFooter>
+                            <Button type="button" variant="outline" onClick={() => setComposeOpen(false)}>Cancelar</Button>
+                            <Button type="submit" disabled={sending} className="bg-[#2C4A5E] hover:bg-[#173247]">
+                                <Mail className="size-4" />
+                                {sending ? 'Enviando…' : 'Enviar correo'}
+                            </Button>
+                        </DialogFooter>
+                    </form>
                 </DialogContent>
             </Dialog>
         </>
