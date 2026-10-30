@@ -17,6 +17,7 @@ import type { Paginador } from '@/components/paginacion-listado';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import legajosRoutes from '@/routes/legajos';
 
 interface LegajoFila {
     id: number;
@@ -588,9 +589,9 @@ export default function LegajosIndex({
                                                                 />
                                                             </Link>
                                                             <a
-                                                                href={`/legajos/${legajo.id}/exportar-word`}
-                                                                aria-label={`Generar Word del legajo ${legajo.numero_legajo}`}
-                                                                title="Generar Word"
+                                                                 href={legajosRoutes.previsualizarWord.url(legajo.id)}
+                                                                 aria-label={`Previsualizar Word del legajo ${legajo.numero_legajo}`}
+                                                                 title="Previsualizar Word"
                                                                 className="grid size-9 place-items-center rounded-md border border-[#DCE3DF] bg-white text-[#2C4A5E] transition hover:border-[#2C4A5E]/40 hover:bg-[#F4F6F5] focus-visible:ring-2 focus-visible:ring-[#2C4A5E]/30 focus-visible:outline-none"
                                                             >
                                                                 <FileDown

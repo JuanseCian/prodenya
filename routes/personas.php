@@ -62,6 +62,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/legajos/{legajo}/estadisticas', [LegajoController::class, 'estadisticas'])
             ->name('legajos.estadisticas')->whereNumber('legajo');
         Route::get('/legajos/{legajo}', [LegajoController::class, 'show'])->name('legajos.show')->whereNumber('legajo');
+        Route::get('/legajos/{legajo}/previsualizar-word', [LegajoController::class, 'previsualizarWord'])
+            ->name('legajos.previsualizar-word')->whereNumber('legajo');
         Route::get('/legajos/{legajo}/exportar-word', [LegajoController::class, 'exportarWord'])
             ->name('legajos.exportar-word')->whereNumber('legajo');
         Route::get('/intervenciones/documentos/{documento}/descargar', [IntervencionController::class, 'descargarAdjunto'])

@@ -120,6 +120,32 @@ test('accepting an additional derivation makes the recipient the principal respo
         ->and(CasoResponsable::where('legajo_id', $legajo->id)->where('usuario_id', $actual->id)->where('es_principal', false)->where('activo', true)->exists())->toBeTrue();
 });
 
+test('cancelling a derivation notifies the recipient', function () {
+    Notification::fake();
+
+    $coordinador = User::factory()->create(['rol_id' => 4]);
+    $profesional = User::factory()->create(['rol_id' => 5]);
+    $legajo = crearLegajoParaDerivacion($coordinador);
+
+    $this->actingAs($coordinador)
+        ->post(route('legajos.derivaciones.store', $legajo), [
+            'destinatario_id' => $profesional->id,
+            'modo' => DerivacionCaso::MODO_ADICIONAL,
+            'motivo' => 'Revisión',
+        ])
+        ->assertRedirect();
+
+    $derivacion = DerivacionCaso::firstOrFail();
+
+    $this->actingAs($coordinador)
+        ->patch(route('derivaciones.cancelar', $derivacion))
+        ->assertRedirect();
+
+    expect($derivacion->fresh()->estado)->toBe(DerivacionCaso::ESTADO_CANCELADA);
+    Notification::assertSentTo($profesional, DerivacionCasoNotification::class, fn ($notification) => $notification->evento === 'derivacion_cancelada'
+    );
+});
+
 test('legajo detail exposes individual statistics and derivations', function () {
     $coordinador = User::factory()->create(['rol_id' => 4]);
     $profesional = User::factory()->create(['rol_id' => 5]);

@@ -333,7 +333,6 @@
               .site-header-brand .brand-name { font-size: 0.98rem; }
               .site-header-brand .brand-caption { display: none; }
               .site-primary-nav { display: none; }
-              .site-liquid-nav { display: none; }
               .site-header-tools { gap: 2px; }
              .site-admin-link { display: none; }
               .site-account-visible-name { display: none; }
@@ -483,8 +482,6 @@
          .site-header-brand .brand-name { font-size: 1.06rem; letter-spacing: 0.13em; }
          .site-header-brand .brand-caption { color: rgba(235, 248, 242, 0.72); font-size: 0.72rem; letter-spacing: 0.01em; margin-top: 5px; }
           .site-header-tools { gap: 8px; }
-          .site-liquid-nav { align-items: center; display: flex; flex: 1 1 auto; justify-content: center; min-width: 0; }
-          .site-liquid-nav .nimbus-nav { max-width: 100%; }
           .site-header-quick-link, .site-menu-toggle {
              border-radius: 12px;
              font-size: 0.84rem;
@@ -783,52 +780,7 @@
                     </span>
                 </a>
 
-                @php
-                    $headerNavItems = [
-                        ['label' => 'Inicio', 'href' => route('home'), 'icon' => 'home', 'fx' => 'glow', 'active' => request()->routeIs('home')],
-                    ];
-
-                    if (auth()->check()) {
-                        $headerNavUser = auth()->user();
-                        $headerCanManageRecords = $headerNavUser->tieneRol('admin', 'operador', 'consulta', 'oficios', 'coordinador', 'profesional', 'administrativo');
-                        $headerUnreadMessages = isset($page) ? (int) data_get($page, 'props.comunicacionNoLeidos', 0) : 0;
-
-                        if (Route::has('legajos.index') && $headerCanManageRecords) {
-                            $headerNavItems[] = ['label' => 'Legajos', 'href' => route('legajos.index'), 'icon' => 'legajos', 'fx' => 'spin', 'active' => request()->routeIs('legajos.*', 'mayores18.*')];
-                        }
-
-                        if (Route::has('tareas.index') && $headerNavUser->tieneRol('admin', 'operador', 'oficios', 'coordinador', 'profesional', 'administrativo')) {
-                            $headerNavItems[] = ['label' => 'Tareas', 'href' => route('tareas.index'), 'icon' => 'tareas', 'fx' => 'wave', 'active' => request()->routeIs('tareas.*')];
-                        }
-
-                        if (Route::has('agenda.index') && $headerNavUser->tieneRol('admin', 'coordinador', 'profesional', 'administrativo')) {
-                            $headerNavItems[] = ['label' => 'Agenda', 'href' => route('agenda.index'), 'icon' => 'agenda', 'fx' => 'drop', 'active' => request()->routeIs('agenda.*')];
-                        }
-
-                        if (Route::has('estadisticas') && $headerCanManageRecords) {
-                            $headerNavItems[] = ['label' => 'Estadísticas', 'href' => route('estadisticas'), 'icon' => 'estadisticas', 'fx' => 'spin', 'active' => request()->routeIs('estadisticas*', 'dashboard')];
-                        }
-
-                        if (Route::has('comunicacion.index') && $headerCanManageRecords) {
-                            $headerNavItems[] = ['label' => 'Mensajes', 'href' => route('comunicacion.index'), 'icon' => 'mensajes', 'fx' => 'wave', 'badge' => $headerUnreadMessages > 99 ? '99+' : $headerUnreadMessages, 'active' => request()->routeIs('comunicacion.*')];
-                        }
-
-                        if (Route::has('admin.home') && $headerNavUser->tieneRol('admin')) {
-                            $headerNavItems[] = ['label' => 'Admin', 'href' => route('admin.home'), 'icon' => 'admin', 'fx' => 'glow', 'active' => request()->routeIs('admin.*')];
-                        }
-                    }
-
-                    $headerActiveIndex = collect($headerNavItems)->search(fn ($item) => $item['active']);
-                @endphp
-                <div
-                    class="site-liquid-nav"
-                    data-liquid-header-navbar
-                    data-items='@json(collect($headerNavItems)->map(fn ($item) => collect($item)->except("active")->all())->values())'
-                    data-active-index="{{ $headerActiveIndex === false ? 0 : $headerActiveIndex }}"
-                    data-message-enabled="{{ collect($headerNavItems)->contains(fn ($item) => $item['icon'] === 'mensajes') ? 'true' : 'false' }}"
-                ></div>
-
-                <div class="site-header-tools">
+                 <div class="site-header-tools">
                     @auth
                         @php
                             $headerNotifications = isset($page)
@@ -979,43 +931,6 @@
                     first.focus();
                 }
             });
-        })();
-
-        (() => {
-            const actualizarBadge = (badge, cantidad) => {
-                const total = Number(cantidad) || 0;
-                badge.textContent = total > 99 ? '99+' : String(total);
-                badge.style.display = total === 0 ? 'none' : 'inline-flex';
-            };
-
-            const iniciarActualizacion = () => {
-                const headerNav = document.querySelector('[data-liquid-header-navbar]');
-
-                if (!headerNav || headerNav.dataset.messageEnabled !== 'true') return;
-
-                const badge = headerNav?.querySelector('[data-nimbus-badge]');
-
-                if (!headerNav || !badge) {
-                    window.setTimeout(iniciarActualizacion, 50);
-                    return;
-                }
-
-                const consultarMensajes = () => {
-                fetch('/comunicacion/no-leidos', {
-                    headers: { Accept: 'application/json' },
-                    credentials: 'same-origin',
-                })
-                    .then((response) => response.ok ? response.json() : null)
-                    .then((data) => data && actualizarBadge(badge, data.no_leidos))
-                    .catch(() => {});
-                };
-
-                actualizarBadge(badge, badge.textContent);
-                consultarMensajes();
-                window.setInterval(consultarMensajes, 30000);
-            };
-
-            iniciarActualizacion();
         })();
 
         (() => {

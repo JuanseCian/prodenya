@@ -35,7 +35,7 @@ createInertiaApp({
         }
     },
     strictMode: true,
-    withApp(app, { page }) {
+    withApp(app) {
 
         return (
             <TooltipProvider delayDuration={0}>

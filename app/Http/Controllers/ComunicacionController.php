@@ -10,6 +10,7 @@ use App\Models\Legajo;
 use App\Models\MailMessage;
 use App\Models\Mensaje;
 use App\Models\User;
+use App\Notifications\MensajePrivadoNotification;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -123,7 +124,7 @@ class ComunicacionController extends Controller
             abort_unless($this->buscarRecurso($tipoRecurso, (int) $recursoId, $request->user()), 403, 'No tenés acceso a ese recurso.');
         }
 
-        DB::transaction(function () use ($request, $conversacion, $cuerpo, $tipoRecurso, $recursoId) {
+        DB::transaction(function () use ($request, $conversacion, $cuerpo, $tipoRecurso, $recursoId): void {
             $mensaje = $conversacion->mensajes()->create([
                 'usuario_id' => $request->user()->id,
                 'cuerpo' => $cuerpo !== '' ? $cuerpo : null,
@@ -137,6 +138,19 @@ class ComunicacionController extends Controller
             }
 
             $conversacion->update(['ultimo_mensaje_en' => now()]);
+
+            $textoNotificacion = $cuerpo !== ''
+                ? str($cuerpo)->limit(160)->toString()
+                : 'Te compartieron un recurso.';
+
+            $conversacion->loadMissing('usuarios');
+            $conversacion->usuarios
+                ->where('id', '!=', $request->user()->id)
+                ->each(fn (User $usuario) => $usuario->notify(new MensajePrivadoNotification(
+                    conversacionId: $conversacion->id,
+                    remitente: $request->user()->name,
+                    mensaje: $textoNotificacion,
+                )));
         });
 
         return back()->with('status', 'Mensaje enviado.');

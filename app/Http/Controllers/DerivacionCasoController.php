@@ -144,8 +144,11 @@ class DerivacionCasoController extends Controller
         return back();
     }
 
-    public function cancelar(Request $request, DerivacionCaso $derivacion): RedirectResponse
-    {
+    public function cancelar(
+        Request $request,
+        DerivacionCaso $derivacion,
+        DerivacionNotificationService $notificador,
+    ): RedirectResponse {
         abort_unless(
             $derivacion->solicitado_por === $request->user()->id
                 || $request->user()->tieneRol('admin', 'coordinador'),
@@ -156,7 +159,7 @@ class DerivacionCasoController extends Controller
             DerivacionCaso::ESTADO_ACEPTADA,
         ], true), 422, 'La derivación no se puede cancelar.');
 
-        DB::transaction(function () use ($derivacion, $request): void {
+        DB::transaction(function () use ($derivacion, $request, $notificador): void {
             if ($derivacion->estado === DerivacionCaso::ESTADO_ACEPTADA) {
                 CasoResponsable::query()
                     ->where('legajo_id', $derivacion->legajo_id)
@@ -175,6 +178,8 @@ class DerivacionCasoController extends Controller
                 'estado' => DerivacionCaso::ESTADO_CANCELADA,
                 'cancelada_en' => now(),
             ]);
+
+            $notificador->notificarCancelacion($derivacion, $request->user());
         });
 
         return back()->with('status', 'La derivación fue cancelada.');

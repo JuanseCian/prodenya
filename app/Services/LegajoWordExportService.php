@@ -47,18 +47,96 @@ class LegajoWordExportService
         'Archivado' => '34495E',
     ];
 
+    /**
+     * @return array<string, mixed>
+     */
+    public function datosPrevisualizacion(Legajo $legajo): array
+    {
+        $this->cargarRelaciones($legajo);
+
+        $persona = $legajo->persona;
+        $direccion = $persona
+            ? trim(implode(' ', array_filter([
+                $persona->direccion_calle,
+                $persona->direccion_numero,
+                $persona->direccion_piso_depto ? "({$persona->direccion_piso_depto})" : null,
+            ])))
+            : '';
+
+        $vinculos = VinculoFamiliar::query()
+            ->with(['persona', 'personaRelacionada'])
+            ->whereNull('desvinculado_en')
+            ->where(function ($query) use ($legajo): void {
+                $query->where('persona_id', $legajo->persona_id)
+                    ->orWhere('persona_relacionada_id', $legajo->persona_id);
+            })
+            ->get()
+            ->map(function (VinculoFamiliar $vinculo) use ($legajo): ?array {
+                $otraPersona = $vinculo->persona_id === $legajo->persona_id
+                    ? $vinculo->personaRelacionada
+                    : $vinculo->persona;
+
+                if (! $otraPersona) {
+                    return null;
+                }
+
+                return [
+                    'tipo' => $vinculo->tipo_vinculo,
+                    'persona' => "{$otraPersona->apellido}, {$otraPersona->nombre}",
+                ];
+            })
+            ->filter()
+            ->values()
+            ->all();
+
+        return [
+            'numero_legajo' => $legajo->numero_legajo,
+            'estado' => $legajo->estado,
+            'nivel_riesgo' => $legajo->nivel_riesgo === 'Critico' ? 'Crítico' : $legajo->nivel_riesgo,
+            'fecha_generado' => now()->format('d/m/Y').' a las '.now()->format('H:i'),
+            'persona' => $persona ? [
+                'nombre' => "{$persona->apellido}, {$persona->nombre}",
+                'dni' => $persona->dni,
+                'fecha_nacimiento' => $persona->fecha_nacimiento?->format('d/m/Y'),
+                'edad' => $persona->fecha_nacimiento?->age,
+                'genero' => $persona->genero,
+                'direccion' => $direccion !== '' ? $direccion : null,
+                'localidad' => $persona->localidad?->nombre,
+                'barrio' => $persona->barrio?->nombre,
+                'telefono' => $persona->telefono,
+                'email' => $persona->email,
+            ] : null,
+            'datos_legajo' => [
+                'origen_derivacion' => $legajo->origen_derivacion,
+                'profesional' => $legajo->profesional?->name,
+                'problematicas' => $legajo->problematicas->pluck('nombre')->values()->all(),
+                'observaciones' => $legajo->observaciones,
+            ],
+            'intervenciones' => $legajo->intervenciones->map(fn (Intervencion $intervencion): array => [
+                'fecha' => $intervencion->fecha_intervencion?->format('d/m/Y'),
+                'hora' => $intervencion->hora_intervencion,
+                'tipo' => $intervencion->tipo?->nombre,
+                'profesional' => $intervencion->profesional?->name,
+                'detalle' => $intervencion->detalle,
+            ])->values()->all(),
+            'derivaciones' => $legajo->derivaciones->map(fn (DerivacionCaso $derivacion): array => [
+                'estado' => $derivacion->estado,
+                'modo' => $derivacion->modo,
+                'motivo' => $derivacion->motivo,
+                'destinatario' => $derivacion->destinatario?->name,
+                'fecha_limite' => $derivacion->fecha_limite?->format('d/m/Y'),
+            ])->values()->all(),
+            'vinculos' => $vinculos,
+            'responsables' => $legajo->responsablesActivos->map(fn ($responsable): array => [
+                'nombre' => $responsable->usuario?->name,
+                'rol' => $responsable->es_principal ? 'Principal' : 'Colaborador',
+            ])->values()->all(),
+        ];
+    }
+
     public function generar(Legajo $legajo): string
     {
-        $legajo->loadMissing([
-            'persona.localidad',
-            'persona.barrio',
-            'problematicas',
-            'profesional',
-            'intervenciones.tipo',
-            'intervenciones.profesional',
-            'derivaciones.destinatario',
-            'responsablesActivos.usuario',
-        ]);
+        $this->cargarRelaciones($legajo);
 
         $phpWord = new PhpWord;
         $phpWord->setDefaultFontName('Calibri');
@@ -94,6 +172,20 @@ class LegajoWordExportService
         IOFactory::createWriter($phpWord, 'Word2007')->save($ruta);
 
         return $ruta;
+    }
+
+    private function cargarRelaciones(Legajo $legajo): void
+    {
+        $legajo->loadMissing([
+            'persona.localidad',
+            'persona.barrio',
+            'problematicas',
+            'profesional',
+            'intervenciones.tipo',
+            'intervenciones.profesional',
+            'derivaciones.destinatario',
+            'responsablesActivos.usuario',
+        ]);
     }
 
     private function agregarEncabezadoPie(Section $section, Legajo $legajo): void

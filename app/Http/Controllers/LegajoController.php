@@ -313,6 +313,14 @@ class LegajoController extends Controller
         return response()->download($ruta, "legajo-{$legajo->numero_legajo}.docx")->deleteFileAfterSend();
     }
 
+    public function previsualizarWord(Legajo $legajo, LegajoWordExportService $exportador): Response
+    {
+        return Inertia::render('legajos/word-preview', [
+            'legajo' => $exportador->datosPrevisualizacion($legajo),
+            'downloadUrl' => route('legajos.exportar-word', $legajo),
+        ]);
+    }
+
     public function edit(Legajo $legajo): Response
     {
         $legajo->load(['persona', 'problematicas']);

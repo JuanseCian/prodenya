@@ -2,7 +2,9 @@
 
 use App\Models\Conversacion;
 use App\Models\User;
+use App\Notifications\MensajePrivadoNotification;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 
 beforeEach(function () {
     DB::table('roles')->insert([
@@ -13,6 +15,8 @@ beforeEach(function () {
 });
 
 test('users can create a direct conversation and exchange messages', function () {
+    Notification::fake();
+
     $emisor = User::factory()->create(['rol_id' => 2]);
     $destinatario = User::factory()->create(['rol_id' => 3]);
 
@@ -32,6 +36,10 @@ test('users can create a direct conversation and exchange messages', function ()
 
     expect($conversacion->usuarios()->count())->toBe(2);
     expect($conversacion->mensajes()->first()->cuerpo)->toBe('Te comparto el seguimiento del caso.');
+    Notification::assertSentTo($destinatario, MensajePrivadoNotification::class, fn ($notification) => $notification->conversacionId === $conversacion->id
+        && $notification->remitente === $emisor->name
+        && $notification->mensaje === 'Te comparto el seguimiento del caso.'
+    );
 });
 
 test('a user outside a conversation cannot read or send messages', function () {

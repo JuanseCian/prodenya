@@ -208,10 +208,14 @@ class MailboxController extends Controller
                     ]);
                 $mailMessage->derivaciones()
                     ->whereIn('estado', [DerivacionCaso::ESTADO_PENDIENTE, DerivacionCaso::ESTADO_ACEPTADA])
-                    ->update([
-                        'estado' => DerivacionCaso::ESTADO_CANCELADA,
-                        'cancelada_en' => now(),
-                    ]);
+                    ->get()
+                    ->each(function (DerivacionCaso $derivacion) use ($notificador, $request): void {
+                        $derivacion->update([
+                            'estado' => DerivacionCaso::ESTADO_CANCELADA,
+                            'cancelada_en' => now(),
+                        ]);
+                        $notificador->notificarCancelacion($derivacion, $request->user());
+                    });
 
                 return;
             }
@@ -264,6 +268,7 @@ class MailboxController extends Controller
                         'estado' => DerivacionCaso::ESTADO_CANCELADA,
                         'cancelada_en' => now(),
                     ]);
+                    $notificador->notificarCancelacion($derivacion, $request->user());
                 }
             }
 

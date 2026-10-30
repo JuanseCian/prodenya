@@ -1,4 +1,4 @@
-import { Link, router, usePage } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import {
     BarChart3,
     ClipboardCheck,
@@ -20,8 +20,6 @@ import {
     DropdownMenuContent,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { LiquidNavbar, NimbusIcons } from '@/components/ui/liquid-glass-navbar';
-import type { LiquidNavItem } from '@/components/ui/liquid-glass-navbar';
 import {
     Sheet,
     SheetContent,
@@ -96,17 +94,6 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
             ? [{ title: 'Mailbox', href: mailbox.index().url, icon: Mail }]
             : []),
     ];
-    const liquidNavItems: LiquidNavItem[] = mainNavItems.map((item, index) => ({
-        label: item.title,
-        icon:
-            [
-                NimbusIcons.home,
-                NimbusIcons.globe,
-                NimbusIcons.plane,
-                NimbusIcons.drop,
-            ][index] ?? NimbusIcons.home,
-        fx: ['glow', 'spin', 'wave', 'drop'][index] as LiquidNavItem['fx'],
-    }));
     const activeNavIndex = mainNavItems.findIndex((item) =>
         isCurrentUrl(item.href),
     );
@@ -185,21 +172,17 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                     </Link>
 
                     {/* Desktop Navigation */}
-                    <div className="ml-6 hidden h-full items-center space-x-6 lg:flex">
-                        <LiquidNavbar
-                            items={liquidNavItems}
-                            active={activeNavIndex >= 0 ? activeNavIndex : 0}
-                            onChange={(index) => {
-                                const item = mainNavItems[index];
-
-                                if (item) {
-                                    router.visit(item.href);
-                                }
-                            }}
-                            compact={false}
-                            tone="dark"
-                            className="shadow-sm"
-                        />
+                    <div className="ml-6 hidden h-full items-center gap-1 lg:flex">
+                        {mainNavItems.map((item, index) => (
+                            <Link
+                                key={item.title}
+                                href={item.href}
+                                className={`inline-flex h-10 items-center gap-2 rounded-md px-3 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground ${index === activeNavIndex ? 'bg-accent text-accent-foreground' : 'text-muted-foreground'}`}
+                            >
+                                {item.icon && <item.icon className="size-4" />}
+                                {item.title}
+                            </Link>
+                        ))}
                     </div>
 
                     <div className="ml-auto flex items-center space-x-2">

@@ -62,4 +62,23 @@ class DerivacionNotificationService
             derivacionId: $derivacion->id,
         ));
     }
+
+    public function notificarCancelacion(DerivacionCaso $derivacion, User $actor): void
+    {
+        $derivacion->loadMissing(['solicitante', 'destinatario', 'legajo']);
+
+        $mensaje = "La derivación del legajo {$derivacion->legajo->numero_legajo} fue cancelada por {$actor->name}.";
+
+        collect([$derivacion->solicitante, $derivacion->destinatario])
+            ->filter(fn (?User $usuario): bool => $usuario !== null && $usuario->id !== $actor->id)
+            ->unique('id')
+            ->each(fn (User $usuario) => $usuario->notify(new DerivacionCasoNotification(
+                evento: 'derivacion_cancelada',
+                titulo: 'Derivación cancelada',
+                mensaje: $mensaje,
+                url: route('legajos.show', $derivacion->legajo),
+                legajoId: $derivacion->legajo_id,
+                derivacionId: $derivacion->id,
+            )));
+    }
 }
