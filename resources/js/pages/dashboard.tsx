@@ -15,10 +15,13 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
+import { NotificationCenter } from '@/components/notification-center';
 import agenda from '@/routes/agenda';
 import estadisticasRoutes from '@/routes/estadisticas';
+import legajosRoutes from '@/routes/legajos';
 import mailbox from '@/routes/mailbox';
 import tareas from '@/routes/tareas';
+import type { NotificationItem } from '@/types';
 
 interface PersonaReciente {
     id: number;
@@ -157,8 +160,10 @@ export default function Dashboard({
     personasRecientes,
     legajosRecientes,
 }: DashboardProps) {
-    const { auth, can } = usePage<{
+    const { auth, can, notificaciones, notificacionesNoLeidas } = usePage<{
         auth: { user: AuthUser | null };
+        notificaciones: NotificationItem[];
+        notificacionesNoLeidas: number;
         can: {
             accessMailbox: boolean;
             accessStatistics: boolean;
@@ -211,6 +216,11 @@ export default function Dashboard({
                         </div>
 
                         <div className="flex items-center gap-4">
+                            <NotificationCenter
+                                initialNotifications={notificaciones}
+                                initialUnreadCount={notificacionesNoLeidas}
+                                placement="dashboard"
+                            />
                             <span
                                 className="hidden text-sm font-medium text-[#2C4A5E]/70 sm:inline"
                                 style={{ fontFamily: FONT_BODY }}
@@ -250,12 +260,12 @@ export default function Dashboard({
                         </p>
                         <div className="flex gap-2">
                             <Link
-                                href="/personas/nueva"
+                                href={legajosRoutes.create.url()}
                                 className="inline-flex items-center gap-2 rounded-md bg-[#2C4A5E] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#1F394B]"
                                 style={{ fontFamily: FONT_BODY }}
                             >
                                 <Plus size={16} />
-                                Nueva persona
+                                Nuevo legajo
                             </Link>
                             <Link
                                 href="/legajos"
@@ -474,11 +484,11 @@ export default function Dashboard({
                                     </p>
                                 </div>
                                 <Link
-                                    href="/legajos/create"
+                                    href={legajosRoutes.create.url()}
                                     className="shrink-0 text-xs font-semibold text-[#2C4A5E] underline-offset-4 hover:underline"
                                     style={{ fontFamily: FONT_BODY }}
                                 >
-                                    Abrir legajo
+                                    Nuevo legajo
                                 </Link>
                             </div>
 
