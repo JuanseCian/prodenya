@@ -38,6 +38,36 @@ test('a coordinator can create a task and the assignee can complete it', functio
     expect($tarea->fresh()->completada_en)->not->toBeNull();
 });
 
+test('a regular user can only create and see tasks assigned to themselves', function () {
+    $usuario = User::factory()->create(['rol_id' => 5]);
+    $otroUsuario = User::factory()->create(['rol_id' => 5]);
+
+    $this->actingAs($usuario)
+        ->post(route('tareas.store'), [
+            'titulo' => 'Tarea propia',
+            'prioridad' => 'normal',
+            'asignado_a' => $otroUsuario->id,
+        ])
+        ->assertRedirect();
+
+    $tareaPropia = Tarea::where('titulo', 'Tarea propia')->firstOrFail();
+    expect($tareaPropia->asignado_a)->toBe($usuario->id);
+
+    $tareaAjena = Tarea::create([
+        'titulo' => 'Tarea ajena',
+        'prioridad' => 'normal',
+        'asignado_a' => $otroUsuario->id,
+        'creado_por' => $otroUsuario->id,
+        'estado' => 'pendiente',
+    ]);
+
+    $this->actingAs($usuario)
+        ->getJson(route('tareas.index'))
+        ->assertOk()
+        ->assertJsonFragment(['titulo' => 'Tarea propia'])
+        ->assertJsonMissing(['titulo' => $tareaAjena->titulo]);
+});
+
 test('a professional can schedule an event with external participants', function () {
     $profesional = User::factory()->create(['rol_id' => 5]);
 
