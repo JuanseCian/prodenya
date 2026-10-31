@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -92,6 +93,16 @@ class Legajo extends Model
     public function documentos(): HasMany
     {
         return $this->hasMany(Documento::class, 'legajo_id');
+    }
+
+    public function cuds(): HasMany
+    {
+        return $this->hasMany(CudCertificado::class, 'legajo_id');
+    }
+
+    public function cudActual(): HasOne
+    {
+        return $this->hasOne(CudCertificado::class, 'legajo_id')->where('activo', true);
     }
 
     public function intervenciones(): HasMany

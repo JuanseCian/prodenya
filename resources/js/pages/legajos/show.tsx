@@ -304,6 +304,15 @@ export default function LegajoShow({
                                     <Pencil size={15} />
                                     Editar
                                 </Link>
+                                <Link
+                                    href={legajosRoutes.documentacion.url(
+                                        legajo.id,
+                                    )}
+                                    className="inline-flex h-10 items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-4 text-sm font-semibold text-white transition hover:bg-white/15"
+                                >
+                                    <FileText size={15} />
+                                    Documentación
+                                </Link>
                                 <a
                                     href={legajosRoutes.estadisticas.url(
                                         legajo.id,

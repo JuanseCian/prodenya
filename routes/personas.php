@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\CudController;
 use App\Http\Controllers\DerivacionCasoController;
 use App\Http\Controllers\GrupoFamiliarController;
 use App\Http\Controllers\IntervencionController;
@@ -20,6 +21,13 @@ Route::middleware(['auth'])->group(function () {
         Route::put('/legajos/{legajo}', [LegajoController::class, 'update'])->name('legajos.update')->whereNumber('legajo');
         Route::patch('/legajos/{legajo}/cerrar', [LegajoController::class, 'cerrar'])->name('legajos.cerrar')->whereNumber('legajo');
         Route::patch('/legajos/{legajo}/reabrir', [LegajoController::class, 'reabrir'])->name('legajos.reabrir')->whereNumber('legajo');
+    });
+
+    Route::middleware('rol:admin,coordinador')->group(function () {
+        Route::post('/legajos/{legajo}/documentacion/cud', [CudController::class, 'store'])
+            ->name('legajos.cud.store')->whereNumber('legajo');
+        Route::delete('/legajos/{legajo}/documentacion/cud/archivos/{cudArchivo}', [CudController::class, 'deleteFile'])
+            ->name('legajos.cud.archivos.eliminar')->whereNumber(['legajo', 'cudArchivo']);
     });
 
     Route::middleware('rol:admin,operador,coordinador,profesional')->group(function () {
@@ -61,6 +69,10 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/mayores-18', [LegajoController::class, 'mayores18'])->name('mayores18.index');
         Route::get('/legajos/{legajo}/estadisticas', [LegajoController::class, 'estadisticas'])
             ->name('legajos.estadisticas')->whereNumber('legajo');
+        Route::get('/legajos/{legajo}/documentacion', [CudController::class, 'show'])
+            ->name('legajos.documentacion')->whereNumber('legajo');
+        Route::get('/legajos/{legajo}/documentacion/cud/archivos/{cudArchivo}', [CudController::class, 'download'])
+            ->name('legajos.cud.archivos.descargar')->whereNumber(['legajo', 'cudArchivo']);
         Route::get('/legajos/{legajo}', [LegajoController::class, 'show'])->name('legajos.show')->whereNumber('legajo');
         Route::get('/legajos/{legajo}/previsualizar-word', [LegajoController::class, 'previsualizarWord'])
             ->name('legajos.previsualizar-word')->whereNumber('legajo');
