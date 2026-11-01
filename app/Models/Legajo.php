@@ -17,6 +17,22 @@ class Legajo extends Model
 {
     use Auditable, RegistraAutor;
 
+    /**
+     * Secciones de la vista de legajo que el administrador puede ocultar
+     * por usuario (ver {@see User::puedeVerSeccionLegajo()}).
+     *
+     * @var array<string, string>
+     */
+    public const SECCIONES = [
+        'persona' => 'Datos de la persona',
+        'seguimiento' => 'Seguimiento del caso',
+        'situacion' => 'Situación y problemáticas',
+        'vinculos' => 'Vínculos familiares',
+        'intervenciones' => 'Intervenciones y registros',
+        'derivaciones' => 'Derivaciones y responsables',
+        'estadisticas' => 'Estadísticas del legajo',
+    ];
+
     protected $table = 'legajos';
 
     const CREATED_AT = 'creado_en';

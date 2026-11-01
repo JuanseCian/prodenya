@@ -153,8 +153,10 @@ class LegajoController extends Controller
         return redirect()->route('legajos.index');
     }
 
-    public function estadisticas(Legajo $legajo): Response
+    public function estadisticas(Request $request, Legajo $legajo): Response
     {
+        abort_unless($request->user()->puedeVerSeccionLegajo('estadisticas'), 403, 'No tenés permiso para ver las estadísticas de este legajo.');
+
         $legajo->load(['persona', 'intervenciones.tipo', 'derivaciones']);
 
         return Inertia::render('legajos/estadisticas', [
@@ -181,8 +183,19 @@ class LegajoController extends Controller
             'derivaciones.solicitante',
             'responsablesActivos.usuario.rol',
         ]);
-        $puedeVerVinculos = $request->user()->tieneRol('admin', 'coordinador', 'profesional', 'administrativo');
-        $puedeGestionarDerivaciones = $request->user()->tieneRol(
+        $usuario = $request->user();
+        $secciones = [
+            'persona' => $usuario->puedeVerSeccionLegajo('persona'),
+            'seguimiento' => $usuario->puedeVerSeccionLegajo('seguimiento'),
+            'situacion' => $usuario->puedeVerSeccionLegajo('situacion'),
+            'vinculos' => $usuario->tieneRol('admin', 'coordinador', 'profesional', 'administrativo')
+                && $usuario->puedeVerSeccionLegajo('vinculos'),
+            'intervenciones' => $usuario->puedeVerSeccionLegajo('intervenciones'),
+            'derivaciones' => $usuario->puedeVerSeccionLegajo('derivaciones'),
+            'estadisticas' => $usuario->puedeVerSeccionLegajo('estadisticas'),
+        ];
+        $puedeVerVinculos = $secciones['vinculos'];
+        $puedeGestionarDerivaciones = $secciones['derivaciones'] && $usuario->tieneRol(
             'admin',
             'operador',
             'oficios',
@@ -247,27 +260,28 @@ class LegajoController extends Controller
                 'numero_legajo' => $legajo->numero_legajo,
                 'nivel_riesgo' => $legajo->nivel_riesgo,
                 'estado' => $legajo->estado,
-                'origen_derivacion' => $legajo->origen_derivacion,
-                'observaciones' => $legajo->observaciones,
-                'fecha_apertura' => $legajo->fecha_apertura?->format('d/m/Y'),
-                'profesional' => $legajo->profesional?->name,
-                'problematicas' => $legajo->problematicas->pluck('nombre')->values(),
-                'persona' => [
+                'origen_derivacion' => $secciones['seguimiento'] ? $legajo->origen_derivacion : null,
+                'observaciones' => $secciones['situacion'] ? $legajo->observaciones : null,
+                'fecha_apertura' => $secciones['seguimiento'] ? $legajo->fecha_apertura?->format('d/m/Y') : null,
+                'profesional' => $secciones['seguimiento'] ? $legajo->profesional?->name : null,
+                'problematicas' => $secciones['situacion'] ? $legajo->problematicas->pluck('nombre')->values() : [],
+                'persona' => $secciones['persona'] ? [
                     'id' => $legajo->persona->id,
                     'nombre_completo' => "{$legajo->persona->apellido}, {$legajo->persona->nombre}",
                     'dni' => $legajo->persona->dni,
                     'edad' => $legajo->persona->fecha_nacimiento?->age,
-                ],
+                ] : null,
             ],
+            'secciones' => $secciones,
             'status' => session('status'),
             'usuarioActualId' => $request->user()->id,
-            'puedeGestionarIntervenciones' => $request->user()->tieneRol('admin', 'operador'),
+            'puedeGestionarIntervenciones' => $secciones['intervenciones'] && $request->user()->tieneRol('admin', 'operador'),
             'puedeGestionarDerivaciones' => $puedeGestionarDerivaciones,
             'responsablesDisponibles' => $puedeGestionarDerivaciones ? $this->responsablesActivos() : [],
             'puedeVerVinculos' => $puedeVerVinculos,
             'vinculos' => $vinculos,
             'personasDisponibles' => $personasDisponibles,
-            'intervenciones' => $legajo->intervenciones->map(fn (Intervencion $intervencion) => [
+            'intervenciones' => $secciones['intervenciones'] ? $legajo->intervenciones->map(fn (Intervencion $intervencion) => [
                 'id' => $intervencion->id,
                 'fecha' => $intervencion->fecha_intervencion?->format('d/m/Y'),
                 'hora' => $intervencion->hora_intervencion,
@@ -281,16 +295,16 @@ class LegajoController extends Controller
                 'firma_entrevistado_nombre' => $intervencion->firma_entrevistado_nombre,
                 'firma_entrevistado_aclaracion' => $intervencion->firma_entrevistado_aclaracion,
                 'tiene_firma_entrevistado' => filled($intervencion->firma_entrevistado_archivo_path),
-            ])->values(),
-            'responsables' => $legajo->responsablesActivos->map(fn ($responsable) => [
+            ])->values() : [],
+            'responsables' => $secciones['derivaciones'] ? $legajo->responsablesActivos->map(fn ($responsable) => [
                 'id' => $responsable->id,
                 'usuario_id' => $responsable->usuario_id,
                 'nombre' => $responsable->usuario?->name,
                 'profesion' => $responsable->usuario?->profesion,
                 'rol' => $responsable->usuario?->rol?->nombre,
                 'es_principal' => $responsable->es_principal,
-            ])->values(),
-            'derivaciones' => $legajo->derivaciones->map(fn ($derivacion) => [
+            ])->values() : [],
+            'derivaciones' => $secciones['derivaciones'] ? $legajo->derivaciones->map(fn ($derivacion) => [
                 'id' => $derivacion->id,
                 'estado' => $derivacion->estado,
                 'modo' => $derivacion->modo,
@@ -301,8 +315,8 @@ class LegajoController extends Controller
                 'destinatario' => $derivacion->destinatario?->name,
                 'solicitante' => $derivacion->solicitante?->name,
                 'motivo_rechazo' => $derivacion->motivo_rechazo,
-            ])->values(),
-            'estadisticas' => $this->estadisticasDelLegajo($legajo),
+            ])->values() : [],
+            'estadisticas' => $secciones['estadisticas'] ? $this->estadisticasDelLegajo($legajo) : null,
         ]);
     }
 

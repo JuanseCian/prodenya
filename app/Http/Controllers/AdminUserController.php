@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\AuditoriaEvento;
+use App\Models\Legajo;
 use App\Models\Rol;
 use App\Models\User;
 use App\Notifications\RegistroUsuarioNotification;
@@ -63,6 +64,7 @@ class AdminUserController extends Controller
             'usuarios' => $usuarios,
             'roles' => $roles,
             'profesiones' => User::PROFESIONES,
+            'seccionesLegajo' => Legajo::SECCIONES,
             'seleccionado' => $seleccionado,
             'actividad' => $actividad,
             'buscar' => $buscar,
@@ -177,6 +179,35 @@ class AdminUserController extends Controller
         return back()->with('success', 'Rol actualizado correctamente.');
     }
 
+    /**
+     * Debido a que los legajos contienen información sensible de menores, el
+     * administrador puede restringir por usuario qué secciones del legajo
+     * puede ver (persona, intervenciones, derivaciones, etc.).
+     */
+    public function updateLegajoSecciones(Request $request, User $user): RedirectResponse
+    {
+        abort_unless($request->user()->esAdmin(), 403, 'Solo un administrador puede configurar el acceso al legajo.');
+        abort_if($user->esAdmin(), 422, 'Los administradores siempre tienen acceso completo al legajo.');
+        abort_if($user->estado_cuenta !== User::ESTADO_APROBADO, 422, 'Solo se puede configurar el acceso de una cuenta aprobada.');
+
+        $datos = $request->validate([
+            'acceso_completo' => ['nullable', 'boolean'],
+            'secciones' => ['array'],
+            'secciones.*' => [Rule::in(array_keys(Legajo::SECCIONES))],
+        ]);
+
+        $antes = $this->snapshot($user);
+        $accesoCompleto = $request->boolean('acceso_completo');
+
+        $user->forceFill([
+            'secciones_legajo_visibles' => $accesoCompleto ? null : array_values($datos['secciones'] ?? []),
+        ])->saveQuietly();
+
+        $this->audit('secciones_legajo_actualizadas', $user, $antes);
+
+        return back()->with('success', 'Se actualizaron las secciones del legajo visibles para el usuario.');
+    }
+
     public function suspend(Request $request, User $user): RedirectResponse
     {
         $this->authorizeManagement($request->user(), $user);
@@ -284,7 +315,7 @@ class AdminUserController extends Controller
 
     private function snapshot(User $user): array
     {
-        return $user->only(['estado_cuenta', 'activo', 'rol_id', 'profesion', 'motivo_rechazo', 'motivo_suspension']);
+        return $user->only(['estado_cuenta', 'activo', 'rol_id', 'profesion', 'motivo_rechazo', 'motivo_suspension', 'secciones_legajo_visibles']);
     }
 
     /**

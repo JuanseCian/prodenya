@@ -35,6 +35,7 @@ Route::middleware(['auth', 'verified'])
         Route::middleware('rol:admin')->group(function () {
             Route::get('home', AdminHomeController::class)->name('home');
             Route::get('auditoria', [AuditoriaController::class, 'index'])->name('auditoria.index');
+            Route::put('usuarios/{user}/secciones-legajo', [AdminUserController::class, 'updateLegajoSecciones'])->whereNumber('user')->name('usuarios.secciones-legajo');
         });
 
         Route::middleware('rol:admin,coordinador')->group(function () {

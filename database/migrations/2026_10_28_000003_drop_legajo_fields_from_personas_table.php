@@ -92,6 +92,7 @@ return new class extends Migration
             });
         }
 
+        DB::statement('DROP VIEW IF EXISTS vista_personas_completa');
         $this->recrearVistaPersonasCompleta();
     }
 

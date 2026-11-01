@@ -176,6 +176,32 @@
 
                 @if ($seleccionado->estado_cuenta === 'aprobado')
                     <section class="users-detail-section"><h3>Permisos</h3><div class="users-action-box"><h4>Cambiar rol</h4><form method="POST" action="{{ route('admin.usuarios.rol', $seleccionado) }}" class="grid gap-3" data-profession-role-form>@csrf @method('PATCH')<label class="grid gap-1 text-xs font-bold text-slate-600">Rol<select name="rol_id" required class="min-w-0 rounded-lg border border-slate-200 px-3 py-2 text-sm" data-profession-role>@foreach ($roles as $role)<option value="{{ $role->id }}" data-role-name="{{ $role->nombre }}" @selected($seleccionado->rol_id === $role->id)>{{ ucfirst($role->nombre) }}</option>@endforeach</select></label><label class="grid gap-1 text-xs font-bold text-slate-600" data-profession-field>Profesión<select name="profesion" class="min-w-0 rounded-lg border border-slate-200 px-3 py-2 text-sm" data-profession-select><option value="">Seleccionar profesión</option>@foreach ($profesiones as $profesion)<option value="{{ $profesion }}" @selected($seleccionado->profesion === $profesion)>{{ $profesion }}</option>@endforeach</select><span class="text-[11px] font-normal text-slate-400">Obligatoria para el rol Profesional.</span></label><button class="rounded-lg bg-indigo-600 px-3 py-2 text-xs font-bold text-white hover:bg-indigo-700">Guardar</button></form></div></section>
+
+                    <section class="users-detail-section">
+                        <h3>Secciones del legajo</h3>
+                        @if ($seleccionado->rol?->nombre === 'admin')
+                            <p class="text-xs text-slate-400">Por ser administrador, este usuario siempre ve todas las secciones del legajo.</p>
+                        @else
+                            <p class="mb-3 text-[11px] font-normal text-slate-400">Los legajos contienen información sensible de menores. Elegí qué partes puede ver este usuario; por defecto ve todo.</p>
+                            <form method="POST" action="{{ route('admin.usuarios.secciones-legajo', $seleccionado) }}" class="users-action-box" data-secciones-legajo-form>
+                                @csrf
+                                @method('PUT')
+                                <label class="flex items-center gap-2 text-xs font-bold text-slate-600">
+                                    <input type="checkbox" name="acceso_completo" value="1" data-secciones-toggle @checked($seleccionado->secciones_legajo_visibles === null)>
+                                    Acceso completo (todas las secciones)
+                                </label>
+                                <div class="mt-3 grid gap-2" data-secciones-lista>
+                                    @foreach ($seccionesLegajo as $clave => $etiqueta)
+                                        <label class="flex items-center gap-2 text-xs text-slate-600">
+                                            <input type="checkbox" name="secciones[]" value="{{ $clave }}" data-seccion-item @checked(in_array($clave, $seleccionado->secciones_legajo_visibles ?? [], true))>
+                                            {{ $etiqueta }}
+                                        </label>
+                                    @endforeach
+                                </div>
+                                <button class="mt-3 rounded-lg bg-indigo-600 px-3 py-2 text-xs font-bold text-white hover:bg-indigo-700">Guardar secciones</button>
+                            </form>
+                        @endif
+                    </section>
                 @endif
 
                 @if ($seleccionado->motivo_suspension)
@@ -214,6 +240,17 @@
                     };
 
                     role?.addEventListener('change', refresh);
+                    refresh();
+                });
+
+                document.querySelectorAll('[data-secciones-legajo-form]').forEach((form) => {
+                    const toggle = form.querySelector('[data-secciones-toggle]');
+                    const items = form.querySelectorAll('[data-seccion-item]');
+                    const refresh = () => {
+                        items.forEach((item) => { item.disabled = Boolean(toggle?.checked); });
+                    };
+
+                    toggle?.addEventListener('change', refresh);
                     refresh();
                 });
             })();

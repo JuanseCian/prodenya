@@ -123,8 +123,19 @@ interface Derivacion {
     motivo_rechazo: string | null;
 }
 
+interface Secciones {
+    persona: boolean;
+    seguimiento: boolean;
+    situacion: boolean;
+    vinculos: boolean;
+    intervenciones: boolean;
+    derivaciones: boolean;
+    estadisticas: boolean;
+}
+
 interface Props {
     legajo: LegajoDetalle;
+    secciones: Secciones;
     status?: string | null;
     intervenciones?: Intervencion[];
     puedeGestionarIntervenciones?: boolean;
@@ -143,6 +154,7 @@ const MAX_RESPONSABLES_ACTIVOS = 3;
 
 export default function LegajoShow({
     legajo,
+    secciones,
     status,
     intervenciones = [],
     puedeGestionarIntervenciones = false,
@@ -157,7 +169,8 @@ export default function LegajoShow({
 }: Props) {
     const errors = (usePage().props.errors ?? {}) as Record<string, string>;
     const cerrado = legajo.estado === 'Cerrado';
-    const alcanzoMaximoResponsables = responsables.length >= MAX_RESPONSABLES_ACTIVOS;
+    const alcanzoMaximoResponsables =
+        responsables.length >= MAX_RESPONSABLES_ACTIVOS;
     const [derivacionesOpen, setDerivacionesOpen] = useState(false);
     const vinculoForm = useForm({
         persona_relacionada_id: '',
@@ -172,7 +185,10 @@ export default function LegajoShow({
     });
 
     useEffect(() => {
-        if (alcanzoMaximoResponsables && derivacionForm.data.modo === 'adicional') {
+        if (
+            alcanzoMaximoResponsables &&
+            derivacionForm.data.modo === 'adicional'
+        ) {
             derivacionForm.setData('modo', 'reemplazo');
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -214,13 +230,10 @@ export default function LegajoShow({
 
     const crearDerivacion = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-        derivacionForm.post(
-            legajosRoutes.derivaciones.store.url(legajo.id),
-            {
-                preserveScroll: true,
-                onSuccess: () => derivacionForm.reset(),
-            },
-        );
+        derivacionForm.post(legajosRoutes.derivaciones.store.url(legajo.id), {
+            preserveScroll: true,
+            onSuccess: () => derivacionForm.reset(),
+        });
     };
 
     const actualizarDerivacion = (
@@ -282,8 +295,11 @@ export default function LegajoShow({
                                     </div>
                                     <p className="mt-2 flex items-center gap-2 text-sm text-white/70">
                                         <UserRound size={15} />
-                                        {legajo.persona?.nombre_completo ??
-                                            'Persona sin asociar'}
+                                        {secciones.persona
+                                            ? (legajo.persona
+                                                  ?.nombre_completo ??
+                                              'Persona sin asociar')
+                                            : 'Datos reservados para tu usuario'}
                                     </p>
                                     <div className="mt-4 flex flex-wrap items-center gap-2">
                                         <NivelBadge
@@ -304,25 +320,31 @@ export default function LegajoShow({
                                     <Pencil size={15} />
                                     Editar
                                 </Link>
-                                <a
-                                    href={legajosRoutes.estadisticas.url(
-                                        legajo.id,
-                                    )}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="inline-flex h-10 items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-4 text-sm font-semibold text-white transition hover:bg-white/15"
-                                >
-                                    <BarChart3 size={15} />
-                                    Estadísticas
-                                </a>
-                                <button
-                                    type="button"
-                                    onClick={() => setDerivacionesOpen(true)}
-                                    className="inline-flex h-10 items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-4 text-sm font-semibold text-white transition hover:bg-white/15"
-                                >
-                                    <Send size={15} />
-                                    Derivaciones
-                                </button>
+                                {secciones.estadisticas && (
+                                    <a
+                                        href={legajosRoutes.estadisticas.url(
+                                            legajo.id,
+                                        )}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="inline-flex h-10 items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-4 text-sm font-semibold text-white transition hover:bg-white/15"
+                                    >
+                                        <BarChart3 size={15} />
+                                        Estadísticas
+                                    </a>
+                                )}
+                                {secciones.derivaciones && (
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            setDerivacionesOpen(true)
+                                        }
+                                        className="inline-flex h-10 items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-4 text-sm font-semibold text-white transition hover:bg-white/15"
+                                    >
+                                        <Send size={15} />
+                                        Derivaciones
+                                    </button>
+                                )}
                                 <button
                                     type="button"
                                     onClick={cambiarEstado}
@@ -341,45 +363,55 @@ export default function LegajoShow({
                         </div>
 
                         <div className="mt-7 grid gap-px overflow-hidden rounded-2xl border border-white/10 bg-white/10 sm:grid-cols-2 lg:grid-cols-4">
-                            <div className="bg-[#173247]/80 px-4 py-3">
-                                <p className="text-[0.65rem] font-bold tracking-[0.12em] text-white/45 uppercase">
-                                    Documento
-                                </p>
-                                <p className="mt-1 truncate font-mono text-sm font-semibold text-white">
-                                    DNI {legajo.persona?.dni ?? '—'}
-                                </p>
-                            </div>
-                            <div className="bg-[#173247]/80 px-4 py-3">
-                                <p className="text-[0.65rem] font-bold tracking-[0.12em] text-white/45 uppercase">
-                                    Edad
-                                </p>
-                                <p className="mt-1 text-sm font-semibold text-white">
-                                    {legajo.persona?.edad !== null &&
-                                    legajo.persona?.edad !== undefined
-                                        ? `${legajo.persona.edad} años`
-                                        : 'Sin informar'}
-                                </p>
-                            </div>
-                            <div className="bg-[#173247]/80 px-4 py-3">
-                                <p className="text-[0.65rem] font-bold tracking-[0.12em] text-white/45 uppercase">
-                                    Apertura
-                                </p>
-                                <p className="mt-1 flex items-center gap-1.5 text-sm font-semibold text-white">
-                                    <CalendarDays
-                                        size={14}
-                                        className="text-[#9BD2B3]"
-                                    />
-                                    {legajo.fecha_apertura ?? 'Sin fecha'}
-                                </p>
-                            </div>
-                            <div className="bg-[#173247]/80 px-4 py-3">
-                                <p className="text-[0.65rem] font-bold tracking-[0.12em] text-white/45 uppercase">
-                                    Responsable
-                                </p>
-                                <p className="mt-1 truncate text-sm font-semibold text-white">
-                                    {legajo.profesional ?? 'Sin asignar'}
-                                </p>
-                            </div>
+                            {secciones.persona && (
+                                <>
+                                    <div className="bg-[#173247]/80 px-4 py-3">
+                                        <p className="text-[0.65rem] font-bold tracking-[0.12em] text-white/45 uppercase">
+                                            Documento
+                                        </p>
+                                        <p className="mt-1 truncate font-mono text-sm font-semibold text-white">
+                                            DNI {legajo.persona?.dni ?? '—'}
+                                        </p>
+                                    </div>
+                                    <div className="bg-[#173247]/80 px-4 py-3">
+                                        <p className="text-[0.65rem] font-bold tracking-[0.12em] text-white/45 uppercase">
+                                            Edad
+                                        </p>
+                                        <p className="mt-1 text-sm font-semibold text-white">
+                                            {legajo.persona?.edad !== null &&
+                                            legajo.persona?.edad !== undefined
+                                                ? `${legajo.persona.edad} años`
+                                                : 'Sin informar'}
+                                        </p>
+                                    </div>
+                                </>
+                            )}
+                            {secciones.seguimiento && (
+                                <>
+                                    <div className="bg-[#173247]/80 px-4 py-3">
+                                        <p className="text-[0.65rem] font-bold tracking-[0.12em] text-white/45 uppercase">
+                                            Apertura
+                                        </p>
+                                        <p className="mt-1 flex items-center gap-1.5 text-sm font-semibold text-white">
+                                            <CalendarDays
+                                                size={14}
+                                                className="text-[#9BD2B3]"
+                                            />
+                                            {legajo.fecha_apertura ??
+                                                'Sin fecha'}
+                                        </p>
+                                    </div>
+                                    <div className="bg-[#173247]/80 px-4 py-3">
+                                        <p className="text-[0.65rem] font-bold tracking-[0.12em] text-white/45 uppercase">
+                                            Responsable
+                                        </p>
+                                        <p className="mt-1 truncate text-sm font-semibold text-white">
+                                            {legajo.profesional ??
+                                                'Sin asignar'}
+                                        </p>
+                                    </div>
+                                </>
+                            )}
                         </div>
                     </div>
                 </section>
@@ -390,125 +422,135 @@ export default function LegajoShow({
                 </div>
 
                 <div className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
-                    <Card className="rounded-2xl border-[#DCE3DF] !bg-white py-0 shadow-[0_14px_35px_rgba(23,50,71,0.06)]">
-                        <CardHeader className="border-b border-[#E4E8E5] bg-[#F8FAF9] px-5 py-4">
-                            <div className="flex items-center gap-2">
-                                <UserRound
-                                    size={17}
-                                    className="text-[#6B8F71]"
-                                />
-                                <CardTitle
-                                    className={tituloCard}
-                                    style={{ fontFamily: FONT_HEADING }}
-                                >
-                                    Persona titular
-                                </CardTitle>
-                            </div>
-                            <p className="mt-1 text-sm text-[#2B2F36]/60">
-                                Identificación de la persona asociada al caso.
-                            </p>
-                        </CardHeader>
-                        <CardContent className="px-5 py-5">
-                            {legajo.persona ? (
+                    {secciones.persona && (
+                        <Card className="rounded-2xl border-[#DCE3DF] !bg-white py-0 shadow-[0_14px_35px_rgba(23,50,71,0.06)]">
+                            <CardHeader className="border-b border-[#E4E8E5] bg-[#F8FAF9] px-5 py-4">
+                                <div className="flex items-center gap-2">
+                                    <UserRound
+                                        size={17}
+                                        className="text-[#6B8F71]"
+                                    />
+                                    <CardTitle
+                                        className={tituloCard}
+                                        style={{ fontFamily: FONT_HEADING }}
+                                    >
+                                        Persona titular
+                                    </CardTitle>
+                                </div>
+                                <p className="mt-1 text-sm text-[#2B2F36]/60">
+                                    Identificación de la persona asociada al
+                                    caso.
+                                </p>
+                            </CardHeader>
+                            <CardContent className="px-5 py-5">
+                                {legajo.persona ? (
+                                    <dl className="grid gap-4 sm:grid-cols-2">
+                                        <Dato etiqueta="Nombre">
+                                            <Link
+                                                href={`/personas/${legajo.persona.id}`}
+                                                className="font-semibold text-[#2C4A5E] underline"
+                                            >
+                                                {legajo.persona.nombre_completo}
+                                            </Link>
+                                        </Dato>
+                                        <Dato etiqueta="DNI">
+                                            {legajo.persona.dni}
+                                        </Dato>
+                                        <Dato etiqueta="Edad">
+                                            {legajo.persona.edad !== null
+                                                ? `${legajo.persona.edad} años`
+                                                : null}
+                                        </Dato>
+                                    </dl>
+                                ) : (
+                                    <p className="text-sm text-[#2B2F36]/60">
+                                        Sin persona asociada.
+                                    </p>
+                                )}
+                            </CardContent>
+                        </Card>
+                    )}
+
+                    {secciones.seguimiento && (
+                        <Card className="rounded-2xl border-[#DCE3DF] !bg-white py-0 shadow-[0_14px_35px_rgba(23,50,71,0.06)]">
+                            <CardHeader className="border-b border-[#E4E8E5] bg-[#F8FAF9] px-5 py-4">
+                                <div className="flex items-center gap-2">
+                                    <ShieldCheck
+                                        size={17}
+                                        className="text-[#6B8F71]"
+                                    />
+                                    <CardTitle
+                                        className={tituloCard}
+                                        style={{ fontFamily: FONT_HEADING }}
+                                    >
+                                        Seguimiento
+                                    </CardTitle>
+                                </div>
+                                <p className="mt-1 text-sm text-[#2B2F36]/60">
+                                    Estado operativo y responsable actual.
+                                </p>
+                            </CardHeader>
+                            <CardContent className="px-5 py-5">
                                 <dl className="grid gap-4 sm:grid-cols-2">
-                                    <Dato etiqueta="Nombre">
-                                        <Link
-                                            href={`/personas/${legajo.persona.id}`}
-                                            className="font-semibold text-[#2C4A5E] underline"
-                                        >
-                                            {legajo.persona.nombre_completo}
-                                        </Link>
+                                    <Dato etiqueta="Fecha de apertura">
+                                        {legajo.fecha_apertura}
                                     </Dato>
-                                    <Dato etiqueta="DNI">
-                                        {legajo.persona.dni}
+                                    <Dato etiqueta="Profesional asignado">
+                                        {legajo.profesional}
                                     </Dato>
-                                    <Dato etiqueta="Edad">
-                                        {legajo.persona.edad !== null
-                                            ? `${legajo.persona.edad} años`
-                                            : null}
+                                    <Dato etiqueta="Origen de la derivación">
+                                        {legajo.origen_derivacion}
                                     </Dato>
                                 </dl>
-                            ) : (
-                                <p className="text-sm text-[#2B2F36]/60">
-                                    Sin persona asociada.
+                            </CardContent>
+                        </Card>
+                    )}
+
+                    {secciones.situacion && (
+                        <Card className="rounded-2xl border-[#DCE3DF] !bg-white py-0 shadow-[0_14px_35px_rgba(23,50,71,0.06)] lg:col-span-2">
+                            <CardHeader className="border-b border-[#E4E8E5] bg-[#F8FAF9] px-5 py-4">
+                                <div className="flex items-center gap-2">
+                                    <MapPin
+                                        size={17}
+                                        className="text-[#6B8F71]"
+                                    />
+                                    <CardTitle
+                                        className={tituloCard}
+                                        style={{ fontFamily: FONT_HEADING }}
+                                    >
+                                        Situación del caso
+                                    </CardTitle>
+                                </div>
+                                <p className="mt-1 text-sm text-[#2B2F36]/60">
+                                    Contexto, problemáticas y notas relevantes
+                                    para la intervención.
                                 </p>
-                            )}
-                        </CardContent>
-                    </Card>
-
-                    <Card className="rounded-2xl border-[#DCE3DF] !bg-white py-0 shadow-[0_14px_35px_rgba(23,50,71,0.06)]">
-                        <CardHeader className="border-b border-[#E4E8E5] bg-[#F8FAF9] px-5 py-4">
-                            <div className="flex items-center gap-2">
-                                <ShieldCheck
-                                    size={17}
-                                    className="text-[#6B8F71]"
-                                />
-                                <CardTitle
-                                    className={tituloCard}
-                                    style={{ fontFamily: FONT_HEADING }}
-                                >
-                                    Seguimiento
-                                </CardTitle>
-                            </div>
-                            <p className="mt-1 text-sm text-[#2B2F36]/60">
-                                Estado operativo y responsable actual.
-                            </p>
-                        </CardHeader>
-                        <CardContent className="px-5 py-5">
-                            <dl className="grid gap-4 sm:grid-cols-2">
-                                <Dato etiqueta="Fecha de apertura">
-                                    {legajo.fecha_apertura}
-                                </Dato>
-                                <Dato etiqueta="Profesional asignado">
-                                    {legajo.profesional}
-                                </Dato>
-                                <Dato etiqueta="Origen de la derivación">
-                                    {legajo.origen_derivacion}
-                                </Dato>
-                            </dl>
-                        </CardContent>
-                    </Card>
-
-                    <Card className="rounded-2xl border-[#DCE3DF] !bg-white py-0 shadow-[0_14px_35px_rgba(23,50,71,0.06)] lg:col-span-2">
-                        <CardHeader className="border-b border-[#E4E8E5] bg-[#F8FAF9] px-5 py-4">
-                            <div className="flex items-center gap-2">
-                                <MapPin size={17} className="text-[#6B8F71]" />
-                                <CardTitle
-                                    className={tituloCard}
-                                    style={{ fontFamily: FONT_HEADING }}
-                                >
-                                    Situación del caso
-                                </CardTitle>
-                            </div>
-                            <p className="mt-1 text-sm text-[#2B2F36]/60">
-                                Contexto, problemáticas y notas relevantes para
-                                la intervención.
-                            </p>
-                        </CardHeader>
-                        <CardContent className="px-5 py-5">
-                            <dl className="grid gap-4 sm:grid-cols-2">
-                                <Dato etiqueta="Problemáticas">
-                                    {legajo.problematicas.length > 0 && (
-                                        <span className="flex flex-wrap gap-1.5">
-                                            {legajo.problematicas.map(
-                                                (nombre) => (
-                                                    <Badge
-                                                        key={nombre}
-                                                        className="border-0 bg-[#EDF3EF] text-[#2C4A5E]"
-                                                    >
-                                                        {nombre}
-                                                    </Badge>
-                                                ),
-                                            )}
-                                        </span>
-                                    )}
-                                </Dato>
-                                <Dato etiqueta="Observaciones">
-                                    {legajo.observaciones}
-                                </Dato>
-                            </dl>
-                        </CardContent>
-                    </Card>
+                            </CardHeader>
+                            <CardContent className="px-5 py-5">
+                                <dl className="grid gap-4 sm:grid-cols-2">
+                                    <Dato etiqueta="Problemáticas">
+                                        {legajo.problematicas.length > 0 && (
+                                            <span className="flex flex-wrap gap-1.5">
+                                                {legajo.problematicas.map(
+                                                    (nombre) => (
+                                                        <Badge
+                                                            key={nombre}
+                                                            className="border-0 bg-[#EDF3EF] text-[#2C4A5E]"
+                                                        >
+                                                            {nombre}
+                                                        </Badge>
+                                                    ),
+                                                )}
+                                            </span>
+                                        )}
+                                    </Dato>
+                                    <Dato etiqueta="Observaciones">
+                                        {legajo.observaciones}
+                                    </Dato>
+                                </dl>
+                            </CardContent>
+                        </Card>
+                    )}
 
                     {puedeVerVinculos && (
                         <Card className="border-[#DCE3DF] !bg-white py-0 shadow-[0_14px_35px_rgba(23,50,71,0.06)] lg:col-span-2">
@@ -675,151 +717,178 @@ export default function LegajoShow({
                         </Card>
                     )}
 
-                    <Dialog
-                        open={derivacionesOpen}
-                        onOpenChange={setDerivacionesOpen}
-                    >
-                        <DialogContent className="max-h-[90vh] overflow-y-auto border-[#DCE3DF] bg-[#FBFCFB] sm:max-w-2xl">
-                            <DialogHeader>
-                                <div className="flex items-center gap-2">
-                                    <Send
-                                        size={18}
-                                        className="text-[#6B8F71]"
-                                    />
-                                    <DialogTitle
-                                        className={tituloCard}
-                                        style={{ fontFamily: FONT_HEADING }}
-                                    >
-                                        Derivaciones y responsables
-                                    </DialogTitle>
-                                </div>
-                                <DialogDescription className="mt-1 text-sm text-[#2B2F36]/60">
-                                    Enviá el caso a otro profesional y conservá
-                                    el historial de decisiones.
-                                </DialogDescription>
-                            </DialogHeader>
-                            <div className="space-y-5 px-1 py-2">
-                                {responsables.length > 0 && (
-                                    <div className="overflow-x-auto rounded-xl border border-[#DCE3DF]">
-                                        <table className="w-full min-w-[560px] text-left text-sm">
-                                            <thead className="bg-[#F3F7F4] text-[0.68rem] font-bold tracking-[0.12em] text-[#6B8F71] uppercase">
-                                                <tr>
-                                                    <th className="px-4 py-3">
-                                                        Usuario
-                                                    </th>
-                                                    <th className="px-4 py-3">
-                                                        Profesión
-                                                    </th>
-                                                    <th className="px-4 py-3">
-                                                        Rol
-                                                    </th>
-                                                    <th className="px-4 py-3">
-                                                        Tipo
-                                                    </th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="divide-y divide-[#EEF0ED] bg-white">
-                                                {responsables.map(
-                                                    (responsable) => (
-                                                        <tr
-                                                            key={responsable.id}
-                                                        >
-                                                            <td className="px-4 py-3 font-semibold text-[#2C4A5E]">
-                                                                {responsable.nombre ??
-                                                                    'Usuario sin nombre'}
-                                                            </td>
-                                                            <td className="px-4 py-3 text-[#2B2F36]/75">
-                                                                {responsable.profesion ??
-                                                                    'Sin profesión'}
-                                                            </td>
-                                                            <td className="px-4 py-3 text-[#2B2F36]/75">
-                                                                {responsable.rol ??
-                                                                    'Sin rol'}
-                                                            </td>
-                                                            <td className="px-4 py-3">
-                                                                <Badge className="border-0 bg-[#EDF3EF] text-[#2C4A5E]">
-                                                                    {responsable.es_principal
-                                                                        ? 'Principal'
-                                                                        : 'Adicional'}
-                                                                </Badge>
-                                                            </td>
-                                                        </tr>
-                                                    ),
-                                                )}
-                                            </tbody>
-                                        </table>
+                    {secciones.derivaciones && (
+                        <Dialog
+                            open={derivacionesOpen}
+                            onOpenChange={setDerivacionesOpen}
+                        >
+                            <DialogContent className="max-h-[90vh] overflow-y-auto border-[#DCE3DF] bg-[#FBFCFB] sm:max-w-2xl">
+                                <DialogHeader>
+                                    <div className="flex items-center gap-2">
+                                        <Send
+                                            size={18}
+                                            className="text-[#6B8F71]"
+                                        />
+                                        <DialogTitle
+                                            className={tituloCard}
+                                            style={{ fontFamily: FONT_HEADING }}
+                                        >
+                                            Derivaciones y responsables
+                                        </DialogTitle>
                                     </div>
-                                )}
+                                    <DialogDescription className="mt-1 text-sm text-[#2B2F36]/60">
+                                        Enviá el caso a otro profesional y
+                                        conservá el historial de decisiones.
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <div className="space-y-5 px-1 py-2">
+                                    {responsables.length > 0 && (
+                                        <div className="overflow-x-auto rounded-xl border border-[#DCE3DF]">
+                                            <table className="w-full min-w-[560px] text-left text-sm">
+                                                <thead className="bg-[#F3F7F4] text-[0.68rem] font-bold tracking-[0.12em] text-[#6B8F71] uppercase">
+                                                    <tr>
+                                                        <th className="px-4 py-3">
+                                                            Usuario
+                                                        </th>
+                                                        <th className="px-4 py-3">
+                                                            Profesión
+                                                        </th>
+                                                        <th className="px-4 py-3">
+                                                            Rol
+                                                        </th>
+                                                        <th className="px-4 py-3">
+                                                            Tipo
+                                                        </th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-[#EEF0ED] bg-white">
+                                                    {responsables.map(
+                                                        (responsable) => (
+                                                            <tr
+                                                                key={
+                                                                    responsable.id
+                                                                }
+                                                            >
+                                                                <td className="px-4 py-3 font-semibold text-[#2C4A5E]">
+                                                                    {responsable.nombre ??
+                                                                        'Usuario sin nombre'}
+                                                                </td>
+                                                                <td className="px-4 py-3 text-[#2B2F36]/75">
+                                                                    {responsable.profesion ??
+                                                                        'Sin profesión'}
+                                                                </td>
+                                                                <td className="px-4 py-3 text-[#2B2F36]/75">
+                                                                    {responsable.rol ??
+                                                                        'Sin rol'}
+                                                                </td>
+                                                                <td className="px-4 py-3">
+                                                                    <Badge className="border-0 bg-[#EDF3EF] text-[#2C4A5E]">
+                                                                        {responsable.es_principal
+                                                                            ? 'Principal'
+                                                                            : 'Adicional'}
+                                                                    </Badge>
+                                                                </td>
+                                                            </tr>
+                                                        ),
+                                                    )}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    )}
 
-                                {derivaciones.length > 0 ? (
-                                    <div className="space-y-3">
-                                        {derivaciones.map((derivacion) => (
-                                            <article
-                                                key={derivacion.id}
-                                                className="rounded-lg border border-[#DCE3DF] bg-[#FBFCFB] p-4"
-                                            >
-                                                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                                                    <div>
-                                                        <div className="flex flex-wrap items-center gap-2">
-                                                            <Badge className="border-0 bg-[#F2F7FB] text-[#35627A]">
+                                    {derivaciones.length > 0 ? (
+                                        <div className="space-y-3">
+                                            {derivaciones.map((derivacion) => (
+                                                <article
+                                                    key={derivacion.id}
+                                                    className="rounded-lg border border-[#DCE3DF] bg-[#FBFCFB] p-4"
+                                                >
+                                                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                                                        <div>
+                                                            <div className="flex flex-wrap items-center gap-2">
+                                                                <Badge className="border-0 bg-[#F2F7FB] text-[#35627A]">
+                                                                    {
+                                                                        derivacion.estado
+                                                                    }
+                                                                </Badge>
+                                                                <span className="text-xs text-[#697586]">
+                                                                    {
+                                                                        derivacion.modo
+                                                                    }
+                                                                </span>
+                                                            </div>
+                                                            <p className="mt-2 text-sm font-semibold text-[#173247]">
                                                                 {
-                                                                    derivacion.estado
-                                                                }
-                                                            </Badge>
-                                                            <span className="text-xs text-[#697586]">
-                                                                {
-                                                                    derivacion.modo
-                                                                }
-                                                            </span>
-                                                        </div>
-                                                        <p className="mt-2 text-sm font-semibold text-[#173247]">
-                                                            {derivacion.motivo}
-                                                        </p>
-                                                        <p className="mt-1 text-xs text-[#697586]">
-                                                            Para{' '}
-                                                            {derivacion.destinatario ??
-                                                                'sin destinatario'}{' '}
-                                                            · solicitó{' '}
-                                                            {derivacion.solicitante ??
-                                                                'sin datos'}
-                                                        </p>
-                                                        {derivacion.detalle && (
-                                                            <p className="mt-3 text-sm leading-6 whitespace-pre-line text-[#2B2F36]/75">
-                                                                {
-                                                                    derivacion.detalle
+                                                                    derivacion.motivo
                                                                 }
                                                             </p>
-                                                        )}
-                                                    </div>
-                                                    <div className="flex shrink-0 gap-2">
-                                                        {derivacion.estado ===
-                                                            'pendiente' &&
-                                                            derivacion.destinatario_id ===
-                                                                usuarioActualId && (
-                                                                <>
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() =>
-                                                                            actualizarDerivacion(
-                                                                                derivacion.id,
-                                                                                'aceptar',
-                                                                            )
-                                                                        }
-                                                                        className="inline-flex items-center gap-1.5 rounded-md border border-[#C7DED0] bg-[#F2F9F4] px-3 py-2 text-xs font-semibold text-[#397461]"
-                                                                    >
-                                                                        <CheckCircle2
-                                                                            size={
-                                                                                14
+                                                            <p className="mt-1 text-xs text-[#697586]">
+                                                                Para{' '}
+                                                                {derivacion.destinatario ??
+                                                                    'sin destinatario'}{' '}
+                                                                · solicitó{' '}
+                                                                {derivacion.solicitante ??
+                                                                    'sin datos'}
+                                                            </p>
+                                                            {derivacion.detalle && (
+                                                                <p className="mt-3 text-sm leading-6 whitespace-pre-line text-[#2B2F36]/75">
+                                                                    {
+                                                                        derivacion.detalle
+                                                                    }
+                                                                </p>
+                                                            )}
+                                                        </div>
+                                                        <div className="flex shrink-0 gap-2">
+                                                            {derivacion.estado ===
+                                                                'pendiente' &&
+                                                                derivacion.destinatario_id ===
+                                                                    usuarioActualId && (
+                                                                    <>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() =>
+                                                                                actualizarDerivacion(
+                                                                                    derivacion.id,
+                                                                                    'aceptar',
+                                                                                )
                                                                             }
-                                                                        />{' '}
-                                                                        Aceptar
-                                                                    </button>
+                                                                            className="inline-flex items-center gap-1.5 rounded-md border border-[#C7DED0] bg-[#F2F9F4] px-3 py-2 text-xs font-semibold text-[#397461]"
+                                                                        >
+                                                                            <CheckCircle2
+                                                                                size={
+                                                                                    14
+                                                                                }
+                                                                            />{' '}
+                                                                            Aceptar
+                                                                        </button>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() =>
+                                                                                actualizarDerivacion(
+                                                                                    derivacion.id,
+                                                                                    'rechazar',
+                                                                                )
+                                                                            }
+                                                                            className="inline-flex items-center gap-1.5 rounded-md border border-[#E8D7DA] bg-[#FCF1F3] px-3 py-2 text-xs font-semibold text-[#9B5964]"
+                                                                        >
+                                                                            <XCircle
+                                                                                size={
+                                                                                    14
+                                                                                }
+                                                                            />{' '}
+                                                                            Rechazar
+                                                                        </button>
+                                                                    </>
+                                                                )}
+                                                            {derivacion.estado ===
+                                                                'pendiente' &&
+                                                                puedeGestionarDerivaciones && (
                                                                     <button
                                                                         type="button"
                                                                         onClick={() =>
                                                                             actualizarDerivacion(
                                                                                 derivacion.id,
-                                                                                'rechazar',
+                                                                                'cancelar',
                                                                             )
                                                                         }
                                                                         className="inline-flex items-center gap-1.5 rounded-md border border-[#E8D7DA] bg-[#FCF1F3] px-3 py-2 text-xs font-semibold text-[#9B5964]"
@@ -829,348 +898,352 @@ export default function LegajoShow({
                                                                                 14
                                                                             }
                                                                         />{' '}
-                                                                        Rechazar
+                                                                        Cancelar
                                                                     </button>
-                                                                </>
-                                                            )}
-                                                        {derivacion.estado ===
-                                                            'pendiente' &&
-                                                            puedeGestionarDerivaciones && (
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() =>
-                                                                        actualizarDerivacion(
-                                                                            derivacion.id,
-                                                                            'cancelar',
-                                                                        )
-                                                                    }
-                                                                    className="inline-flex items-center gap-1.5 rounded-md border border-[#E8D7DA] bg-[#FCF1F3] px-3 py-2 text-xs font-semibold text-[#9B5964]"
-                                                                >
-                                                                    <XCircle
-                                                                        size={
-                                                                            14
-                                                                        }
-                                                                    />{' '}
-                                                                    Cancelar
-                                                                </button>
-                                                            )}
+                                                                )}
+                                                        </div>
                                                     </div>
-                                                </div>
-                                                {derivacion.motivo_rechazo && (
-                                                    <p className="mt-3 text-xs text-[#9B5964]">
-                                                        Motivo del rechazo:{' '}
-                                                        {
-                                                            derivacion.motivo_rechazo
-                                                        }
-                                                    </p>
-                                                )}
-                                            </article>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <p className="rounded-lg border border-dashed border-[#DCE3DF] bg-[#FAFBFA] px-4 py-5 text-sm text-[#697586]">
-                                        Todavía no hay derivaciones registradas.
-                                    </p>
-                                )}
+                                                    {derivacion.motivo_rechazo && (
+                                                        <p className="mt-3 text-xs text-[#9B5964]">
+                                                            Motivo del rechazo:{' '}
+                                                            {
+                                                                derivacion.motivo_rechazo
+                                                            }
+                                                        </p>
+                                                    )}
+                                                </article>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <p className="rounded-lg border border-dashed border-[#DCE3DF] bg-[#FAFBFA] px-4 py-5 text-sm text-[#697586]">
+                                            Todavía no hay derivaciones
+                                            registradas.
+                                        </p>
+                                    )}
 
-                                {puedeGestionarDerivaciones && (
-                                    <form
-                                        onSubmit={crearDerivacion}
-                                        className="grid gap-3 border-t border-[#E4E8E5] pt-5"
-                                    >
-                                        <div className="grid gap-3 sm:grid-cols-2">
-                                            <label className="grid gap-2 text-xs font-semibold text-[#2C4A5E]">
-                                                Destinatario
-                                                <select
-                                                    value={
-                                                        derivacionForm.data
-                                                            .destinatario_id
-                                                    }
-                                                    onChange={(event) =>
-                                                        derivacionForm.setData(
-                                                            'destinatario_id',
-                                                            event.target.value,
-                                                        )
-                                                    }
-                                                    className="h-10 rounded-lg border border-[#D5D1C6] bg-white px-3 text-sm font-normal text-[#2B2F36]"
-                                                    required
-                                                >
-                                                    <option value="">
-                                                        Seleccionar
-                                                        profesional...
-                                                    </option>
-                                                    {responsablesDisponibles
-                                                        .filter(
-                                                            (responsable) =>
-                                                                responsable.id !==
-                                                                usuarioActualId,
-                                                        )
-                                                        .map((responsable) => (
-                                                            <option
-                                                                key={
-                                                                    responsable.id
-                                                                }
-                                                                value={
-                                                                    responsable.id
-                                                                }
-                                                            >
-                                                                {
-                                                                    responsable.name
-                                                                }
-                                                                {responsable.profesion
-                                                                    ? ` · ${responsable.profesion}`
-                                                                    : ''}
-                                                            </option>
-                                                        ))}
-                                                </select>
-                                            </label>
-                                            <label className="grid gap-2 text-xs font-semibold text-[#2C4A5E]">
-                                                Modo
-                                                <select
-                                                    value={
-                                                        derivacionForm.data.modo
-                                                    }
-                                                    onChange={(event) =>
-                                                        derivacionForm.setData(
-                                                            'modo',
-                                                            event.target.value,
-                                                        )
-                                                    }
-                                                    className="h-10 rounded-lg border border-[#D5D1C6] bg-white px-3 text-sm font-normal text-[#2B2F36]"
-                                                >
-                                                    <option
-                                                        value="adicional"
-                                                        disabled={
-                                                            alcanzoMaximoResponsables
-                                                        }
-                                                    >
-                                                        Sumar responsable
-                                                    </option>
-                                                    <option value="reemplazo">
-                                                        Reemplazar responsables
-                                                    </option>
-                                                </select>
-                                                {alcanzoMaximoResponsables && (
-                                                    <span className="text-xs font-normal text-[#B3541E]">
-                                                        Este legajo ya tiene{' '}
-                                                        {
-                                                            MAX_RESPONSABLES_ACTIVOS
-                                                        }{' '}
-                                                        responsables activos,
-                                                        el máximo permitido.
-                                                        Elegí "Reemplazar
-                                                        responsables" para
-                                                        sumar a otra persona.
-                                                    </span>
-                                                )}
-                                            </label>
-                                        </div>
-                                        <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_180px]">
-                                            <label className="grid gap-2 text-xs font-semibold text-[#2C4A5E]">
-                                                Motivo
-                                                <Input
-                                                    value={
-                                                        derivacionForm.data
-                                                            .motivo
-                                                    }
-                                                    onChange={(event) =>
-                                                        derivacionForm.setData(
-                                                            'motivo',
-                                                            event.target.value,
-                                                        )
-                                                    }
-                                                    placeholder="Ej. Seguimiento especializado"
-                                                    className="h-10 border-[#D5D1C6] bg-white text-sm font-normal"
-                                                    required
-                                                />
-                                            </label>
-                                            <label className="grid gap-2 text-xs font-semibold text-[#2C4A5E]">
-                                                Fecha límite
-                                                <Input
-                                                    type="date"
-                                                    value={
-                                                        derivacionForm.data
-                                                            .fecha_limite
-                                                    }
-                                                    onChange={(event) =>
-                                                        derivacionForm.setData(
-                                                            'fecha_limite',
-                                                            event.target.value,
-                                                        )
-                                                    }
-                                                    className="h-10 border-[#D5D1C6] bg-white text-sm font-normal"
-                                                />
-                                            </label>
-                                        </div>
-                                        <label className="grid gap-2 text-xs font-semibold text-[#2C4A5E]">
-                                            Detalle
-                                            <textarea
-                                                value={
-                                                    derivacionForm.data.detalle
-                                                }
-                                                onChange={(event) =>
-                                                    derivacionForm.setData(
-                                                        'detalle',
-                                                        event.target.value,
-                                                    )
-                                                }
-                                                rows={3}
-                                                className="rounded-lg border border-[#D5D1C6] bg-white px-3 py-2 text-sm font-normal text-[#2B2F36] outline-none focus:border-[#2C4A5E]"
-                                                placeholder="Información que la otra persona necesita para tomar el caso."
-                                            />
-                                        </label>
-                                        <button
-                                            type="submit"
-                                            disabled={derivacionForm.processing}
-                                            className="inline-flex h-10 w-fit items-center gap-2 rounded-md bg-[#2C4A5E] px-4 text-sm font-semibold text-white transition hover:bg-[#1F394B] disabled:opacity-60"
+                                    {puedeGestionarDerivaciones && (
+                                        <form
+                                            onSubmit={crearDerivacion}
+                                            className="grid gap-3 border-t border-[#E4E8E5] pt-5"
                                         >
-                                            <Send size={15} />{' '}
-                                            {derivacionForm.processing
-                                                ? 'Enviando...'
-                                                : 'Enviar derivación'}
-                                        </button>
-                                    </form>
-                                )}
-                            </div>
-                        </DialogContent>
-                    </Dialog>
+                                            <div className="grid gap-3 sm:grid-cols-2">
+                                                <label className="grid gap-2 text-xs font-semibold text-[#2C4A5E]">
+                                                    Destinatario
+                                                    <select
+                                                        value={
+                                                            derivacionForm.data
+                                                                .destinatario_id
+                                                        }
+                                                        onChange={(event) =>
+                                                            derivacionForm.setData(
+                                                                'destinatario_id',
+                                                                event.target
+                                                                    .value,
+                                                            )
+                                                        }
+                                                        className="h-10 rounded-lg border border-[#D5D1C6] bg-white px-3 text-sm font-normal text-[#2B2F36]"
+                                                        required
+                                                    >
+                                                        <option value="">
+                                                            Seleccionar
+                                                            profesional...
+                                                        </option>
+                                                        {responsablesDisponibles
+                                                            .filter(
+                                                                (responsable) =>
+                                                                    responsable.id !==
+                                                                    usuarioActualId,
+                                                            )
+                                                            .map(
+                                                                (
+                                                                    responsable,
+                                                                ) => (
+                                                                    <option
+                                                                        key={
+                                                                            responsable.id
+                                                                        }
+                                                                        value={
+                                                                            responsable.id
+                                                                        }
+                                                                    >
+                                                                        {
+                                                                            responsable.name
+                                                                        }
+                                                                        {responsable.profesion
+                                                                            ? ` · ${responsable.profesion}`
+                                                                            : ''}
+                                                                    </option>
+                                                                ),
+                                                            )}
+                                                    </select>
+                                                </label>
+                                                <label className="grid gap-2 text-xs font-semibold text-[#2C4A5E]">
+                                                    Modo
+                                                    <select
+                                                        value={
+                                                            derivacionForm.data
+                                                                .modo
+                                                        }
+                                                        onChange={(event) =>
+                                                            derivacionForm.setData(
+                                                                'modo',
+                                                                event.target
+                                                                    .value,
+                                                            )
+                                                        }
+                                                        className="h-10 rounded-lg border border-[#D5D1C6] bg-white px-3 text-sm font-normal text-[#2B2F36]"
+                                                    >
+                                                        <option
+                                                            value="adicional"
+                                                            disabled={
+                                                                alcanzoMaximoResponsables
+                                                            }
+                                                        >
+                                                            Sumar responsable
+                                                        </option>
+                                                        <option value="reemplazo">
+                                                            Reemplazar
+                                                            responsables
+                                                        </option>
+                                                    </select>
+                                                    {alcanzoMaximoResponsables && (
+                                                        <span className="text-xs font-normal text-[#B3541E]">
+                                                            Este legajo ya tiene{' '}
+                                                            {
+                                                                MAX_RESPONSABLES_ACTIVOS
+                                                            }{' '}
+                                                            responsables
+                                                            activos, el máximo
+                                                            permitido. Elegí
+                                                            "Reemplazar
+                                                            responsables" para
+                                                            sumar a otra
+                                                            persona.
+                                                        </span>
+                                                    )}
+                                                </label>
+                                            </div>
+                                            <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_180px]">
+                                                <label className="grid gap-2 text-xs font-semibold text-[#2C4A5E]">
+                                                    Motivo
+                                                    <Input
+                                                        value={
+                                                            derivacionForm.data
+                                                                .motivo
+                                                        }
+                                                        onChange={(event) =>
+                                                            derivacionForm.setData(
+                                                                'motivo',
+                                                                event.target
+                                                                    .value,
+                                                            )
+                                                        }
+                                                        placeholder="Ej. Seguimiento especializado"
+                                                        className="h-10 border-[#D5D1C6] bg-white text-sm font-normal"
+                                                        required
+                                                    />
+                                                </label>
+                                                <label className="grid gap-2 text-xs font-semibold text-[#2C4A5E]">
+                                                    Fecha límite
+                                                    <Input
+                                                        type="date"
+                                                        value={
+                                                            derivacionForm.data
+                                                                .fecha_limite
+                                                        }
+                                                        onChange={(event) =>
+                                                            derivacionForm.setData(
+                                                                'fecha_limite',
+                                                                event.target
+                                                                    .value,
+                                                            )
+                                                        }
+                                                        className="h-10 border-[#D5D1C6] bg-white text-sm font-normal"
+                                                    />
+                                                </label>
+                                            </div>
+                                            <label className="grid gap-2 text-xs font-semibold text-[#2C4A5E]">
+                                                Detalle
+                                                <textarea
+                                                    value={
+                                                        derivacionForm.data
+                                                            .detalle
+                                                    }
+                                                    onChange={(event) =>
+                                                        derivacionForm.setData(
+                                                            'detalle',
+                                                            event.target.value,
+                                                        )
+                                                    }
+                                                    rows={3}
+                                                    className="rounded-lg border border-[#D5D1C6] bg-white px-3 py-2 text-sm font-normal text-[#2B2F36] outline-none focus:border-[#2C4A5E]"
+                                                    placeholder="Información que la otra persona necesita para tomar el caso."
+                                                />
+                                            </label>
+                                            <button
+                                                type="submit"
+                                                disabled={
+                                                    derivacionForm.processing
+                                                }
+                                                className="inline-flex h-10 w-fit items-center gap-2 rounded-md bg-[#2C4A5E] px-4 text-sm font-semibold text-white transition hover:bg-[#1F394B] disabled:opacity-60"
+                                            >
+                                                <Send size={15} />{' '}
+                                                {derivacionForm.processing
+                                                    ? 'Enviando...'
+                                                    : 'Enviar derivación'}
+                                            </button>
+                                        </form>
+                                    )}
+                                </div>
+                            </DialogContent>
+                        </Dialog>
+                    )}
                 </div>
 
-                <Card className="mt-6 rounded-2xl border-[#DCE3DF] !bg-white py-0 shadow-[0_14px_35px_rgba(23,50,71,0.06)]">
-                    <CardHeader className="flex flex-col gap-3 border-b border-[#E4E8E5] bg-[#F8FAF9] px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-                        <div>
-                            <CardTitle
-                                className={tituloCard}
-                                style={{ fontFamily: FONT_HEADING }}
-                            >
-                                Intervenciones y registros
-                            </CardTitle>
-                            <p className="mt-1 text-sm text-[#2B2F36]/60">
-                                Actas, oficios, denuncias, mails y actuaciones
-                                asociadas a este legajo.
-                            </p>
-                        </div>
-                        {puedeGestionarIntervenciones && (
-                            <Link
-                                href={`/legajos/${legajo.id}/intervenciones/create`}
-                                className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-[#2C4A5E] px-4 text-sm font-semibold text-white transition hover:bg-[#1F394B]"
-                            >
-                                <Plus size={16} />
-                                Nueva intervención
-                            </Link>
-                        )}
-                    </CardHeader>
-                    <CardContent className="px-5 py-5 sm:px-6">
-                        {intervenciones.length === 0 ? (
-                            <div className="rounded-md border border-dashed border-[#DCE3DF] bg-[#FAFBFA] px-5 py-8 text-center">
-                                <p className="text-sm font-semibold text-[#2C4A5E]">
-                                    Todavía no hay intervenciones registradas.
+                {secciones.intervenciones && (
+                    <Card className="mt-6 rounded-2xl border-[#DCE3DF] !bg-white py-0 shadow-[0_14px_35px_rgba(23,50,71,0.06)]">
+                        <CardHeader className="flex flex-col gap-3 border-b border-[#E4E8E5] bg-[#F8FAF9] px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+                            <div>
+                                <CardTitle
+                                    className={tituloCard}
+                                    style={{ fontFamily: FONT_HEADING }}
+                                >
+                                    Intervenciones y registros
+                                </CardTitle>
+                                <p className="mt-1 text-sm text-[#2B2F36]/60">
+                                    Actas, oficios, denuncias, mails y
+                                    actuaciones asociadas a este legajo.
                                 </p>
-                                {puedeGestionarIntervenciones && (
-                                    <p className="mt-1 text-sm text-[#2B2F36]/60">
-                                        Registrá la primera actuación para
-                                        comenzar el historial del legajo.
-                                    </p>
-                                )}
                             </div>
-                        ) : (
-                            <div className="relative space-y-4 border-l border-[#DCE3DF] pl-5 sm:pl-7">
-                                {intervenciones.map((intervencion) => (
-                                    <div
-                                        key={intervencion.id}
-                                        className="relative"
-                                    >
-                                        <span
-                                            className="absolute -top-0.5 -left-[2rem] grid size-7 place-items-center rounded-full border-4 border-[#F4F6F5] bg-[#DDEBE1] text-[#41634A] sm:-left-[2.75rem]"
-                                            aria-hidden="true"
+                            {puedeGestionarIntervenciones && (
+                                <Link
+                                    href={`/legajos/${legajo.id}/intervenciones/create`}
+                                    className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-[#2C4A5E] px-4 text-sm font-semibold text-white transition hover:bg-[#1F394B]"
+                                >
+                                    <Plus size={16} />
+                                    Nueva intervención
+                                </Link>
+                            )}
+                        </CardHeader>
+                        <CardContent className="px-5 py-5 sm:px-6">
+                            {intervenciones.length === 0 ? (
+                                <div className="rounded-md border border-dashed border-[#DCE3DF] bg-[#FAFBFA] px-5 py-8 text-center">
+                                    <p className="text-sm font-semibold text-[#2C4A5E]">
+                                        Todavía no hay intervenciones
+                                        registradas.
+                                    </p>
+                                    {puedeGestionarIntervenciones && (
+                                        <p className="mt-1 text-sm text-[#2B2F36]/60">
+                                            Registrá la primera actuación para
+                                            comenzar el historial del legajo.
+                                        </p>
+                                    )}
+                                </div>
+                            ) : (
+                                <div className="relative space-y-4 border-l border-[#DCE3DF] pl-5 sm:pl-7">
+                                    {intervenciones.map((intervencion) => (
+                                        <div
+                                            key={intervencion.id}
+                                            className="relative"
                                         >
-                                            <Clock3 size={12} />
-                                        </span>
-                                        <article className="rounded-2xl border border-[#DCE3DF] bg-white p-4 shadow-[0_8px_24px_rgba(23,50,71,0.04)] sm:p-5">
-                                            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                                                <div>
-                                                    <div className="flex flex-wrap items-center gap-2">
-                                                        <Badge className="border-0 bg-[#EDF3EF] text-[#2C4A5E]">
-                                                            {intervencion.tipo ??
-                                                                'Registro'}
-                                                        </Badge>
-                                                        <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#697586]">
-                                                            <Clock3 size={13} />
-                                                            {intervencion.fecha}
-                                                            {intervencion.hora
-                                                                ? ` · ${intervencion.hora.slice(0, 5)}`
-                                                                : ''}
-                                                        </span>
+                                            <span
+                                                className="absolute -top-0.5 -left-[2rem] grid size-7 place-items-center rounded-full border-4 border-[#F4F6F5] bg-[#DDEBE1] text-[#41634A] sm:-left-[2.75rem]"
+                                                aria-hidden="true"
+                                            >
+                                                <Clock3 size={12} />
+                                            </span>
+                                            <article className="rounded-2xl border border-[#DCE3DF] bg-white p-4 shadow-[0_8px_24px_rgba(23,50,71,0.04)] sm:p-5">
+                                                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                                                    <div>
+                                                        <div className="flex flex-wrap items-center gap-2">
+                                                            <Badge className="border-0 bg-[#EDF3EF] text-[#2C4A5E]">
+                                                                {intervencion.tipo ??
+                                                                    'Registro'}
+                                                            </Badge>
+                                                            <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#697586]">
+                                                                <Clock3
+                                                                    size={13}
+                                                                />
+                                                                {
+                                                                    intervencion.fecha
+                                                                }
+                                                                {intervencion.hora
+                                                                    ? ` · ${intervencion.hora.slice(0, 5)}`
+                                                                    : ''}
+                                                            </span>
+                                                        </div>
+                                                        <p className="mt-3 text-sm leading-6 whitespace-pre-line text-[#2B2F36]">
+                                                            {
+                                                                intervencion.detalle
+                                                            }
+                                                        </p>
                                                     </div>
-                                                    <p className="mt-3 text-sm leading-6 whitespace-pre-line text-[#2B2F36]">
-                                                        {intervencion.detalle}
+                                                    {puedeGestionarIntervenciones && (
+                                                        <Link
+                                                            href={`/legajos/${legajo.id}/intervenciones/${intervencion.id}/edit`}
+                                                            className="inline-flex shrink-0 items-center gap-1.5 text-sm font-semibold text-[#2C4A5E] hover:underline"
+                                                        >
+                                                            <Pencil size={14} />
+                                                            Editar
+                                                        </Link>
+                                                    )}
+                                                </div>
+                                                <div className="mt-4 grid gap-3 border-t border-[#E4E8E5] pt-3 text-xs text-[#697586] sm:grid-cols-2 lg:grid-cols-4">
+                                                    <p>
+                                                        <strong className="text-[#2B2F36]">
+                                                            Responsable:{' '}
+                                                        </strong>
+                                                        {intervencion.profesional ??
+                                                            'Sin asignar'}
+                                                    </p>
+                                                    <p>
+                                                        <strong className="text-[#2B2F36]">
+                                                            Registró:{' '}
+                                                        </strong>
+                                                        {intervencion.creado_por ??
+                                                            'Sin datos'}
+                                                    </p>
+                                                    <p>
+                                                        <strong className="text-[#2B2F36]">
+                                                            Firma:{' '}
+                                                        </strong>
+                                                        {intervencion.firma_nombre
+                                                            ? `${intervencion.firma_nombre} · ${intervencion.firma_aclaracion ?? ''}`
+                                                            : 'Sin firma'}
+                                                        {intervencion.tiene_firma_responsable && (
+                                                            <a
+                                                                href={`/legajos/${legajo.id}/intervenciones/${intervencion.id}/firma/responsable/descargar`}
+                                                                className="ml-1 underline"
+                                                            >
+                                                                (descargar)
+                                                            </a>
+                                                        )}
+                                                    </p>
+                                                    <p>
+                                                        <strong className="text-[#2B2F36]">
+                                                            Entrevistado:{' '}
+                                                        </strong>
+                                                        {intervencion.firma_entrevistado_nombre
+                                                            ? `${intervencion.firma_entrevistado_nombre} · ${intervencion.firma_entrevistado_aclaracion ?? ''}`
+                                                            : 'Sin firma'}
+                                                        {intervencion.tiene_firma_entrevistado && (
+                                                            <a
+                                                                href={`/legajos/${legajo.id}/intervenciones/${intervencion.id}/firma/entrevistado/descargar`}
+                                                                className="ml-1 underline"
+                                                            >
+                                                                (descargar)
+                                                            </a>
+                                                        )}
                                                     </p>
                                                 </div>
-                                                {puedeGestionarIntervenciones && (
-                                                    <Link
-                                                        href={`/legajos/${legajo.id}/intervenciones/${intervencion.id}/edit`}
-                                                        className="inline-flex shrink-0 items-center gap-1.5 text-sm font-semibold text-[#2C4A5E] hover:underline"
-                                                    >
-                                                        <Pencil size={14} />
-                                                        Editar
-                                                    </Link>
-                                                )}
-                                            </div>
-                                            <div className="mt-4 grid gap-3 border-t border-[#E4E8E5] pt-3 text-xs text-[#697586] sm:grid-cols-2 lg:grid-cols-4">
-                                                <p>
-                                                    <strong className="text-[#2B2F36]">
-                                                        Responsable:{' '}
-                                                    </strong>
-                                                    {intervencion.profesional ??
-                                                        'Sin asignar'}
-                                                </p>
-                                                <p>
-                                                    <strong className="text-[#2B2F36]">
-                                                        Registró:{' '}
-                                                    </strong>
-                                                    {intervencion.creado_por ??
-                                                        'Sin datos'}
-                                                </p>
-                                                <p>
-                                                    <strong className="text-[#2B2F36]">
-                                                        Firma:{' '}
-                                                    </strong>
-                                                    {intervencion.firma_nombre
-                                                        ? `${intervencion.firma_nombre} · ${intervencion.firma_aclaracion ?? ''}`
-                                                        : 'Sin firma'}
-                                                    {intervencion.tiene_firma_responsable && (
-                                                        <a
-                                                            href={`/legajos/${legajo.id}/intervenciones/${intervencion.id}/firma/responsable/descargar`}
-                                                            className="ml-1 underline"
-                                                        >
-                                                            (descargar)
-                                                        </a>
-                                                    )}
-                                                </p>
-                                                <p>
-                                                    <strong className="text-[#2B2F36]">
-                                                        Entrevistado:{' '}
-                                                    </strong>
-                                                    {intervencion.firma_entrevistado_nombre
-                                                        ? `${intervencion.firma_entrevistado_nombre} · ${intervencion.firma_entrevistado_aclaracion ?? ''}`
-                                                        : 'Sin firma'}
-                                                    {intervencion.tiene_firma_entrevistado && (
-                                                        <a
-                                                            href={`/legajos/${legajo.id}/intervenciones/${intervencion.id}/firma/entrevistado/descargar`}
-                                                            className="ml-1 underline"
-                                                        >
-                                                            (descargar)
-                                                        </a>
-                                                    )}
-                                                </p>
-                                            </div>
-                                        </article>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
+                                            </article>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                )}
             </main>
         </>
     );

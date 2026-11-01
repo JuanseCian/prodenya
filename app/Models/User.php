@@ -90,6 +90,7 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
             'rechazado_en' => 'datetime',
             'suspendido_en' => 'datetime',
             'archivado_en' => 'datetime',
+            'secciones_legajo_visibles' => 'array',
         ];
     }
 
@@ -122,6 +123,25 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     public function esAdmin(): bool
     {
         return $this->tieneRol('admin');
+    }
+
+    /**
+     * Debido a que los legajos contienen información sensible de menores, el
+     * administrador puede restringir por usuario qué secciones del legajo son
+     * visibles (ver {@see Legajo::SECCIONES}).
+     *
+     * `secciones_legajo_visibles` en null significa "sin restricción": el
+     * usuario ve todas las secciones. Los administradores siempre ven todo.
+     */
+    public function puedeVerSeccionLegajo(string $seccion): bool
+    {
+        if ($this->esAdmin()) {
+            return true;
+        }
+
+        $visibles = $this->secciones_legajo_visibles;
+
+        return $visibles === null || in_array($seccion, $visibles, true);
     }
 
     /**
