@@ -45,11 +45,19 @@ return [
         'port' => (int) env('HOSTINGER_IMAP_PORT', 993),
         'encryption' => env('HOSTINGER_IMAP_ENCRYPTION', 'ssl'),
         'validate_cert' => env('HOSTINGER_IMAP_VALIDATE_CERT', true),
-        'username' => env('HOSTINGER_IMAP_USERNAME', 'contacto@desarrollohumanosn.com'),
+        'username' => env('HOSTINGER_IMAP_USERNAME', 'prodenya@desarrollohumanosn.com'),
         'password' => env('HOSTINGER_IMAP_PASSWORD'),
         'folder' => env('HOSTINGER_IMAP_FOLDER', 'INBOX'),
         'sync_days' => max(1, (int) env('HOSTINGER_IMAP_SYNC_DAYS', 30)),
-        'to_email' => env('HOSTINGER_MAILBOX_ADDRESS', 'contacto@desarrollohumanosn.com'),
+        'address' => env('HOSTINGER_MAILBOX_ADDRESS', 'prodenya@desarrollohumanosn.com'),
+        'to_email' => env('HOSTINGER_MAILBOX_ADDRESS', 'prodenya@desarrollohumanosn.com'),
+        'smtp' => [
+            'host' => env('HOSTINGER_SMTP_HOST', 'smtp.hostinger.com'),
+            'port' => (int) env('HOSTINGER_SMTP_PORT', 465),
+            'encryption' => env('HOSTINGER_SMTP_ENCRYPTION', 'ssl'),
+            'username' => env('HOSTINGER_SMTP_USERNAME', 'prodenya@desarrollohumanosn.com'),
+            'password' => env('HOSTINGER_SMTP_PASSWORD'),
+        ],
     ],
 
 ];

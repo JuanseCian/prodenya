@@ -15,10 +15,20 @@ class TareaController extends Controller
 {
     public function index(Request $request): Response|JsonResponse
     {
+        $usuario = $request->user();
+        $puedeAsignarOtros = $usuario->esAdmin() || $usuario->tieneRol('coordinador');
+
         $tareas = Tarea::query()
             ->with(['asignado', 'legajo'])
             ->when($request->filled('estado'), fn ($query) => $query->where('estado', $request->string('estado')))
-            ->when($request->filled('asignado_a'), fn ($query) => $query->where('asignado_a', $request->integer('asignado_a')))
+            ->when(
+                $puedeAsignarOtros && $request->filled('asignado_a'),
+                fn ($query) => $query->where('asignado_a', $request->integer('asignado_a')),
+            )
+            ->when(
+                ! $puedeAsignarOtros,
+                fn ($query) => $query->where('asignado_a', $usuario->id),
+            )
             ->orderByRaw('fecha_limite IS NULL')
             ->orderBy('fecha_limite')
             ->limit(100)
@@ -42,15 +52,21 @@ class TareaController extends Controller
 
         return Inertia::render('tareas/index', [
             'tareas' => $tareas,
-            'responsables' => User::query()
-                ->where('activo', true)
-                ->orderBy('name')
-                ->get(['id', 'name', 'profesion']),
+            'responsables' => $puedeAsignarOtros
+                ? User::query()
+                    ->where('activo', true)
+                    ->orderBy('name')
+                    ->get(['id', 'name', 'profesion'])
+                : [],
+            'puedeAsignarOtros' => $puedeAsignarOtros,
+            'usuarioActualId' => $usuario->id,
         ]);
     }
 
     public function store(Request $request): RedirectResponse
     {
+        $usuario = $request->user();
+        $puedeAsignarOtros = $usuario->esAdmin() || $usuario->tieneRol('coordinador');
         $datos = $request->validate([
             'titulo' => ['required', 'string', 'max:180'],
             'descripcion' => ['nullable', 'string', 'max:5000'],
@@ -66,17 +82,21 @@ class TareaController extends Controller
             'recursos.*.recurso_id' => ['required_with:recursos', 'integer'],
         ]);
 
+        $asignadoA = $puedeAsignarOtros && ! empty($datos['asignado_a'])
+            ? $datos['asignado_a']
+            : $usuario->id;
+
         $tarea = Tarea::create([
             'titulo' => $datos['titulo'],
             'descripcion' => $datos['descripcion'] ?? null,
             'tipo' => $datos['tipo'] ?? 'derivacion',
             'prioridad' => $datos['prioridad'],
             'fecha_limite' => $datos['fecha_limite'] ?? null,
-            'asignado_a' => $datos['asignado_a'] ?? null,
+            'asignado_a' => $asignadoA,
             'legajo_id' => $datos['legajo_id'] ?? null,
             'intervencion_id' => $datos['intervencion_id'] ?? null,
             'mail_message_id' => $datos['mail_message_id'] ?? null,
-            'creado_por' => $request->user()->id,
+            'creado_por' => $usuario->id,
             'estado' => 'pendiente',
         ]);
 

@@ -15,7 +15,9 @@ class MailMessage extends Model
     protected $fillable = [
         'message_id',
         'mailbox_uid',
+        'direction',
         'thread_id',
+        'in_reply_to',
         'from_name',
         'from_email',
         'to_email',
@@ -23,6 +25,7 @@ class MailMessage extends Model
         'body_text',
         'body_html',
         'received_at',
+        'sent_at',
         'synced_at',
         'is_read',
         'estado',
@@ -35,6 +38,7 @@ class MailMessage extends Model
     {
         return [
             'received_at' => 'datetime',
+            'sent_at' => 'datetime',
             'synced_at' => 'datetime',
             'is_read' => 'boolean',
             'attachments' => 'array',

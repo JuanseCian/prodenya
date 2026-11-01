@@ -1,5 +1,6 @@
 <?php
 
+use App\Mail\MailboxMessage;
 use App\Models\Conversacion;
 use App\Models\DerivacionCaso;
 use App\Models\Legajo;
@@ -8,19 +9,26 @@ use App\Models\Persona;
 use App\Models\Tarea;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 
 beforeEach(function () {
     DB::table('roles')->insert([
         ['id' => 1, 'nombre' => 'admin', 'descripcion' => 'Acceso total', 'creado_en' => now()],
         ['id' => 2, 'nombre' => 'operador', 'descripcion' => 'Carga y edición', 'creado_en' => now()],
+        ['id' => 3, 'nombre' => 'coordinador', 'descripcion' => 'Coordinación', 'creado_en' => now()],
+        ['id' => 4, 'nombre' => 'oficios', 'descripcion' => 'Clasificación', 'creado_en' => now()],
     ]);
 });
 
-test('only administrators can access the mailbox', function () {
+test('mailbox is available to the configured operational roles', function () {
     $admin = User::factory()->create(['rol_id' => 1]);
+    $coordinador = User::factory()->create(['rol_id' => 3]);
+    $oficios = User::factory()->create(['rol_id' => 4]);
     $operador = User::factory()->create(['rol_id' => 2]);
 
     $this->actingAs($admin)->get(route('mailbox.index'))->assertOk();
+    $this->actingAs($coordinador)->get(route('mailbox.index'))->assertOk();
+    $this->actingAs($oficios)->get(route('mailbox.index'))->assertOk();
     $this->actingAs($operador)->get(route('mailbox.index'))->assertForbidden();
 });
 
@@ -32,11 +40,38 @@ test('the mailbox sync command fails safely when Hostinger credentials are missi
         ->assertFailed();
 });
 
-test('oficios can classify a message and derive it as a task', function () {
-    DB::table('roles')->insert([
-        ['id' => 4, 'nombre' => 'oficios', 'descripcion' => 'Clasificación', 'creado_en' => now()],
-    ]);
+test('mailbox users can send and retain an outgoing email', function () {
+    $admin = User::factory()->create(['rol_id' => 1]);
+    Mail::fake();
+    config(['services.hostinger_mailbox.address' => 'prodenya@desarrollohumanosn.com']);
 
+    $this->actingAs($admin)
+        ->post(route('mailbox.send'), [
+            'to_email' => 'destinatario@example.test',
+            'subject' => 'Información solicitada',
+            'body' => 'Se envía la información solicitada.',
+        ])
+        ->assertRedirect();
+
+    Mail::assertSent(MailboxMessage::class, fn (MailboxMessage $mail): bool => $mail->hasTo('destinatario@example.test')
+        && $mail->hasSubject('Información solicitada'));
+
+    expect(MailMessage::query()
+        ->where('direction', 'outgoing')
+        ->where('to_email', 'destinatario@example.test')
+        ->where('subject', 'Información solicitada')
+        ->exists())->toBeTrue();
+});
+
+test('the mailbox mailable renders text and html content', function () {
+    $mail = new MailboxMessage('Asunto de prueba', 'Contenido del mensaje');
+
+    $mail->assertHasSubject('Asunto de prueba');
+    $mail->assertSeeInText('Contenido del mensaje');
+    $mail->assertSeeInHtml('Contenido del mensaje');
+});
+
+test('oficios can classify a message and derive it as a task', function () {
     $oficios = User::factory()->create(['rol_id' => 4]);
     $responsable = User::factory()->create(['rol_id' => 2]);
     $provincia = DB::table('provincias')->insertGetId(['nombre' => 'Buenos Aires']);
