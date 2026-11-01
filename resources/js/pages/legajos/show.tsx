@@ -5,6 +5,7 @@ import {
     CalendarDays,
     CheckCircle2,
     Clock3,
+    FileDown,
     FileText,
     Link2,
     Lock,
@@ -19,7 +20,7 @@ import {
     UserRound,
     UsersRound,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
 
 import {
@@ -172,6 +173,29 @@ export default function LegajoShow({
     const alcanzoMaximoResponsables =
         responsables.length >= MAX_RESPONSABLES_ACTIVOS;
     const [derivacionesOpen, setDerivacionesOpen] = useState(false);
+    const [filtroTipoIntervencion, setFiltroTipoIntervencion] =
+        useState('todas');
+    const tiposIntervencionDisponibles = useMemo(
+        () =>
+            Array.from(
+                new Set(
+                    intervenciones
+                        .map((intervencion) => intervencion.tipo)
+                        .filter((tipo): tipo is string => Boolean(tipo)),
+                ),
+            ).sort((a, b) => a.localeCompare(b)),
+        [intervenciones],
+    );
+    const intervencionesFiltradas = useMemo(
+        () =>
+            filtroTipoIntervencion === 'todas'
+                ? intervenciones
+                : intervenciones.filter(
+                      (intervencion) =>
+                          intervencion.tipo === filtroTipoIntervencion,
+                  ),
+        [intervenciones, filtroTipoIntervencion],
+    );
     const vinculoForm = useForm({
         persona_relacionada_id: '',
         tipo_vinculo: 'hermano/a',
@@ -320,6 +344,17 @@ export default function LegajoShow({
                                     <Pencil size={15} />
                                     Editar
                                 </Link>
+                                <a
+                                    href={legajosRoutes.previsualizarWord.url(
+                                        legajo.id,
+                                    )}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="inline-flex h-10 items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-4 text-sm font-semibold text-white transition hover:bg-white/15"
+                                >
+                                    <FileDown size={15} />
+                                    Previsualizar Word
+                                </a>
                                 {secciones.estadisticas && (
                                     <a
                                         href={legajosRoutes.estadisticas.url(
@@ -1115,15 +1150,47 @@ export default function LegajoShow({
                                     actuaciones asociadas a este legajo.
                                 </p>
                             </div>
-                            {puedeGestionarIntervenciones && (
-                                <Link
-                                    href={`/legajos/${legajo.id}/intervenciones/create`}
-                                    className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-[#2C4A5E] px-4 text-sm font-semibold text-white transition hover:bg-[#1F394B]"
-                                >
-                                    <Plus size={16} />
-                                    Nueva intervención
-                                </Link>
-                            )}
+                            <div className="flex flex-wrap items-center gap-2">
+                                {tiposIntervencionDisponibles.length > 0 && (
+                                    <label className="text-xs font-bold tracking-wide text-[#697586] uppercase">
+                                        <span className="sr-only">
+                                            Filtrar por tipo
+                                        </span>
+                                        <select
+                                            value={filtroTipoIntervencion}
+                                            onChange={(event) =>
+                                                setFiltroTipoIntervencion(
+                                                    event.target.value,
+                                                )
+                                            }
+                                            className="h-10 rounded-md border border-[#DCE3DF] bg-white px-3 text-sm font-medium text-[#2C4A5E] transition outline-none focus:border-[#2C4A5E] focus:ring-2 focus:ring-[#2C4A5E]/20"
+                                        >
+                                            <option value="todas">
+                                                Todos los tipos
+                                            </option>
+                                            {tiposIntervencionDisponibles.map(
+                                                (tipo) => (
+                                                    <option
+                                                        key={tipo}
+                                                        value={tipo}
+                                                    >
+                                                        {tipo}
+                                                    </option>
+                                                ),
+                                            )}
+                                        </select>
+                                    </label>
+                                )}
+                                {puedeGestionarIntervenciones && (
+                                    <Link
+                                        href={`/legajos/${legajo.id}/intervenciones/create`}
+                                        className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-[#2C4A5E] px-4 text-sm font-semibold text-white transition hover:bg-[#1F394B]"
+                                    >
+                                        <Plus size={16} />
+                                        Nueva intervención
+                                    </Link>
+                                )}
+                            </div>
                         </CardHeader>
                         <CardContent className="px-5 py-5 sm:px-6">
                             {intervenciones.length === 0 ? (
@@ -1139,106 +1206,128 @@ export default function LegajoShow({
                                         </p>
                                     )}
                                 </div>
+                            ) : intervencionesFiltradas.length === 0 ? (
+                                <div className="rounded-md border border-dashed border-[#DCE3DF] bg-[#FAFBFA] px-5 py-8 text-center">
+                                    <p className="text-sm font-semibold text-[#2C4A5E]">
+                                        No hay intervenciones del tipo
+                                        seleccionado.
+                                    </p>
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            setFiltroTipoIntervencion('todas')
+                                        }
+                                        className="mt-1 text-sm font-semibold text-[#2C4A5E] hover:underline"
+                                    >
+                                        Quitar filtro
+                                    </button>
+                                </div>
                             ) : (
                                 <div className="relative space-y-4 border-l border-[#DCE3DF] pl-5 sm:pl-7">
-                                    {intervenciones.map((intervencion) => (
-                                        <div
-                                            key={intervencion.id}
-                                            className="relative"
-                                        >
-                                            <span
-                                                className="absolute -top-0.5 -left-[2rem] grid size-7 place-items-center rounded-full border-4 border-[#F4F6F5] bg-[#DDEBE1] text-[#41634A] sm:-left-[2.75rem]"
-                                                aria-hidden="true"
+                                    {intervencionesFiltradas.map(
+                                        (intervencion) => (
+                                            <div
+                                                key={intervencion.id}
+                                                className="relative"
                                             >
-                                                <Clock3 size={12} />
-                                            </span>
-                                            <article className="rounded-2xl border border-[#DCE3DF] bg-white p-4 shadow-[0_8px_24px_rgba(23,50,71,0.04)] sm:p-5">
-                                                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                                                    <div>
-                                                        <div className="flex flex-wrap items-center gap-2">
-                                                            <Badge className="border-0 bg-[#EDF3EF] text-[#2C4A5E]">
-                                                                {intervencion.tipo ??
-                                                                    'Registro'}
-                                                            </Badge>
-                                                            <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#697586]">
-                                                                <Clock3
-                                                                    size={13}
-                                                                />
+                                                <span
+                                                    className="absolute -top-0.5 -left-[2rem] grid size-7 place-items-center rounded-full border-4 border-[#F4F6F5] bg-[#DDEBE1] text-[#41634A] sm:-left-[2.75rem]"
+                                                    aria-hidden="true"
+                                                >
+                                                    <Clock3 size={12} />
+                                                </span>
+                                                <article className="rounded-2xl border border-[#DCE3DF] bg-white p-4 shadow-[0_8px_24px_rgba(23,50,71,0.04)] sm:p-5">
+                                                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                                                        <div>
+                                                            <div className="flex flex-wrap items-center gap-2">
+                                                                <Badge className="border-0 bg-[#EDF3EF] text-[#2C4A5E]">
+                                                                    {intervencion.tipo ??
+                                                                        'Registro'}
+                                                                </Badge>
+                                                                <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#697586]">
+                                                                    <Clock3
+                                                                        size={
+                                                                            13
+                                                                        }
+                                                                    />
+                                                                    {
+                                                                        intervencion.fecha
+                                                                    }
+                                                                    {intervencion.hora
+                                                                        ? ` · ${intervencion.hora.slice(0, 5)}`
+                                                                        : ''}
+                                                                </span>
+                                                            </div>
+                                                            <p className="mt-3 text-sm leading-6 whitespace-pre-line text-[#2B2F36]">
                                                                 {
-                                                                    intervencion.fecha
+                                                                    intervencion.detalle
                                                                 }
-                                                                {intervencion.hora
-                                                                    ? ` · ${intervencion.hora.slice(0, 5)}`
-                                                                    : ''}
-                                                            </span>
+                                                            </p>
                                                         </div>
-                                                        <p className="mt-3 text-sm leading-6 whitespace-pre-line text-[#2B2F36]">
-                                                            {
-                                                                intervencion.detalle
-                                                            }
+                                                        {puedeGestionarIntervenciones && (
+                                                            <Link
+                                                                href={`/legajos/${legajo.id}/intervenciones/${intervencion.id}/edit`}
+                                                                className="inline-flex shrink-0 items-center gap-1.5 text-sm font-semibold text-[#2C4A5E] hover:underline"
+                                                            >
+                                                                <Pencil
+                                                                    size={14}
+                                                                />
+                                                                Editar
+                                                            </Link>
+                                                        )}
+                                                    </div>
+                                                    <div className="mt-4 grid gap-3 border-t border-[#E4E8E5] pt-3 text-xs text-[#697586] sm:grid-cols-2 lg:grid-cols-4">
+                                                        <p>
+                                                            <strong className="text-[#2B2F36]">
+                                                                Responsable:{' '}
+                                                            </strong>
+                                                            {intervencion.profesional ??
+                                                                'Sin asignar'}
+                                                        </p>
+                                                        <p>
+                                                            <strong className="text-[#2B2F36]">
+                                                                Registró:{' '}
+                                                            </strong>
+                                                            {intervencion.creado_por ??
+                                                                'Sin datos'}
+                                                        </p>
+                                                        <p>
+                                                            <strong className="text-[#2B2F36]">
+                                                                Firma:{' '}
+                                                            </strong>
+                                                            {intervencion.firma_nombre
+                                                                ? `${intervencion.firma_nombre} · ${intervencion.firma_aclaracion ?? ''}`
+                                                                : 'Sin firma'}
+                                                            {intervencion.tiene_firma_responsable && (
+                                                                <a
+                                                                    href={`/legajos/${legajo.id}/intervenciones/${intervencion.id}/firma/responsable/descargar`}
+                                                                    className="ml-1 underline"
+                                                                >
+                                                                    (descargar)
+                                                                </a>
+                                                            )}
+                                                        </p>
+                                                        <p>
+                                                            <strong className="text-[#2B2F36]">
+                                                                Entrevistado:{' '}
+                                                            </strong>
+                                                            {intervencion.firma_entrevistado_nombre
+                                                                ? `${intervencion.firma_entrevistado_nombre} · ${intervencion.firma_entrevistado_aclaracion ?? ''}`
+                                                                : 'Sin firma'}
+                                                            {intervencion.tiene_firma_entrevistado && (
+                                                                <a
+                                                                    href={`/legajos/${legajo.id}/intervenciones/${intervencion.id}/firma/entrevistado/descargar`}
+                                                                    className="ml-1 underline"
+                                                                >
+                                                                    (descargar)
+                                                                </a>
+                                                            )}
                                                         </p>
                                                     </div>
-                                                    {puedeGestionarIntervenciones && (
-                                                        <Link
-                                                            href={`/legajos/${legajo.id}/intervenciones/${intervencion.id}/edit`}
-                                                            className="inline-flex shrink-0 items-center gap-1.5 text-sm font-semibold text-[#2C4A5E] hover:underline"
-                                                        >
-                                                            <Pencil size={14} />
-                                                            Editar
-                                                        </Link>
-                                                    )}
-                                                </div>
-                                                <div className="mt-4 grid gap-3 border-t border-[#E4E8E5] pt-3 text-xs text-[#697586] sm:grid-cols-2 lg:grid-cols-4">
-                                                    <p>
-                                                        <strong className="text-[#2B2F36]">
-                                                            Responsable:{' '}
-                                                        </strong>
-                                                        {intervencion.profesional ??
-                                                            'Sin asignar'}
-                                                    </p>
-                                                    <p>
-                                                        <strong className="text-[#2B2F36]">
-                                                            Registró:{' '}
-                                                        </strong>
-                                                        {intervencion.creado_por ??
-                                                            'Sin datos'}
-                                                    </p>
-                                                    <p>
-                                                        <strong className="text-[#2B2F36]">
-                                                            Firma:{' '}
-                                                        </strong>
-                                                        {intervencion.firma_nombre
-                                                            ? `${intervencion.firma_nombre} · ${intervencion.firma_aclaracion ?? ''}`
-                                                            : 'Sin firma'}
-                                                        {intervencion.tiene_firma_responsable && (
-                                                            <a
-                                                                href={`/legajos/${legajo.id}/intervenciones/${intervencion.id}/firma/responsable/descargar`}
-                                                                className="ml-1 underline"
-                                                            >
-                                                                (descargar)
-                                                            </a>
-                                                        )}
-                                                    </p>
-                                                    <p>
-                                                        <strong className="text-[#2B2F36]">
-                                                            Entrevistado:{' '}
-                                                        </strong>
-                                                        {intervencion.firma_entrevistado_nombre
-                                                            ? `${intervencion.firma_entrevistado_nombre} · ${intervencion.firma_entrevistado_aclaracion ?? ''}`
-                                                            : 'Sin firma'}
-                                                        {intervencion.tiene_firma_entrevistado && (
-                                                            <a
-                                                                href={`/legajos/${legajo.id}/intervenciones/${intervencion.id}/firma/entrevistado/descargar`}
-                                                                className="ml-1 underline"
-                                                            >
-                                                                (descargar)
-                                                            </a>
-                                                        )}
-                                                    </p>
-                                                </div>
-                                            </article>
-                                        </div>
-                                    ))}
+                                                </article>
+                                            </div>
+                                        ),
+                                    )}
                                 </div>
                             )}
                         </CardContent>
