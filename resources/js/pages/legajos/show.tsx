@@ -23,6 +23,8 @@ import {
 import { useEffect, useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
 
+import CudModule from '@/components/cud-module';
+import type { CudResumen } from '@/components/cud-module';
 import {
     AvisoEstado,
     Dato,
@@ -47,8 +49,8 @@ import legajosRoutes from '@/routes/legajos';
 interface LegajoDetalle {
     id: number;
     numero_legajo: string;
-    nivel_riesgo: string;
-    estado: string;
+    nivel_riesgo: string | null;
+    estado: string | null;
     origen_derivacion: string | null;
     observaciones: string | null;
     fecha_apertura: string | null;
@@ -137,10 +139,15 @@ interface Secciones {
 interface Props {
     legajo: LegajoDetalle;
     secciones: Secciones;
+    cud?: CudResumen | null;
     status?: string | null;
     intervenciones?: Intervencion[];
     puedeGestionarIntervenciones?: boolean;
     puedeGestionarDerivaciones?: boolean;
+    puedeEditarLegajo?: boolean;
+    puedeCambiarEstado?: boolean;
+    puedeExportarWord?: boolean;
+    puedeGestionarCud: boolean;
     usuarioActualId: number;
     responsablesDisponibles?: ResponsableDisponible[];
     responsables?: Responsable[];
@@ -156,10 +163,15 @@ const MAX_RESPONSABLES_ACTIVOS = 3;
 export default function LegajoShow({
     legajo,
     secciones,
+    cud = null,
     status,
     intervenciones = [],
     puedeGestionarIntervenciones = false,
     puedeGestionarDerivaciones = false,
+    puedeEditarLegajo = false,
+    puedeCambiarEstado = false,
+    puedeExportarWord = false,
+    puedeGestionarCud,
     usuarioActualId,
     responsablesDisponibles = [],
     responsables = [],
@@ -326,35 +338,43 @@ export default function LegajoShow({
                                             : 'Datos reservados para tu usuario'}
                                     </p>
                                     <div className="mt-4 flex flex-wrap items-center gap-2">
-                                        <NivelBadge
-                                            nivel={legajo.nivel_riesgo}
-                                        />
-                                        <Badge className="border border-white/15 bg-white/10 text-white">
-                                            {legajo.estado}
-                                        </Badge>
+                                        {legajo.nivel_riesgo && (
+                                            <NivelBadge
+                                                nivel={legajo.nivel_riesgo}
+                                            />
+                                        )}
+                                        {legajo.estado && (
+                                            <Badge className="border border-white/15 bg-white/10 text-white">
+                                                {legajo.estado}
+                                            </Badge>
+                                        )}
                                     </div>
                                 </div>
                             </div>
 
                             <div className="flex flex-wrap gap-2 xl:max-w-[560px] xl:justify-end">
-                                <Link
-                                    href={`/legajos/${legajo.id}/edit`}
-                                    className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#CDE8D6] px-4 text-sm font-bold text-[#1E5143] transition hover:bg-white"
-                                >
-                                    <Pencil size={15} />
-                                    Editar
-                                </Link>
-                                <a
-                                    href={legajosRoutes.previsualizarWord.url(
-                                        legajo.id,
-                                    )}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="inline-flex h-10 items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-4 text-sm font-semibold text-white transition hover:bg-white/15"
-                                >
-                                    <FileDown size={15} />
-                                    Previsualizar Word
-                                </a>
+                                {puedeEditarLegajo && (
+                                    <Link
+                                        href={`/legajos/${legajo.id}/edit`}
+                                        className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#CDE8D6] px-4 text-sm font-bold text-[#1E5143] transition hover:bg-white"
+                                    >
+                                        <Pencil size={15} />
+                                        Editar
+                                    </Link>
+                                )}
+                                {puedeExportarWord && (
+                                    <a
+                                        href={legajosRoutes.previsualizarWord.url(
+                                            legajo.id,
+                                        )}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="inline-flex h-10 items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-4 text-sm font-semibold text-white transition hover:bg-white/15"
+                                    >
+                                        <FileDown size={15} />
+                                        Previsualizar Legajo
+                                    </a>
+                                )}
                                 {secciones.estadisticas && (
                                     <a
                                         href={legajosRoutes.estadisticas.url(
@@ -380,20 +400,22 @@ export default function LegajoShow({
                                         Derivaciones
                                     </button>
                                 )}
-                                <button
-                                    type="button"
-                                    onClick={cambiarEstado}
-                                    className="inline-flex h-10 items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-4 text-sm font-semibold text-white transition hover:bg-white/15"
-                                >
-                                    {cerrado ? (
-                                        <LockOpen size={15} />
-                                    ) : (
-                                        <Lock size={15} />
-                                    )}
-                                    {cerrado
-                                        ? 'Reabrir legajo'
-                                        : 'Cerrar legajo'}
-                                </button>
+                                {puedeCambiarEstado && (
+                                    <button
+                                        type="button"
+                                        onClick={cambiarEstado}
+                                        className="inline-flex h-10 items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-4 text-sm font-semibold text-white transition hover:bg-white/15"
+                                    >
+                                        {cerrado ? (
+                                            <LockOpen size={15} />
+                                        ) : (
+                                            <Lock size={15} />
+                                        )}
+                                        {cerrado
+                                            ? 'Reabrir legajo'
+                                            : 'Cerrar legajo'}
+                                    </button>
+                                )}
                             </div>
                         </div>
 
@@ -585,6 +607,14 @@ export default function LegajoShow({
                                 </dl>
                             </CardContent>
                         </Card>
+                    )}
+
+                    {secciones.persona && (
+                        <CudModule
+                            legajoId={legajo.id}
+                            cud={cud}
+                            puedeGestionar={puedeGestionarCud}
+                        />
                     )}
 
                     {puedeVerVinculos && (

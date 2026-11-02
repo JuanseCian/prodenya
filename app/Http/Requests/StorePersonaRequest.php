@@ -7,6 +7,7 @@ use App\Models\Localidad;
 use App\Models\Persona;
 use App\Models\Problematica;
 use App\Models\Provincia;
+use App\Models\Rol;
 use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -43,16 +44,28 @@ class StorePersonaRequest extends FormRequest
             'direccion_numero' => ['nullable', 'string', 'max:20'],
             'direccion_piso_depto' => ['nullable', 'string', 'max:20'],
             'provincia_id' => ['required', Rule::exists(Provincia::class, 'id')],
-            'localidad_id' => ['required', Rule::exists(Localidad::class, 'id')],
-            'barrio_id' => ['nullable', Rule::exists(Barrio::class, 'id')],
+            'localidad_id' => [
+                'required',
+                Rule::exists(Localidad::class, 'id')->where('provincia_id', $this->integer('provincia_id')),
+            ],
+            'barrio_id' => [
+                'nullable',
+                Rule::exists(Barrio::class, 'id')->where('localidad_id', $this->integer('localidad_id')),
+            ],
             'observaciones' => ['nullable', 'string', 'max:2000'],
 
-            'abrir_legajo' => ['boolean'],
+            'abrir_legajo' => ['required', 'accepted'],
             'legajo_problematicas' => $conLegajo ? ['required', 'array', 'min:1'] : ['nullable', 'array'],
             'legajo_problematicas.*' => [Rule::exists(Problematica::class, 'id')],
             'legajo_nivel_riesgo' => $conLegajo ? ['required', 'in:Bajo,Medio,Alto,Critico'] : ['nullable'],
             'legajo_origen_derivacion' => $conLegajo ? ['required', 'string', 'max:255'] : ['nullable'],
-            'legajo_profesional_id' => ['nullable', Rule::exists(User::class, 'id')],
+            'legajo_profesional_id' => [
+                'nullable',
+                Rule::exists(User::class, 'id')
+                    ->where('activo', true)
+                    ->where('estado_cuenta', User::ESTADO_APROBADO)
+                    ->where('rol_id', Rol::query()->where('nombre', 'profesional')->value('id')),
+            ],
             'legajo_observaciones' => ['nullable', 'string', 'max:2000'],
         ];
     }

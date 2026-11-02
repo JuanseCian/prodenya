@@ -125,3 +125,40 @@ test('an admin always sees every legajo section regardless of configuration', fu
         ->where('secciones.derivaciones', true),
     );
 });
+
+test('a restricted user cannot access interventions or export the full legajo', function () {
+    $admin = User::factory()->create(['rol_id' => 1]);
+    $profesional = User::factory()->create([
+        'rol_id' => 5,
+        'secciones_legajo_visibles' => ['persona'],
+    ]);
+    $legajo = crearLegajoParaSecciones($admin);
+
+    $this->actingAs($profesional)
+        ->get(route('legajos.intervenciones.create', $legajo))
+        ->assertForbidden();
+
+    $this->actingAs($profesional)
+        ->get(route('legajos.previsualizar-word', $legajo))
+        ->assertForbidden();
+});
+
+test('the legajo listing masks fields from restricted sections', function () {
+    $admin = User::factory()->create(['rol_id' => 1]);
+    $profesional = User::factory()->create([
+        'rol_id' => 5,
+        'secciones_legajo_visibles' => ['intervenciones'],
+    ]);
+    $legajo = crearLegajoParaSecciones($admin);
+
+    $this->actingAs($profesional)
+        ->get(route('legajos.index'))
+        ->assertInertia(fn ($page) => $page
+            ->where('legajos.data.0.id', $legajo->id)
+            ->where('legajos.data.0.persona', null)
+            ->where('legajos.data.0.problematicas', [])
+            ->where('legajos.data.0.nivel_riesgo', null)
+            ->where('legajos.data.0.estado', null)
+            ->where('legajos.data.0.origen_derivacion', null),
+        );
+});

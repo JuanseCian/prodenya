@@ -96,6 +96,12 @@ class EstadisticasController extends Controller
 
     private function datos(Request $request): array
     {
+        abort_unless(
+            $request->user()->puedeVerSeccionLegajo('estadisticas'),
+            403,
+            'No tenés permiso para ver estas estadísticas.',
+        );
+
         $rango = $this->resolverRango($request);
         $filtros = $this->resolverFiltros($request);
         $intervalos = $this->intervalos($rango['desde'], $rango['hasta']);
@@ -132,10 +138,15 @@ class EstadisticasController extends Controller
             'catalogos' => [
                 'profesionales' => User::query()
                     ->where('activo', true)
+                    ->where('estado_cuenta', User::ESTADO_APROBADO)
                     ->whereHas('rol', fn ($query) => $query->where('nombre', 'profesional'))
                     ->orderBy('name')
                     ->get(['id', 'name', 'profesion']),
-                'responsables' => User::query()->where('activo', true)->orderBy('name')->get(['id', 'name', 'profesion']),
+                'responsables' => User::query()
+                    ->where('activo', true)
+                    ->where('estado_cuenta', User::ESTADO_APROBADO)
+                    ->orderBy('name')
+                    ->get(['id', 'name', 'profesion']),
                 'tiposIntervencion' => TipoIntervencion::query()->where('activo', true)->orderBy('nombre')->get(['id', 'nombre']),
                 'generos' => [
                     ['value' => 'M', 'label' => 'Masculino'],

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\AgendaEvento;
 use App\Models\Legajo;
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -13,7 +14,7 @@ use Inertia\Response;
 
 class AgendaEventoController extends Controller
 {
-    public function index(Request $request): Response|\Illuminate\Http\JsonResponse
+    public function index(Request $request): Response|JsonResponse
     {
         $usuario = $request->user();
         $eventos = AgendaEvento::query()
@@ -66,6 +67,7 @@ class AgendaEventoController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $datos = $request->validate($this->rules());
+        $this->validarReferencias($request->user(), $datos);
         $evento = AgendaEvento::create([
             'titulo' => $datos['titulo'],
             'tipo' => $datos['tipo'],
@@ -96,6 +98,7 @@ class AgendaEventoController extends Controller
         );
 
         $datos = $request->validate($this->rules());
+        $this->validarReferencias($request->user(), $datos);
         $agendaEvento->update([
             'titulo' => $datos['titulo'],
             'tipo' => $datos['tipo'],
@@ -144,7 +147,47 @@ class AgendaEventoController extends Controller
             'legajo_ids' => ['nullable', 'array'],
             'legajo_ids.*' => ['integer', Rule::exists(Legajo::class, 'id')],
             'usuario_ids' => ['nullable', 'array'],
-            'usuario_ids.*' => ['integer', Rule::exists(User::class, 'id')],
+            'usuario_ids.*' => [
+                'integer',
+                Rule::exists(User::class, 'id')
+                    ->where('activo', true)
+                    ->where('estado_cuenta', User::ESTADO_APROBADO),
+            ],
         ];
+    }
+
+    /** @param array<string, mixed> $datos */
+    private function validarReferencias(User $usuario, array $datos): void
+    {
+        $legajoIds = array_values(array_unique(array_map('intval', $datos['legajo_ids'] ?? [])));
+        $legajos = Legajo::query()->whereKey($legajoIds)->get();
+
+        abort_if(
+            $legajos->count() !== count($legajoIds)
+                || $legajos->contains(fn (Legajo $legajo): bool => ! $this->puedeAccederLegajo($usuario, $legajo, ...array_keys(Legajo::SECCIONES))),
+            422,
+            'Uno de los legajos seleccionados no está disponible para tu usuario.',
+        );
+
+        $usuarioIds = array_values(array_unique(array_map('intval', $datos['usuario_ids'] ?? [])));
+        $usuariosValidos = User::query()
+            ->whereKey($usuarioIds)
+            ->where('activo', true)
+            ->where('estado_cuenta', User::ESTADO_APROBADO)
+            ->whereHas('rol', fn ($query) => $query->whereIn('nombre', [
+                'admin',
+                'operador',
+                'oficios',
+                'coordinador',
+                'profesional',
+                'administrativo',
+            ]))
+            ->count();
+
+        abort_if(
+            $usuariosValidos !== count($usuarioIds),
+            422,
+            'Uno de los participantes seleccionados no está habilitado.',
+        );
     }
 }

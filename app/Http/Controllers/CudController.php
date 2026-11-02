@@ -22,6 +22,8 @@ class CudController extends Controller
 {
     public function show(Request $request, Legajo $legajo): Response
     {
+        $this->authorizeLegajoSection($request->user(), $legajo, 'persona');
+
         $actual = $legajo->cudActual()->with('archivos')->first();
         $historial = $legajo->cuds()
             ->where('activo', false)
@@ -44,6 +46,8 @@ class CudController extends Controller
 
     public function store(StoreCudRequest $request, Legajo $legajo): RedirectResponse
     {
+        $this->authorizeLegajoSection($request->user(), $legajo, 'persona');
+
         $datos = $request->validated();
         $rutas = [];
         $actual = $legajo->cudActual()->with('archivos')->first();
@@ -123,6 +127,8 @@ class CudController extends Controller
 
     public function deleteFile(Request $request, Legajo $legajo, CudArchivo $cudArchivo): RedirectResponse
     {
+        $this->authorizeLegajoSection($request->user(), $legajo, 'persona');
+
         $cudArchivo->load('certificado');
         abort_unless(
             $cudArchivo->certificado?->legajo_id === $legajo->id
@@ -140,6 +146,8 @@ class CudController extends Controller
 
     public function download(Request $request, Legajo $legajo, CudArchivo $cudArchivo): StreamedResponse
     {
+        $this->authorizeLegajoSection($request->user(), $legajo, 'persona');
+
         $cudArchivo->load('certificado');
         abort_unless($cudArchivo->certificado?->legajo_id === $legajo->id, 404);
         abort_unless(Storage::disk('local')->exists($cudArchivo->ruta_archivo), 404);

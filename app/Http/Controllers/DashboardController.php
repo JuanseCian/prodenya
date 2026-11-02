@@ -15,17 +15,19 @@ class DashboardController extends Controller
     {
         $hoy = now();
         $inicioMes = $hoy->copy()->startOfMonth();
+        $puedeVerResumen = collect(['persona', 'seguimiento', 'situacion'])
+            ->every(fn (string $seccion): bool => $request->user()->puedeVerSeccionLegajo($seccion));
 
         return Inertia::render('dashboard', [
             'estadisticas' => [
-                'personasActivas' => Persona::where('activo', true)->count(),
-                'legajosAbiertos' => Legajo::where('estado', 'Abierto')->count(),
-                'riesgoPrioritario' => Legajo::whereIn('nivel_riesgo', ['Alto', 'Critico'])->count(),
-                'aperturasMes' => Legajo::whereDate('fecha_apertura', '>=', $inicioMes)
+                'personasActivas' => $puedeVerResumen ? Persona::where('activo', true)->count() : 0,
+                'legajosAbiertos' => $puedeVerResumen ? Legajo::where('estado', 'Abierto')->count() : 0,
+                'riesgoPrioritario' => $puedeVerResumen ? Legajo::whereIn('nivel_riesgo', ['Alto', 'Critico'])->count() : 0,
+                'aperturasMes' => $puedeVerResumen ? Legajo::whereDate('fecha_apertura', '>=', $inicioMes)
                     ->whereDate('fecha_apertura', '<=', $hoy)
-                    ->count(),
+                    ->count() : 0,
             ],
-            'personasRecientes' => Persona::with('localidad')
+            'personasRecientes' => $puedeVerResumen ? Persona::with('localidad')
                 ->where('activo', true)
                 ->latest('creado_en')
                 ->take(5)
@@ -36,8 +38,8 @@ class DashboardController extends Controller
                     'dni' => $persona->dni,
                     'localidad' => $persona->localidad?->nombre,
                     'fechaAlta' => $persona->creado_en->format('d/m/Y'),
-                ]),
-            'legajosRecientes' => Legajo::with('persona')
+                ]) : collect(),
+            'legajosRecientes' => $puedeVerResumen ? Legajo::with('persona')
                 ->latest('fecha_apertura')
                 ->take(6)
                 ->get()
@@ -49,7 +51,7 @@ class DashboardController extends Controller
                     'riesgo' => $legajo->nivel_riesgo,
                     'estado' => $legajo->estado,
                     'fechaApertura' => $legajo->fecha_apertura?->format('d/m/Y'),
-                ]),
+                ]) : collect(),
             'pendingInvitations' => TeamInvitation::query()
                 ->with(['team', 'inviter'])
                 ->where('email', $request->user()->email)

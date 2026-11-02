@@ -111,6 +111,7 @@ test('an intervention can be copied to linked legajos without copying signatures
     Storage::fake('local');
 
     $admin = User::factory()->create(['rol_id' => crearRol('admin')]);
+    $profesional = User::factory()->create(['rol_id' => crearRol('profesional')]);
     [$personaA, $legajoA] = crearPersonaConLegajoParaVinculo('E', $admin->id);
     [$personaB, $legajoB] = crearPersonaConLegajoParaVinculo('F', $admin->id);
 
@@ -129,7 +130,7 @@ test('an intervention can be copied to linked legajos without copying signatures
         'fecha_intervencion' => today()->toDateString(),
         'hora_intervencion' => '10:00',
         'tipo_intervencion_id' => $tipoId,
-        'profesional_id' => $admin->id,
+        'profesional_id' => $profesional->id,
         'detalle' => 'Entrevista familiar conjunta.',
         'firma_nombre' => 'Administrador',
         'firma_aclaracion' => 'Profesional',
