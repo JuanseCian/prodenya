@@ -56,6 +56,10 @@ return new class extends Migration
                 $table->index(['legajo_id', 'activo']);
                 $table->index(['usuario_id', 'activo']);
             });
+        } elseif (! Schema::hasColumn('caso_responsables', 'es_principal')) {
+            Schema::table('caso_responsables', function (Blueprint $table) {
+                $table->boolean('es_principal')->default(false)->after('retirado_por');
+            });
         }
 
         if (! Schema::hasTable('derivacion_caso_conversacion')) {
