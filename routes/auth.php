@@ -18,10 +18,9 @@ Route::middleware('guest')->group(function () {
     Route::get('registro/pendiente', [RegisteredUserController::class, 'pending'])
         ->name('register.pending');
 
-    Route::get('registro/verificar/{user}', [RegisteredUserController::class, 'verifyRegistration'])
-        ->middleware('signed')
-        ->whereNumber('user')
-        ->name('registration.verify-email');
+    Route::post('registro/verificar/reenviar', [RegisteredUserController::class, 'resendVerification'])
+        ->middleware('throttle:6,1')
+        ->name('registration.verification.resend');
 
     Route::get('login', [AuthenticatedSessionController::class, 'create'])
         ->name('login');
@@ -42,6 +41,13 @@ Route::middleware('guest')->group(function () {
     Route::post('reset-password', [NewPasswordController::class, 'update'])
         ->name('password.update');
 });
+
+// La firma es la única autorización necesaria: el usuario puede abrir el enlace
+// desde otra sesión o sin estar autenticado.
+Route::get('registro/verificar/{user}', [RegisteredUserController::class, 'verifyRegistration'])
+    ->middleware('signed')
+    ->whereNumber('user')
+    ->name('registration.verify-email');
 
 // Rutas de usuario autenticado
 Route::middleware('auth')->group(function () {

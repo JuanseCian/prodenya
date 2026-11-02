@@ -14,6 +14,12 @@ test('login screen can be rendered', function () {
     $response->assertOk();
 });
 
+test('login screen includes the biometric access mount point', function () {
+    $this->get(route('login'))
+        ->assertOk()
+        ->assertSee('data-biometric-login');
+});
+
 test('login screen includes team invitation context', function () {
     $owner = User::factory()->create();
     $team = Team::factory()->create(['name' => 'Laravel Team']);

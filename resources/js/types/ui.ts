@@ -14,6 +14,15 @@ export type FlashToast = {
     title?: string;
 };
 
+export type NotificationItem = {
+    id: string;
+    titulo: string;
+    mensaje: string;
+    url: string | null;
+    leida: boolean;
+    creada_en: string | null;
+};
+
 export type AuthLayoutProps = {
     children?: ReactNode;
     name?: string;

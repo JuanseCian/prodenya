@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Controllers\CudController;
+use App\Http\Controllers\DerivacionCasoController;
+use App\Http\Controllers\GrupoFamiliarController;
 use App\Http\Controllers\IntervencionController;
 use App\Http\Controllers\LegajoController;
 use App\Models\Barrio;
@@ -20,6 +23,13 @@ Route::middleware(['auth'])->group(function () {
         Route::patch('/legajos/{legajo}/reabrir', [LegajoController::class, 'reabrir'])->name('legajos.reabrir')->whereNumber('legajo');
     });
 
+    Route::middleware('rol:admin,coordinador')->group(function () {
+        Route::post('/legajos/{legajo}/documentacion/cud', [CudController::class, 'store'])
+            ->name('legajos.cud.store')->whereNumber('legajo');
+        Route::delete('/legajos/{legajo}/documentacion/cud/archivos/{cudArchivo}', [CudController::class, 'deleteFile'])
+            ->name('legajos.cud.archivos.eliminar')->whereNumber(['legajo', 'cudArchivo']);
+    });
+
     Route::middleware('rol:admin,operador,coordinador,profesional')->group(function () {
         Route::get('/legajos/{legajo}/intervenciones/create', [IntervencionController::class, 'create'])->name('legajos.intervenciones.create')->whereNumber('legajo');
         Route::post('/legajos/{legajo}/intervenciones', [IntervencionController::class, 'store'])->name('legajos.intervenciones.store')->whereNumber('legajo');
@@ -27,14 +37,47 @@ Route::middleware(['auth'])->group(function () {
         Route::put('/legajos/{legajo}/intervenciones/{intervencion}', [IntervencionController::class, 'update'])->name('legajos.intervenciones.update')->whereNumber(['legajo', 'intervencion']);
     });
 
+    Route::middleware('rol:admin,coordinador,profesional,administrativo')->group(function () {
+        Route::post('/legajos/{legajo}/vinculos', [GrupoFamiliarController::class, 'store'])
+            ->name('legajos.vinculos.store')->whereNumber('legajo');
+        Route::delete('/legajos/{legajo}/vinculos/{vinculo}', [GrupoFamiliarController::class, 'destroy'])
+            ->name('legajos.vinculos.destroy')->whereNumber(['legajo', 'vinculo']);
+    });
+
+    Route::middleware('rol:admin,operador,oficios,coordinador,profesional,administrativo')->group(function () {
+        Route::post('/legajos/{legajo}/derivaciones', [DerivacionCasoController::class, 'store'])
+            ->name('legajos.derivaciones.store')->whereNumber('legajo');
+        Route::patch('/derivaciones/{derivacion}/aceptar', [DerivacionCasoController::class, 'aceptar'])
+            ->name('derivaciones.aceptar')->whereNumber('derivacion');
+        Route::patch('/derivaciones/{derivacion}/rechazar', [DerivacionCasoController::class, 'rechazar'])
+            ->name('derivaciones.rechazar')->whereNumber('derivacion');
+        Route::patch('/derivaciones/{derivacion}/cancelar', [DerivacionCasoController::class, 'cancelar'])
+            ->name('derivaciones.cancelar')->whereNumber('derivacion');
+    });
+
     // ── Lectura: admin, operador y consulta ─────────────────────────────
     Route::middleware('rol:admin,operador,consulta,oficios,coordinador,profesional,administrativo')->group(function () {
         Route::get('/personas', fn () => redirect()->route('legajos.index'))->name('personas.index');
-        Route::get('/personas/{persona}', fn (Persona $persona) => redirect()->route('legajos.show', $persona->id))
-            ->name('personas.show')->whereNumber('persona');
+        Route::get('/personas/{persona}', function (Persona $persona) {
+            $legajo = $persona->legajos()->latest('fecha_apertura')->first();
+
+            abort_unless($legajo, 404);
+
+            return redirect()->route('legajos.show', $legajo);
+        })->name('personas.show')->whereNumber('persona');
         Route::get('/legajos', [LegajoController::class, 'index'])->name('legajos.index');
         Route::get('/mayores-18', [LegajoController::class, 'mayores18'])->name('mayores18.index');
+        Route::get('/legajos/{legajo}/estadisticas', [LegajoController::class, 'estadisticas'])
+            ->name('legajos.estadisticas')->whereNumber('legajo');
+        Route::get('/legajos/{legajo}/documentacion', [CudController::class, 'show'])
+            ->name('legajos.documentacion')->whereNumber('legajo');
+        Route::get('/legajos/{legajo}/documentacion/cud/archivos/{cudArchivo}', [CudController::class, 'download'])
+            ->name('legajos.cud.archivos.descargar')->whereNumber(['legajo', 'cudArchivo']);
         Route::get('/legajos/{legajo}', [LegajoController::class, 'show'])->name('legajos.show')->whereNumber('legajo');
+        Route::get('/legajos/{legajo}/previsualizar-word', [LegajoController::class, 'previsualizarWord'])
+            ->name('legajos.previsualizar-word')->whereNumber('legajo');
+        Route::get('/legajos/{legajo}/exportar-word', [LegajoController::class, 'exportarWord'])
+            ->name('legajos.exportar-word')->whereNumber('legajo');
         Route::get('/intervenciones/documentos/{documento}/descargar', [IntervencionController::class, 'descargarAdjunto'])
             ->name('intervenciones.documentos.descargar')->whereNumber('documento');
         Route::get('/legajos/{legajo}/intervenciones/{intervencion}/firma/{firma}/descargar', [IntervencionController::class, 'descargarFirma'])

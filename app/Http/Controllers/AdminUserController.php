@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\AuditoriaEvento;
+use App\Models\Legajo;
 use App\Models\Rol;
 use App\Models\User;
 use App\Notifications\RegistroUsuarioNotification;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -61,6 +63,8 @@ class AdminUserController extends Controller
         return view('backend.usuarios.index', [
             'usuarios' => $usuarios,
             'roles' => $roles,
+            'profesiones' => User::PROFESIONES,
+            'seccionesLegajo' => Legajo::SECCIONES,
             'seleccionado' => $seleccionado,
             'actividad' => $actividad,
             'buscar' => $buscar,
@@ -79,13 +83,14 @@ class AdminUserController extends Controller
         $datos = $request->validate(['rol_id' => ['required', 'integer', Rule::exists(Rol::class, 'id')]]);
         $rol = Rol::findOrFail($datos['rol_id']);
         $this->authorizeRole($request->user(), $rol);
+        $request->validate(['profesion' => $this->professionRules($rol)]);
 
         abort_if($user->estado_cuenta !== User::ESTADO_PENDIENTE, 422, 'Solo se pueden aprobar solicitudes pendientes.');
         abort_if(! $user->hasVerifiedEmail(), 422, 'El usuario debe verificar su correo antes de ser aprobado.');
         abort_if($user->estado_cuenta === User::ESTADO_ARCHIVADO, 422, 'Una cuenta archivada debe ser restaurada antes de aprobarse.');
 
         $antes = $this->snapshot($user);
-        $user->forceFill([
+        $atributos = [
             'rol_id' => $rol->id,
             'estado_cuenta' => User::ESTADO_APROBADO,
             'activo' => true,
@@ -97,7 +102,13 @@ class AdminUserController extends Controller
             'suspendido_en' => null,
             'suspendido_por' => null,
             'motivo_suspension' => null,
-        ])->saveQuietly();
+        ];
+
+        if ($rol->nombre === 'profesional') {
+            $atributos['profesion'] = $request->string('profesion')->toString();
+        }
+
+        $user->forceFill($atributos)->saveQuietly();
         $this->audit('usuario_aprobado', $user, $antes);
         $user->notify(new RegistroUsuarioNotification('aprobado'));
 
@@ -148,6 +159,7 @@ class AdminUserController extends Controller
         $datos = $request->validate(['rol_id' => ['required', 'integer', Rule::exists(Rol::class, 'id')]]);
         $rol = Rol::findOrFail($datos['rol_id']);
         $this->authorizeRole($request->user(), $rol);
+        $request->validate(['profesion' => $this->professionRules($rol)]);
         abort_if($user->estado_cuenta !== User::ESTADO_APROBADO, 422, 'Solo se puede cambiar el rol de una cuenta aprobada.');
         abort_if($user->id === $request->user()->id, 422, 'No podés cambiar tu propio rol.');
         if ($user->rol?->nombre === 'admin' && $rol->nombre !== 'admin') {
@@ -155,10 +167,45 @@ class AdminUserController extends Controller
         }
 
         $antes = $this->snapshot($user);
-        $user->forceFill(['rol_id' => $rol->id])->saveQuietly();
+        $atributos = ['rol_id' => $rol->id];
+
+        if ($rol->nombre === 'profesional') {
+            $atributos['profesion'] = $request->string('profesion')->toString();
+        }
+
+        $user->forceFill($atributos)->saveQuietly();
         $this->audit('rol_usuario_actualizado', $user, $antes, ['rol_nuevo' => $rol->nombre]);
 
         return back()->with('success', 'Rol actualizado correctamente.');
+    }
+
+    /**
+     * Debido a que los legajos contienen información sensible de menores, el
+     * administrador puede restringir por usuario qué secciones del legajo
+     * puede ver (persona, intervenciones, derivaciones, etc.).
+     */
+    public function updateLegajoSecciones(Request $request, User $user): RedirectResponse
+    {
+        abort_unless($request->user()->esAdmin(), 403, 'Solo un administrador puede configurar el acceso al legajo.');
+        abort_if($user->esAdmin(), 422, 'Los administradores siempre tienen acceso completo al legajo.');
+        abort_if($user->estado_cuenta !== User::ESTADO_APROBADO, 422, 'Solo se puede configurar el acceso de una cuenta aprobada.');
+
+        $datos = $request->validate([
+            'acceso_completo' => ['nullable', 'boolean'],
+            'secciones' => ['array'],
+            'secciones.*' => [Rule::in(array_keys(Legajo::SECCIONES))],
+        ]);
+
+        $antes = $this->snapshot($user);
+        $accesoCompleto = $request->boolean('acceso_completo');
+
+        $user->forceFill([
+            'secciones_legajo_visibles' => $accesoCompleto ? null : array_values($datos['secciones'] ?? []),
+        ])->saveQuietly();
+
+        $this->audit('secciones_legajo_actualizadas', $user, $antes);
+
+        return back()->with('success', 'Se actualizaron las secciones del legajo visibles para el usuario.');
     }
 
     public function suspend(Request $request, User $user): RedirectResponse
@@ -268,7 +315,19 @@ class AdminUserController extends Controller
 
     private function snapshot(User $user): array
     {
-        return $user->only(['estado_cuenta', 'activo', 'rol_id', 'motivo_rechazo', 'motivo_suspension']);
+        return $user->only(['estado_cuenta', 'activo', 'rol_id', 'profesion', 'motivo_rechazo', 'motivo_suspension', 'secciones_legajo_visibles']);
+    }
+
+    /**
+     * @return array<int, ValidationRule|string>
+     */
+    private function professionRules(Rol $rol): array
+    {
+        return [
+            Rule::requiredIf($rol->nombre === 'profesional'),
+            'nullable',
+            Rule::in(User::PROFESIONES),
+        ];
     }
 
     private function audit(string $evento, User $user, array $antes, ?array $despues = null): void

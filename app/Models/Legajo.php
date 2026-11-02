@@ -2,30 +2,47 @@
 
 namespace App\Models;
 
-use App\Models\Concerns\RegistraAutor;
 use App\Models\Concerns\Auditable;
+use App\Models\Concerns\RegistraAutor;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use Illuminate\Support\Carbon;
 
 class Legajo extends Model
 {
-    use RegistraAutor, Auditable;
+    use Auditable, RegistraAutor;
+
+    /**
+     * Secciones de la vista de legajo que el administrador puede ocultar
+     * por usuario (ver {@see User::puedeVerSeccionLegajo()}).
+     *
+     * @var array<string, string>
+     */
+    public const SECCIONES = [
+        'persona' => 'Datos de la persona',
+        'seguimiento' => 'Seguimiento del caso',
+        'situacion' => 'Situación y problemáticas',
+        'vinculos' => 'Vínculos familiares',
+        'intervenciones' => 'Intervenciones y registros',
+        'derivaciones' => 'Derivaciones y responsables',
+        'estadisticas' => 'Estadísticas del legajo',
+    ];
 
     protected $table = 'legajos';
 
     const CREATED_AT = 'creado_en';
+
     const UPDATED_AT = 'actualizado_en';
 
     protected $fillable = [
         'persona_id',
         'numero_legajo',
-        'motivo_ingreso',
         'nivel_riesgo',
         'origen_derivacion',
         'profesional_id',
@@ -94,6 +111,16 @@ class Legajo extends Model
         return $this->hasMany(Documento::class, 'legajo_id');
     }
 
+    public function cuds(): HasMany
+    {
+        return $this->hasMany(CudCertificado::class, 'legajo_id');
+    }
+
+    public function cudActual(): HasOne
+    {
+        return $this->hasOne(CudCertificado::class, 'legajo_id')->where('activo', true);
+    }
+
     public function intervenciones(): HasMany
     {
         return $this->hasMany(Intervencion::class, 'legajo_id')
@@ -105,6 +132,21 @@ class Legajo extends Model
     public function accesos(): HasMany
     {
         return $this->hasMany(AuditoriaAccesoLegajo::class, 'legajo_id');
+    }
+
+    public function derivaciones(): HasMany
+    {
+        return $this->hasMany(DerivacionCaso::class, 'legajo_id')->latest();
+    }
+
+    public function responsables(): HasMany
+    {
+        return $this->hasMany(CasoResponsable::class, 'legajo_id');
+    }
+
+    public function responsablesActivos(): HasMany
+    {
+        return $this->responsables()->where('activo', true);
     }
 
     /**

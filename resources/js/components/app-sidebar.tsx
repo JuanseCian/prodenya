@@ -1,5 +1,14 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Home, LayoutGrid, Mail, UserRound } from 'lucide-react';
+import {
+    BarChart3,
+    CalendarDays,
+    ClipboardCheck,
+    FolderOpen,
+    Home,
+    LayoutGrid,
+    Mail,
+    UserRound,
+} from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -14,13 +23,16 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { dashboard } from '@/routes';
+import { dashboard, estadisticas as estadisticasRoute } from '@/routes';
+import agenda from '@/routes/agenda';
+import mailbox from '@/routes/mailbox';
+import tareas from '@/routes/tareas';
 import type { NavItem } from '@/types';
 
 export function AppSidebar() {
     const page = usePage();
     const dashboardUrl = page.props.currentTeam
-        ? dashboard(page.props.currentTeam.slug)
+        ? dashboard().url
         : '/';
 
     const mainNavItems: NavItem[] = [
@@ -29,8 +41,22 @@ export function AppSidebar() {
             href: dashboardUrl,
             icon: LayoutGrid,
         },
+        {
+            title: 'Consultar legajos',
+            href: '/legajos',
+            icon: FolderOpen,
+        },
+        ...(page.props.can?.accessStatistics
+            ? [{ title: 'Estadísticas', href: estadisticasRoute().url, icon: BarChart3 }]
+            : []),
+        ...(page.props.can?.accessTasks
+            ? [{ title: 'Tareas', href: tareas.index().url, icon: ClipboardCheck }]
+            : []),
+        ...(page.props.can?.accessAgenda
+            ? [{ title: 'Agenda', href: agenda.index().url, icon: CalendarDays }]
+            : []),
         ...(page.props.can?.accessMailbox
-            ? [{ title: 'Mailbox', href: '/mailbox', icon: Mail }]
+            ? [{ title: 'Mailbox', href: mailbox.index().url, icon: Mail }]
             : []),
     ];
 

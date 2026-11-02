@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\Concerns\Auditable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Intervencion extends Model
 {
@@ -13,10 +14,13 @@ class Intervencion extends Model
     protected $table = 'intervenciones';
 
     const CREATED_AT = 'creado_en';
+
     const UPDATED_AT = 'actualizado_en';
 
     protected $fillable = [
         'legajo_id',
+        'grupo_copia_id',
+        'intervencion_origen_id',
         'tipo_intervencion_id',
         'profesional_id',
         'fecha_intervencion',
@@ -66,5 +70,15 @@ class Intervencion extends Model
     public function actualizadoPor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'actualizado_por');
+    }
+
+    public function origen(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'intervencion_origen_id');
+    }
+
+    public function copias(): HasMany
+    {
+        return $this->hasMany(self::class, 'intervencion_origen_id');
     }
 }

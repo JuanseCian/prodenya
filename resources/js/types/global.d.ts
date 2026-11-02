@@ -1,5 +1,6 @@
 import type { Auth } from '@/types/auth';
 import type { Team } from '@/types/teams';
+import type { NotificationItem } from '@/types/ui';
 
 declare module 'react' {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -18,7 +19,12 @@ declare module '@inertiajs/core' {
             teams: Team[];
             can: {
                 accessMailbox: boolean;
+                accessStatistics: boolean;
+                accessTasks: boolean;
+                accessAgenda: boolean;
             };
+            notificaciones: NotificationItem[];
+            notificacionesNoLeidas: number;
             [key: string]: unknown;
         };
     }

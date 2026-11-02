@@ -1,5 +1,14 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Home, LayoutGrid, Mail, Menu, Search, UserRound } from 'lucide-react';
+import {
+    BarChart3,
+    ClipboardCheck,
+    Home,
+    LayoutGrid,
+    Mail,
+    Menu,
+    Search,
+    UserRound,
+} from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import AppLogoIcon from '@/components/app-logo-icon';
 import { Breadcrumbs } from '@/components/breadcrumbs';
@@ -11,12 +20,6 @@ import {
     DropdownMenuContent,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-    NavigationMenu,
-    NavigationMenuItem,
-    NavigationMenuList,
-    navigationMenuTriggerStyle,
-} from '@/components/ui/navigation-menu';
 import {
     Sheet,
     SheetContent,
@@ -33,8 +36,10 @@ import {
 import { UserMenuContent } from '@/components/user-menu-content';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import { useInitials } from '@/hooks/use-initials';
-import { cn, toUrl } from '@/lib/utils';
-import { dashboard } from '@/routes';
+import { toUrl } from '@/lib/utils';
+import { dashboard, estadisticas as estadisticasRoute } from '@/routes';
+import mailbox from '@/routes/mailbox';
+import tareas from '@/routes/tareas';
 import type { BreadcrumbItem, NavItem } from '@/types';
 
 type Props = {
@@ -54,15 +59,12 @@ const rightNavItems: NavItem[] = [
     },
 ];
 
-const activeItemStyles =
-    'text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100';
-
 export function AppHeader({ breadcrumbs = [] }: Props) {
     const page = usePage();
     const { auth, currentTeam } = page.props;
     const getInitials = useInitials();
-    const { isCurrentUrl, whenCurrentUrl } = useCurrentUrl();
-    const dashboardUrl = currentTeam ? dashboard(currentTeam.slug) : '/';
+    const { isCurrentUrl } = useCurrentUrl();
+    const dashboardUrl = currentTeam ? dashboard().url : '/';
 
     const mainNavItems: NavItem[] = [
         {
@@ -70,10 +72,31 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
             href: dashboardUrl,
             icon: LayoutGrid,
         },
+        ...(page.props.can?.accessStatistics
+            ? [
+                  {
+                      title: 'Estadísticas',
+                      href: estadisticasRoute().url,
+                      icon: BarChart3,
+                  },
+              ]
+            : []),
+        ...(page.props.can?.accessTasks
+            ? [
+                  {
+                      title: 'Tareas',
+                      href: tareas.index().url,
+                      icon: ClipboardCheck,
+                  },
+              ]
+            : []),
         ...(page.props.can?.accessMailbox
-            ? [{ title: 'Mailbox', href: '/mailbox', icon: Mail }]
+            ? [{ title: 'Mailbox', href: mailbox.index().url, icon: Mail }]
             : []),
     ];
+    const activeNavIndex = mainNavItems.findIndex((item) =>
+        isCurrentUrl(item.href),
+    );
 
     return (
         <>
@@ -149,37 +172,17 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                     </Link>
 
                     {/* Desktop Navigation */}
-                    <div className="ml-6 hidden h-full items-center space-x-6 lg:flex">
-                        <NavigationMenu className="flex h-full items-stretch">
-                            <NavigationMenuList className="flex h-full items-stretch space-x-2">
-                                {mainNavItems.map((item, index) => (
-                                    <NavigationMenuItem
-                                        key={index}
-                                        className="relative flex h-full items-center"
-                                    >
-                                        <Link
-                                            href={item.href}
-                                            className={cn(
-                                                navigationMenuTriggerStyle(),
-                                                whenCurrentUrl(
-                                                    item.href,
-                                                    activeItemStyles,
-                                                ),
-                                                'h-9 cursor-pointer px-3',
-                                            )}
-                                        >
-                                            {item.icon && (
-                                                <item.icon className="mr-2 h-4 w-4" />
-                                            )}
-                                            {item.title}
-                                        </Link>
-                                        {isCurrentUrl(item.href) && (
-                                            <div className="absolute bottom-0 left-0 h-0.5 w-full translate-y-px bg-black dark:bg-white"></div>
-                                        )}
-                                    </NavigationMenuItem>
-                                ))}
-                            </NavigationMenuList>
-                        </NavigationMenu>
+                    <div className="ml-6 hidden h-full items-center gap-1 lg:flex">
+                        {mainNavItems.map((item, index) => (
+                            <Link
+                                key={item.title}
+                                href={item.href}
+                                className={`inline-flex h-10 items-center gap-2 rounded-md px-3 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground ${index === activeNavIndex ? 'bg-accent text-accent-foreground' : 'text-muted-foreground'}`}
+                            >
+                                {item.icon && <item.icon className="size-4" />}
+                                {item.title}
+                            </Link>
+                        ))}
                     </div>
 
                     <div className="ml-auto flex items-center space-x-2">

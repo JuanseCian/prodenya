@@ -10,12 +10,17 @@
     @endphp
 
     <div class="home-page">
-        @if (session('status'))
-            <div class="home-container home-status-alert" role="status">
-                <i class="bi bi-check-circle" aria-hidden="true"></i>
-                <span>{{ session('status') }}</span>
-            </div>
-        @endif
+        <div class="home-toast-region" id="home-toast-region" aria-live="polite" aria-atomic="true">
+            @if (session('status'))
+                <div class="home-status-alert home-toast home-toast--success" data-home-toast role="status">
+                    <i class="bi bi-check-circle" aria-hidden="true"></i>
+                    <span>{{ session('status') }}</span>
+                    <button type="button" data-home-toast-close aria-label="Cerrar notificación">
+                        <i class="bi bi-x-lg" aria-hidden="true"></i>
+                    </button>
+                </div>
+            @endif
+        </div>
 
         <main class="home-container">
             <h1 class="sr-only">Inicio</h1>
@@ -26,9 +31,9 @@
                     <p class="home-overview-date"><i class="bi bi-calendar3" aria-hidden="true"></i> {{ ucfirst($homeDate) }}</p>
                 </div>
                 <div class="home-overview-actions">
-                    <button type="button" class="home-panel-launch" data-personal-panel-open>
-                        <span class="home-panel-launch-icon"><i class="bi bi-grid-1x2" aria-hidden="true"></i></span>
-                        <span><strong>Abrir mi panel</strong><small>Pendientes y agenda de hoy</small></span>
+                        <button type="button" class="home-panel-launch" data-personal-panel-open>
+                            <span class="home-panel-launch-icon"><i class="bi bi-grid-1x2" aria-hidden="true"></i></span>
+                            <span><strong>Abrir mi panel</strong><small>Prioridades y agenda de los próximos 3 días</small></span>
                         <i class="bi bi-arrow-up-right" aria-hidden="true"></i>
                     </button>
                 </div>
@@ -77,7 +82,7 @@
                 <div class="home-daily-header">
                     <div>
                         <p class="home-eyebrow">SEGUIMIENTO</p>
-                        <h2 id="home-daily-title">Pendientes y agenda</h2>
+                        <h2 id="home-daily-title">Prioridades de los próximos días</h2>
                     </div>
                     <span class="home-daily-date" data-panel-date>{{ ucfirst($homeDate) }}</span>
                 </div>
@@ -97,15 +102,16 @@
                     <div class="home-preview-summary" aria-label="Resumen de obligaciones">
                         <div><strong data-panel-pending>0</strong><span>pendientes</span></div>
                         <div class="is-warning"><strong data-panel-overdue>0</strong><span>vencidas</span></div>
-                        <div><strong data-panel-events-count>0</strong><span>eventos hoy</span></div>
+                        <div><strong data-panel-upcoming>0</strong><span>vencen pronto</span></div>
+                        <div><strong data-panel-events-count>0</strong><span>eventos próximos</span></div>
                     </div>
                     <div class="home-preview-columns">
                         <section class="home-preview-section" aria-labelledby="home-preview-tasks-title">
-                            <div class="home-preview-section-heading"><h3 id="home-preview-tasks-title">Tareas</h3><a href="{{ route('tareas.index') }}">Ver todas <i class="bi bi-arrow-up-right" aria-hidden="true"></i></a></div>
+                            <div class="home-preview-section-heading"><h3 id="home-preview-tasks-title">Tareas por atender</h3><a href="{{ route('tareas.index') }}">Ver todas <i class="bi bi-arrow-up-right" aria-hidden="true"></i></a></div>
                             <div class="home-control-list" data-panel-tasks></div>
                         </section>
                         <section class="home-preview-section" aria-labelledby="home-preview-events-title">
-                            <div class="home-preview-section-heading"><h3 id="home-preview-events-title">Agenda de hoy</h3><a href="{{ route('agenda.index') }}">Abrir agenda <i class="bi bi-arrow-up-right" aria-hidden="true"></i></a></div>
+                            <div class="home-preview-section-heading"><h3 id="home-preview-events-title">Agenda próxima</h3><a href="{{ route('agenda.index') }}">Abrir agenda <i class="bi bi-arrow-up-right" aria-hidden="true"></i></a></div>
                             <div class="home-control-list" data-panel-events></div>
                         </section>
                     </div>
@@ -148,16 +154,17 @@
                 <div class="home-control-summary" aria-label="Resumen de obligaciones">
                     <div><strong data-panel-pending>0</strong><span>pendientes</span></div>
                     <div class="is-warning"><strong data-panel-overdue>0</strong><span>vencidas</span></div>
-                    <div><strong data-panel-events-count>0</strong><span>eventos hoy</span></div>
+                    <div><strong data-panel-upcoming>0</strong><span>vencen pronto</span></div>
+                    <div><strong data-panel-events-count>0</strong><span>eventos próximos</span></div>
                 </div>
 
                 <div class="home-control-sections">
                     <section class="home-control-section" aria-labelledby="panel-tasks-title">
-                        <div class="home-control-section-heading"><h3 id="panel-tasks-title">Tareas asignadas</h3><a href="{{ route('tareas.index') }}">Ver todas <i class="bi bi-arrow-up-right" aria-hidden="true"></i></a></div>
+                        <div class="home-control-section-heading"><h3 id="panel-tasks-title">Tareas por atender</h3><a href="{{ route('tareas.index') }}">Ver todas <i class="bi bi-arrow-up-right" aria-hidden="true"></i></a></div>
                         <div class="home-control-list" data-panel-tasks></div>
                     </section>
                     <section class="home-control-section" aria-labelledby="panel-events-title">
-                        <div class="home-control-section-heading"><h3 id="panel-events-title">Agenda de hoy</h3><a href="{{ route('agenda.index') }}">Abrir agenda <i class="bi bi-arrow-up-right" aria-hidden="true"></i></a></div>
+                        <div class="home-control-section-heading"><h3 id="panel-events-title">Agenda próxima</h3><a href="{{ route('agenda.index') }}">Abrir agenda <i class="bi bi-arrow-up-right" aria-hidden="true"></i></a></div>
                         <div class="home-control-list" data-panel-events></div>
                     </section>
                 </div>
@@ -166,10 +173,17 @@
     </aside>
 
     <style>
-        .home-page { background: #f4f7fb; color: #173247; min-height: calc(100vh - 164px); }
+        .home-page { animation: home-page-enter 520ms cubic-bezier(0.22, 1, 0.36, 1) both; background: #f4f7fb; color: #173247; min-height: calc(100vh - 164px); }
         .home-container { margin: 0 auto; max-width: 1180px; padding-left: 24px; padding-right: 24px; }
-        .home-status-alert { align-items: center; background: #e8f7ef; border: 1px solid #bde3cb; border-radius: 12px; box-shadow: 0 8px 20px rgba(35, 113, 72, 0.07); color: #267148; display: flex; font-size: 0.85rem; font-weight: 700; gap: 9px; margin-top: 20px; padding: 12px 15px; }
-        .home-overview { align-items: center; border-bottom: 1px solid #dce7ed; display: flex; gap: 24px; justify-content: space-between; min-height: 182px; padding: 42px 0 36px; }
+        .home-toast-region { display: grid; gap: 10px; position: fixed; right: 22px; top: 22px; width: min(calc(100vw - 32px), 390px); z-index: 80; }
+        .home-status-alert { align-items: center; background: #e8f7ef; border: 1px solid #bde3cb; border-radius: 14px; box-shadow: 0 16px 34px rgba(35, 113, 72, 0.14); color: #267148; display: flex; font-size: 0.85rem; font-weight: 700; gap: 9px; margin: 0; padding: 13px 14px; }
+        .home-toast { animation: home-toast-enter 360ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+        .home-toast.is-leaving { animation: home-toast-leave 180ms ease both; }
+        .home-toast > span { flex: 1; }
+        .home-toast button { align-items: center; background: transparent; border: 0; border-radius: 8px; color: currentColor; cursor: pointer; display: inline-flex; height: 28px; justify-content: center; opacity: 0.6; padding: 0; width: 28px; }
+        .home-toast button:hover { background: rgba(38, 113, 72, 0.1); opacity: 1; }
+        .home-toast--error { background: #fff1ef; border-color: #f1c5bf; color: #a8493c; }
+        .home-overview { align-items: center; animation: home-section-enter 560ms 80ms cubic-bezier(0.22, 1, 0.36, 1) both; border-bottom: 1px solid #dce7ed; display: flex; gap: 24px; justify-content: space-between; min-height: 182px; padding: 42px 0 36px; }
         .home-overview-copy { min-width: 0; }
         .home-overview-date { align-items: center; color: #526873; display: flex; font-size: 0.9rem; gap: 8px; margin: 10px 0 0; text-transform: capitalize; }
         .home-overview-date i { color: #397461; }
@@ -183,7 +197,7 @@
         .home-panel-launch strong { font-size: 0.88rem; }
         .home-panel-launch small { color: rgba(255, 255, 255, 0.67); font-size: 0.72rem; }
         .home-panel-launch > i { color: #b9e8cc; font-size: 0.85rem; }
-        .home-shortcuts { border-top: 1px solid #dce7ed; padding: 34px 0 100px; }
+        .home-shortcuts { animation: home-section-enter 560ms 160ms cubic-bezier(0.22, 1, 0.36, 1) both; border-top: 1px solid #dce7ed; padding: 34px 0 100px; }
         .home-section-heading h2 { color: #173247; font-size: 1.45rem; font-weight: 700; letter-spacing: -0.03em; margin: 9px 0 22px; }
         .home-shortcut-grid { display: grid; gap: 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
         .home-shortcut { align-items: center; background: #fff; border: 1px solid #dce7ed; border-radius: 14px; box-shadow: 0 7px 18px rgba(37, 65, 84, 0.04); color: #2c4a5e; display: flex; gap: 13px; min-height: 88px; padding: 16px; text-decoration: none; transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease; }
@@ -193,7 +207,7 @@
         .home-shortcut strong { font-size: 0.88rem; font-weight: 700; }
         .home-shortcut small { color: #5d727e; font-size: 0.74rem; line-height: 1.35; }
         .home-shortcut-arrow { color: #8fa4b1; font-size: 0.8rem; }
-        .home-daily-preview { border: 1px solid #dce7ed; border-radius: 18px; background: #fff; box-shadow: 0 10px 24px rgba(37, 65, 84, 0.04); margin-bottom: 80px; padding: 22px; }
+        .home-daily-preview { animation: home-section-enter 560ms 240ms cubic-bezier(0.22, 1, 0.36, 1) both; border: 1px solid #dce7ed; border-radius: 18px; background: #fff; box-shadow: 0 10px 24px rgba(37, 65, 84, 0.04); margin-bottom: 80px; padding: 22px; }
         .home-daily-header { align-items: flex-start; display: flex; gap: 16px; justify-content: space-between; }
         .home-daily-header h2 { color: #173247; font-size: 1.25rem; font-weight: 750; letter-spacing: -0.03em; margin: 8px 0 0; }
         .home-daily-date { color: #397461; font-size: 0.78rem; font-weight: 750; text-align: right; text-transform: capitalize; }
@@ -207,7 +221,7 @@
         .home-skeleton-panel-title { height: 18px; margin-bottom: 6px; max-width: 180px; }
         .home-skeleton-panel-line { height: 48px; }
         .home-skeleton-panel-line.short { max-width: 82%; }
-        .home-preview-summary { display: grid; gap: 9px; grid-template-columns: repeat(3, 1fr); margin-top: 20px; }
+        .home-preview-summary { display: grid; gap: 9px; grid-template-columns: repeat(4, 1fr); margin-top: 20px; }
         .home-preview-summary div { background: #f7fbf8; border: 1px solid #e0eae4; border-radius: 13px; padding: 13px 14px; }
         .home-preview-summary strong, .home-preview-summary span { display: block; }
         .home-preview-summary strong { color: #173247; font-size: 1.35rem; letter-spacing: -0.04em; }
@@ -220,10 +234,10 @@
         .home-preview-section-heading a { color: #397461; font-size: 0.7rem; font-weight: 750; text-decoration: none; white-space: nowrap; }
         .home-preview-section-heading a:hover { text-decoration: underline; }
 
-        .home-panel-backdrop { background: rgba(17, 34, 46, 0.38); inset: 0; opacity: 0; pointer-events: none; position: fixed; transition: opacity 220ms ease; z-index: 60; }
-        .home-control-panel { background: rgba(247, 251, 249, 0.97); border: 1px solid rgba(255, 255, 255, 0.8); border-radius: 28px; bottom: 22px; box-shadow: -18px 20px 60px rgba(23, 50, 71, 0.22); color: #173247; display: flex; flex-direction: column; max-width: calc(100vw - 32px); opacity: 0; overflow: hidden; position: fixed; right: 22px; top: 22px; transform: translateX(110%) scale(0.97); transition: opacity 180ms ease, transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1); visibility: hidden; width: 560px; z-index: 61; }
+        .home-panel-backdrop { background: rgba(17, 34, 46, 0.38); inset: 0; opacity: 0; pointer-events: none; position: fixed; transition: opacity 360ms cubic-bezier(0.22, 1, 0.36, 1); z-index: 60; }
+        .home-control-panel { background: rgba(247, 251, 249, 0.97); border: 1px solid rgba(255, 255, 255, 0.8); border-radius: 28px; bottom: 22px; box-shadow: -18px 20px 60px rgba(23, 50, 71, 0.22); color: #173247; display: flex; flex-direction: column; max-width: calc(100vw - 32px); opacity: 0; overflow: hidden; position: fixed; right: 22px; top: 22px; transform: translate3d(32px, 0, 0) scale(0.985); transition: opacity 360ms cubic-bezier(0.22, 1, 0.36, 1), transform 440ms cubic-bezier(0.22, 1, 0.36, 1), visibility 0s linear 440ms; visibility: hidden; width: 560px; z-index: 61; }
         .home-panel-open .home-panel-backdrop { opacity: 1; pointer-events: auto; }
-        .home-panel-open .home-control-panel { opacity: 1; transform: translateX(0) scale(1); visibility: visible; }
+        .home-panel-open .home-control-panel { opacity: 1; transform: translate3d(0, 0, 0) scale(1); transition-delay: 0s; visibility: visible; }
         .home-control-header { align-items: flex-start; border-bottom: 1px solid rgba(220, 227, 223, 0.8); display: flex; justify-content: space-between; padding: 28px 28px 22px; }
         .home-control-header h2 { font-size: 1.8rem; font-weight: 750; letter-spacing: -0.045em; margin: 7px 0 0; }
         .home-panel-close { align-items: center; background: rgba(225, 234, 229, 0.8); border: 0; border-radius: 50%; color: #49616d; cursor: pointer; display: flex; height: 38px; justify-content: center; width: 38px; }
@@ -233,7 +247,7 @@
         .home-panel-error { color: #9b5964; }
         .home-panel-error i { font-size: 1.5rem; }
         .home-control-date { color: #397461; font-size: 0.82rem; font-weight: 750; margin: 0 0 17px; text-transform: capitalize; }
-        .home-control-summary { display: grid; gap: 9px; grid-template-columns: repeat(3, 1fr); margin-bottom: 27px; }
+        .home-control-summary { display: grid; gap: 9px; grid-template-columns: repeat(4, 1fr); margin-bottom: 27px; }
         .home-control-summary div { background: rgba(255, 255, 255, 0.75); border: 1px solid #e0eae4; border-radius: 14px; padding: 13px 14px; }
         .home-control-summary strong, .home-control-summary span { display: block; }
         .home-control-summary strong { color: #173247; font-size: 1.45rem; letter-spacing: -0.04em; }
@@ -251,6 +265,10 @@
         .home-obligation-dot { background: #80b8a8; border-radius: 50%; flex-shrink: 0; height: 8px; width: 8px; }
         .home-obligation-dot.urgente { background: #d9786d; }
         .home-obligation-dot.alta { background: #d49a58; }
+        .home-obligation--vencida { background: #fff7f5; border-radius: 10px; padding-left: 9px; padding-right: 9px; }
+        .home-obligation--vencida .home-obligation-copy strong { color: #9b4c40; }
+        .home-obligation--hoy { background: #fffaf0; border-radius: 10px; padding-left: 9px; padding-right: 9px; }
+        .home-obligation--hoy .home-obligation-copy strong { color: #8e6425; }
         .home-obligation-time { color: #397461; font-size: 0.76rem; font-variant-numeric: tabular-nums; font-weight: 800; min-width: 40px; }
         .home-obligation-copy { display: flex; flex: 1; flex-direction: column; gap: 3px; min-width: 0; }
         .home-obligation-copy strong { color: #2d4a5c; font-size: 0.8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -258,6 +276,10 @@
         .home-obligation-link { color: #8ba1ad; font-size: 0.8rem; padding: 6px; }
         .home-obligation-link:hover { color: #397461; }
         .home-control-empty { color: #5b707a; font-size: 0.78rem; padding: 18px 0 8px; }
+        @keyframes home-page-enter { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes home-section-enter { from { opacity: 0; transform: translateY(13px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes home-toast-enter { from { opacity: 0; transform: translate3d(18px, -8px, 0) scale(0.96); } to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); } }
+        @keyframes home-toast-leave { from { opacity: 1; transform: translate3d(0, 0, 0) scale(1); } to { opacity: 0; transform: translate3d(18px, -6px, 0) scale(0.97); } }
         @keyframes home-skeleton-shimmer { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
         @keyframes home-panel-spin { to { transform: rotate(360deg); } }
 
@@ -297,14 +319,14 @@
         @media (max-width: 420px) {
             .home-control-header { padding-left: 20px; padding-right: 20px; }
             .home-control-body { padding-left: 20px; padding-right: 20px; }
-            .home-control-summary { gap: 6px; }
+            .home-control-summary, .home-preview-summary { gap: 6px; grid-template-columns: repeat(2, 1fr); }
             .home-control-summary div { padding: 11px 9px; }
             .home-control-summary strong { font-size: 1.25rem; }
-            .home-preview-summary { gap: 6px; }
             .home-preview-summary div { padding: 11px 9px; }
             .home-preview-summary strong { font-size: 1.2rem; }
         }
         @media (prefers-reduced-motion: reduce) {
+            .home-page, .home-toast, .home-overview, .home-shortcuts, .home-daily-preview { animation: none; }
             .home-panel-backdrop, .home-control-panel, .home-panel-launch, .home-shortcut { transition: none; }
             .home-skeleton { animation: none; background: #e9f1ec; }
             .dark .home-skeleton { background: #1c3544; }
@@ -333,12 +355,44 @@
                  let panelRequest = null;
                 const focusableSelector = 'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
-                const text = (tag, className, value) => {
-                    const element = document.createElement(tag);
-                    element.className = className;
-                    element.textContent = value;
-                    return element;
-                };
+                 const text = (tag, className, value) => {
+                     const element = document.createElement(tag);
+                     element.className = className;
+                     element.textContent = value;
+                     return element;
+                 };
+
+                 const toastRegion = document.getElementById('home-toast-region');
+                 const dismissToast = (toast) => {
+                     toast.classList.add('is-leaving');
+                     window.setTimeout(() => toast.remove(), 180);
+                 };
+                 const showToast = (message) => {
+                     if (!toastRegion) return;
+
+                     const toast = document.createElement('div');
+                     toast.className = 'home-toast home-toast--error';
+                     toast.setAttribute('role', 'alert');
+                     toast.append(text('i', 'bi bi-exclamation-circle', ''));
+                     toast.append(text('span', '', message));
+                     const close = document.createElement('button');
+                     close.type = 'button';
+                     close.setAttribute('aria-label', 'Cerrar notificación');
+                     close.append(text('i', 'bi bi-x-lg', ''));
+                     close.addEventListener('click', () => dismissToast(toast));
+                     toast.append(close);
+                     toastRegion.append(toast);
+                     window.setTimeout(() => {
+                         if (toast.isConnected) dismissToast(toast);
+                     }, 6000);
+                 };
+
+                 document.querySelectorAll('[data-home-toast]').forEach((toast) => {
+                     toast.querySelector('[data-home-toast-close]')?.addEventListener('click', () => dismissToast(toast));
+                     window.setTimeout(() => {
+                         if (toast.isConnected) dismissToast(toast);
+                     }, 6000);
+                 });
 
                 const renderEmpty = (container, message) => {
                     container.replaceChildren(text('p', 'home-control-empty', message));
@@ -354,24 +408,25 @@
                     visibleItems.forEach(renderItem);
                 };
 
-                const renderRoot = (root, data, isPreview = false) => {
-                    const date = root.querySelector('[data-panel-date]');
-                    if (date) date.textContent = data.fecha;
-                    root.querySelector('[data-panel-pending]').textContent = data.tareas_pendientes;
-                    root.querySelector('[data-panel-overdue]').textContent = data.tareas_vencidas;
-                    root.querySelector('[data-panel-events-count]').textContent = data.eventos.length;
+                 const renderRoot = (root, data, isPreview = false) => {
+                     const date = root.querySelector('[data-panel-date]');
+                     if (date) date.textContent = `${data.fecha} · ${data.rango?.etiqueta ?? 'Próximos 3 días'}`;
+                     root.querySelector('[data-panel-pending]').textContent = data.tareas_pendientes;
+                     root.querySelector('[data-panel-overdue]').textContent = data.tareas_vencidas;
+                     root.querySelector('[data-panel-upcoming]').textContent = data.tareas_proximas;
+                     root.querySelector('[data-panel-events-count]').textContent = data.eventos_proximos;
 
-                    const tasks = root.querySelector('[data-panel-tasks]');
-                    const allClear = data.tareas.length === 0 && data.eventos.length === 0;
-                    renderList(tasks, data.tareas, allClear ? 'Jornada al día.' : 'No hay tareas pendientes.', isPreview, (task) => {
-                            const row = document.createElement('div');
-                            row.className = 'home-obligation';
-                            row.append(text('span', `home-obligation-dot ${task.prioridad ?? ''}`, ''));
-                            const copy = document.createElement('div');
-                            copy.className = 'home-obligation-copy';
-                            copy.append(text('strong', '', task.titulo));
-                            copy.append(text('small', '', `${task.prioridad ? task.prioridad.charAt(0).toUpperCase() + task.prioridad.slice(1) : 'Tarea'}${task.fecha_limite ? ` · vence ${task.fecha_limite}` : ''}${task.legajo ? ` · ${task.legajo}` : ''}`));
-                            row.append(copy);
+                     const tasks = root.querySelector('[data-panel-tasks]');
+                     const allClear = data.tareas.length === 0 && data.eventos.length === 0;
+                     renderList(tasks, data.tareas, allClear ? 'Jornada al día.' : 'No hay tareas por atender en este período.', isPreview, (task) => {
+                             const row = document.createElement('div');
+                             row.className = `home-obligation home-obligation--${task.urgencia ?? 'proxima'}`;
+                             row.append(text('span', `home-obligation-dot ${task.prioridad ?? ''}`, ''));
+                             const copy = document.createElement('div');
+                             copy.className = 'home-obligation-copy';
+                             copy.append(text('strong', '', task.titulo));
+                             copy.append(text('small', '', `${task.alerta ?? 'Tarea'}${task.fecha_limite ? ` · ${task.fecha_limite}` : ''}${task.legajo ? ` · ${task.legajo}` : ''}`));
+                             row.append(copy);
                             if (task.legajo_url) {
                                 const link = document.createElement('a');
                                 link.className = 'home-obligation-link';
@@ -381,14 +436,14 @@
                                 row.append(link);
                             }
                             tasks.append(row);
-                    });
+                     });
 
-                    const events = root.querySelector('[data-panel-events]');
-                    renderList(events, data.eventos, allClear ? 'Jornada al día.' : 'No hay eventos para hoy.', isPreview, (event) => {
-                            const row = document.createElement('div');
-                            row.className = 'home-obligation';
-                            row.append(text('time', 'home-obligation-time', event.hora ?? '--:--'));
-                            const copy = document.createElement('div');
+                     const events = root.querySelector('[data-panel-events]');
+                     renderList(events, data.eventos, allClear ? 'Jornada al día.' : 'No hay actividades en este período.', isPreview, (event) => {
+                             const row = document.createElement('div');
+                             row.className = 'home-obligation';
+                             row.append(text('time', 'home-obligation-time', event.es_hoy ? (event.hora ?? '--:--') : `${event.fecha ?? '--/--'} · ${event.hora ?? '--:--'}`));
+                             const copy = document.createElement('div');
                             copy.className = 'home-obligation-copy';
                             copy.append(text('strong', '', event.titulo));
                             copy.append(text('small', '', `${event.tipo ? event.tipo.charAt(0).toUpperCase() + event.tipo.slice(1) : 'Evento'}${event.lugar ? ` · ${event.lugar}` : ''}${event.visibilidad === 'general' ? ' · General' : ' · Personal'}`));
@@ -421,13 +476,14 @@
                             if (previewLoading) previewLoading.hidden = true;
                             if (previewContent) previewContent.hidden = false;
                         })
-                        .catch(() => {
-                            loading.hidden = true;
-                            error.hidden = false;
-                            if (previewLoading) {
-                                previewLoading.textContent = 'No pudimos cargar la información.';
-                            }
-                        })
+                         .catch(() => {
+                             loading.hidden = true;
+                             error.hidden = false;
+                             if (previewLoading) {
+                                 previewLoading.textContent = 'No pudimos cargar la información.';
+                             }
+                             showToast('No pudimos cargar tu panel. Intentá nuevamente.');
+                         })
                         .finally(() => {
                             panelRequest = null;
                         });

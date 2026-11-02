@@ -1,16 +1,27 @@
 import { Head, Link, usePage } from '@inertiajs/react';
 import {
     Activity,
+    BarChart3,
     CalendarDays,
     ClipboardList,
     FileText,
+    FolderOpen,
     LogOut,
+    Mail,
     Plus,
     ShieldAlert,
     UserRound,
     UsersRound,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+
+import { NotificationCenter } from '@/components/notification-center';
+import agenda from '@/routes/agenda';
+import estadisticasRoutes from '@/routes/estadisticas';
+import legajosRoutes from '@/routes/legajos';
+import mailbox from '@/routes/mailbox';
+import tareas from '@/routes/tareas';
+import type { NotificationItem } from '@/types';
 
 interface PersonaReciente {
     id: number;
@@ -41,7 +52,6 @@ interface LegajoReciente {
     riesgo: 'Bajo' | 'Medio' | 'Alto' | 'Critico';
     estado: 'Abierto' | 'Cerrado' | 'Archivado';
     fechaApertura: string;
-    motivo: string;
 }
 
 interface AuthUser {
@@ -150,7 +160,17 @@ export default function Dashboard({
     personasRecientes,
     legajosRecientes,
 }: DashboardProps) {
-    const { auth } = usePage<{ auth: { user: AuthUser | null } }>().props;
+    const { auth, can, notificaciones, notificacionesNoLeidas } = usePage<{
+        auth: { user: AuthUser | null };
+        notificaciones: NotificationItem[];
+        notificacionesNoLeidas: number;
+        can: {
+            accessMailbox: boolean;
+            accessStatistics: boolean;
+            accessTasks: boolean;
+            accessAgenda: boolean;
+        };
+    }>().props;
 
     return (
         <>
@@ -196,6 +216,11 @@ export default function Dashboard({
                         </div>
 
                         <div className="flex items-center gap-4">
+                            <NotificationCenter
+                                initialNotifications={notificaciones}
+                                initialUnreadCount={notificacionesNoLeidas}
+                                placement="dashboard"
+                            />
                             <span
                                 className="hidden text-sm font-medium text-[#2C4A5E]/70 sm:inline"
                                 style={{ fontFamily: FONT_BODY }}
@@ -218,7 +243,7 @@ export default function Dashboard({
                 </header>
 
                 {/* Contenido */}
-                <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
+                <main className="mx-auto max-w-6xl px-4 pt-8 pb-[calc(6rem+env(safe-area-inset-bottom))] sm:px-6 sm:pt-10 sm:pb-[calc(6rem+env(safe-area-inset-bottom))] lg:pb-10">
                     <h2
                         className="text-2xl font-semibold tracking-tight text-[#173247] sm:text-3xl"
                         style={{ fontFamily: FONT_HEADING }}
@@ -235,21 +260,61 @@ export default function Dashboard({
                         </p>
                         <div className="flex gap-2">
                             <Link
-                                href="/personas/nueva"
+                                href={legajosRoutes.create.url()}
                                 className="inline-flex items-center gap-2 rounded-md bg-[#2C4A5E] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#1F394B]"
                                 style={{ fontFamily: FONT_BODY }}
                             >
                                 <Plus size={16} />
-                                Nueva persona
+                                Nuevo legajo
                             </Link>
                             <Link
-                                href="/legajos/nuevo"
+                                href="/legajos"
                                 className="inline-flex items-center gap-2 rounded-md border border-[#DCE3DF] bg-white px-4 py-2 text-sm font-semibold text-[#2B2F36] transition hover:border-[#B9C5BD] hover:bg-[#F4F6F5]"
                                 style={{ fontFamily: FONT_BODY }}
                             >
-                                <ClipboardList size={16} />
-                                Nuevo legajo
+                                <FolderOpen size={16} />
+                                Consultar legajos
                             </Link>
+                            {can.accessAgenda && (
+                                <Link
+                                    href={agenda.index().url}
+                                    className="inline-flex items-center gap-2 rounded-md border border-[#DCE3DF] bg-white px-4 py-2 text-sm font-semibold text-[#2B2F36] transition hover:border-[#B9C5BD] hover:bg-[#F4F6F5]"
+                                    style={{ fontFamily: FONT_BODY }}
+                                >
+                                    <CalendarDays size={16} />
+                                    Agenda
+                                </Link>
+                            )}
+                            {can.accessStatistics && (
+                                <Link
+                                    href={estadisticasRoutes.legajos.url()}
+                                    className="inline-flex items-center gap-2 rounded-md border border-[#DCE3DF] bg-white px-4 py-2 text-sm font-semibold text-[#2B2F36] transition hover:border-[#B9C5BD] hover:bg-[#F4F6F5]"
+                                    style={{ fontFamily: FONT_BODY }}
+                                >
+                                    <BarChart3 size={16} />
+                                    Estadísticas de legajos
+                                </Link>
+                            )}
+                            {can.accessTasks && (
+                                <Link
+                                    href={tareas.index().url}
+                                    className="inline-flex items-center gap-2 rounded-md border border-[#DCE3DF] bg-white px-4 py-2 text-sm font-semibold text-[#2B2F36] transition hover:border-[#B9C5BD] hover:bg-[#F4F6F5]"
+                                    style={{ fontFamily: FONT_BODY }}
+                                >
+                                    <ClipboardList size={16} />
+                                    Tareas y derivaciones
+                                </Link>
+                            )}
+                            {can.accessMailbox && (
+                                <Link
+                                    href={mailbox.index().url}
+                                    className="inline-flex items-center gap-2 rounded-md border border-[#DCE3DF] bg-white px-4 py-2 text-sm font-semibold text-[#2B2F36] transition hover:border-[#B9C5BD] hover:bg-[#F4F6F5]"
+                                    style={{ fontFamily: FONT_BODY }}
+                                >
+                                    <Mail size={16} />
+                                    Derivar comunicaciones
+                                </Link>
+                            )}
                         </div>
                     </div>
 
@@ -419,11 +484,11 @@ export default function Dashboard({
                                     </p>
                                 </div>
                                 <Link
-                                    href="/legajos/nuevo"
+                                    href={legajosRoutes.create.url()}
                                     className="shrink-0 text-xs font-semibold text-[#2C4A5E] underline-offset-4 hover:underline"
                                     style={{ fontFamily: FONT_BODY }}
                                 >
-                                    Abrir legajo
+                                    Nuevo legajo
                                 </Link>
                             </div>
 
@@ -477,10 +542,6 @@ export default function Dashboard({
                                                 <span className="flex items-center gap-1.5">
                                                     <UserRound size={13} /> DNI{' '}
                                                     {legajo.dni}
-                                                </span>
-                                                <span className="flex items-center gap-1.5">
-                                                    <FileText size={13} />{' '}
-                                                    {legajo.motivo}
                                                 </span>
                                             </div>
                                         </article>

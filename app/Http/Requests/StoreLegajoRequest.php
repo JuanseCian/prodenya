@@ -15,8 +15,6 @@ class StoreLegajoRequest extends FormRequest
     {
         return [
             'persona_id' => ['required', 'exists:personas,id'],
-            'motivo_ingreso' => ['required', 'string'],
-            'motivo_ingreso_id' => ['nullable', 'exists:motivos_ingreso,id'],
             'nivel_riesgo' => ['required', 'in:Bajo,Medio,Alto,Critico'],
             'origen_derivacion' => ['required', 'string', 'max:255'],
             'profesional_id' => ['nullable', 'exists:users,id'],
@@ -31,8 +29,6 @@ class StoreLegajoRequest extends FormRequest
         return [
             'persona_id.required' => 'Elegí una persona para asociar el legajo.',
             'persona_id.exists' => 'La persona seleccionada no es válida.',
-            'motivo_ingreso.required' => 'Ingresá el motivo de ingreso.',
-            'motivo_ingreso_id.exists' => 'El motivo de ingreso seleccionado no es válido.',
             'nivel_riesgo.required' => 'Seleccioná el nivel de riesgo.',
             'origen_derivacion.required' => 'Indicá la institución o referente que deriva el caso.',
             'problematicas.array' => 'Seleccioná al menos una problemática.',

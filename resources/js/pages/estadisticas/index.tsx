@@ -19,8 +19,10 @@ import {
 } from '@/components/estadisticas-chart';
 import EstadisticasFiltros from '@/components/estadisticas-filtros';
 import { EstadisticaKpi } from '@/components/estadisticas-kpi';
+import EstadisticasMapa from '@/components/estadisticas-mapa';
 import EstadisticasShell from '@/components/estadisticas-shell';
 import type { EstadisticasData } from '@/components/estadisticas-types';
+import estadisticas from '@/routes/estadisticas';
 
 function Card({ title, children }: { title: string; children: ReactNode }) {
     return (
@@ -190,6 +192,20 @@ export default function EstadisticasResumen(props: EstadisticasData) {
                             </Card>
                         </section>
 
+                        <section className="pt-5">
+                            <Card title="Mapa de zonas más recurridas">
+                                <p className="mt-1 text-xs text-[#697586] dark:text-[#B7C9D4]">
+                                    Distribución agregada por zona y problemática, respetando los filtros seleccionados.
+                                </p>
+                                <div className="mt-5">
+                                    <EstadisticasMapa
+                                        data={props.mapaBarrios}
+                                        problematicas={props.problematicas}
+                                    />
+                                </div>
+                            </Card>
+                        </section>
+
                         <section className="grid gap-5 pt-5 xl:grid-cols-2">
                             <Card title="Distribución por barrio · San Nicolás">
                                 <div className="mt-5">
@@ -201,9 +217,7 @@ export default function EstadisticasResumen(props: EstadisticasData) {
                                         className="mt-0.5 shrink-0 text-[#5B559E]"
                                     />
                                     <span>
-                                        {props.mapaBarrios.mensaje} Se expone el
-                                        ranking de barrios sin inventar
-                                        coordenadas.
+                                        Se expone el ranking de barrios como complemento del mapa agregado.
                                     </span>
                                 </div>
                             </Card>
@@ -248,38 +262,42 @@ export default function EstadisticasResumen(props: EstadisticasData) {
                         </section>
 
                         <section className="grid gap-4 pt-5 sm:grid-cols-2">
-                            <Link
-                                href="/estadisticas/tareas"
-                                className="group rounded-lg border border-[#DFE4EA] bg-white p-5 dark:border-[#3B4552] dark:bg-[#232A34]"
-                            >
-                                <ClipboardCheck className="text-[#5B559E]" />
-                                <h2 className="mt-3 font-semibold text-[#173247] dark:text-[#EDF6FB]">
-                                    Tareas operativas
-                                </h2>
-                                <span className="mt-3 inline-flex items-center gap-1 text-sm font-bold text-[#5B559E]">
-                                    Ver detalle{' '}
-                                    <ArrowUpRight
-                                        size={15}
-                                        className="transition group-hover:translate-x-0.5"
-                                    />
-                                </span>
-                            </Link>
-                            <Link
-                                href="/estadisticas/agenda"
-                                className="group rounded-lg border border-[#DFE4EA] bg-white p-5 dark:border-[#3B4552] dark:bg-[#232A34]"
-                            >
-                                <CalendarDays className="text-[#5B559E]" />
-                                <h2 className="mt-3 font-semibold text-[#173247] dark:text-[#EDF6FB]">
-                                    Agenda y próximos eventos
-                                </h2>
-                                <span className="mt-3 inline-flex items-center gap-1 text-sm font-bold text-[#5B559E]">
-                                    Ver detalle{' '}
-                                    <ArrowUpRight
-                                        size={15}
-                                        className="transition group-hover:translate-x-0.5"
-                                    />
-                                </span>
-                            </Link>
+                            {props.modulosDisponibles.includes('tareas') && (
+                                <Link
+                                    href={estadisticas.tareas.url()}
+                                    className="group rounded-lg border border-[#DFE4EA] bg-white p-5 dark:border-[#3B4552] dark:bg-[#232A34]"
+                                >
+                                    <ClipboardCheck className="text-[#5B559E]" />
+                                    <h2 className="mt-3 font-semibold text-[#173247] dark:text-[#EDF6FB]">
+                                        Tareas operativas
+                                    </h2>
+                                    <span className="mt-3 inline-flex items-center gap-1 text-sm font-bold text-[#5B559E]">
+                                        Ver detalle{' '}
+                                        <ArrowUpRight
+                                            size={15}
+                                            className="transition group-hover:translate-x-0.5"
+                                        />
+                                    </span>
+                                </Link>
+                            )}
+                            {props.modulosDisponibles.includes('agenda') && (
+                                <Link
+                                    href={estadisticas.agenda.url()}
+                                    className="group rounded-lg border border-[#DFE4EA] bg-white p-5 dark:border-[#3B4552] dark:bg-[#232A34]"
+                                >
+                                    <CalendarDays className="text-[#5B559E]" />
+                                    <h2 className="mt-3 font-semibold text-[#173247] dark:text-[#EDF6FB]">
+                                        Agenda y próximos eventos
+                                    </h2>
+                                    <span className="mt-3 inline-flex items-center gap-1 text-sm font-bold text-[#5B559E]">
+                                        Ver detalle{' '}
+                                        <ArrowUpRight
+                                            size={15}
+                                            className="transition group-hover:translate-x-0.5"
+                                        />
+                                    </span>
+                                </Link>
+                            )}
                         </section>
                     </div>
                 </div>

@@ -10,7 +10,7 @@ class PasskeyLoginResponse implements PasskeyLoginResponseContract
 {
     public function toResponse($request): Response
     {
-        $redirect = url('/');
+        $redirect = route('home');
 
         return $request->wantsJson()
             ? new JsonResponse(['redirect' => $redirect], 200)

@@ -17,8 +17,6 @@ class UpdateLegajoRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'motivo_ingreso' => ['required', 'string', 'max:2000'],
-            'motivo_ingreso_id' => ['nullable', Rule::exists('motivos_ingreso', 'id')],
             'nivel_riesgo' => ['required', 'in:Bajo,Medio,Alto,Critico'],
             'origen_derivacion' => ['required', 'string', 'max:255'],
             'profesional_id' => ['nullable', Rule::exists(User::class, 'id')],
@@ -31,9 +29,6 @@ class UpdateLegajoRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'motivo_ingreso.required' => 'Ingresá el motivo de ingreso.',
-            'motivo_ingreso.max' => 'El motivo de ingreso no puede superar los 2000 caracteres.',
-            'motivo_ingreso_id.exists' => 'El motivo de ingreso seleccionado no es válido.',
             'nivel_riesgo.required' => 'Seleccioná el nivel de riesgo (Bajo, Medio, Alto o Crítico).',
             'nivel_riesgo.in' => 'El nivel de riesgo debe ser Bajo, Medio, Alto o Crítico.',
             'origen_derivacion.required' => 'Indicá la institución o referente que deriva el caso.',

@@ -13,6 +13,7 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import tareasRoutes from '@/routes/tareas';
 
 interface Tarea {
     id: number;
@@ -29,11 +30,14 @@ interface Tarea {
 interface Responsable {
     id: number;
     name: string;
+    profesion: string | null;
 }
 
 interface Props {
     tareas: Tarea[];
     responsables: Responsable[];
+    puedeAsignarOtros: boolean;
+    usuarioActualId: number;
 }
 
 const priorityClass: Record<string, string> = {
@@ -43,20 +47,25 @@ const priorityClass: Record<string, string> = {
     urgente: 'bg-[#FCF1F3] text-[#9B5964]',
 };
 
-export default function Tareas({ tareas, responsables }: Props) {
+export default function Tareas({
+    tareas,
+    responsables,
+    puedeAsignarOtros,
+    usuarioActualId,
+}: Props) {
     const [open, setOpen] = useState(false);
     const [titulo, setTitulo] = useState('');
     const [prioridad, setPrioridad] = useState('normal');
-    const [asignadoA, setAsignadoA] = useState('');
+    const [asignadoA, setAsignadoA] = useState(String(usuarioActualId));
     const [fechaLimite, setFechaLimite] = useState('');
 
     const crearTarea = () => {
         router.post(
-            '/tareas',
+            tareasRoutes.store.url(),
             {
                 titulo,
                 prioridad,
-                ...(asignadoA ? { asignado_a: Number(asignadoA) } : {}),
+                asignado_a: Number(asignadoA),
                 ...(fechaLimite ? { fecha_limite: fechaLimite } : {}),
             },
             {
@@ -64,7 +73,7 @@ export default function Tareas({ tareas, responsables }: Props) {
                 onSuccess: () => {
                     setOpen(false);
                     setTitulo('');
-                    setAsignadoA('');
+                    setAsignadoA(String(usuarioActualId));
                     setFechaLimite('');
                 },
             },
@@ -72,7 +81,7 @@ export default function Tareas({ tareas, responsables }: Props) {
     };
 
     const cambiarEstado = (tarea: Tarea) => {
-        router.patch(`/tareas/${tarea.id}`, {
+        router.patch(tareasRoutes.update.url(tarea.id), {
             estado: tarea.estado === 'completada' ? 'pendiente' : 'completada',
         }, { preserveScroll: true });
     };
@@ -86,7 +95,7 @@ export default function Tareas({ tareas, responsables }: Props) {
                         <div>
                             <p className="text-xs font-semibold tracking-[0.14em] text-[#6B8F71] uppercase">Seguimiento</p>
                             <h1 className="mt-3 text-3xl font-semibold tracking-tight text-[#173247] sm:text-4xl">Tareas</h1>
-                            <p className="mt-2 text-sm text-[#697586]">Derivaciones y pendientes de trabajo en un solo lugar.</p>
+                            <p className="mt-2 text-sm text-[#697586]">Tus pendientes de trabajo en un solo lugar.</p>
                         </div>
                         <Button onClick={() => setOpen(true)} className="w-fit gap-2 bg-[#2C4A5E] hover:bg-[#173247]"><Plus className="size-4" /> Nueva tarea</Button>
                     </div>
@@ -130,7 +139,11 @@ export default function Tareas({ tareas, responsables }: Props) {
                 <DialogContent className="border-[#DCE3DF] bg-[#FBFCFB] sm:max-w-lg">
                     <DialogHeader>
                         <DialogTitle className="text-[#173247]">Nueva tarea</DialogTitle>
-                        <DialogDescription className="text-[#697586]">Creá un pendiente y asignalo a una persona del equipo.</DialogDescription>
+                        <DialogDescription className="text-[#697586]">
+                            {puedeAsignarOtros
+                                ? 'Creá un pendiente para vos o asignalo a otra persona del equipo.'
+                                : 'Creá un pendiente para vos. Solo coordinación y administración pueden asignarlo a otra persona.'}
+                        </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-2">
                         <label className="grid gap-2 text-sm font-semibold text-[#2B2F36]">Título<Input value={titulo} onChange={(event) => setTitulo(event.target.value)} placeholder="Ej. Revisar informe del caso" className="h-10 border-[#D5D1C6] bg-white font-normal" /></label>
@@ -138,7 +151,9 @@ export default function Tareas({ tareas, responsables }: Props) {
                             <label className="grid gap-2 text-sm font-semibold text-[#2B2F36]">Prioridad<select value={prioridad} onChange={(event) => setPrioridad(event.target.value)} className="h-10 rounded-md border border-[#D5D1C6] bg-white px-3 text-sm font-normal"><option value="baja">Baja</option><option value="normal">Normal</option><option value="alta">Alta</option><option value="urgente">Urgente</option></select></label>
                             <label className="grid gap-2 text-sm font-semibold text-[#2B2F36]">Vencimiento<Input type="date" value={fechaLimite} onChange={(event) => setFechaLimite(event.target.value)} className="h-10 border-[#D5D1C6] bg-white font-normal" /></label>
                         </div>
-                        <label className="grid gap-2 text-sm font-semibold text-[#2B2F36]">Responsable<select value={asignadoA} onChange={(event) => setAsignadoA(event.target.value)} className="h-10 rounded-md border border-[#D5D1C6] bg-white px-3 text-sm font-normal"><option value="">Sin asignar</option>{responsables.map((responsable) => <option key={responsable.id} value={responsable.id}>{responsable.name}</option>)}</select></label>
+                            {puedeAsignarOtros && (
+                                <label className="grid gap-2 text-sm font-semibold text-[#2B2F36]">Responsable<select value={asignadoA} onChange={(event) => setAsignadoA(event.target.value)} className="h-10 rounded-md border border-[#D5D1C6] bg-white px-3 text-sm font-normal">{responsables.map((responsable) => <option key={responsable.id} value={responsable.id}>{responsable.name}{responsable.profesion ? ` · ${responsable.profesion}` : ''}</option>)}</select></label>
+                            )}
                     </div>
                     <DialogFooter><Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancelar</Button><Button type="button" disabled={!titulo.trim()} onClick={crearTarea} className="bg-[#2C4A5E] hover:bg-[#173247]">Crear tarea</Button></DialogFooter>
                 </DialogContent>

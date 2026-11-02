@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: localhost
--- Tiempo de generación: 12-10-2026 a las 11:31:42
+-- Tiempo de generación: 27-10-2026 a las 13:39:18
 -- Versión del servidor: 8.0.30
 -- Versión de PHP: 8.4.24
 
@@ -24,13 +24,58 @@ SET time_zone = "+00:00";
 -- --------------------------------------------------------
 
 --
+-- Estructura de tabla para la tabla `agenda_eventos`
+--
+
+CREATE TABLE `agenda_eventos` (
+  `id` bigint UNSIGNED NOT NULL,
+  `titulo` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `tipo` varchar(40) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'reunion',
+  `visibilidad` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'general',
+  `fecha_inicio` datetime NOT NULL,
+  `fecha_fin` datetime DEFAULT NULL,
+  `lugar` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `enlace` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `participantes_externos` json DEFAULT NULL,
+  `notas` text COLLATE utf8mb4_unicode_ci,
+  `estado` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'programado',
+  `creado_por` bigint UNSIGNED NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `agenda_evento_legajo`
+--
+
+CREATE TABLE `agenda_evento_legajo` (
+  `agenda_evento_id` bigint UNSIGNED NOT NULL,
+  `legajo_id` int UNSIGNED NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `agenda_evento_usuario`
+--
+
+CREATE TABLE `agenda_evento_usuario` (
+  `agenda_evento_id` bigint UNSIGNED NOT NULL,
+  `usuario_id` bigint UNSIGNED NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Estructura de tabla para la tabla `auditoria_accesos_legajo`
 --
 
 CREATE TABLE `auditoria_accesos_legajo` (
   `id` bigint UNSIGNED NOT NULL,
   `legajo_id` int UNSIGNED NOT NULL,
-  `usuario_id` int UNSIGNED NOT NULL,
+  `usuario_id` bigint UNSIGNED NOT NULL,
   `tipo_accion` enum('Visualizacion','Descarga') COLLATE utf8mb4_unicode_ci NOT NULL,
   `fecha_acceso` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `ip_origen` varchar(45) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
@@ -46,10 +91,29 @@ CREATE TABLE `auditoria_accesos_legajo` (
 CREATE TABLE `auditoria_descargas` (
   `id` bigint UNSIGNED NOT NULL,
   `documento_id` int UNSIGNED NOT NULL,
-  `usuario_id` int UNSIGNED NOT NULL,
+  `usuario_id` bigint UNSIGNED NOT NULL,
   `fecha_descarga` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `ip_origen` varchar(45) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `user_agent` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `auditoria_eventos`
+--
+
+CREATE TABLE `auditoria_eventos` (
+  `id` bigint UNSIGNED NOT NULL,
+  `usuario_id` bigint UNSIGNED DEFAULT NULL,
+  `evento` varchar(80) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `auditable_type` varchar(150) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `auditable_id` bigint UNSIGNED DEFAULT NULL,
+  `datos_antes` json DEFAULT NULL,
+  `datos_despues` json DEFAULT NULL,
+  `ip_origen` varchar(45) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `user_agent` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `creado_en` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -184,6 +248,14 @@ CREATE TABLE `cache` (
   `expiration` bigint NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Volcado de datos para la tabla `cache`
+--
+
+INSERT INTO `cache` (`key`, `value`, `expiration`) VALUES
+('laravel-cache-c525a5357e97fef8d3db25841c86da1a', 'i:1;', 1793055979),
+('laravel-cache-c525a5357e97fef8d3db25841c86da1a:timer', 'i:1793055979;', 1793055979);
+
 -- --------------------------------------------------------
 
 --
@@ -194,6 +266,36 @@ CREATE TABLE `cache_locks` (
   `key` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   `owner` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   `expiration` bigint NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `conversaciones`
+--
+
+CREATE TABLE `conversaciones` (
+  `id` bigint UNSIGNED NOT NULL,
+  `tipo` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'directa',
+  `titulo` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `creado_por` bigint UNSIGNED NOT NULL,
+  `ultimo_mensaje_en` timestamp NULL DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `conversacion_usuario`
+--
+
+CREATE TABLE `conversacion_usuario` (
+  `conversacion_id` bigint UNSIGNED NOT NULL,
+  `usuario_id` bigint UNSIGNED NOT NULL,
+  `ultimo_leido_en` timestamp NULL DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -223,11 +325,12 @@ CREATE TABLE `documentos` (
   `id` int UNSIGNED NOT NULL,
   `persona_id` int UNSIGNED DEFAULT NULL,
   `legajo_id` int UNSIGNED DEFAULT NULL,
+  `intervencion_id` int UNSIGNED DEFAULT NULL,
   `tipo_documento_id` int UNSIGNED NOT NULL,
   `nombre_archivo` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   `ruta_archivo` varchar(500) COLLATE utf8mb4_unicode_ci NOT NULL,
   `tamanio_bytes` bigint UNSIGNED DEFAULT NULL,
-  `subido_por` int UNSIGNED NOT NULL,
+  `subido_por` bigint UNSIGNED NOT NULL,
   `fecha_subida` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `activo` tinyint(1) NOT NULL DEFAULT '1'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -246,6 +349,34 @@ CREATE TABLE `failed_jobs` (
   `payload` longtext COLLATE utf8mb4_unicode_ci NOT NULL,
   `exception` longtext COLLATE utf8mb4_unicode_ci NOT NULL,
   `failed_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `intervenciones`
+--
+
+CREATE TABLE `intervenciones` (
+  `id` int UNSIGNED NOT NULL,
+  `legajo_id` int UNSIGNED NOT NULL,
+  `tipo_intervencion_id` int UNSIGNED NOT NULL,
+  `profesional_id` bigint UNSIGNED NOT NULL,
+  `fecha_intervencion` date NOT NULL,
+  `hora_intervencion` time DEFAULT NULL,
+  `detalle` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `firma_nombre` varchar(150) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `firma_aclaracion` varchar(150) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `firmada_en` timestamp NULL DEFAULT NULL,
+  `firma_archivo_path` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `firma_entrevistado_nombre` varchar(150) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `firma_entrevistado_aclaracion` varchar(150) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `firma_entrevistado_archivo_path` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `firma_entrevistado_en` timestamp NULL DEFAULT NULL,
+  `creado_por` bigint UNSIGNED DEFAULT NULL,
+  `actualizado_por` bigint UNSIGNED DEFAULT NULL,
+  `creado_en` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `actualizado_en` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -296,21 +427,20 @@ CREATE TABLE `legajos` (
   `motivo_ingreso` text COLLATE utf8mb4_unicode_ci NOT NULL,
   `nivel_riesgo` enum('Bajo','Medio','Alto','Critico') COLLATE utf8mb4_unicode_ci NOT NULL,
   `origen_derivacion` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `profesional_id` int UNSIGNED DEFAULT NULL,
+  `profesional_id` bigint UNSIGNED DEFAULT NULL,
   `fecha_apertura` date NOT NULL DEFAULT (curdate()),
+  `fecha_cierre` date DEFAULT NULL,
   `estado` enum('Abierto','Cerrado','Archivado') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Abierto',
+  `retencion_hasta` date DEFAULT NULL,
+  `archivado_legal_en` timestamp NULL DEFAULT NULL,
+  `eliminacion_autorizada_en` timestamp NULL DEFAULT NULL,
+  `eliminacion_autorizada_por` bigint UNSIGNED DEFAULT NULL,
   `observaciones` text COLLATE utf8mb4_unicode_ci,
-  `creado_por` int UNSIGNED NOT NULL,
+  `creado_por` bigint UNSIGNED NOT NULL,
+  `actualizado_por` bigint UNSIGNED DEFAULT NULL,
   `creado_en` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `actualizado_en` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Volcado de datos para la tabla `legajos`
---
-
-INSERT INTO `legajos` (`id`, `persona_id`, `numero_legajo`, `motivo_ingreso`, `nivel_riesgo`, `origen_derivacion`, `profesional_id`, `fecha_apertura`, `estado`, `observaciones`, `creado_por`, `creado_en`, `actualizado_en`) VALUES
-(1, 1, 'VIL-HER-735', 'asd', 'Critico', 'asd', 1, '2026-10-08', 'Abierto', NULL, 1, '2026-10-08 10:45:17', '2026-10-08 10:45:17');
 
 -- --------------------------------------------------------
 
@@ -320,15 +450,8 @@ INSERT INTO `legajos` (`id`, `persona_id`, `numero_legajo`, `motivo_ingreso`, `n
 
 CREATE TABLE `legajo_problematica` (
   `legajo_id` int UNSIGNED NOT NULL,
-  `problematica_id` bigint UNSIGNED NOT NULL
+  `problematica_id` int UNSIGNED NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Volcado de datos para la tabla `legajo_problematica`
---
-
-INSERT INTO `legajo_problematica` (`legajo_id`, `problematica_id`) VALUES
-(1, 6);
 
 -- --------------------------------------------------------
 
@@ -560,6 +683,73 @@ INSERT INTO `localidades` (`id`, `nombre`, `provincia_id`, `codigo_postal`, `cre
 -- --------------------------------------------------------
 
 --
+-- Estructura de tabla para la tabla `mail_messages`
+--
+
+CREATE TABLE `mail_messages` (
+  `id` bigint UNSIGNED NOT NULL,
+  `message_id` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `thread_id` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `from_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `from_email` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `to_email` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `subject` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `body_text` longtext COLLATE utf8mb4_unicode_ci,
+  `body_html` longtext COLLATE utf8mb4_unicode_ci,
+  `received_at` timestamp NULL DEFAULT NULL,
+  `is_read` tinyint(1) NOT NULL DEFAULT '0',
+  `estado` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Nuevo',
+  `clasificado_por` bigint UNSIGNED DEFAULT NULL,
+  `clasificado_en` timestamp NULL DEFAULT NULL,
+  `attachments` json DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `mail_message_legajo`
+--
+
+CREATE TABLE `mail_message_legajo` (
+  `mail_message_id` bigint UNSIGNED NOT NULL,
+  `legajo_id` int UNSIGNED NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `mensajes`
+--
+
+CREATE TABLE `mensajes` (
+  `id` bigint UNSIGNED NOT NULL,
+  `conversacion_id` bigint UNSIGNED NOT NULL,
+  `usuario_id` bigint UNSIGNED NOT NULL,
+  `cuerpo` text COLLATE utf8mb4_unicode_ci,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `mensaje_recursos`
+--
+
+CREATE TABLE `mensaje_recursos` (
+  `id` bigint UNSIGNED NOT NULL,
+  `mensaje_id` bigint UNSIGNED NOT NULL,
+  `tipo_recurso` varchar(30) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `recurso_id` bigint UNSIGNED NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Estructura de tabla para la tabla `migrations`
 --
 
@@ -596,7 +786,29 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (20, '2026_01_27_000001_create_teams_table', 1),
 (21, '2026_01_27_000002_add_current_team_id_to_users_table', 1),
 (22, '2026_09_17_000001_add_dump_columns_to_geographic_tables', 1),
-(23, '2026_10_01_000015_create_tipos_problematicas_and_legajo_fields', 1);
+(23, '2026_10_01_000015_create_tipos_problematicas_and_legajo_fields', 1),
+(24, '2026_10_12_000001_add_avatar_path_to_users_table', 1),
+(25, '2026_10_12_000001_unify_usuarios_into_users', 1),
+(26, '2026_10_12_000002_normalize_problematicas_table', 1),
+(27, '2026_10_12_000003_add_audit_columns_to_personas_and_legajos', 1),
+(28, '2026_10_12_000004_optimize_indexes_and_make_dni_nullable', 1),
+(29, '2026_10_12_000005_fix_vista_personas_completa', 1),
+(30, '2026_10_12_000007_create_mail_messages_table', 1),
+(31, '2026_10_12_000008_integrate_legajos_into_personas', 1),
+(32, '2026_10_15_000001_create_motivos_ingreso_table', 1),
+(33, '2026_10_15_000002_add_motivo_ingreso_id_to_personas_table', 1),
+(34, '2026_10_16_000001_create_tipos_intervencion_and_intervenciones_tables', 1),
+(35, '2026_10_16_000002_add_intervencion_id_to_documentos', 1),
+(36, '2026_10_19_000001_extend_intervenciones_and_seed_types', 1),
+(37, '2026_10_19_000002_add_digital_signatures_to_intervenciones', 1),
+(38, '2026_10_19_000003_create_internal_communication_tables', 1),
+(39, '2026_10_20_000001_create_workflow_tables', 1),
+(40, '2026_10_20_000002_extend_mailbox_workflow', 1),
+(41, '2026_10_20_000003_create_auditoria_eventos_table', 1),
+(42, '2026_10_20_000004_add_legal_retention_to_legajos', 1),
+(43, '2026_10_20_000005_add_visibility_to_agenda_eventos', 1),
+(44, '2026_10_20_000006_add_account_workflow_to_users_table', 1),
+(45, '2026_10_20_000007_add_fecha_cierre_to_legajos', 1);
 
 -- --------------------------------------------------------
 
@@ -637,7 +849,7 @@ CREATE TABLE `personas` (
   `id` int UNSIGNED NOT NULL,
   `nombre` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
   `apellido` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `dni` varchar(15) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `dni` varchar(15) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `fecha_nacimiento` date NOT NULL,
   `genero` enum('M','F','X','NO_ESPECIFICA') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'NO_ESPECIFICA',
   `direccion_calle` varchar(150) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
@@ -649,38 +861,53 @@ CREATE TABLE `personas` (
   `email` varchar(150) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `observaciones` text COLLATE utf8mb4_unicode_ci,
   `activo` tinyint(1) NOT NULL DEFAULT '1',
+  `creado_por` bigint UNSIGNED DEFAULT NULL,
+  `actualizado_por` bigint UNSIGNED DEFAULT NULL,
   `creado_en` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `actualizado_en` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  `actualizado_en` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `numero_legajo` varchar(40) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `motivo_ingreso` text COLLATE utf8mb4_unicode_ci,
+  `nivel_riesgo` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `origen_derivacion` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `profesional_id` bigint UNSIGNED DEFAULT NULL,
+  `fecha_apertura` date DEFAULT NULL,
+  `fecha_cierre` date DEFAULT NULL,
+  `estado` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `observaciones_legajo` text COLLATE utf8mb4_unicode_ci
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Volcado de datos para la tabla `personas`
---
-
-INSERT INTO `personas` (`id`, `nombre`, `apellido`, `dni`, `fecha_nacimiento`, `genero`, `direccion_calle`, `direccion_numero`, `direccion_piso_depto`, `barrio_id`, `localidad_id`, `telefono`, `email`, `observaciones`, `activo`, `creado_en`, `actualizado_en`) VALUES
-(1, 'hernan', 'vilchez', '41145735', '2019-05-02', 'M', 'paraguay 1', '384', NULL, 14, 5, '+543364367123', 'hernanvilchezdoc@gmail.com', 'asd', 1, '2026-10-08 10:45:17', '2026-10-08 10:45:17');
 
 -- --------------------------------------------------------
 
 --
--- Estructura de tabla para la tabla `problematica`
+-- Estructura de tabla para la tabla `persona_problematica`
 --
 
-CREATE TABLE `problematica` (
-  `id` bigint UNSIGNED NOT NULL,
+CREATE TABLE `persona_problematica` (
+  `persona_id` int UNSIGNED NOT NULL,
+  `problematica_id` int UNSIGNED NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `problematicas`
+--
+
+CREATE TABLE `problematicas` (
+  `id` int UNSIGNED NOT NULL,
   `nombre` varchar(190) COLLATE utf8mb4_unicode_ci NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_by` int UNSIGNED DEFAULT NULL,
-  `deleted_by` int UNSIGNED DEFAULT NULL,
+  `updated_by` bigint UNSIGNED DEFAULT NULL,
+  `deleted_by` bigint UNSIGNED DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Volcado de datos para la tabla `problematica`
+-- Volcado de datos para la tabla `problematicas`
 --
 
-INSERT INTO `problematica` (`id`, `nombre`, `created_at`, `updated_by`, `deleted_by`, `updated_at`, `deleted_at`) VALUES
+INSERT INTO `problematicas` (`id`, `nombre`, `created_at`, `updated_by`, `deleted_by`, `updated_at`, `deleted_at`) VALUES
 (1, 'Ausencia del adulto responsable', '2024-10-24 07:59:55', NULL, NULL, NULL, NULL),
 (3, 'Maltrato', '2024-10-24 07:59:55', NULL, NULL, NULL, NULL),
 (4, 'Negligencia', '2024-10-24 07:59:55', NULL, NULL, NULL, NULL),
@@ -759,9 +986,13 @@ CREATE TABLE `roles` (
 --
 
 INSERT INTO `roles` (`id`, `nombre`, `descripcion`, `creado_en`) VALUES
-(1, 'admin', 'Acceso total al sistema', '2026-10-08 07:42:33'),
-(2, 'operador', 'Carga y edición de personas y documentos', '2026-10-08 07:42:33'),
-(3, 'consulta', 'Solo lectura y descarga de documentos', '2026-10-08 07:42:33');
+(1, 'admin', 'Acceso total al sistema', '2026-08-14 06:08:47'),
+(2, 'operador', 'Carga y edición de personas y documentos', '2026-08-14 06:08:47'),
+(3, 'consulta', 'Solo lectura y descarga de documentos', '2026-08-14 06:08:47'),
+(4, 'oficios', 'Clasificación, vinculación y derivación de comunicaciones.', '2026-10-20 06:00:00'),
+(5, 'coordinador', 'Supervisión, agenda, tareas y avisos.', '2026-10-20 06:00:00'),
+(6, 'profesional', 'Intervenciones, seguimiento y firmas profesionales.', '2026-10-20 06:00:00'),
+(7, 'administrativo', 'Carga y organización de información operativa.', '2026-10-20 06:00:00');
 
 -- --------------------------------------------------------
 
@@ -783,7 +1014,46 @@ CREATE TABLE `sessions` (
 --
 
 INSERT INTO `sessions` (`id`, `user_id`, `ip_address`, `user_agent`, `payload`, `last_activity`) VALUES
-('ct2YXndsmeTH8wkqSoBKLHxr9M3J0Um4TPUcY6u9', 1, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'eyJfdG9rZW4iOiJ2NXVyR0dMMlJvSm5SMEpDcUdPMTlJUlRrUDBKaWRsWlNVN0xIRll4IiwidXJsIjp7ImludGVuZGVkIjoiaHR0cDpcL1wvMTI3LjAuMC4xOjgwMDBcL3BlcnNvbmFzXC9udWV2YSJ9LCJfcHJldmlvdXMiOnsidXJsIjoiaHR0cDpcL1wvMTI3LjAuMC4xOjgwMDBcL2FwaVwvYmFycmlvcz9sb2NhbGlkYWRfaWQ9NSIsInJvdXRlIjoiYXBpLmJhcnJpb3MifSwiX2ZsYXNoIjp7Im9sZCI6W10sIm5ldyI6W119LCJsb2dpbl93ZWJfNTliYTM2YWRkYzJiMmY5NDAxNTgwZjAxNGM3ZjU4ZWE0ZTMwOTg5ZCI6MX0=', 1791447578);
+('yDFX7MHbk8EPRnABIXbZ0ycedP6JTMhKDVXHsSoV', NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36', 'eyJfdG9rZW4iOiJXTllsNThYMEN3Y2VmdlNvTWxlU0tSYzJRb05PQUMxQ2x1N0tpMEZKIiwidXJsIjp7ImludGVuZGVkIjoiaHR0cDpcL1wvMTI3LjAuMC4xOjgwMDAifSwiX3ByZXZpb3VzIjp7InVybCI6Imh0dHA6XC9cLzEyNy4wLjAuMTo4MDAwXC9sb2dpbiIsInJvdXRlIjoibG9naW4ifSwiX2ZsYXNoIjp7Im9sZCI6W10sIm5ldyI6W119fQ==', 1793106689);
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `tareas`
+--
+
+CREATE TABLE `tareas` (
+  `id` bigint UNSIGNED NOT NULL,
+  `tipo` varchar(40) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'derivacion',
+  `titulo` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `descripcion` text COLLATE utf8mb4_unicode_ci,
+  `prioridad` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'normal',
+  `estado` varchar(30) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'pendiente',
+  `fecha_limite` date DEFAULT NULL,
+  `asignado_a` bigint UNSIGNED DEFAULT NULL,
+  `creado_por` bigint UNSIGNED NOT NULL,
+  `legajo_id` int UNSIGNED DEFAULT NULL,
+  `intervencion_id` int UNSIGNED DEFAULT NULL,
+  `mail_message_id` bigint UNSIGNED DEFAULT NULL,
+  `completada_en` timestamp NULL DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `tarea_recursos`
+--
+
+CREATE TABLE `tarea_recursos` (
+  `id` bigint UNSIGNED NOT NULL,
+  `tarea_id` bigint UNSIGNED NOT NULL,
+  `tipo_recurso` varchar(30) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `recurso_id` bigint UNSIGNED NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -846,15 +1116,33 @@ CREATE TABLE `tipos_documento` (
   `nombre` varchar(80) COLLATE utf8mb4_unicode_ci NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- --------------------------------------------------------
+
 --
--- Volcado de datos para la tabla `tipos_documento`
+-- Estructura de tabla para la tabla `tipos_intervencion`
 --
 
-INSERT INTO `tipos_documento` (`id`, `nombre`) VALUES
-(3, 'Certificado médico'),
-(1, 'CUD'),
-(2, 'DNI'),
-(4, 'Otro');
+CREATE TABLE `tipos_intervencion` (
+  `id` int UNSIGNED NOT NULL,
+  `nombre` varchar(80) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `activo` tinyint(1) NOT NULL DEFAULT '1'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Volcado de datos para la tabla `tipos_intervencion`
+--
+
+INSERT INTO `tipos_intervencion` (`id`, `nombre`, `activo`) VALUES
+(1, 'Denuncia', 1),
+(2, 'Oficio', 1),
+(3, 'Acta', 1),
+(4, 'Mail', 1),
+(5, 'Intervención en calle', 1),
+(6, 'Intervención domiciliaria', 1),
+(7, 'Intervención en sede', 1),
+(8, 'Sin intervención', 1),
+(9, 'Respuesta oficio', 1),
+(10, 'Recepcion oficio', 1);
 
 -- --------------------------------------------------------
 
@@ -865,9 +1153,27 @@ INSERT INTO `tipos_documento` (`id`, `nombre`) VALUES
 CREATE TABLE `users` (
   `id` bigint UNSIGNED NOT NULL,
   `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `dni` varchar(30) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `telefono` varchar(40) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `profesion` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `email` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `avatar_path` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `email_verified_at` timestamp NULL DEFAULT NULL,
   `password` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `rol_id` int UNSIGNED DEFAULT NULL,
+  `activo` tinyint(1) NOT NULL DEFAULT '1',
+  `estado_cuenta` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'aprobado',
+  `aprobado_en` datetime DEFAULT NULL,
+  `aprobado_por` bigint UNSIGNED DEFAULT NULL,
+  `rechazado_en` datetime DEFAULT NULL,
+  `rechazado_por` bigint UNSIGNED DEFAULT NULL,
+  `motivo_rechazo` text COLLATE utf8mb4_unicode_ci,
+  `suspendido_en` datetime DEFAULT NULL,
+  `suspendido_por` bigint UNSIGNED DEFAULT NULL,
+  `motivo_suspension` text COLLATE utf8mb4_unicode_ci,
+  `archivado_en` datetime DEFAULT NULL,
+  `archivado_por` bigint UNSIGNED DEFAULT NULL,
+  `ultimo_acceso` datetime DEFAULT NULL,
   `current_team_id` bigint UNSIGNED DEFAULT NULL,
   `two_factor_secret` text COLLATE utf8mb4_unicode_ci,
   `two_factor_recovery_codes` text COLLATE utf8mb4_unicode_ci,
@@ -881,34 +1187,9 @@ CREATE TABLE `users` (
 -- Volcado de datos para la tabla `users`
 --
 
-INSERT INTO `users` (`id`, `name`, `email`, `email_verified_at`, `password`, `current_team_id`, `two_factor_secret`, `two_factor_recovery_codes`, `two_factor_confirmed_at`, `remember_token`, `created_at`, `updated_at`) VALUES
-(1, 'Administrador', 'admin@prodenya.local', NULL, '$2y$12$8/XuyEtB148i1LRmlU8HYeSNt/YK8lzbI3ZiMctHdhKuM8KlYhUfm', NULL, NULL, NULL, NULL, NULL, '2026-10-08 10:42:34', '2026-10-08 10:42:34');
-
--- --------------------------------------------------------
-
---
--- Estructura de tabla para la tabla `usuarios`
---
-
-CREATE TABLE `usuarios` (
-  `id` int UNSIGNED NOT NULL,
-  `nombre_usuario` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `email` varchar(150) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `password_hash` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `rol_id` int UNSIGNED NOT NULL,
-  `activo` tinyint(1) NOT NULL DEFAULT '1',
-  `ultimo_acceso` datetime DEFAULT NULL,
-  `remember_token` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `creado_en` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `actualizado_en` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Volcado de datos para la tabla `usuarios`
---
-
-INSERT INTO `usuarios` (`id`, `nombre_usuario`, `email`, `password_hash`, `rol_id`, `activo`, `ultimo_acceso`, `remember_token`, `creado_en`, `actualizado_en`) VALUES
-(1, 'admin', 'admin@prodenya.local', '$2y$12$n9TWE.HX1ymTprVCI7054.y68wWmeOdbSUFOaNiwD50PTP9oOWsEu', 1, 1, NULL, NULL, '2026-10-08 10:42:34', '2026-10-08 10:42:34');
+INSERT INTO `users` (`id`, `name`, `dni`, `telefono`, `profesion`, `email`, `avatar_path`, `email_verified_at`, `password`, `rol_id`, `activo`, `estado_cuenta`, `aprobado_en`, `aprobado_por`, `rechazado_en`, `rechazado_por`, `motivo_rechazo`, `suspendido_en`, `suspendido_por`, `motivo_suspension`, `archivado_en`, `archivado_por`, `ultimo_acceso`, `current_team_id`, `two_factor_secret`, `two_factor_recovery_codes`, `two_factor_confirmed_at`, `remember_token`, `created_at`, `updated_at`) VALUES
+(1, 'Administrador', NULL, NULL, NULL, 'admin@gmail.com', NULL, '2026-10-24 05:21:19', '$2y$12$8fHwThf6/gi7VLpxPdnhreVP/HgdCCJnNn70d/fFGG/F6DI9Je6xK', 1, 1, 'aprobado', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-10-24 05:19:31', '2026-10-24 05:21:19'),
+(10, 'juan segundo cian', '45032239', '+543364318066', NULL, 'juansegundocian@gmail.com', NULL, '2026-10-27 04:22:02', '$2y$12$SNWcyVNCU3xfe11C2lnT5uDAwjwby2YmU6a8OzTlB2UXSBa7OvNf6', 6, 1, 'aprobado', '2026-10-26 22:25:00', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-10-27 04:19:55', '2026-10-27 04:25:00');
 
 -- --------------------------------------------------------
 
@@ -917,7 +1198,8 @@ INSERT INTO `usuarios` (`id`, `nombre_usuario`, `email`, `password_hash`, `rol_i
 -- (Véase abajo para la vista actual)
 --
 CREATE TABLE `vista_personas_completa` (
-`apellido` varchar(100)
+`activo` tinyint(1)
+,`apellido` varchar(100)
 ,`barrio` varchar(100)
 ,`cud_vencimiento` date
 ,`dni` varchar(15)
@@ -935,22 +1217,54 @@ CREATE TABLE `vista_personas_completa` (
 --
 
 --
+-- Indices de la tabla `agenda_eventos`
+--
+ALTER TABLE `agenda_eventos`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `agenda_eventos_creado_por_foreign` (`creado_por`),
+  ADD KEY `agenda_eventos_fecha_inicio_index` (`fecha_inicio`),
+  ADD KEY `agenda_eventos_visibilidad_index` (`visibilidad`);
+
+--
+-- Indices de la tabla `agenda_evento_legajo`
+--
+ALTER TABLE `agenda_evento_legajo`
+  ADD PRIMARY KEY (`agenda_evento_id`,`legajo_id`),
+  ADD KEY `agenda_evento_legajo_legajo_id_foreign` (`legajo_id`);
+
+--
+-- Indices de la tabla `agenda_evento_usuario`
+--
+ALTER TABLE `agenda_evento_usuario`
+  ADD PRIMARY KEY (`agenda_evento_id`,`usuario_id`),
+  ADD KEY `agenda_evento_usuario_usuario_id_foreign` (`usuario_id`);
+
+--
 -- Indices de la tabla `auditoria_accesos_legajo`
 --
 ALTER TABLE `auditoria_accesos_legajo`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `idx_auditlegajo_legajo` (`legajo_id`),
   ADD KEY `idx_auditlegajo_usuario` (`usuario_id`),
-  ADD KEY `idx_auditlegajo_fecha` (`fecha_acceso`);
+  ADD KEY `idx_auditlegajo_fecha` (`fecha_acceso`),
+  ADD KEY `idx_auditlegajo_legajo_fecha` (`legajo_id`,`fecha_acceso`);
 
 --
 -- Indices de la tabla `auditoria_descargas`
 --
 ALTER TABLE `auditoria_descargas`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `idx_auditoria_documento` (`documento_id`),
   ADD KEY `idx_auditoria_usuario` (`usuario_id`),
-  ADD KEY `idx_auditoria_fecha` (`fecha_descarga`);
+  ADD KEY `idx_auditoria_fecha` (`fecha_descarga`),
+  ADD KEY `idx_auditoria_documento_fecha` (`documento_id`,`fecha_descarga`);
+
+--
+-- Indices de la tabla `auditoria_eventos`
+--
+ALTER TABLE `auditoria_eventos`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `auditoria_eventos_usuario_id_foreign` (`usuario_id`),
+  ADD KEY `auditoria_eventos_auditable_type_auditable_id_index` (`auditable_type`,`auditable_id`),
+  ADD KEY `auditoria_eventos_evento_creado_en_index` (`evento`,`creado_en`);
 
 --
 -- Indices de la tabla `barrios`
@@ -958,7 +1272,9 @@ ALTER TABLE `auditoria_descargas`
 ALTER TABLE `barrios`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `uq_barrio` (`nombre`,`localidad_id`),
-  ADD KEY `barrios_localidad_id_foreign` (`localidad_id`);
+  ADD KEY `barrios_localidad_id_foreign` (`localidad_id`),
+  ADD KEY `barrios_updated_by_foreign` (`updated_by`),
+  ADD KEY `barrios_deleted_by_foreign` (`deleted_by`);
 
 --
 -- Indices de la tabla `cache`
@@ -975,6 +1291,21 @@ ALTER TABLE `cache_locks`
   ADD KEY `cache_locks_expiration_index` (`expiration`);
 
 --
+-- Indices de la tabla `conversaciones`
+--
+ALTER TABLE `conversaciones`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `conversaciones_creado_por_foreign` (`creado_por`),
+  ADD KEY `conversaciones_ultimo_mensaje_en_index` (`ultimo_mensaje_en`);
+
+--
+-- Indices de la tabla `conversacion_usuario`
+--
+ALTER TABLE `conversacion_usuario`
+  ADD PRIMARY KEY (`conversacion_id`,`usuario_id`),
+  ADD KEY `conversacion_usuario_usuario_id_foreign` (`usuario_id`);
+
+--
 -- Indices de la tabla `cud`
 --
 ALTER TABLE `cud`
@@ -989,9 +1320,10 @@ ALTER TABLE `cud`
 ALTER TABLE `documentos`
   ADD PRIMARY KEY (`id`),
   ADD KEY `documentos_tipo_documento_id_foreign` (`tipo_documento_id`),
-  ADD KEY `documentos_subido_por_foreign` (`subido_por`),
   ADD KEY `idx_documento_persona` (`persona_id`),
-  ADD KEY `idx_documento_legajo` (`legajo_id`);
+  ADD KEY `idx_documento_legajo` (`legajo_id`),
+  ADD KEY `documentos_subido_por_foreign` (`subido_por`),
+  ADD KEY `idx_documento_intervencion` (`intervencion_id`);
 
 --
 -- Indices de la tabla `failed_jobs`
@@ -1000,6 +1332,17 @@ ALTER TABLE `failed_jobs`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `failed_jobs_uuid_unique` (`uuid`),
   ADD KEY `failed_jobs_connection_queue_failed_at_index` (`connection`,`queue`,`failed_at`);
+
+--
+-- Indices de la tabla `intervenciones`
+--
+ALTER TABLE `intervenciones`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_intervencion_legajo_fecha` (`legajo_id`,`fecha_intervencion`),
+  ADD KEY `intervenciones_tipo_intervencion_id_foreign` (`tipo_intervencion_id`),
+  ADD KEY `intervenciones_profesional_id_foreign` (`profesional_id`),
+  ADD KEY `intervenciones_creado_por_foreign` (`creado_por`),
+  ADD KEY `intervenciones_actualizado_por_foreign` (`actualizado_por`);
 
 --
 -- Indices de la tabla `jobs`
@@ -1021,8 +1364,13 @@ ALTER TABLE `legajos`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `legajos_numero_legajo_unique` (`numero_legajo`),
   ADD KEY `legajos_creado_por_foreign` (`creado_por`),
-  ADD KEY `idx_legajo_persona` (`persona_id`),
-  ADD KEY `legajos_profesional_id_foreign` (`profesional_id`);
+  ADD KEY `legajos_profesional_id_foreign` (`profesional_id`),
+  ADD KEY `legajos_actualizado_por_foreign` (`actualizado_por`),
+  ADD KEY `idx_legajo_persona_estado` (`persona_id`,`estado`),
+  ADD KEY `idx_legajo_estado_creado` (`estado`,`creado_en`),
+  ADD KEY `legajos_eliminacion_autorizada_por_foreign` (`eliminacion_autorizada_por`),
+  ADD KEY `legajos_retencion_hasta_index` (`retencion_hasta`),
+  ADD KEY `idx_legajo_fecha_cierre` (`fecha_cierre`);
 
 --
 -- Indices de la tabla `legajo_problematica`
@@ -1037,7 +1385,44 @@ ALTER TABLE `legajo_problematica`
 ALTER TABLE `localidades`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `uq_localidad` (`nombre`,`provincia_id`),
-  ADD KEY `localidades_provincia_id_foreign` (`provincia_id`);
+  ADD KEY `localidades_provincia_id_foreign` (`provincia_id`),
+  ADD KEY `localidades_updated_by_foreign` (`updated_by`),
+  ADD KEY `localidades_deleted_by_foreign` (`deleted_by`);
+
+--
+-- Indices de la tabla `mail_messages`
+--
+ALTER TABLE `mail_messages`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `mail_messages_message_id_unique` (`message_id`),
+  ADD KEY `mail_messages_thread_id_index` (`thread_id`),
+  ADD KEY `mail_messages_from_email_index` (`from_email`),
+  ADD KEY `mail_messages_received_at_index` (`received_at`),
+  ADD KEY `mail_messages_is_read_index` (`is_read`),
+  ADD KEY `mail_messages_clasificado_por_foreign` (`clasificado_por`),
+  ADD KEY `mail_messages_estado_index` (`estado`);
+
+--
+-- Indices de la tabla `mail_message_legajo`
+--
+ALTER TABLE `mail_message_legajo`
+  ADD PRIMARY KEY (`mail_message_id`,`legajo_id`),
+  ADD KEY `mail_message_legajo_legajo_id_foreign` (`legajo_id`);
+
+--
+-- Indices de la tabla `mensajes`
+--
+ALTER TABLE `mensajes`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `mensajes_usuario_id_foreign` (`usuario_id`),
+  ADD KEY `mensajes_conversacion_id_created_at_index` (`conversacion_id`,`created_at`);
+
+--
+-- Indices de la tabla `mensaje_recursos`
+--
+ALTER TABLE `mensaje_recursos`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `mensaje_recursos_mensaje_id_tipo_recurso_recurso_id_unique` (`mensaje_id`,`tipo_recurso`,`recurso_id`);
 
 --
 -- Indices de la tabla `migrations`
@@ -1065,23 +1450,37 @@ ALTER TABLE `password_reset_tokens`
 ALTER TABLE `personas`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `personas_dni_unique` (`dni`),
+  ADD UNIQUE KEY `personas_numero_legajo_unique` (`numero_legajo`),
   ADD KEY `personas_barrio_id_foreign` (`barrio_id`),
   ADD KEY `personas_localidad_id_foreign` (`localidad_id`),
-  ADD KEY `idx_persona_dni` (`dni`),
-  ADD KEY `idx_persona_apellido_nombre` (`apellido`,`nombre`);
+  ADD KEY `personas_creado_por_foreign` (`creado_por`),
+  ADD KEY `personas_actualizado_por_foreign` (`actualizado_por`),
+  ADD KEY `idx_persona_activo_apellido_nombre` (`activo`,`apellido`,`nombre`),
+  ADD KEY `idx_persona_fecha_cierre` (`fecha_cierre`);
 
 --
--- Indices de la tabla `problematica`
+-- Indices de la tabla `persona_problematica`
 --
-ALTER TABLE `problematica`
-  ADD PRIMARY KEY (`id`);
+ALTER TABLE `persona_problematica`
+  ADD PRIMARY KEY (`persona_id`,`problematica_id`),
+  ADD KEY `persona_problematica_problematica_id_foreign` (`problematica_id`);
+
+--
+-- Indices de la tabla `problematicas`
+--
+ALTER TABLE `problematicas`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `problematicas_updated_by_foreign` (`updated_by`),
+  ADD KEY `problematicas_deleted_by_foreign` (`deleted_by`);
 
 --
 -- Indices de la tabla `provincias`
 --
 ALTER TABLE `provincias`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `provincias_nombre_unique` (`nombre`);
+  ADD UNIQUE KEY `provincias_nombre_unique` (`nombre`),
+  ADD KEY `provincias_updated_by_foreign` (`updated_by`),
+  ADD KEY `provincias_deleted_by_foreign` (`deleted_by`);
 
 --
 -- Indices de la tabla `roles`
@@ -1097,6 +1496,25 @@ ALTER TABLE `sessions`
   ADD PRIMARY KEY (`id`),
   ADD KEY `sessions_user_id_index` (`user_id`),
   ADD KEY `sessions_last_activity_index` (`last_activity`);
+
+--
+-- Indices de la tabla `tareas`
+--
+ALTER TABLE `tareas`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `tareas_creado_por_foreign` (`creado_por`),
+  ADD KEY `tareas_mail_message_id_foreign` (`mail_message_id`),
+  ADD KEY `tareas_asignado_a_estado_index` (`asignado_a`,`estado`),
+  ADD KEY `tareas_legajo_id_foreign` (`legajo_id`),
+  ADD KEY `tareas_intervencion_id_foreign` (`intervencion_id`),
+  ADD KEY `tareas_fecha_limite_index` (`fecha_limite`);
+
+--
+-- Indices de la tabla `tarea_recursos`
+--
+ALTER TABLE `tarea_recursos`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `tarea_recursos_tarea_id_tipo_recurso_recurso_id_unique` (`tarea_id`,`tipo_recurso`,`recurso_id`);
 
 --
 -- Indices de la tabla `teams`
@@ -1130,25 +1548,36 @@ ALTER TABLE `tipos_documento`
   ADD UNIQUE KEY `tipos_documento_nombre_unique` (`nombre`);
 
 --
+-- Indices de la tabla `tipos_intervencion`
+--
+ALTER TABLE `tipos_intervencion`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `tipos_intervencion_nombre_unique` (`nombre`);
+
+--
 -- Indices de la tabla `users`
 --
 ALTER TABLE `users`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `users_email_unique` (`email`),
-  ADD KEY `users_current_team_id_foreign` (`current_team_id`);
-
---
--- Indices de la tabla `usuarios`
---
-ALTER TABLE `usuarios`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `usuarios_nombre_usuario_unique` (`nombre_usuario`),
-  ADD UNIQUE KEY `usuarios_email_unique` (`email`),
-  ADD KEY `usuarios_rol_id_foreign` (`rol_id`);
+  ADD UNIQUE KEY `users_dni_unique` (`dni`),
+  ADD KEY `users_current_team_id_foreign` (`current_team_id`),
+  ADD KEY `users_rol_id_foreign` (`rol_id`),
+  ADD KEY `users_aprobado_por_foreign` (`aprobado_por`),
+  ADD KEY `users_rechazado_por_foreign` (`rechazado_por`),
+  ADD KEY `users_suspendido_por_foreign` (`suspendido_por`),
+  ADD KEY `users_archivado_por_foreign` (`archivado_por`),
+  ADD KEY `users_estado_cuenta_index` (`estado_cuenta`);
 
 --
 -- AUTO_INCREMENT de las tablas volcadas
 --
+
+--
+-- AUTO_INCREMENT de la tabla `agenda_eventos`
+--
+ALTER TABLE `agenda_eventos`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT de la tabla `auditoria_accesos_legajo`
@@ -1163,10 +1592,22 @@ ALTER TABLE `auditoria_descargas`
   MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT de la tabla `auditoria_eventos`
+--
+ALTER TABLE `auditoria_eventos`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT de la tabla `barrios`
 --
 ALTER TABLE `barrios`
   MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=100;
+
+--
+-- AUTO_INCREMENT de la tabla `conversaciones`
+--
+ALTER TABLE `conversaciones`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT de la tabla `cud`
@@ -1187,6 +1628,12 @@ ALTER TABLE `failed_jobs`
   MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT de la tabla `intervenciones`
+--
+ALTER TABLE `intervenciones`
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT de la tabla `jobs`
 --
 ALTER TABLE `jobs`
@@ -1196,7 +1643,7 @@ ALTER TABLE `jobs`
 -- AUTO_INCREMENT de la tabla `legajos`
 --
 ALTER TABLE `legajos`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT de la tabla `localidades`
@@ -1205,10 +1652,28 @@ ALTER TABLE `localidades`
   MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=208;
 
 --
+-- AUTO_INCREMENT de la tabla `mail_messages`
+--
+ALTER TABLE `mail_messages`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `mensajes`
+--
+ALTER TABLE `mensajes`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `mensaje_recursos`
+--
+ALTER TABLE `mensaje_recursos`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT de la tabla `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=46;
 
 --
 -- AUTO_INCREMENT de la tabla `passkeys`
@@ -1220,13 +1685,13 @@ ALTER TABLE `passkeys`
 -- AUTO_INCREMENT de la tabla `personas`
 --
 ALTER TABLE `personas`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT de la tabla `problematica`
+-- AUTO_INCREMENT de la tabla `problematicas`
 --
-ALTER TABLE `problematica`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
+ALTER TABLE `problematicas`
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
 
 --
 -- AUTO_INCREMENT de la tabla `provincias`
@@ -1238,7 +1703,19 @@ ALTER TABLE `provincias`
 -- AUTO_INCREMENT de la tabla `roles`
 --
 ALTER TABLE `roles`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+
+--
+-- AUTO_INCREMENT de la tabla `tareas`
+--
+ALTER TABLE `tareas`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `tarea_recursos`
+--
+ALTER TABLE `tarea_recursos`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT de la tabla `teams`
@@ -1262,19 +1739,19 @@ ALTER TABLE `team_members`
 -- AUTO_INCREMENT de la tabla `tipos_documento`
 --
 ALTER TABLE `tipos_documento`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `tipos_intervencion`
+--
+ALTER TABLE `tipos_intervencion`
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT de la tabla `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
-
---
--- AUTO_INCREMENT de la tabla `usuarios`
---
-ALTER TABLE `usuarios`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 -- --------------------------------------------------------
 
@@ -1283,31 +1760,72 @@ ALTER TABLE `usuarios`
 --
 DROP TABLE IF EXISTS `vista_personas_completa`;
 
-CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `vista_personas_completa`  AS SELECT `p`.`id` AS `id`, `p`.`nombre` AS `nombre`, `p`.`apellido` AS `apellido`, `p`.`dni` AS `dni`, timestampdiff(YEAR,`p`.`fecha_nacimiento`,curdate()) AS `edad`, `b`.`nombre` AS `barrio`, `l`.`nombre` AS `localidad`, `pr`.`nombre` AS `provincia`, `c`.`numero_cud` AS `numero_cud`, `c`.`fecha_vencimiento` AS `cud_vencimiento`, (case when (`c`.`fecha_vencimiento` >= curdate()) then 'Vigente' else 'Vencido' end) AS `estado_cud` FROM ((((`personas` `p` left join `barrios` `b` on((`p`.`barrio_id` = `b`.`id`))) join `localidades` `l` on((`p`.`localidad_id` = `l`.`id`))) join `provincias` `pr` on((`l`.`provincia_id` = `pr`.`id`))) left join `cud` `c` on((`c`.`persona_id` = `p`.`id`))) ;
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY INVOKER VIEW `vista_personas_completa`  AS SELECT `p`.`id` AS `id`, `p`.`nombre` AS `nombre`, `p`.`apellido` AS `apellido`, `p`.`dni` AS `dni`, `p`.`activo` AS `activo`, timestampdiff(YEAR,`p`.`fecha_nacimiento`,curdate()) AS `edad`, `b`.`nombre` AS `barrio`, `l`.`nombre` AS `localidad`, `pr`.`nombre` AS `provincia`, `c`.`numero_cud` AS `numero_cud`, `c`.`fecha_vencimiento` AS `cud_vencimiento`, (case when (`c`.`id` is null) then 'Sin CUD' when (`c`.`fecha_vencimiento` >= curdate()) then 'Vigente' else 'Vencido' end) AS `estado_cud` FROM ((((`personas` `p` left join `barrios` `b` on((`p`.`barrio_id` = `b`.`id`))) join `localidades` `l` on((`p`.`localidad_id` = `l`.`id`))) join `provincias` `pr` on((`l`.`provincia_id` = `pr`.`id`))) left join `cud` `c` on((`c`.`id` = (select `c2`.`id` from `cud` `c2` where (`c2`.`persona_id` = `p`.`id`) order by `c2`.`fecha_vencimiento` desc,`c2`.`id` desc limit 1)))) ;
 
 --
 -- Restricciones para tablas volcadas
 --
 
 --
+-- Filtros para la tabla `agenda_eventos`
+--
+ALTER TABLE `agenda_eventos`
+  ADD CONSTRAINT `agenda_eventos_creado_por_foreign` FOREIGN KEY (`creado_por`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
+-- Filtros para la tabla `agenda_evento_legajo`
+--
+ALTER TABLE `agenda_evento_legajo`
+  ADD CONSTRAINT `agenda_evento_legajo_agenda_evento_id_foreign` FOREIGN KEY (`agenda_evento_id`) REFERENCES `agenda_eventos` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `agenda_evento_legajo_legajo_id_foreign` FOREIGN KEY (`legajo_id`) REFERENCES `legajos` (`id`) ON DELETE CASCADE;
+
+--
+-- Filtros para la tabla `agenda_evento_usuario`
+--
+ALTER TABLE `agenda_evento_usuario`
+  ADD CONSTRAINT `agenda_evento_usuario_agenda_evento_id_foreign` FOREIGN KEY (`agenda_evento_id`) REFERENCES `agenda_eventos` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `agenda_evento_usuario_usuario_id_foreign` FOREIGN KEY (`usuario_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
 -- Filtros para la tabla `auditoria_accesos_legajo`
 --
 ALTER TABLE `auditoria_accesos_legajo`
   ADD CONSTRAINT `auditoria_accesos_legajo_legajo_id_foreign` FOREIGN KEY (`legajo_id`) REFERENCES `legajos` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  ADD CONSTRAINT `auditoria_accesos_legajo_usuario_id_foreign` FOREIGN KEY (`usuario_id`) REFERENCES `usuarios` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+  ADD CONSTRAINT `auditoria_accesos_legajo_usuario_id_foreign` FOREIGN KEY (`usuario_id`) REFERENCES `users` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 --
 -- Filtros para la tabla `auditoria_descargas`
 --
 ALTER TABLE `auditoria_descargas`
   ADD CONSTRAINT `auditoria_descargas_documento_id_foreign` FOREIGN KEY (`documento_id`) REFERENCES `documentos` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  ADD CONSTRAINT `auditoria_descargas_usuario_id_foreign` FOREIGN KEY (`usuario_id`) REFERENCES `usuarios` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+  ADD CONSTRAINT `auditoria_descargas_usuario_id_foreign` FOREIGN KEY (`usuario_id`) REFERENCES `users` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+--
+-- Filtros para la tabla `auditoria_eventos`
+--
+ALTER TABLE `auditoria_eventos`
+  ADD CONSTRAINT `auditoria_eventos_usuario_id_foreign` FOREIGN KEY (`usuario_id`) REFERENCES `users` (`id`) ON DELETE SET NULL;
 
 --
 -- Filtros para la tabla `barrios`
 --
 ALTER TABLE `barrios`
-  ADD CONSTRAINT `barrios_localidad_id_foreign` FOREIGN KEY (`localidad_id`) REFERENCES `localidades` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+  ADD CONSTRAINT `barrios_deleted_by_foreign` FOREIGN KEY (`deleted_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `barrios_localidad_id_foreign` FOREIGN KEY (`localidad_id`) REFERENCES `localidades` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
+  ADD CONSTRAINT `barrios_updated_by_foreign` FOREIGN KEY (`updated_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
+
+--
+-- Filtros para la tabla `conversaciones`
+--
+ALTER TABLE `conversaciones`
+  ADD CONSTRAINT `conversaciones_creado_por_foreign` FOREIGN KEY (`creado_por`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
+-- Filtros para la tabla `conversacion_usuario`
+--
+ALTER TABLE `conversacion_usuario`
+  ADD CONSTRAINT `conversacion_usuario_conversacion_id_foreign` FOREIGN KEY (`conversacion_id`) REFERENCES `conversaciones` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `conversacion_usuario_usuario_id_foreign` FOREIGN KEY (`usuario_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 
 --
 -- Filtros para la tabla `cud`
@@ -1319,31 +1837,72 @@ ALTER TABLE `cud`
 -- Filtros para la tabla `documentos`
 --
 ALTER TABLE `documentos`
+  ADD CONSTRAINT `documentos_intervencion_id_foreign` FOREIGN KEY (`intervencion_id`) REFERENCES `intervenciones` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
   ADD CONSTRAINT `documentos_legajo_id_foreign` FOREIGN KEY (`legajo_id`) REFERENCES `legajos` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
   ADD CONSTRAINT `documentos_persona_id_foreign` FOREIGN KEY (`persona_id`) REFERENCES `personas` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
-  ADD CONSTRAINT `documentos_subido_por_foreign` FOREIGN KEY (`subido_por`) REFERENCES `usuarios` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
+  ADD CONSTRAINT `documentos_subido_por_foreign` FOREIGN KEY (`subido_por`) REFERENCES `users` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
   ADD CONSTRAINT `documentos_tipo_documento_id_foreign` FOREIGN KEY (`tipo_documento_id`) REFERENCES `tipos_documento` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+--
+-- Filtros para la tabla `intervenciones`
+--
+ALTER TABLE `intervenciones`
+  ADD CONSTRAINT `intervenciones_actualizado_por_foreign` FOREIGN KEY (`actualizado_por`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `intervenciones_creado_por_foreign` FOREIGN KEY (`creado_por`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `intervenciones_legajo_id_foreign` FOREIGN KEY (`legajo_id`) REFERENCES `legajos` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
+  ADD CONSTRAINT `intervenciones_profesional_id_foreign` FOREIGN KEY (`profesional_id`) REFERENCES `users` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
+  ADD CONSTRAINT `intervenciones_tipo_intervencion_id_foreign` FOREIGN KEY (`tipo_intervencion_id`) REFERENCES `tipos_intervencion` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 --
 -- Filtros para la tabla `legajos`
 --
 ALTER TABLE `legajos`
-  ADD CONSTRAINT `legajos_creado_por_foreign` FOREIGN KEY (`creado_por`) REFERENCES `usuarios` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
+  ADD CONSTRAINT `legajos_actualizado_por_foreign` FOREIGN KEY (`actualizado_por`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `legajos_creado_por_foreign` FOREIGN KEY (`creado_por`) REFERENCES `users` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
+  ADD CONSTRAINT `legajos_eliminacion_autorizada_por_foreign` FOREIGN KEY (`eliminacion_autorizada_por`) REFERENCES `users` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `legajos_persona_id_foreign` FOREIGN KEY (`persona_id`) REFERENCES `personas` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
-  ADD CONSTRAINT `legajos_profesional_id_foreign` FOREIGN KEY (`profesional_id`) REFERENCES `usuarios` (`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+  ADD CONSTRAINT `legajos_profesional_id_foreign` FOREIGN KEY (`profesional_id`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 --
 -- Filtros para la tabla `legajo_problematica`
 --
 ALTER TABLE `legajo_problematica`
   ADD CONSTRAINT `legajo_problematica_legajo_id_foreign` FOREIGN KEY (`legajo_id`) REFERENCES `legajos` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  ADD CONSTRAINT `legajo_problematica_problematica_id_foreign` FOREIGN KEY (`problematica_id`) REFERENCES `problematica` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+  ADD CONSTRAINT `legajo_problematica_problematica_id_foreign` FOREIGN KEY (`problematica_id`) REFERENCES `problematicas` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 --
 -- Filtros para la tabla `localidades`
 --
 ALTER TABLE `localidades`
-  ADD CONSTRAINT `localidades_provincia_id_foreign` FOREIGN KEY (`provincia_id`) REFERENCES `provincias` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+  ADD CONSTRAINT `localidades_deleted_by_foreign` FOREIGN KEY (`deleted_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `localidades_provincia_id_foreign` FOREIGN KEY (`provincia_id`) REFERENCES `provincias` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
+  ADD CONSTRAINT `localidades_updated_by_foreign` FOREIGN KEY (`updated_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
+
+--
+-- Filtros para la tabla `mail_messages`
+--
+ALTER TABLE `mail_messages`
+  ADD CONSTRAINT `mail_messages_clasificado_por_foreign` FOREIGN KEY (`clasificado_por`) REFERENCES `users` (`id`) ON DELETE SET NULL;
+
+--
+-- Filtros para la tabla `mail_message_legajo`
+--
+ALTER TABLE `mail_message_legajo`
+  ADD CONSTRAINT `mail_message_legajo_legajo_id_foreign` FOREIGN KEY (`legajo_id`) REFERENCES `legajos` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `mail_message_legajo_mail_message_id_foreign` FOREIGN KEY (`mail_message_id`) REFERENCES `mail_messages` (`id`) ON DELETE CASCADE;
+
+--
+-- Filtros para la tabla `mensajes`
+--
+ALTER TABLE `mensajes`
+  ADD CONSTRAINT `mensajes_conversacion_id_foreign` FOREIGN KEY (`conversacion_id`) REFERENCES `conversaciones` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `mensajes_usuario_id_foreign` FOREIGN KEY (`usuario_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
+-- Filtros para la tabla `mensaje_recursos`
+--
+ALTER TABLE `mensaje_recursos`
+  ADD CONSTRAINT `mensaje_recursos_mensaje_id_foreign` FOREIGN KEY (`mensaje_id`) REFERENCES `mensajes` (`id`) ON DELETE CASCADE;
 
 --
 -- Filtros para la tabla `passkeys`
@@ -1355,8 +1914,47 @@ ALTER TABLE `passkeys`
 -- Filtros para la tabla `personas`
 --
 ALTER TABLE `personas`
+  ADD CONSTRAINT `personas_actualizado_por_foreign` FOREIGN KEY (`actualizado_por`) REFERENCES `users` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `personas_barrio_id_foreign` FOREIGN KEY (`barrio_id`) REFERENCES `barrios` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  ADD CONSTRAINT `personas_creado_por_foreign` FOREIGN KEY (`creado_por`) REFERENCES `users` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `personas_localidad_id_foreign` FOREIGN KEY (`localidad_id`) REFERENCES `localidades` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+--
+-- Filtros para la tabla `persona_problematica`
+--
+ALTER TABLE `persona_problematica`
+  ADD CONSTRAINT `persona_problematica_persona_id_foreign` FOREIGN KEY (`persona_id`) REFERENCES `personas` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `persona_problematica_problematica_id_foreign` FOREIGN KEY (`problematica_id`) REFERENCES `problematicas` (`id`) ON DELETE RESTRICT;
+
+--
+-- Filtros para la tabla `problematicas`
+--
+ALTER TABLE `problematicas`
+  ADD CONSTRAINT `problematicas_deleted_by_foreign` FOREIGN KEY (`deleted_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `problematicas_updated_by_foreign` FOREIGN KEY (`updated_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
+
+--
+-- Filtros para la tabla `provincias`
+--
+ALTER TABLE `provincias`
+  ADD CONSTRAINT `provincias_deleted_by_foreign` FOREIGN KEY (`deleted_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `provincias_updated_by_foreign` FOREIGN KEY (`updated_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
+
+--
+-- Filtros para la tabla `tareas`
+--
+ALTER TABLE `tareas`
+  ADD CONSTRAINT `tareas_asignado_a_foreign` FOREIGN KEY (`asignado_a`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `tareas_creado_por_foreign` FOREIGN KEY (`creado_por`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `tareas_intervencion_id_foreign` FOREIGN KEY (`intervencion_id`) REFERENCES `intervenciones` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `tareas_legajo_id_foreign` FOREIGN KEY (`legajo_id`) REFERENCES `legajos` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `tareas_mail_message_id_foreign` FOREIGN KEY (`mail_message_id`) REFERENCES `mail_messages` (`id`) ON DELETE SET NULL;
+
+--
+-- Filtros para la tabla `tarea_recursos`
+--
+ALTER TABLE `tarea_recursos`
+  ADD CONSTRAINT `tarea_recursos_tarea_id_foreign` FOREIGN KEY (`tarea_id`) REFERENCES `tareas` (`id`) ON DELETE CASCADE;
 
 --
 -- Filtros para la tabla `team_invitations`
@@ -1376,13 +1974,12 @@ ALTER TABLE `team_members`
 -- Filtros para la tabla `users`
 --
 ALTER TABLE `users`
-  ADD CONSTRAINT `users_current_team_id_foreign` FOREIGN KEY (`current_team_id`) REFERENCES `teams` (`id`) ON DELETE SET NULL;
-
---
--- Filtros para la tabla `usuarios`
---
-ALTER TABLE `usuarios`
-  ADD CONSTRAINT `usuarios_rol_id_foreign` FOREIGN KEY (`rol_id`) REFERENCES `roles` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+  ADD CONSTRAINT `users_aprobado_por_foreign` FOREIGN KEY (`aprobado_por`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `users_archivado_por_foreign` FOREIGN KEY (`archivado_por`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `users_current_team_id_foreign` FOREIGN KEY (`current_team_id`) REFERENCES `teams` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `users_rechazado_por_foreign` FOREIGN KEY (`rechazado_por`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `users_rol_id_foreign` FOREIGN KEY (`rol_id`) REFERENCES `roles` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
+  ADD CONSTRAINT `users_suspendido_por_foreign` FOREIGN KEY (`suspendido_por`) REFERENCES `users` (`id`) ON DELETE SET NULL;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

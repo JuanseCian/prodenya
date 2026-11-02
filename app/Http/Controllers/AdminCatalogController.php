@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Barrio;
 use App\Models\Localidad;
-use App\Models\MotivoIngreso;
 use App\Models\Problematica;
 use App\Models\Provincia;
 use App\Models\Rol;
@@ -196,23 +195,6 @@ class AdminCatalogController extends Controller
                 'with' => [],
                 'columns' => [['label' => 'Nombre', 'key' => 'nombre']],
                 'fields' => [['name' => 'nombre', 'label' => 'Nombre', 'type' => 'text', 'maxlength' => 80, 'required' => true, 'unique' => true]],
-            ],
-            'motivos-ingreso' => [
-                'title' => 'Motivos de ingreso',
-                'singular' => 'Motivo de ingreso',
-                'model' => MotivoIngreso::class,
-                'search' => ['nombre', 'descripcion'],
-                'with' => [],
-                'columns' => [
-                    ['label' => 'Nombre', 'key' => 'nombre'],
-                    ['label' => 'Descripción', 'key' => 'descripcion'],
-                    ['label' => 'Estado', 'key' => 'activo', 'type' => 'boolean'],
-                ],
-                'fields' => [
-                    ['name' => 'nombre', 'label' => 'Nombre', 'type' => 'text', 'maxlength' => 190, 'required' => true, 'unique' => true],
-                    ['name' => 'descripcion', 'label' => 'Descripción', 'type' => 'textarea'],
-                    ['name' => 'activo', 'label' => 'Activo', 'type' => 'checkbox'],
-                ],
             ],
             'problematicas' => [
                 'title' => 'Tipos de problemáticas',

@@ -49,6 +49,17 @@ return [
             'local_domain' => env('MAIL_EHLO_DOMAIN', parse_url((string) env('APP_URL', 'http://localhost'), PHP_URL_HOST)),
         ],
 
+        'hostinger' => [
+            'transport' => 'smtp',
+            'scheme' => env('HOSTINGER_SMTP_SCHEME', 'smtps'),
+            'host' => env('HOSTINGER_SMTP_HOST', 'smtp.hostinger.com'),
+            'port' => env('HOSTINGER_SMTP_PORT', 465),
+            'username' => env('HOSTINGER_SMTP_USERNAME', 'prodenya@desarrollohumanosn.com'),
+            'password' => env('HOSTINGER_SMTP_PASSWORD'),
+            'timeout' => null,
+            'local_domain' => env('MAIL_EHLO_DOMAIN', parse_url((string) env('APP_URL', 'http://localhost'), PHP_URL_HOST)),
+        ],
+
         'ses' => [
             'transport' => 'ses',
         ],
