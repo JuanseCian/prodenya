@@ -81,7 +81,7 @@ class HandleInertiaRequests extends Middleware
                 ) ?? false,
             ],
             'status' => fn (): ?string => $request->session()->get('status'),
-            'comunicacionNoLeidos' => $user
+            'comunicacionNoLeidos' => fn (): int => $user
                 ? (int) DB::table('mensajes')
                     ->join('conversacion_usuario', 'conversacion_usuario.conversacion_id', '=', 'mensajes.conversacion_id')
                     ->where('conversacion_usuario.usuario_id', $user->id)
@@ -92,7 +92,7 @@ class HandleInertiaRequests extends Middleware
                     })
                     ->count()
                 : 0,
-            'notificaciones' => $user
+            'notificaciones' => fn (): array => $user
                 ? $user->notifications()
                     ->latest()
                     ->limit(10)
@@ -108,7 +108,7 @@ class HandleInertiaRequests extends Middleware
                     ->values()
                     ->all()
                 : [],
-            'notificacionesNoLeidas' => $user
+            'notificacionesNoLeidas' => fn (): int => $user
                 ? (int) $user->unreadNotifications()->count()
                 : 0,
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
