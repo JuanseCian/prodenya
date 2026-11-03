@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Conversacion extends Model
 {
@@ -41,6 +42,11 @@ class Conversacion extends Model
     public function mensajes(): HasMany
     {
         return $this->hasMany(Mensaje::class, 'conversacion_id');
+    }
+
+    public function ultimoMensaje(): HasOne
+    {
+        return $this->hasOne(Mensaje::class, 'conversacion_id')->latestOfMany('created_at');
     }
 
     public function creador(): BelongsTo

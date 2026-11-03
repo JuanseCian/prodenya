@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -277,26 +278,26 @@ class ComunicacionController extends Controller
     private function render(Request $request, ?Conversacion $seleccionada): Response
     {
         $usuario = $request->user();
-        $conversaciones = Conversacion::query()
+        $listado = Conversacion::query()
             ->whereHas('usuarios', fn ($query) => $query->whereKey($usuario->id))
-            ->with('usuarios:id,name')
+            ->with(['usuarios:id,name', 'ultimoMensaje'])
             ->orderByDesc('ultimo_mensaje_en')
             ->orderByDesc('id')
-            ->get()
-            ->map(function (Conversacion $conversacion) use ($usuario) {
-                $ultimo = $conversacion->mensajes()->latest()->first();
+            ->get();
+
+        $noLeidosPorConversacion = $this->noLeidosPorConversacion($listado->pluck('id'), $usuario);
+
+        $conversaciones = $listado
+            ->map(function (Conversacion $conversacion) use ($usuario, $noLeidosPorConversacion) {
+                $ultimo = $conversacion->ultimoMensaje;
                 $participantes = $conversacion->usuarios->where('id', '!=', $usuario->id);
-                $pivot = $conversacion->usuarios->firstWhere('id', $usuario->id)?->pivot;
-                $ultimoLeido = $pivot?->ultimo_leido_en;
 
                 return [
                     'id' => $conversacion->id,
                     'nombre' => $conversacion->titulo ?: $participantes->pluck('name')->join(', '),
                     'ultimo_mensaje' => $ultimo?->cuerpo ?: ($ultimo ? 'Recurso compartido' : 'Sin mensajes'),
                     'ultimo_mensaje_en' => $ultimo?->created_at?->toIso8601String(),
-                    'no_leidos' => $ultimoLeido
-                        ? $conversacion->mensajes()->where('created_at', '>', $ultimoLeido)->where('usuario_id', '!=', $usuario->id)->count()
-                        : $conversacion->mensajes()->where('usuario_id', '!=', $usuario->id)->count(),
+                    'no_leidos' => (int) ($noLeidosPorConversacion->get($conversacion->id) ?? 0),
                 ];
             })
             ->values();
@@ -362,6 +363,26 @@ class ComunicacionController extends Controller
                     ->orWhereColumn('mensajes.created_at', '>', 'conversacion_usuario.ultimo_leido_en');
             })
             ->count();
+    }
+
+    /**
+     * @param  Collection<int, int>  $conversacionIds
+     * @return Collection<int, int>
+     */
+    private function noLeidosPorConversacion($conversacionIds, User $usuario)
+    {
+        return DB::table('mensajes')
+            ->join('conversacion_usuario', 'conversacion_usuario.conversacion_id', '=', 'mensajes.conversacion_id')
+            ->where('conversacion_usuario.usuario_id', $usuario->id)
+            ->where('mensajes.usuario_id', '!=', $usuario->id)
+            ->whereIn('mensajes.conversacion_id', $conversacionIds)
+            ->where(function ($query) {
+                $query->whereNull('conversacion_usuario.ultimo_leido_en')
+                    ->orWhereColumn('mensajes.created_at', '>', 'conversacion_usuario.ultimo_leido_en');
+            })
+            ->selectRaw('mensajes.conversacion_id, COUNT(*) as total')
+            ->groupBy('mensajes.conversacion_id')
+            ->pluck('total', 'mensajes.conversacion_id');
     }
 
     private function buscarRecurso(string $tipo, int $id, User $usuario): ?Model

@@ -7,9 +7,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class AuditoriaEvento extends Model
 {
+    private const MAX_LONGITUD_VALOR = 2000;
+
     protected $table = 'auditoria_eventos';
 
     public const CREATED_AT = 'creado_en';
+
     public const UPDATED_AT = null;
 
     protected $fillable = [
@@ -48,10 +51,31 @@ class AuditoriaEvento extends Model
             'evento' => $evento,
             'auditable_type' => $modelo?->getMorphClass(),
             'auditable_id' => $modelo?->getKey(),
-            'datos_antes' => $antes,
-            'datos_despues' => $despues,
+            'datos_antes' => self::limitarPayload($antes),
+            'datos_despues' => self::limitarPayload($despues),
             'ip_origen' => request()->ip(),
             'user_agent' => mb_substr((string) request()->userAgent(), 0, 500),
         ]);
+    }
+
+    /**
+     * Evita que columnas de texto libre (observaciones, detalle, body_html, etc.)
+     * hagan crecer sin límite el tamaño de cada fila de auditoría.
+     *
+     * @param  array<string, mixed>|null  $datos
+     * @return array<string, mixed>|null
+     */
+    private static function limitarPayload(?array $datos): ?array
+    {
+        if ($datos === null) {
+            return null;
+        }
+
+        return array_map(
+            fn ($valor) => is_string($valor) && mb_strlen($valor) > self::MAX_LONGITUD_VALOR
+                ? mb_substr($valor, 0, self::MAX_LONGITUD_VALOR).'… (truncado)'
+                : $valor,
+            $datos,
+        );
     }
 }
