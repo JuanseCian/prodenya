@@ -23,6 +23,8 @@ import {
 import { useEffect, useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
 
+import CoberturaSaludModule from '@/components/cobertura-salud-module';
+import type { CoberturaResumen } from '@/components/cobertura-salud-module';
 import CudModule from '@/components/cud-module';
 import type { CudResumen } from '@/components/cud-module';
 import {
@@ -44,6 +46,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import derivacionesRoutes from '@/routes/derivaciones';
+import fichasRoutes from '@/routes/fichas';
 import legajosRoutes from '@/routes/legajos';
 
 interface LegajoDetalle {
@@ -140,6 +143,8 @@ interface Props {
     legajo: LegajoDetalle;
     secciones: Secciones;
     cud?: CudResumen | null;
+    coberturaSalud?: CoberturaResumen | null;
+    coberturaSaludHistorial?: CoberturaResumen[];
     status?: string | null;
     intervenciones?: Intervencion[];
     puedeGestionarIntervenciones?: boolean;
@@ -148,6 +153,7 @@ interface Props {
     puedeCambiarEstado?: boolean;
     puedeExportarWord?: boolean;
     puedeGestionarCud: boolean;
+    puedeGestionarCoberturaSalud?: boolean;
     usuarioActualId: number;
     responsablesDisponibles?: ResponsableDisponible[];
     responsables?: Responsable[];
@@ -164,6 +170,8 @@ export default function LegajoShow({
     legajo,
     secciones,
     cud = null,
+    coberturaSalud = null,
+    coberturaSaludHistorial = [],
     status,
     intervenciones = [],
     puedeGestionarIntervenciones = false,
@@ -172,6 +180,7 @@ export default function LegajoShow({
     puedeCambiarEstado = false,
     puedeExportarWord = false,
     puedeGestionarCud,
+    puedeGestionarCoberturaSalud = false,
     usuarioActualId,
     responsablesDisponibles = [],
     responsables = [],
@@ -353,6 +362,15 @@ export default function LegajoShow({
                             </div>
 
                             <div className="flex flex-wrap gap-2 xl:max-w-[560px] xl:justify-end">
+                                <Link
+                                    href={fichasRoutes.index.url({
+                                        query: { legajo: legajo.id },
+                                    })}
+                                    className="inline-flex h-10 items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-4 text-sm font-semibold text-white transition hover:bg-white/15"
+                                >
+                                    <FileText size={15} />
+                                    Ver ficha
+                                </Link>
                                 {puedeEditarLegajo && (
                                     <Link
                                         href={`/legajos/${legajo.id}/edit`}
@@ -614,6 +632,15 @@ export default function LegajoShow({
                             legajoId={legajo.id}
                             cud={cud}
                             puedeGestionar={puedeGestionarCud}
+                        />
+                    )}
+
+                    {secciones.persona && (
+                        <CoberturaSaludModule
+                            legajoId={legajo.id}
+                            cobertura={coberturaSalud}
+                            historial={coberturaSaludHistorial}
+                            puedeGestionar={puedeGestionarCoberturaSalud}
                         />
                     )}
 

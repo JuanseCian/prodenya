@@ -3,6 +3,7 @@ import {
     Eye,
     FileDown,
     Filter,
+    FileText,
     FolderOpen,
     FolderPlus,
     Pencil,
@@ -17,6 +18,7 @@ import type { Paginador } from '@/components/paginacion-listado';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import fichasRoutes from '@/routes/fichas';
 import legajosRoutes from '@/routes/legajos';
 
 interface LegajoFila {
@@ -221,6 +223,13 @@ export default function LegajosIndex({
                             >
                                 <UsersRound size={14} />
                                 +18
+                            </Link>
+                            <Link
+                                href={fichasRoutes.index().url}
+                                className="inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-xs font-semibold text-[#697586] transition hover:bg-[#F4F6F5] hover:text-[#1F394B]"
+                            >
+                                <FileText size={14} />
+                                Fichas
                             </Link>
                         </nav>
                         <Link
@@ -567,6 +576,26 @@ export default function LegajosIndex({
                                                         className={`${tdClass} text-right whitespace-nowrap`}
                                                     >
                                                         <div className="inline-flex items-center gap-1.5">
+                                                            <Link
+                                                                href={fichasRoutes.index.url(
+                                                                    {
+                                                                        query: {
+                                                                            legajo: legajo.id,
+                                                                        },
+                                                                    },
+                                                                )}
+                                                                aria-label={`Ver ficha del legajo ${legajo.numero_legajo}`}
+                                                                title="Ver ficha"
+                                                                className="inline-flex h-9 items-center gap-1.5 rounded-md border border-[#C8DDD0] bg-[#F1F8F3] px-3 text-xs font-semibold text-[#39795B] transition hover:border-[#39795B]/50 hover:bg-[#E5F2E9] focus-visible:ring-2 focus-visible:ring-[#39795B]/30 focus-visible:outline-none"
+                                                            >
+                                                                <FileText
+                                                                    size={15}
+                                                                    strokeWidth={
+                                                                        1.9
+                                                                    }
+                                                                />
+                                                                Ver ficha
+                                                            </Link>
                                                             <Link
                                                                 href={`/legajos/${legajo.id}`}
                                                                 aria-label={`Ver legajo ${legajo.numero_legajo}`}

@@ -42,6 +42,29 @@ test('admin can save a CUD with its documents', function () {
     Storage::disk('local')->assertExists(CudArchivo::firstOrFail()->ruta_archivo);
 });
 
+test('saving an unchanged CUD does not create a new history version', function () {
+    $admin = User::factory()->create(['rol_id' => 1]);
+    $legajo = crearLegajoParaCud($admin);
+    $datos = [
+        'numero_cud' => 'CUD-SIN-CAMBIOS',
+        'fecha_vigencia' => '2026-01-01',
+        'fecha_vencimiento' => '2028-01-01',
+        'observaciones' => 'Sin cambios',
+    ];
+
+    $this->actingAs($admin)
+        ->post(route('legajos.cud.store', $legajo), $datos)
+        ->assertRedirect();
+
+    $this->actingAs($admin)
+        ->post(route('legajos.cud.store', $legajo), $datos)
+        ->assertRedirect()
+        ->assertSessionHas('status', 'La documentación del CUD ya está actualizada. No se creó una nueva versión.');
+
+    expect(CudCertificado::count())->toBe(1)
+        ->and(CudCertificado::where('activo', true)->count())->toBe(1);
+});
+
 test('the legajo visualization includes the current CUD summary', function () {
     $admin = User::factory()->create(['rol_id' => 1]);
     $legajo = crearLegajoParaCud($admin);

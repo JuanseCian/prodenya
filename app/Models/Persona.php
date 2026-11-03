@@ -67,6 +67,16 @@ class Persona extends Model
         return $this->hasMany(Cud::class, 'persona_id');
     }
 
+    public function coberturasSalud(): HasMany
+    {
+        return $this->hasMany(CoberturaSalud::class, 'persona_id');
+    }
+
+    public function coberturaSaludActual(): HasMany
+    {
+        return $this->coberturasSalud()->where('activo', true);
+    }
+
     public function cudVigente(): HasMany
     {
         return $this->hasMany(Cud::class, 'persona_id')

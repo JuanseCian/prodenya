@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StorePersonaRequest;
 use App\Http\Requests\UpdateLegajoRequest;
+use App\Models\CoberturaSalud;
 use App\Models\CudArchivo;
 use App\Models\Intervencion;
 use App\Models\Legajo;
@@ -14,6 +15,7 @@ use App\Models\Provincia;
 use App\Models\Tarea;
 use App\Models\User;
 use App\Models\VinculoFamiliar;
+use App\Services\CoberturaSaludService;
 use App\Services\LegajoWordExportService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -193,8 +195,11 @@ class LegajoController extends Controller
         ]);
     }
 
-    public function show(Request $request, Legajo $legajo): Response
-    {
+    public function show(
+        Request $request,
+        Legajo $legajo,
+        CoberturaSaludService $coberturaSaludService,
+    ): Response {
         $legajo->load([
             'persona',
             'problematicas',
@@ -229,6 +234,12 @@ class LegajoController extends Controller
         $cudActual = $secciones['persona']
             ? $legajo->cudActual()->with('archivos')->first()
             : null;
+        $coberturaActual = $secciones['persona'] && $legajo->persona
+            ? $coberturaSaludService->actual($legajo->persona)
+            : null;
+        $coberturaHistorial = $secciones['persona'] && $legajo->persona
+            ? $coberturaSaludService->historial($legajo->persona)
+            : collect();
         $vinculos = [];
         $personasDisponibles = [];
 
@@ -320,6 +331,14 @@ class LegajoController extends Controller
                     ->values()
                     ->all(),
             ] : null,
+            'coberturaSalud' => $coberturaActual
+                ? $coberturaSaludService->resumen($coberturaActual, $legajo)
+                : null,
+            'coberturaSaludHistorial' => $coberturaHistorial
+                ->map(fn (CoberturaSalud $cobertura) => $coberturaSaludService->resumen($cobertura, $legajo))
+                ->values()
+                ->all(),
+            'puedeGestionarCoberturaSalud' => $secciones['persona'],
             'status' => session('status'),
             'usuarioActualId' => $request->user()->id,
             'puedeGestionarIntervenciones' => $secciones['intervenciones'] && $request->user()->tieneRol('admin', 'operador'),

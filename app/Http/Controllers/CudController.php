@@ -52,6 +52,10 @@ class CudController extends Controller
         $rutas = [];
         $actual = $legajo->cudActual()->with('archivos')->first();
 
+        if ($actual && ! $this->hayCambios($actual, $datos, $request)) {
+            return back()->with('status', 'La documentación del CUD ya está actualizada. No se creó una nueva versión.');
+        }
+
         try {
             DB::transaction(function () use ($request, $legajo, $datos, $actual, &$rutas): void {
                 $antes = $actual?->only([
@@ -123,6 +127,20 @@ class CudController extends Controller
         }
 
         return back()->with('status', 'La documentación del CUD se guardó correctamente.');
+    }
+
+    /**
+     * @param  array<string, mixed>  $datos
+     */
+    private function hayCambios(CudCertificado $actual, array $datos, Request $request): bool
+    {
+        return $actual->numero_cud !== $datos['numero_cud']
+            || $actual->fecha_vigencia?->toDateString() !== $datos['fecha_vigencia']
+            || $actual->fecha_vencimiento?->toDateString() !== $datos['fecha_vencimiento']
+            || trim((string) $actual->observaciones) !== trim((string) ($datos['observaciones'] ?? ''))
+            || $request->hasFile('frente')
+            || $request->hasFile('dorso')
+            || $request->hasFile('recetas');
     }
 
     public function deleteFile(Request $request, Legajo $legajo, CudArchivo $cudArchivo): RedirectResponse
