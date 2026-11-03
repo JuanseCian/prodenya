@@ -121,6 +121,16 @@ class Legajo extends Model
         return $this->hasOne(CudCertificado::class, 'legajo_id')->where('activo', true);
     }
 
+    public function auhs(): HasMany
+    {
+        return $this->hasMany(Auh::class, 'legajo_id');
+    }
+
+    public function auhActual(): HasOne
+    {
+        return $this->hasOne(Auh::class, 'legajo_id')->where('activo', true);
+    }
+
     public function intervenciones(): HasMany
     {
         return $this->hasMany(Intervencion::class, 'legajo_id')
