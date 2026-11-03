@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { ProdenyaToast } from '@/components/prodenya-toast';
+import { Skeleton } from '@/components/ui/skeleton';
 import notificaciones from '@/routes/notificaciones';
 import type { NotificationItem } from '@/types';
 
@@ -38,6 +39,7 @@ export function NotificationCenter({
     const [open, setOpen] = useState(false);
     const [notifications, setNotifications] = useState(initialNotifications);
     const [unreadCount, setUnreadCount] = useState(initialUnreadCount);
+    const [cargando, setCargando] = useState(standalone);
     const knownIds = useRef(new Set<string>());
     const initialized = useRef(false);
     const entryToastShown = useRef(false);
@@ -93,6 +95,7 @@ export function NotificationCenter({
 
             setNotifications(data.notificaciones);
             setUnreadCount(data.notificacionesNoLeidas);
+            setCargando(false);
         };
 
         void cargar();
@@ -295,7 +298,22 @@ export function NotificationCenter({
                     </header>
 
                     <div className="max-h-[min(65vh,480px)] overflow-y-auto">
-                        {notifications.length === 0 ? (
+                        {cargando ? (
+                            <div className="space-y-0">
+                                {[0, 1, 2].map((index) => (
+                                    <div
+                                        key={index}
+                                        className="flex items-start gap-3 border-b border-[#EEF0ED] px-4 py-3 last:border-b-0 dark:border-[#3B4552]"
+                                    >
+                                        <Skeleton className="mt-1 size-2 shrink-0 rounded-full" />
+                                        <div className="min-w-0 flex-1 space-y-2">
+                                            <Skeleton className="h-3.5 w-2/3 rounded" />
+                                            <Skeleton className="h-3 w-full rounded" />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : notifications.length === 0 ? (
                             <p className="px-4 py-8 text-center text-sm text-[#697586]">
                                 No tenés notificaciones nuevas.
                             </p>

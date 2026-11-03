@@ -19,6 +19,7 @@ import {
     ConversationContent,
     ConversationScrollButton,
 } from '@/components/ui/conversation';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface Conversacion {
     id: number;
@@ -353,7 +354,21 @@ export default function Comunicacion({
 
                                     <Conversation className="bg-[radial-gradient(circle_at_top_left,_rgba(234,243,237,0.75),_transparent_38%),#FAFBFA]">
                                         <ConversationContent className="space-y-5 px-4 py-5 sm:px-7">
-                                        {mensajes.length === 0 ? (
+                                        {actualizando ? (
+                                            <div className="space-y-5">
+                                                {[0, 1, 2].map((index) => (
+                                                    <div
+                                                        key={index}
+                                                        className={`flex items-start gap-3 ${index % 2 === 0 ? 'justify-start' : 'justify-end'}`}
+                                                    >
+                                                        {index % 2 === 0 && (
+                                                            <Skeleton className="mt-1 size-8 shrink-0 rounded-xl" />
+                                                        )}
+                                                        <Skeleton className="h-16 min-w-0 max-w-[min(42rem,70%)] flex-1 rounded-2xl" />
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : mensajes.length === 0 ? (
                                             <div className="flex h-full min-h-80 flex-col items-center justify-center text-center">
                                                 <span className="flex size-12 items-center justify-center rounded-full bg-[#EAF3ED] text-[#267148]">
                                                     <MessageCircle size={22} />
