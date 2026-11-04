@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StorePersonaRequest;
 use App\Http\Requests\UpdateLegajoRequest;
+use App\Models\CoberturaSalud;
+use App\Models\CudArchivo;
 use App\Models\Intervencion;
 use App\Models\Legajo;
 use App\Models\MailMessage;
@@ -13,6 +15,7 @@ use App\Models\Provincia;
 use App\Models\Tarea;
 use App\Models\User;
 use App\Models\VinculoFamiliar;
+use App\Services\CoberturaSaludService;
 use App\Services\LegajoWordExportService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -45,6 +48,9 @@ class LegajoController extends Controller
 
     private function listadoPorEdad(Request $request, bool $mayores18): Response
     {
+        $usuario = $request->user();
+        $puedeVerPersona = $usuario->puedeVerSeccionLegajo('persona');
+        $puedeVerSituacion = $usuario->puedeVerSeccionLegajo('situacion');
         $buscar = trim((string) $request->query('buscar', ''));
         $digitos = preg_replace('/\D/', '', $buscar);
         $nivel = in_array($request->query('nivel_riesgo'), self::NIVELES_RIESGO, true)
@@ -68,14 +74,20 @@ class LegajoController extends Controller
             ->when($numeroLegajo !== '', fn ($query) => $query->where('numero_legajo', 'like', "%{$numeroLegajo}%"))
             ->when($problematicaId, fn ($query) => $query->whereHas('problematicas', fn ($problematica) => $problematica->whereKey($problematicaId)))
             ->when($edad, fn ($query) => $query->whereHas('persona', fn ($persona) => $this->aplicarRangoEdad($persona, $edad)))
-            ->when($buscar !== '', function ($query) use ($buscar, $digitos) {
-                $query->where(function ($query) use ($buscar, $digitos) {
-                    $query->where('numero_legajo', 'like', "%{$buscar}%")
-                        ->orWhereHas('persona', fn ($persona) => $persona->where('nombre', 'like', "%{$buscar}%")
-                            ->orWhere('apellido', 'like', "%{$buscar}%"))
-                        ->orWhereHas('problematicas', fn ($problematica) => $problematica->where('nombre', 'like', "%{$buscar}%"));
+            ->when($buscar !== '', function ($query) use ($buscar, $digitos, $puedeVerPersona, $puedeVerSituacion) {
+                $query->where(function ($query) use ($buscar, $digitos, $puedeVerPersona, $puedeVerSituacion) {
+                    $query->where('numero_legajo', 'like', "%{$buscar}%");
 
-                    if ($digitos !== '') {
+                    if ($puedeVerPersona) {
+                        $query->orWhereHas('persona', fn ($persona) => $persona->where('nombre', 'like', "%{$buscar}%")
+                            ->orWhere('apellido', 'like', "%{$buscar}%"));
+                    }
+
+                    if ($puedeVerSituacion) {
+                        $query->orWhereHas('problematicas', fn ($problematica) => $problematica->where('nombre', 'like', "%{$buscar}%"));
+                    }
+
+                    if ($puedeVerPersona && $digitos !== '') {
                         $query->orWhereHas('persona', fn ($persona) => $persona->where('dni', 'like', "%{$digitos}%"));
                     }
                 });
@@ -86,11 +98,24 @@ class LegajoController extends Controller
             ->paginate(15)
             ->withQueryString();
 
-        $legajos->through(fn (Legajo $legajo) => $this->filaLegajo($legajo));
+        $legajos->through(fn (Legajo $legajo) => $this->filaLegajo($legajo, $usuario));
 
         return Inertia::render('legajos/index', [
             'legajos' => $legajos,
             'seccion' => $mayores18 ? 'mayores18' : 'legajos',
+            'puedeEditar' => $usuario->tieneRol('admin', 'operador', 'coordinador', 'administrativo')
+                && $usuario->puedeVerSeccionLegajo('seguimiento')
+                && $usuario->puedeVerSeccionLegajo('situacion'),
+            'puedeExportarWord' => $usuario->tieneRol('admin', 'coordinador', 'profesional', 'administrativo')
+                && collect([
+                    'persona',
+                    'seguimiento',
+                    'situacion',
+                    'vinculos',
+                    'intervenciones',
+                    'derivaciones',
+                    'estadisticas',
+                ])->every(fn (string $seccion): bool => $usuario->puedeVerSeccionLegajo($seccion)),
             'filtros' => [
                 'buscar' => $buscar !== '' ? $buscar : null,
                 'numero_legajo' => $numeroLegajo !== '' ? $numeroLegajo : null,
@@ -170,8 +195,11 @@ class LegajoController extends Controller
         ]);
     }
 
-    public function show(Request $request, Legajo $legajo): Response
-    {
+    public function show(
+        Request $request,
+        Legajo $legajo,
+        CoberturaSaludService $coberturaSaludService,
+    ): Response {
         $legajo->load([
             'persona',
             'problematicas',
@@ -203,6 +231,15 @@ class LegajoController extends Controller
             'profesional',
             'administrativo',
         );
+        $cudActual = $secciones['persona']
+            ? $legajo->cudActual()->with('archivos')->first()
+            : null;
+        $coberturaActual = $secciones['persona'] && $legajo->persona
+            ? $coberturaSaludService->actual($legajo->persona)
+            : null;
+        $coberturaHistorial = $secciones['persona'] && $legajo->persona
+            ? $coberturaSaludService->historial($legajo->persona)
+            : collect();
         $vinculos = [];
         $personasDisponibles = [];
 
@@ -258,8 +295,8 @@ class LegajoController extends Controller
             'legajo' => [
                 'id' => $legajo->id,
                 'numero_legajo' => $legajo->numero_legajo,
-                'nivel_riesgo' => $legajo->nivel_riesgo,
-                'estado' => $legajo->estado,
+                'nivel_riesgo' => $secciones['situacion'] ? $legajo->nivel_riesgo : null,
+                'estado' => $secciones['seguimiento'] ? $legajo->estado : null,
                 'origen_derivacion' => $secciones['seguimiento'] ? $legajo->origen_derivacion : null,
                 'observaciones' => $secciones['situacion'] ? $legajo->observaciones : null,
                 'fecha_apertura' => $secciones['seguimiento'] ? $legajo->fecha_apertura?->format('d/m/Y') : null,
@@ -273,10 +310,46 @@ class LegajoController extends Controller
                 ] : null,
             ],
             'secciones' => $secciones,
+            'puedeGestionarCud' => $usuario->esAdmin() || $usuario->tieneRol('coordinador'),
+            'cud' => $cudActual ? [
+                'id' => $cudActual->id,
+                'numero_cud' => $cudActual->numero_cud,
+                'fecha_vigencia' => $cudActual->fecha_vigencia?->toDateString(),
+                'fecha_vencimiento' => $cudActual->fecha_vencimiento?->toDateString(),
+                'observaciones' => $cudActual->observaciones,
+                'estado' => $cudActual->estado(),
+                'archivos' => $cudActual->archivos
+                    ->where('activo', true)
+                    ->map(fn (CudArchivo $archivo) => [
+                        'id' => $archivo->id,
+                        'tipo' => $archivo->tipo,
+                        'nombre' => $archivo->nombre_archivo,
+                        'mime' => $archivo->mime_type,
+                        'tamanio' => $archivo->tamanio_bytes,
+                        'descarga_url' => route('legajos.cud.archivos.descargar', [$legajo, $archivo]),
+                    ])
+                    ->values()
+                    ->all(),
+            ] : null,
+            'coberturaSalud' => $coberturaActual
+                ? $coberturaSaludService->resumen($coberturaActual, $legajo)
+                : null,
+            'coberturaSaludHistorial' => $coberturaHistorial
+                ->map(fn (CoberturaSalud $cobertura) => $coberturaSaludService->resumen($cobertura, $legajo))
+                ->values()
+                ->all(),
+            'puedeGestionarCoberturaSalud' => $secciones['persona'],
             'status' => session('status'),
             'usuarioActualId' => $request->user()->id,
             'puedeGestionarIntervenciones' => $secciones['intervenciones'] && $request->user()->tieneRol('admin', 'operador'),
             'puedeGestionarDerivaciones' => $puedeGestionarDerivaciones,
+            'puedeEditarLegajo' => $request->user()->tieneRol('admin', 'operador', 'coordinador', 'administrativo')
+                && $secciones['seguimiento']
+                && $secciones['situacion'],
+            'puedeCambiarEstado' => $request->user()->tieneRol('admin', 'operador', 'coordinador', 'administrativo')
+                && $secciones['seguimiento'],
+            'puedeExportarWord' => $request->user()->tieneRol('admin', 'coordinador', 'profesional', 'administrativo')
+                && collect($secciones)->every(fn (bool $visible): bool => $visible),
             'responsablesDisponibles' => $puedeGestionarDerivaciones ? $this->responsablesActivos() : [],
             'puedeVerVinculos' => $puedeVerVinculos,
             'vinculos' => $vinculos,
@@ -320,23 +393,33 @@ class LegajoController extends Controller
         ]);
     }
 
-    public function exportarWord(Legajo $legajo, LegajoWordExportService $exportador): BinaryFileResponse
+    public function exportarWord(Request $request, Legajo $legajo, LegajoWordExportService $exportador): BinaryFileResponse
     {
+        $this->authorizeCompleteLegajo($request->user(), $legajo);
         $ruta = $exportador->generar($legajo);
 
         return response()->download($ruta, "legajo-{$legajo->numero_legajo}.docx")->deleteFileAfterSend();
     }
 
-    public function previsualizarWord(Legajo $legajo, LegajoWordExportService $exportador): Response
+    public function previsualizarWord(Request $request, Legajo $legajo, LegajoWordExportService $exportador): Response
     {
+        $this->authorizeCompleteLegajo($request->user(), $legajo);
+
         return Inertia::render('legajos/word-preview', [
             'legajo' => $exportador->datosPrevisualizacion($legajo),
             'downloadUrl' => route('legajos.exportar-word', $legajo),
         ]);
     }
 
-    public function edit(Legajo $legajo): Response
+    public function edit(Request $request, Legajo $legajo): Response
     {
+        abort_unless(
+            $request->user()->tieneRol('admin', 'operador', 'coordinador', 'administrativo')
+                && $request->user()->puedeVerSeccionLegajo('seguimiento')
+                && $request->user()->puedeVerSeccionLegajo('situacion'),
+            403,
+        );
+
         $legajo->load(['persona', 'problematicas']);
 
         return Inertia::render('legajos/edit', [
@@ -384,13 +467,17 @@ class LegajoController extends Controller
             ->with('status', 'El legajo se actualizó correctamente.');
     }
 
-    public function cerrar(Legajo $legajo)
+    public function cerrar(Request $request, Legajo $legajo)
     {
+        $this->authorizeLegajoSection($request->user(), $legajo, 'seguimiento');
+
         return $this->cambiarEstado($legajo, 'Cerrado', "Legajo {$legajo->numero_legajo} cerrado.");
     }
 
-    public function reabrir(Legajo $legajo)
+    public function reabrir(Request $request, Legajo $legajo)
     {
+        $this->authorizeLegajoSection($request->user(), $legajo, 'seguimiento');
+
         return $this->cambiarEstado($legajo, 'Abierto', "Legajo {$legajo->numero_legajo} reabierto.");
     }
 
@@ -410,23 +497,27 @@ class LegajoController extends Controller
         return back()->with('status', $mensaje);
     }
 
-    private function filaLegajo(Legajo $legajo): array
+    private function filaLegajo(Legajo $legajo, User $usuario): array
     {
+        $puedeVerPersona = $usuario->puedeVerSeccionLegajo('persona');
+        $puedeVerSeguimiento = $usuario->puedeVerSeccionLegajo('seguimiento');
+        $puedeVerSituacion = $usuario->puedeVerSeccionLegajo('situacion');
+
         return [
             'id' => $legajo->id,
             'numero_legajo' => $legajo->numero_legajo,
-            'edad' => $legajo->persona?->fecha_nacimiento?->age,
-            'persona' => [
+            'edad' => $puedeVerPersona ? $legajo->persona?->fecha_nacimiento?->age : null,
+            'persona' => $puedeVerPersona ? [
                 'id' => $legajo->persona?->id,
                 'nombre_completo' => $legajo->persona ? "{$legajo->persona->apellido}, {$legajo->persona->nombre}" : null,
                 'dni' => $legajo->persona?->dni,
-            ],
-            'problematicas' => $legajo->problematicas->pluck('nombre')->values(),
-            'nivel_riesgo' => $legajo->nivel_riesgo,
-            'estado' => $legajo->estado,
-            'origen_derivacion' => $legajo->origen_derivacion,
-            'profesional' => $legajo->profesional?->name,
-            'fecha_apertura' => $legajo->fecha_apertura?->format('d/m/Y'),
+            ] : null,
+            'problematicas' => $puedeVerSituacion ? $legajo->problematicas->pluck('nombre')->values() : [],
+            'nivel_riesgo' => $puedeVerSituacion ? $legajo->nivel_riesgo : null,
+            'estado' => $puedeVerSeguimiento ? $legajo->estado : null,
+            'origen_derivacion' => $puedeVerSeguimiento ? $legajo->origen_derivacion : null,
+            'profesional' => $puedeVerSeguimiento ? $legajo->profesional?->name : null,
+            'fecha_apertura' => $puedeVerSeguimiento ? $legajo->fecha_apertura?->format('d/m/Y') : null,
         ];
     }
 
@@ -485,6 +576,7 @@ class LegajoController extends Controller
     private function profesionalesActivos()
     {
         return User::where('activo', true)
+            ->where('estado_cuenta', User::ESTADO_APROBADO)
             ->whereHas('rol', fn ($query) => $query->where('nombre', 'profesional'))
             ->orderBy('name')
             ->get(['id', 'name as nombre_usuario', 'email', 'profesion']);
@@ -495,6 +587,7 @@ class LegajoController extends Controller
         return User::query()
             ->with('rol')
             ->where('activo', true)
+            ->where('estado_cuenta', User::ESTADO_APROBADO)
             ->whereHas('rol', fn ($query) => $query->whereIn('nombre', [
                 'admin',
                 'oficios',

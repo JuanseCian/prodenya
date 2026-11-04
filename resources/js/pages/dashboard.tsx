@@ -18,6 +18,7 @@ import type { LucideIcon } from 'lucide-react';
 import { NotificationCenter } from '@/components/notification-center';
 import agenda from '@/routes/agenda';
 import estadisticasRoutes from '@/routes/estadisticas';
+import fichasRoutes from '@/routes/fichas';
 import legajosRoutes from '@/routes/legajos';
 import mailbox from '@/routes/mailbox';
 import tareas from '@/routes/tareas';
@@ -258,7 +259,7 @@ export default function Dashboard({
                         >
                             Resumen del trabajo actual.
                         </p>
-                        <div className="flex gap-2">
+                        <div className="flex flex-wrap gap-2">
                             <Link
                                 href={legajosRoutes.create.url()}
                                 className="inline-flex items-center gap-2 rounded-md bg-[#2C4A5E] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#1F394B]"
@@ -274,6 +275,14 @@ export default function Dashboard({
                             >
                                 <FolderOpen size={16} />
                                 Consultar legajos
+                            </Link>
+                            <Link
+                                href={fichasRoutes.index().url}
+                                className="inline-flex items-center gap-2 rounded-md border border-[#DCE3DF] bg-white px-4 py-2 text-sm font-semibold text-[#2B2F36] transition hover:border-[#B9C5BD] hover:bg-[#F4F6F5]"
+                                style={{ fontFamily: FONT_BODY }}
+                            >
+                                <FileText size={16} />
+                                Fichas
                             </Link>
                             {can.accessAgenda && (
                                 <Link

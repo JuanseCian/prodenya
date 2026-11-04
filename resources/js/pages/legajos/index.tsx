@@ -3,6 +3,7 @@ import {
     Eye,
     FileDown,
     Filter,
+    FileText,
     FolderOpen,
     FolderPlus,
     Pencil,
@@ -17,6 +18,7 @@ import type { Paginador } from '@/components/paginacion-listado';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import fichasRoutes from '@/routes/fichas';
 import legajosRoutes from '@/routes/legajos';
 
 interface LegajoFila {
@@ -25,9 +27,9 @@ interface LegajoFila {
     edad: number | null;
     persona: { id: number; nombre_completo: string; dni: string } | null;
     problematicas: string[];
-    nivel_riesgo: string;
-    estado: string;
-    origen_derivacion: string;
+    nivel_riesgo: string | null;
+    estado: string | null;
+    origen_derivacion: string | null;
     profesional: string | null;
     fecha_apertura: string | null;
 }
@@ -55,6 +57,8 @@ interface LegajosIndexProps {
     estados: string[];
     problematicas: OpcionFiltro[];
     edades: OpcionFiltro[];
+    puedeEditar: boolean;
+    puedeExportarWord: boolean;
     status?: string | null;
 }
 
@@ -83,6 +87,8 @@ export default function LegajosIndex({
     estados,
     problematicas,
     edades,
+    puedeEditar,
+    puedeExportarWord,
     status,
 }: LegajosIndexProps) {
     const [buscar, setBuscar] = useState(filtros.buscar ?? '');
@@ -198,14 +204,14 @@ export default function LegajosIndex({
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2">
-                            <nav
+                        <nav
                             aria-label="Secciones de legajos"
                             className="flex items-center rounded-lg border border-[#DCE3DF] bg-white p-1"
                         >
                             <Link
                                 href="/legajos"
                                 aria-current={!esMayores18 ? 'page' : undefined}
-                                 className={`inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-xs font-semibold transition ${!esMayores18 ? 'bg-[#2C4A5E] text-white' : 'text-[#697586] hover:bg-[#F4F6F5] hover:text-[#1F394B]'}`}
+                                className={`inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-xs font-semibold transition ${!esMayores18 ? 'bg-[#2C4A5E] text-white' : 'text-[#697586] hover:bg-[#F4F6F5] hover:text-[#1F394B]'}`}
                             >
                                 <FolderOpen size={14} />
                                 Legajos
@@ -213,10 +219,17 @@ export default function LegajosIndex({
                             <Link
                                 href="/mayores-18"
                                 aria-current={esMayores18 ? 'page' : undefined}
-                                 className={`inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-xs font-semibold transition ${esMayores18 ? 'bg-[#2C4A5E] text-white' : 'text-[#697586] hover:bg-[#F4F6F5] hover:text-[#1F394B]'}`}
+                                className={`inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-xs font-semibold transition ${esMayores18 ? 'bg-[#2C4A5E] text-white' : 'text-[#697586] hover:bg-[#F4F6F5] hover:text-[#1F394B]'}`}
                             >
                                 <UsersRound size={14} />
                                 +18
+                            </Link>
+                            <Link
+                                href={fichasRoutes.index().url}
+                                className="inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-xs font-semibold text-[#697586] transition hover:bg-[#F4F6F5] hover:text-[#1F394B]"
+                            >
+                                <FileText size={14} />
+                                Fichas
                             </Link>
                         </nav>
                         <Link
@@ -532,21 +545,22 @@ export default function LegajosIndex({
                                                     </td>
                                                     <td className={tdClass}>
                                                         <Badge
-                                                            className={`border-0 ${NIVEL_ESTILO[legajo.nivel_riesgo] ?? 'bg-[#EEF0ED] text-[#2B2F36]'}`}
+                                                            className={`border-0 ${legajo.nivel_riesgo ? (NIVEL_ESTILO[legajo.nivel_riesgo] ?? 'bg-[#EEF0ED] text-[#2B2F36]') : 'bg-[#EEF0ED] text-[#2B2F36]'}`}
                                                         >
                                                             {legajo.nivel_riesgo ===
                                                             'Critico'
                                                                 ? 'Crítico'
-                                                                : legajo.nivel_riesgo}
+                                                                : (legajo.nivel_riesgo ??
+                                                                  'Reservado')}
                                                         </Badge>
                                                     </td>
                                                     <td className={tdClass}>
-                                                        {legajo.estado}
+                                                        {legajo.estado ??
+                                                            'Reservado'}
                                                     </td>
                                                     <td className={tdClass}>
-                                                        {
-                                                            legajo.origen_derivacion
-                                                        }
+                                                        {legajo.origen_derivacion ??
+                                                            '—'}
                                                     </td>
                                                     <td className={tdClass}>
                                                         {legajo.profesional ??
@@ -563,6 +577,26 @@ export default function LegajosIndex({
                                                     >
                                                         <div className="inline-flex items-center gap-1.5">
                                                             <Link
+                                                                href={fichasRoutes.index.url(
+                                                                    {
+                                                                        query: {
+                                                                            legajo: legajo.id,
+                                                                        },
+                                                                    },
+                                                                )}
+                                                                aria-label={`Ver ficha del legajo ${legajo.numero_legajo}`}
+                                                                title="Ver ficha"
+                                                                className="inline-flex h-9 items-center gap-1.5 rounded-md border border-[#C8DDD0] bg-[#F1F8F3] px-3 text-xs font-semibold text-[#39795B] transition hover:border-[#39795B]/50 hover:bg-[#E5F2E9] focus-visible:ring-2 focus-visible:ring-[#39795B]/30 focus-visible:outline-none"
+                                                            >
+                                                                <FileText
+                                                                    size={15}
+                                                                    strokeWidth={
+                                                                        1.9
+                                                                    }
+                                                                />
+                                                                Ver ficha
+                                                            </Link>
+                                                            <Link
                                                                 href={`/legajos/${legajo.id}`}
                                                                 aria-label={`Ver legajo ${legajo.numero_legajo}`}
                                                                 title="Ver legajo"
@@ -575,32 +609,42 @@ export default function LegajosIndex({
                                                                     }
                                                                 />
                                                             </Link>
-                                                            <Link
-                                                                href={`/legajos/${legajo.id}/edit`}
-                                                                aria-label={`Editar legajo ${legajo.numero_legajo}`}
-                                                                title="Editar legajo"
-                                                                className="grid size-9 place-items-center rounded-md border border-[#DCE3DF] bg-white text-[#2C4A5E] transition hover:border-[#2C4A5E]/40 hover:bg-[#F4F6F5] focus-visible:ring-2 focus-visible:ring-[#2C4A5E]/30 focus-visible:outline-none"
-                                                            >
-                                                                <Pencil
-                                                                    size={15}
-                                                                    strokeWidth={
-                                                                        2
-                                                                    }
-                                                                />
-                                                            </Link>
-                                                            <a
-                                                                 href={legajosRoutes.previsualizarWord.url(legajo.id)}
-                                                                 aria-label={`Previsualizar Word del legajo ${legajo.numero_legajo}`}
-                                                                 title="Previsualizar Word"
-                                                                className="grid size-9 place-items-center rounded-md border border-[#DCE3DF] bg-white text-[#2C4A5E] transition hover:border-[#2C4A5E]/40 hover:bg-[#F4F6F5] focus-visible:ring-2 focus-visible:ring-[#2C4A5E]/30 focus-visible:outline-none"
-                                                            >
-                                                                <FileDown
-                                                                    size={15}
-                                                                    strokeWidth={
-                                                                        1.9
-                                                                    }
-                                                                />
-                                                            </a>
+                                                            {puedeEditar && (
+                                                                <Link
+                                                                    href={`/legajos/${legajo.id}/edit`}
+                                                                    aria-label={`Editar legajo ${legajo.numero_legajo}`}
+                                                                    title="Editar legajo"
+                                                                    className="grid size-9 place-items-center rounded-md border border-[#DCE3DF] bg-white text-[#2C4A5E] transition hover:border-[#2C4A5E]/40 hover:bg-[#F4F6F5] focus-visible:ring-2 focus-visible:ring-[#2C4A5E]/30 focus-visible:outline-none"
+                                                                >
+                                                                    <Pencil
+                                                                        size={
+                                                                            15
+                                                                        }
+                                                                        strokeWidth={
+                                                                            2
+                                                                        }
+                                                                    />
+                                                                </Link>
+                                                            )}
+                                                            {puedeExportarWord && (
+                                                                <a
+                                                                    href={legajosRoutes.previsualizarWord.url(
+                                                                        legajo.id,
+                                                                    )}
+                                                                    aria-label={`Previsualizar Word del legajo ${legajo.numero_legajo}`}
+                                                                    title="Previsualizar Word"
+                                                                    className="grid size-9 place-items-center rounded-md border border-[#DCE3DF] bg-white text-[#2C4A5E] transition hover:border-[#2C4A5E]/40 hover:bg-[#F4F6F5] focus-visible:ring-2 focus-visible:ring-[#2C4A5E]/30 focus-visible:outline-none"
+                                                                >
+                                                                    <FileDown
+                                                                        size={
+                                                                            15
+                                                                        }
+                                                                        strokeWidth={
+                                                                            1.9
+                                                                        }
+                                                                    />
+                                                                </a>
+                                                            )}
                                                         </div>
                                                     </td>
                                                 </tr>

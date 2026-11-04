@@ -25,6 +25,8 @@ class IntervencionController extends Controller
 
     public function create(Request $request, Legajo $legajo): Response
     {
+        $this->authorizeLegajoSection($request->user(), $legajo, 'intervenciones');
+
         return Inertia::render('intervenciones/create', [
             'legajo' => $this->resumenLegajo($legajo),
             'tipos' => $this->tipos(),
@@ -108,6 +110,7 @@ class IntervencionController extends Controller
 
     public function edit(Legajo $legajo, Intervencion $intervencion): Response
     {
+        $this->authorizeLegajoSection(request()->user(), $legajo, 'intervenciones');
         abort_unless($intervencion->legajo_id === $legajo->id, 404);
         $legajo = $intervencion->legajo()->with('persona')->firstOrFail();
 
@@ -140,6 +143,7 @@ class IntervencionController extends Controller
 
     public function update(GuardarIntervencionRequest $request, Legajo $legajo, Intervencion $intervencion)
     {
+        $this->authorizeLegajoSection($request->user(), $legajo, 'intervenciones');
         abort_unless($intervencion->legajo_id === $legajo->id, 404);
         $datos = $request->validated();
         $legajo = $intervencion->legajo()->firstOrFail();
@@ -194,6 +198,7 @@ class IntervencionController extends Controller
 
     public function descargarFirma(Request $request, Legajo $legajo, Intervencion $intervencion, string $firma)
     {
+        $this->authorizeLegajoSection($request->user(), $legajo, 'intervenciones');
         abort_unless($intervencion->legajo_id === $legajo->id, 404);
 
         $columna = match ($firma) {
@@ -222,6 +227,8 @@ class IntervencionController extends Controller
             ->first();
 
         abort_if(! $archivo, 404);
+        $legajo = Legajo::findOrFail($archivo->legajo_id);
+        $this->authorizeLegajoSection($request->user(), $legajo, 'intervenciones');
         abort_unless(Storage::disk(self::DISCO)->exists($archivo->ruta_archivo), 404);
 
         DB::table('auditoria_descargas')->insert([
@@ -448,6 +455,7 @@ class IntervencionController extends Controller
     {
         return User::query()
             ->where('activo', true)
+            ->where('estado_cuenta', User::ESTADO_APROBADO)
             ->whereHas('rol', fn ($query) => $query->where('nombre', 'profesional'))
             ->orderBy('name')
             ->get(['id', 'name', 'profesion']);

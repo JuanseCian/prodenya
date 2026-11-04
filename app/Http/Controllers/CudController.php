@@ -22,6 +22,8 @@ class CudController extends Controller
 {
     public function show(Request $request, Legajo $legajo): Response
     {
+        $this->authorizeLegajoSection($request->user(), $legajo, 'persona');
+
         $actual = $legajo->cudActual()->with('archivos')->first();
         $historial = $legajo->cuds()
             ->where('activo', false)
@@ -44,9 +46,15 @@ class CudController extends Controller
 
     public function store(StoreCudRequest $request, Legajo $legajo): RedirectResponse
     {
+        $this->authorizeLegajoSection($request->user(), $legajo, 'persona');
+
         $datos = $request->validated();
         $rutas = [];
         $actual = $legajo->cudActual()->with('archivos')->first();
+
+        if ($actual && ! $this->hayCambios($actual, $datos, $request)) {
+            return back()->with('status', 'La documentación del CUD ya está actualizada. No se creó una nueva versión.');
+        }
 
         try {
             DB::transaction(function () use ($request, $legajo, $datos, $actual, &$rutas): void {
@@ -121,8 +129,24 @@ class CudController extends Controller
         return back()->with('status', 'La documentación del CUD se guardó correctamente.');
     }
 
+    /**
+     * @param  array<string, mixed>  $datos
+     */
+    private function hayCambios(CudCertificado $actual, array $datos, Request $request): bool
+    {
+        return $actual->numero_cud !== $datos['numero_cud']
+            || $actual->fecha_vigencia?->toDateString() !== $datos['fecha_vigencia']
+            || $actual->fecha_vencimiento?->toDateString() !== $datos['fecha_vencimiento']
+            || trim((string) $actual->observaciones) !== trim((string) ($datos['observaciones'] ?? ''))
+            || $request->hasFile('frente')
+            || $request->hasFile('dorso')
+            || $request->hasFile('recetas');
+    }
+
     public function deleteFile(Request $request, Legajo $legajo, CudArchivo $cudArchivo): RedirectResponse
     {
+        $this->authorizeLegajoSection($request->user(), $legajo, 'persona');
+
         $cudArchivo->load('certificado');
         abort_unless(
             $cudArchivo->certificado?->legajo_id === $legajo->id
@@ -140,6 +164,8 @@ class CudController extends Controller
 
     public function download(Request $request, Legajo $legajo, CudArchivo $cudArchivo): StreamedResponse
     {
+        $this->authorizeLegajoSection($request->user(), $legajo, 'persona');
+
         $cudArchivo->load('certificado');
         abort_unless($cudArchivo->certificado?->legajo_id === $legajo->id, 404);
         abort_unless(Storage::disk('local')->exists($cudArchivo->ruta_archivo), 404);

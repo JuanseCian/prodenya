@@ -42,6 +42,62 @@ test('admin can save a CUD with its documents', function () {
     Storage::disk('local')->assertExists(CudArchivo::firstOrFail()->ruta_archivo);
 });
 
+test('saving an unchanged CUD does not create a new history version', function () {
+    $admin = User::factory()->create(['rol_id' => 1]);
+    $legajo = crearLegajoParaCud($admin);
+    $datos = [
+        'numero_cud' => 'CUD-SIN-CAMBIOS',
+        'fecha_vigencia' => '2026-01-01',
+        'fecha_vencimiento' => '2028-01-01',
+        'observaciones' => 'Sin cambios',
+    ];
+
+    $this->actingAs($admin)
+        ->post(route('legajos.cud.store', $legajo), $datos)
+        ->assertRedirect();
+
+    $this->actingAs($admin)
+        ->post(route('legajos.cud.store', $legajo), $datos)
+        ->assertRedirect()
+        ->assertSessionHas('status', 'La documentación del CUD ya está actualizada. No se creó una nueva versión.');
+
+    expect(CudCertificado::count())->toBe(1)
+        ->and(CudCertificado::where('activo', true)->count())->toBe(1);
+});
+
+test('the legajo visualization includes the current CUD summary', function () {
+    $admin = User::factory()->create(['rol_id' => 1]);
+    $legajo = crearLegajoParaCud($admin);
+    $certificado = CudCertificado::create([
+        'legajo_id' => $legajo->id,
+        'numero_cud' => 'CUD-VISTA',
+        'fecha_vigencia' => '2026-01-01',
+        'fecha_vencimiento' => '2028-01-01',
+        'activo' => true,
+        'creado_por' => $admin->id,
+        'actualizado_por' => $admin->id,
+    ]);
+    CudArchivo::create([
+        'cud_certificado_id' => $certificado->id,
+        'tipo' => 'frente',
+        'nombre_archivo' => 'frente.pdf',
+        'ruta_archivo' => 'cud/frente.pdf',
+        'mime_type' => 'application/pdf',
+        'tamanio_bytes' => 100,
+        'activo' => true,
+        'subido_por' => $admin->id,
+    ]);
+
+    $this->actingAs($admin)
+        ->get(route('legajos.show', $legajo))
+        ->assertInertia(fn ($page) => $page
+            ->component('legajos/show')
+            ->where('puedeGestionarCud', true)
+            ->where('cud.numero_cud', 'CUD-VISTA')
+            ->where('cud.archivos.0.nombre', 'frente.pdf'),
+        );
+});
+
 test('only administrators and coordinators can manage CUD documents', function () {
     $profesional = User::factory()->create(['rol_id' => 5]);
     $legajo = crearLegajoParaCud($profesional);
@@ -51,11 +107,27 @@ test('only administrators and coordinators can manage CUD documents', function (
         ->assertOk();
 
     $this->actingAs($profesional)
+        ->get(route('legajos.show', $legajo))
+        ->assertInertia(fn ($page) => $page->where('puedeGestionarCud', false));
+
+    $this->actingAs($profesional)
         ->post(route('legajos.cud.store', $legajo), [
             'numero_cud' => 'CUD-123456',
             'fecha_vigencia' => '2026-01-01',
             'fecha_vencimiento' => '2028-01-01',
         ])
+        ->assertForbidden();
+});
+
+test('a user restricted away from personal data cannot open CUD documentation', function () {
+    $profesional = User::factory()->create([
+        'rol_id' => 5,
+        'secciones_legajo_visibles' => ['intervenciones'],
+    ]);
+    $legajo = crearLegajoParaCud($profesional);
+
+    $this->actingAs($profesional)
+        ->get(route('legajos.documentacion', $legajo))
         ->assertForbidden();
 });
 

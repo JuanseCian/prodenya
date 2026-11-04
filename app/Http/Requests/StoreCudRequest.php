@@ -2,13 +2,18 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Legajo;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreCudRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->esAdmin() || $this->user()?->tieneRol('coordinador');
+        $legajo = $this->route('legajo');
+
+        return ($this->user()?->esAdmin() || $this->user()?->tieneRol('coordinador'))
+            && $legajo instanceof Legajo
+            && $this->user()->puedeVerSeccionLegajo('persona');
     }
 
     public function rules(): array

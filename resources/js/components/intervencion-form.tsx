@@ -174,7 +174,7 @@ export default function IntervencionForm({
                     <div className="mb-7 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
                         <div>
                             <Link
-                                href={`/legajos/${legajo.persona_id}`}
+                                href={`/legajos/${legajo.id}`}
                                 className="mb-4 inline-flex items-center gap-1.5 text-sm font-semibold text-[#2C4A5E] transition hover:text-[#173247] hover:underline"
                             >
                                 <ArrowLeft size={15} />
@@ -249,11 +249,14 @@ export default function IntervencionForm({
                                                         id="fecha_intervencion"
                                                         type="date"
                                                         max={hoy}
-                                                        value={data.fecha_intervencion}
+                                                        value={
+                                                            data.fecha_intervencion
+                                                        }
                                                         onChange={(event) =>
                                                             setData(
                                                                 'fecha_intervencion',
-                                                                event.target.value,
+                                                                event.target
+                                                                    .value,
                                                             )
                                                         }
                                                         className={`${inputClass} pl-9`}
@@ -272,11 +275,14 @@ export default function IntervencionForm({
                                                     <input
                                                         id="hora_intervencion"
                                                         type="time"
-                                                        value={data.hora_intervencion}
+                                                        value={
+                                                            data.hora_intervencion
+                                                        }
                                                         onChange={(event) =>
                                                             setData(
                                                                 'hora_intervencion',
-                                                                event.target.value,
+                                                                event.target
+                                                                    .value,
                                                             )
                                                         }
                                                         className={`${inputClass} pl-9`}
@@ -289,7 +295,9 @@ export default function IntervencionForm({
                                                 </Label>
                                                 <select
                                                     id="tipo_intervencion_id"
-                                                    value={data.tipo_intervencion_id}
+                                                    value={
+                                                        data.tipo_intervencion_id
+                                                    }
                                                     onChange={(event) =>
                                                         setData(
                                                             'tipo_intervencion_id',
@@ -332,10 +340,19 @@ export default function IntervencionForm({
                                                     {profesionales.map(
                                                         (profesional) => (
                                                             <option
-                                                                key={profesional.id}
-                                                                value={profesional.id}
+                                                                key={
+                                                                    profesional.id
+                                                                }
+                                                                value={
+                                                                    profesional.id
+                                                                }
                                                             >
-                                                                {profesional.name}{profesional.profesion ? ` · ${profesional.profesion}` : ''}
+                                                                {
+                                                                    profesional.name
+                                                                }
+                                                                {profesional.profesion
+                                                                    ? ` · ${profesional.profesion}`
+                                                                    : ''}
                                                             </option>
                                                         ),
                                                     )}
@@ -362,64 +379,98 @@ export default function IntervencionForm({
                                                         event.target.value,
                                                     )
                                                 }
-                                                className="block min-h-44 w-full resize-y rounded-lg border border-[#D5D1C6] bg-white px-3.5 py-3 text-sm leading-6 text-[#2B2F36] outline-none transition placeholder:text-[#697586]/55 focus:border-[#2C4A5E] focus:ring-2 focus:ring-[#2C4A5E]/20"
+                                                className="block min-h-44 w-full resize-y rounded-lg border border-[#D5D1C6] bg-white px-3.5 py-3 text-sm leading-6 text-[#2B2F36] transition outline-none placeholder:text-[#697586]/55 focus:border-[#2C4A5E] focus:ring-2 focus:ring-[#2C4A5E]/20"
                                                 placeholder="Describí la actuación, comunicación, acuerdo o situación registrada."
                                             />
                                         </div>
                                     </CardContent>
                                 </Card>
 
-                                {!editando && legajosRelacionados.length > 0 && (
-                                    <Card className="overflow-hidden border-[#DCE3DF] !bg-white py-0 shadow-[0_18px_45px_rgba(23,50,71,0.07)]">
-                                        <CardHeader className="border-b border-[#E4E8E5] bg-[#F8FAF9] px-5 py-4 sm:px-6">
-                                            <div className="flex items-start gap-3">
-                                                <UsersRound size={19} className="mt-0.5 text-[#6B8F71]" />
-                                                <div>
-                                                    <CardTitle className="text-base text-[#2C4A5E]">
-                                                        Copiar en otros legajos
-                                                    </CardTitle>
-                                                    <p className="mt-1 text-xs leading-5 text-[#697586]">
-                                                        Se creará una copia independiente, sin sus firmas.
-                                                    </p>
+                                {!editando &&
+                                    legajosRelacionados.length > 0 && (
+                                        <Card className="overflow-hidden border-[#DCE3DF] !bg-white py-0 shadow-[0_18px_45px_rgba(23,50,71,0.07)]">
+                                            <CardHeader className="border-b border-[#E4E8E5] bg-[#F8FAF9] px-5 py-4 sm:px-6">
+                                                <div className="flex items-start gap-3">
+                                                    <UsersRound
+                                                        size={19}
+                                                        className="mt-0.5 text-[#6B8F71]"
+                                                    />
+                                                    <div>
+                                                        <CardTitle className="text-base text-[#2C4A5E]">
+                                                            Copiar en otros
+                                                            legajos
+                                                        </CardTitle>
+                                                        <p className="mt-1 text-xs leading-5 text-[#697586]">
+                                                            Se creará una copia
+                                                            independiente, sin
+                                                            sus firmas.
+                                                        </p>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        </CardHeader>
-                                        <CardContent className="px-5 py-5 sm:px-6">
-                                            <div className="grid gap-2 sm:grid-cols-2">
-                                                {legajosRelacionados.map((relacionado) => {
-                                                    const value = String(relacionado.id);
-                                                    const checked = data.legajos_destino_ids.includes(value);
+                                            </CardHeader>
+                                            <CardContent className="px-5 py-5 sm:px-6">
+                                                <div className="grid gap-2 sm:grid-cols-2">
+                                                    {legajosRelacionados.map(
+                                                        (relacionado) => {
+                                                            const value =
+                                                                String(
+                                                                    relacionado.id,
+                                                                );
+                                                            const checked =
+                                                                data.legajos_destino_ids.includes(
+                                                                    value,
+                                                                );
 
-                                                    return (
-                                                        <label key={relacionado.id} className="flex cursor-pointer items-center gap-3 rounded-lg border border-[#DCE3DF] bg-[#FBFCFB] px-3 py-3 transition hover:border-[#2C4A5E]/40">
-                                                            <input
-                                                                type="checkbox"
-                                                                checked={checked}
-                                                                onChange={() =>
-                                                                    setData(
-                                                                        'legajos_destino_ids',
-                                                                        checked
-                                                                            ? data.legajos_destino_ids.filter((id) => id !== value)
-                                                                            : [...data.legajos_destino_ids, value],
-                                                                    )
-                                                                }
-                                                                className="h-4 w-4 rounded border-[#B9C5BD] text-[#2C4A5E] focus:ring-[#2C4A5E]/30"
-                                                            />
-                                                            <span className="min-w-0">
-                                                                <span className="block truncate text-sm font-semibold text-[#2C4A5E]">
-                                                                    {relacionado.persona ?? 'Persona sin nombre'}
-                                                                </span>
-                                                                <span className="mt-0.5 block font-mono text-xs text-[#697586]">
-                                                                    {relacionado.numero_legajo}
-                                                                </span>
-                                                            </span>
-                                                        </label>
-                                                    );
-                                                })}
-                                            </div>
-                                        </CardContent>
-                                    </Card>
-                                )}
+                                                            return (
+                                                                <label
+                                                                    key={
+                                                                        relacionado.id
+                                                                    }
+                                                                    className="flex cursor-pointer items-center gap-3 rounded-lg border border-[#DCE3DF] bg-[#FBFCFB] px-3 py-3 transition hover:border-[#2C4A5E]/40"
+                                                                >
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        checked={
+                                                                            checked
+                                                                        }
+                                                                        onChange={() =>
+                                                                            setData(
+                                                                                'legajos_destino_ids',
+                                                                                checked
+                                                                                    ? data.legajos_destino_ids.filter(
+                                                                                          (
+                                                                                              id,
+                                                                                          ) =>
+                                                                                              id !==
+                                                                                              value,
+                                                                                      )
+                                                                                    : [
+                                                                                          ...data.legajos_destino_ids,
+                                                                                          value,
+                                                                                      ],
+                                                                            )
+                                                                        }
+                                                                        className="h-4 w-4 rounded border-[#B9C5BD] text-[#2C4A5E] focus:ring-[#2C4A5E]/30"
+                                                                    />
+                                                                    <span className="min-w-0">
+                                                                        <span className="block truncate text-sm font-semibold text-[#2C4A5E]">
+                                                                            {relacionado.persona ??
+                                                                                'Persona sin nombre'}
+                                                                        </span>
+                                                                        <span className="mt-0.5 block font-mono text-xs text-[#697586]">
+                                                                            {
+                                                                                relacionado.numero_legajo
+                                                                            }
+                                                                        </span>
+                                                                    </span>
+                                                                </label>
+                                                            );
+                                                        },
+                                                    )}
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+                                    )}
 
                                 <Card className="overflow-hidden border-[#DCE3DF] !bg-white py-0 shadow-[0_18px_45px_rgba(23,50,71,0.07)]">
                                     <CardHeader className="border-b border-[#E4E8E5] bg-[#F8FAF9] px-5 py-4 sm:px-6">
@@ -429,8 +480,8 @@ export default function IntervencionForm({
                                                     Firmas digitales
                                                 </CardTitle>
                                                 <p className="mt-1 text-xs text-[#697586]">
-                                                    Dibujá con el dedo o cargá un
-                                                    archivo de firma.
+                                                    Dibujá con el dedo o cargá
+                                                    un archivo de firma.
                                                 </p>
                                             </div>
                                             <ShieldCheck
@@ -447,8 +498,9 @@ export default function IntervencionForm({
                                                         Responsable
                                                     </h3>
                                                     <p className="mt-1 text-xs leading-5 text-[#697586]">
-                                                        Obligatoria para registrar
-                                                        la intervención.
+                                                        Obligatoria para
+                                                        registrar la
+                                                        intervención.
                                                     </p>
                                                 </div>
                                                 <span className="rounded-full bg-[#FCEBD7] px-2 py-1 text-[0.62rem] font-bold tracking-[0.08em] text-[#8A6420] uppercase">
@@ -462,11 +514,14 @@ export default function IntervencionForm({
                                                     </Label>
                                                     <input
                                                         id="firma_nombre"
-                                                        value={data.firma_nombre}
+                                                        value={
+                                                            data.firma_nombre
+                                                        }
                                                         onChange={(event) =>
                                                             setData(
                                                                 'firma_nombre',
-                                                                event.target.value,
+                                                                event.target
+                                                                    .value,
                                                             )
                                                         }
                                                         className={inputClass}
@@ -479,11 +534,14 @@ export default function IntervencionForm({
                                                     </Label>
                                                     <input
                                                         id="firma_aclaracion"
-                                                        value={data.firma_aclaracion}
+                                                        value={
+                                                            data.firma_aclaracion
+                                                        }
                                                         onChange={(event) =>
                                                             setData(
                                                                 'firma_aclaracion',
-                                                                event.target.value,
+                                                                event.target
+                                                                    .value,
                                                             )
                                                         }
                                                         className={inputClass}
@@ -494,7 +552,9 @@ export default function IntervencionForm({
                                             <div className="mt-4">
                                                 <FirmaDigital
                                                     label="Firmar con touch o mouse"
-                                                    value={data.firma_responsable_dibujo}
+                                                    value={
+                                                        data.firma_responsable_dibujo
+                                                    }
                                                     onChange={(value) =>
                                                         setData(
                                                             'firma_responsable_dibujo',
@@ -507,7 +567,8 @@ export default function IntervencionForm({
                                                 <FileUp size={15} />
                                                 <span className="truncate">
                                                     {data.firma_responsable_archivo
-                                                        ? data.firma_responsable_archivo
+                                                        ? data
+                                                              .firma_responsable_archivo
                                                               .name
                                                         : 'Subir archivo de firma'}
                                                 </span>
@@ -518,7 +579,8 @@ export default function IntervencionForm({
                                                     onChange={(event) =>
                                                         setData(
                                                             'firma_responsable_archivo',
-                                                            event.target.files?.[0] ??
+                                                            event.target
+                                                                .files?.[0] ??
                                                                 null,
                                                         )
                                                     }
@@ -562,7 +624,8 @@ export default function IntervencionForm({
                                                         onChange={(event) =>
                                                             setData(
                                                                 'firma_entrevistado_nombre',
-                                                                event.target.value,
+                                                                event.target
+                                                                    .value,
                                                             )
                                                         }
                                                         className={inputClass}
@@ -581,7 +644,8 @@ export default function IntervencionForm({
                                                         onChange={(event) =>
                                                             setData(
                                                                 'firma_entrevistado_aclaracion',
-                                                                event.target.value,
+                                                                event.target
+                                                                    .value,
                                                             )
                                                         }
                                                         className={inputClass}
@@ -607,7 +671,8 @@ export default function IntervencionForm({
                                                 <FileUp size={15} />
                                                 <span className="truncate">
                                                     {data.firma_entrevistado_archivo
-                                                        ? data.firma_entrevistado_archivo
+                                                        ? data
+                                                              .firma_entrevistado_archivo
                                                               .name
                                                         : 'Subir archivo de firma'}
                                                 </span>
@@ -618,7 +683,8 @@ export default function IntervencionForm({
                                                     onChange={(event) =>
                                                         setData(
                                                             'firma_entrevistado_archivo',
-                                                            event.target.files?.[0] ??
+                                                            event.target
+                                                                .files?.[0] ??
                                                                 null,
                                                         )
                                                     }
@@ -641,13 +707,17 @@ export default function IntervencionForm({
                                 <Card className="overflow-hidden border-[#DCE3DF] !bg-white py-0 shadow-[0_18px_45px_rgba(23,50,71,0.07)]">
                                     <CardHeader className="border-b border-[#E4E8E5] bg-[#F8FAF9] px-5 py-4">
                                         <div className="flex items-center gap-2">
-                                            <Paperclip size={17} className="text-[#6B8F71]" />
+                                            <Paperclip
+                                                size={17}
+                                                className="text-[#6B8F71]"
+                                            />
                                             <CardTitle className="text-base text-[#2C4A5E]">
                                                 Documentación
                                             </CardTitle>
                                         </div>
                                         <p className="mt-1 text-xs text-[#697586]">
-                                            Actas, oficios, mails u otro respaldo.
+                                            Actas, oficios, mails u otro
+                                            respaldo.
                                         </p>
                                     </CardHeader>
                                     <CardContent className="px-5 py-5">
@@ -675,7 +745,8 @@ export default function IntervencionForm({
                                                     setData(
                                                         'archivos',
                                                         Array.from(
-                                                            event.target.files ?? [],
+                                                            event.target
+                                                                .files ?? [],
                                                         ),
                                                     )
                                                 }
@@ -719,8 +790,9 @@ export default function IntervencionForm({
                                                 Registro seguro
                                             </p>
                                             <p className="mt-1 text-xs leading-5 text-[#41634A]/80">
-                                                Se guardan el usuario, la fecha y
-                                                cada firma asociada al registro.
+                                                Se guardan el usuario, la fecha
+                                                y cada firma asociada al
+                                                registro.
                                             </p>
                                         </div>
                                     </div>
@@ -734,7 +806,9 @@ export default function IntervencionForm({
                             </p>
                             <div className="flex flex-col-reverse gap-2 sm:flex-row">
                                 <Button asChild type="button" variant="outline">
-                                    <Link href={`/legajos/${legajo.persona_id}`}>
+                                    <Link
+                                        href={`/legajos/${legajo.persona_id}`}
+                                    >
                                         Cancelar
                                     </Link>
                                 </Button>
