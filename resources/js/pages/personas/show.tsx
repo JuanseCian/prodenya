@@ -104,12 +104,12 @@ export default function PersonaShow({ persona, legajos, status }: Props) {
                                 </Badge>
                             )}
                         </div>
-                        <h2
+                        <h1
                             className="mt-3 text-3xl font-semibold tracking-tight text-[#173247] sm:text-4xl"
                             style={{ fontFamily: FONT_HEADING }}
                         >
                             {persona.apellido}, {persona.nombre}
-                        </h2>
+                        </h1>
                         <p className="mt-2 font-mono text-sm text-[#2B2F36]/65">
                             DNI {persona.dni}
                         </p>

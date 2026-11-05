@@ -147,7 +147,7 @@ export default function PersonaEdit({ persona, provincias }: Props) {
             <Head title="Editar persona" />
 
             <main
-                    className="min-h-screen bg-[#F4F6F5] px-4 py-8 sm:px-6 sm:py-10 lg:px-8"
+                className="min-h-screen bg-[#F4F6F5] px-4 py-8 sm:px-6 sm:py-10 lg:px-8"
                 style={{ fontFamily: FONT_BODY }}
             >
                 <Link
@@ -158,12 +158,12 @@ export default function PersonaEdit({ persona, provincias }: Props) {
                     Volver a la persona
                 </Link>
 
-                <h2
+                <h1
                     className="mb-8 text-3xl font-semibold tracking-tight text-[#173247] sm:text-4xl"
                     style={{ fontFamily: FONT_HEADING }}
                 >
                     Editar persona
-                </h2>
+                </h1>
 
                 <form onSubmit={submit} className="max-w-4xl space-y-6">
                     <ResumenErrores

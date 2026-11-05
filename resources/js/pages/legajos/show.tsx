@@ -782,16 +782,28 @@ export default function LegajoShow({
                                             <table className="w-full min-w-[560px] text-left text-sm">
                                                 <thead className="bg-[#F3F7F4] text-[0.68rem] font-bold tracking-[0.12em] text-[#6B8F71] uppercase">
                                                     <tr>
-                                                        <th className="px-4 py-3">
+                                                        <th
+                                                            scope="col"
+                                                            className="px-4 py-3"
+                                                        >
                                                             Usuario
                                                         </th>
-                                                        <th className="px-4 py-3">
+                                                        <th
+                                                            scope="col"
+                                                            className="px-4 py-3"
+                                                        >
                                                             Profesión
                                                         </th>
-                                                        <th className="px-4 py-3">
+                                                        <th
+                                                            scope="col"
+                                                            className="px-4 py-3"
+                                                        >
                                                             Rol
                                                         </th>
-                                                        <th className="px-4 py-3">
+                                                        <th
+                                                            scope="col"
+                                                            className="px-4 py-3"
+                                                        >
                                                             Tipo
                                                         </th>
                                                     </tr>

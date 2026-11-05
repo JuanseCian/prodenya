@@ -183,12 +183,12 @@ export default function LegajosIndex({
                                         : 'Listado'}
                                 </span>
                             </div>
-                            <h2
+                            <h1
                                 className="mt-3 text-3xl font-semibold tracking-tight text-[#173247] sm:text-4xl"
                                 style={{ fontFamily: FONT_HEADING }}
                             >
                                 {esMayores18 ? '+18' : 'Legajos'}
-                            </h2>
+                            </h1>
                             <p className="mt-2 text-sm text-[#2B2F36]/65">
                                 {esMayores18
                                     ? 'Personas que cumplieron 18 años y continúan abiertas en otra instancia de acompañamiento.'
@@ -198,14 +198,14 @@ export default function LegajosIndex({
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2">
-                            <nav
+                        <nav
                             aria-label="Secciones de legajos"
                             className="flex items-center rounded-lg border border-[#DCE3DF] bg-white p-1"
                         >
                             <Link
                                 href="/legajos"
                                 aria-current={!esMayores18 ? 'page' : undefined}
-                                 className={`inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-xs font-semibold transition ${!esMayores18 ? 'bg-[#2C4A5E] text-white' : 'text-[#697586] hover:bg-[#F4F6F5] hover:text-[#1F394B]'}`}
+                                className={`inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-xs font-semibold transition ${!esMayores18 ? 'bg-[#2C4A5E] text-white' : 'text-[#697586] hover:bg-[#F4F6F5] hover:text-[#1F394B]'}`}
                             >
                                 <FolderOpen size={14} />
                                 Legajos
@@ -213,7 +213,7 @@ export default function LegajosIndex({
                             <Link
                                 href="/mayores-18"
                                 aria-current={esMayores18 ? 'page' : undefined}
-                                 className={`inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-xs font-semibold transition ${esMayores18 ? 'bg-[#2C4A5E] text-white' : 'text-[#697586] hover:bg-[#F4F6F5] hover:text-[#1F394B]'}`}
+                                className={`inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-xs font-semibold transition ${esMayores18 ? 'bg-[#2C4A5E] text-white' : 'text-[#697586] hover:bg-[#F4F6F5] hover:text-[#1F394B]'}`}
                             >
                                 <UsersRound size={14} />
                                 +18
@@ -435,34 +435,68 @@ export default function LegajosIndex({
                                     <table className="w-full min-w-[980px] border-collapse">
                                         <thead className="bg-[#FAFBFA]">
                                             <tr className="border-b border-[#E4E8E5]">
-                                                <th className={thClass}>
+                                                <th
+                                                    scope="col"
+                                                    className={thClass}
+                                                >
                                                     Legajo
                                                 </th>
-                                                <th className={thClass}>
+                                                <th
+                                                    scope="col"
+                                                    className={thClass}
+                                                >
                                                     Persona
                                                 </th>
-                                                <th className={thClass}>
+                                                <th
+                                                    scope="col"
+                                                    className={thClass}
+                                                >
                                                     Edad
                                                 </th>
-                                                <th className={thClass}>
+                                                <th
+                                                    scope="col"
+                                                    className={thClass}
+                                                >
                                                     Problemáticas
                                                 </th>
-                                                <th className={thClass}>
+                                                <th
+                                                    scope="col"
+                                                    className={thClass}
+                                                >
                                                     Riesgo
                                                 </th>
-                                                <th className={thClass}>
+                                                <th
+                                                    scope="col"
+                                                    className={thClass}
+                                                >
                                                     Estado
                                                 </th>
-                                                <th className={thClass}>
+                                                <th
+                                                    scope="col"
+                                                    className={thClass}
+                                                >
                                                     Derivación
                                                 </th>
-                                                <th className={thClass}>
+                                                <th
+                                                    scope="col"
+                                                    className={thClass}
+                                                >
                                                     Profesional
                                                 </th>
-                                                <th className={thClass}>
+                                                <th
+                                                    scope="col"
+                                                    className={thClass}
+                                                >
                                                     Apertura
                                                 </th>
-                                                <th className={thClass}></th>
+                                                <th
+                                                    scope="col"
+                                                    className={thClass}
+                                                >
+                                                    <span className="sr-only">
+                                                        Acciones
+                                                    </span>
+                                                </th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-[#EEF0ED]">
@@ -589,9 +623,11 @@ export default function LegajosIndex({
                                                                 />
                                                             </Link>
                                                             <a
-                                                                 href={legajosRoutes.previsualizarWord.url(legajo.id)}
-                                                                 aria-label={`Previsualizar Word del legajo ${legajo.numero_legajo}`}
-                                                                 title="Previsualizar Word"
+                                                                href={legajosRoutes.previsualizarWord.url(
+                                                                    legajo.id,
+                                                                )}
+                                                                aria-label={`Previsualizar Word del legajo ${legajo.numero_legajo}`}
+                                                                title="Previsualizar Word"
                                                                 className="grid size-9 place-items-center rounded-md border border-[#DCE3DF] bg-white text-[#2C4A5E] transition hover:border-[#2C4A5E]/40 hover:bg-[#F4F6F5] focus-visible:ring-2 focus-visible:ring-[#2C4A5E]/30 focus-visible:outline-none"
                                                             >
                                                                 <FileDown

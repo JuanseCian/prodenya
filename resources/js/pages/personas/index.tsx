@@ -79,12 +79,12 @@ export default function PersonasIndex({
                             <span className="text-[#B4C1B8]">/</span>
                             <span className="text-[#2B2F36]/45">Listado</span>
                         </div>
-                        <h2
+                        <h1
                             className="mt-3 text-3xl font-semibold tracking-tight text-[#173247] sm:text-4xl"
                             style={{ fontFamily: FONT_HEADING }}
                         >
                             Personas registradas
-                        </h2>
+                        </h1>
                         <p className="mt-2 text-sm text-[#2B2F36]/65">
                             Buscá por nombre, apellido o DNI.
                         </p>
@@ -157,17 +157,29 @@ export default function PersonasIndex({
                                 <table className="w-full min-w-[820px] border-collapse">
                                     <thead className="bg-[#FAFBFA]">
                                         <tr className="border-b border-[#E4E8E5]">
-                                            <th className={thClass}>Persona</th>
-                                            <th className={thClass}>DNI</th>
-                                            <th className={thClass}>Edad</th>
-                                            <th className={thClass}>
+                                            <th scope="col" className={thClass}>
+                                                Persona
+                                            </th>
+                                            <th scope="col" className={thClass}>
+                                                DNI
+                                            </th>
+                                            <th scope="col" className={thClass}>
+                                                Edad
+                                            </th>
+                                            <th scope="col" className={thClass}>
                                                 Domicilio
                                             </th>
-                                            <th className={thClass}>
+                                            <th scope="col" className={thClass}>
                                                 Contacto
                                             </th>
-                                            <th className={thClass}>Legajo</th>
-                                            <th className={thClass}></th>
+                                            <th scope="col" className={thClass}>
+                                                Legajo
+                                            </th>
+                                            <th scope="col" className={thClass}>
+                                                <span className="sr-only">
+                                                    Acciones
+                                                </span>
+                                            </th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-[#EEF0ED]">

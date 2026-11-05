@@ -126,12 +126,12 @@ export default function CreateLegajo({
                 className="bg-[#F4F6F5] px-4 py-8 sm:px-6 sm:py-10"
                 style={{ fontFamily: FONT_BODY }}
             >
-                <h2
+                <h1
                     className="text-2xl font-semibold text-[#2B2F36]"
                     style={{ fontFamily: FONT_HEADING }}
                 >
                     Nuevo legajo
-                </h2>
+                </h1>
                 <p className="mt-1 text-sm text-[#2B2F36]/60">
                     Elegí la persona para la que vas a abrir el legajo.
                 </p>
@@ -252,10 +252,10 @@ export default function CreateLegajo({
                         </h3>
 
                         <div className="mt-4 space-y-4">
-                            <div>
-                                <label className={labelClass}>
+                            <fieldset className="m-0 border-0 p-0">
+                                <legend className={labelClass}>
                                     Problematica (podés elegir más de uno)
-                                </label>
+                                </legend>
                                 <div
                                     className={`flex flex-wrap gap-x-5 gap-y-2 rounded-md border bg-white px-3.5 py-3 ${errors.problematicas ? 'border-[#D59A8E] bg-[#FFF9F7]' : 'border-[#D5D1C6]'}`}
                                     aria-describedby={
@@ -291,7 +291,7 @@ export default function CreateLegajo({
                                         {errors.problematicas}
                                     </p>
                                 )}
-                            </div>
+                            </fieldset>
 
                             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                 <div>

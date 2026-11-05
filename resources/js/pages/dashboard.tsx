@@ -417,16 +417,28 @@ export default function Dashboard({
                                     >
                                         <thead>
                                             <tr className="border-b border-[#DDEBF3] text-[#1670AD]/65">
-                                                <th className="py-2 pr-4 font-medium">
+                                                <th
+                                                    scope="col"
+                                                    className="py-2 pr-4 font-medium"
+                                                >
                                                     Nombre
                                                 </th>
-                                                <th className="py-2 pr-4 font-medium">
+                                                <th
+                                                    scope="col"
+                                                    className="py-2 pr-4 font-medium"
+                                                >
                                                     DNI
                                                 </th>
-                                                <th className="py-2 pr-4 font-medium">
+                                                <th
+                                                    scope="col"
+                                                    className="py-2 pr-4 font-medium"
+                                                >
                                                     Localidad
                                                 </th>
-                                                <th className="py-2 pr-4 font-medium">
+                                                <th
+                                                    scope="col"
+                                                    className="py-2 pr-4 font-medium"
+                                                >
                                                     Fecha de alta
                                                 </th>
                                             </tr>

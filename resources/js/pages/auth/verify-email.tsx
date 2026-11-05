@@ -8,12 +8,15 @@ import { send } from '@/routes/verification';
 export default function VerifyEmail({ status }: { status?: string }) {
     return (
         <>
-            <Head title="Email verification" />
+            <Head title="Verificación de email" />
 
             {status === 'verification-link-sent' && (
-                <div className="mb-4 text-center text-sm font-medium text-green-600">
-                    A new verification link has been sent to the email address
-                    you provided during registration.
+                <div
+                    role="status"
+                    className="mb-4 text-center text-sm font-medium text-green-600"
+                >
+                    Se envió un nuevo enlace de verificación a la dirección de
+                    correo que proporcionaste al registrarte.
                 </div>
             )}
 
@@ -22,7 +25,7 @@ export default function VerifyEmail({ status }: { status?: string }) {
                     <>
                         <Button disabled={processing} variant="secondary">
                             {processing && <Spinner />}
-                            Resend verification email
+                            Reenviar email de verificación
                         </Button>
 
                         <button
@@ -30,7 +33,7 @@ export default function VerifyEmail({ status }: { status?: string }) {
                             onClick={() => router.post(logout.url())}
                             className="mx-auto block text-sm text-foreground underline decoration-neutral-300 underline-offset-4 transition-colors duration-300 ease-out hover:decoration-current! dark:decoration-neutral-500"
                         >
-                            Log out
+                            Cerrar sesión
                         </button>
                     </>
                 )}
@@ -40,7 +43,7 @@ export default function VerifyEmail({ status }: { status?: string }) {
 }
 
 VerifyEmail.layout = {
-    title: 'Email verification',
+    title: 'Verificación de email',
     description:
-        'Please verify your email address by clicking on the link we just emailed to you.',
+        'Por favor verificá tu dirección de email haciendo clic en el enlace que te acabamos de enviar.',
 };

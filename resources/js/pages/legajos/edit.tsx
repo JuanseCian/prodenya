@@ -98,12 +98,12 @@ export default function LegajoEdit({
                     Volver al legajo
                 </Link>
 
-                <h2
+                <h1
                     className="text-2xl font-semibold tracking-tight text-[#173247] sm:text-3xl"
                     style={{ fontFamily: FONT_HEADING }}
                 >
                     Editar legajo
-                </h2>
+                </h1>
                 <p className="mt-2 mb-8 text-sm text-[#2B2F36]/65">
                     <span className="font-mono font-semibold text-[#2C4A5E]">
                         {legajo.numero_legajo}
@@ -128,11 +128,11 @@ export default function LegajoEdit({
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-5 px-5 py-6">
-                            <div>
-                                <Label className={labelClass}>
+                            <fieldset className="m-0 border-0 p-0">
+                                <legend className={labelClass}>
                                     Problemáticas{' '}
                                     <span className="text-[#A84635]">*</span>
-                                </Label>
+                                </legend>
                                 <div className="mt-2 grid gap-2 rounded-lg border border-[#D5D1C6] bg-white p-3 sm:grid-cols-2">
                                     {problematicas.map((problematica) => (
                                         <label
@@ -160,7 +160,7 @@ export default function LegajoEdit({
                                         {errors.problematicas}
                                     </p>
                                 )}
-                            </div>
+                            </fieldset>
 
                             <div className="grid gap-5 sm:grid-cols-2">
                                 <div>
