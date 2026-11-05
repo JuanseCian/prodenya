@@ -3,6 +3,7 @@ import {
     BarChart3,
     CalendarDays,
     ClipboardCheck,
+    FileText,
     FolderOpen,
     Home,
     LayoutGrid,
@@ -25,15 +26,14 @@ import {
 } from '@/components/ui/sidebar';
 import { dashboard, estadisticas as estadisticasRoute } from '@/routes';
 import agenda from '@/routes/agenda';
+import fichas from '@/routes/fichas';
 import mailbox from '@/routes/mailbox';
 import tareas from '@/routes/tareas';
 import type { NavItem } from '@/types';
 
 export function AppSidebar() {
     const page = usePage();
-    const dashboardUrl = page.props.currentTeam
-        ? dashboard().url
-        : '/';
+    const dashboardUrl = page.props.currentTeam ? dashboard().url : '/';
 
     const mainNavItems: NavItem[] = [
         {
@@ -46,14 +46,37 @@ export function AppSidebar() {
             href: '/legajos',
             icon: FolderOpen,
         },
+        {
+            title: 'Todas las fichas',
+            href: fichas.index().url,
+            icon: FileText,
+        },
         ...(page.props.can?.accessStatistics
-            ? [{ title: 'Estadísticas', href: estadisticasRoute().url, icon: BarChart3 }]
+            ? [
+                  {
+                      title: 'Estadísticas',
+                      href: estadisticasRoute().url,
+                      icon: BarChart3,
+                  },
+              ]
             : []),
         ...(page.props.can?.accessTasks
-            ? [{ title: 'Tareas', href: tareas.index().url, icon: ClipboardCheck }]
+            ? [
+                  {
+                      title: 'Tareas',
+                      href: tareas.index().url,
+                      icon: ClipboardCheck,
+                  },
+              ]
             : []),
         ...(page.props.can?.accessAgenda
-            ? [{ title: 'Agenda', href: agenda.index().url, icon: CalendarDays }]
+            ? [
+                  {
+                      title: 'Agenda',
+                      href: agenda.index().url,
+                      icon: CalendarDays,
+                  },
+              ]
             : []),
         ...(page.props.can?.accessMailbox
             ? [{ title: 'Mailbox', href: mailbox.index().url, icon: Mail }]

@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Models\Legajo;
+use App\Models\Rol;
 use App\Models\TipoIntervencion;
 use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
@@ -16,7 +17,11 @@ class GuardarIntervencionRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        $legajo = $this->route('legajo');
+
+        return $this->user()?->tieneRol('admin', 'operador', 'coordinador', 'profesional')
+            && $legajo instanceof Legajo
+            && $this->user()->puedeVerSeccionLegajo('intervenciones');
     }
 
     public function rules(): array
@@ -25,7 +30,13 @@ class GuardarIntervencionRequest extends FormRequest
             'fecha_intervencion' => ['required', 'date', 'before_or_equal:today', 'after:2000-01-01'],
             'hora_intervencion' => ['required', 'date_format:H:i'],
             'tipo_intervencion_id' => ['required', Rule::exists(TipoIntervencion::class, 'id')->where('activo', true)],
-            'profesional_id' => ['required', Rule::exists(User::class, 'id')->where('activo', true)],
+            'profesional_id' => [
+                'required',
+                Rule::exists(User::class, 'id')
+                    ->where('activo', true)
+                    ->where('estado_cuenta', User::ESTADO_APROBADO)
+                    ->where('rol_id', Rol::query()->where('nombre', 'profesional')->value('id')),
+            ],
             'detalle' => ['required', 'string', 'max:10000'],
             'firma_nombre' => ['required', 'string', 'max:150'],
             'firma_aclaracion' => ['required', 'string', 'max:150'],

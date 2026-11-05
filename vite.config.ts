@@ -16,6 +16,7 @@ export default defineConfig({
                 'resources/js/site-header.tsx',
             ],
             refresh: true,
+            hotFile: 'storage/framework/vite.hot',
             fonts: [
                 bunny('Instrument Sans', {
                     weights: [400, 500, 600],

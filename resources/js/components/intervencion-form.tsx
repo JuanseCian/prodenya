@@ -174,7 +174,7 @@ export default function IntervencionForm({
                     <div className="mb-7 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
                         <div>
                             <Link
-                                href={`/legajos/${legajo.persona_id}`}
+                                href={`/legajos/${legajo.id}`}
                                 className="mb-4 inline-flex items-center gap-1.5 text-sm font-semibold text-[#2C4A5E] transition hover:text-[#173247] hover:underline"
                             >
                                 <ArrowLeft size={15} />
@@ -409,10 +409,7 @@ export default function IntervencionForm({
                                                 </div>
                                             </CardHeader>
                                             <CardContent className="px-5 py-5 sm:px-6">
-                                                <fieldset className="m-0 grid gap-2 border-0 p-0 sm:grid-cols-2">
-                                                    <legend className="sr-only">
-                                                        Copiar en otros legajos
-                                                    </legend>
+                                                <div className="grid gap-2 sm:grid-cols-2">
                                                     {legajosRelacionados.map(
                                                         (relacionado) => {
                                                             const value =
@@ -470,7 +467,7 @@ export default function IntervencionForm({
                                                             );
                                                         },
                                                     )}
-                                                </fieldset>
+                                                </div>
                                             </CardContent>
                                         </Card>
                                     )}

@@ -2,6 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Documento;
+use App\Models\Intervencion;
+use App\Models\Legajo;
+use App\Models\MailMessage;
 use App\Models\Tarea;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
@@ -73,7 +77,13 @@ class TareaController extends Controller
             'tipo' => ['nullable', 'string', 'max:40'],
             'prioridad' => ['required', Rule::in(['baja', 'normal', 'alta', 'urgente'])],
             'fecha_limite' => ['nullable', 'date'],
-            'asignado_a' => ['nullable', 'integer', Rule::exists(User::class, 'id')],
+            'asignado_a' => [
+                'nullable',
+                'integer',
+                Rule::exists(User::class, 'id')
+                    ->where('activo', true)
+                    ->where('estado_cuenta', User::ESTADO_APROBADO),
+            ],
             'legajo_id' => ['nullable', 'integer', Rule::exists('legajos', 'id')],
             'intervencion_id' => ['nullable', 'integer', Rule::exists('intervenciones', 'id')],
             'mail_message_id' => ['nullable', 'integer', Rule::exists('mail_messages', 'id')],
@@ -81,6 +91,43 @@ class TareaController extends Controller
             'recursos.*.tipo_recurso' => ['required_with:recursos', Rule::in(['legajo', 'intervencion', 'documento', 'mail'])],
             'recursos.*.recurso_id' => ['required_with:recursos', 'integer'],
         ]);
+
+        if (! empty($datos['legajo_id'])) {
+            $legajo = Legajo::findOrFail($datos['legajo_id']);
+            abort_unless(
+                $this->puedeAccederLegajo($usuario, $legajo, ...array_keys(Legajo::SECCIONES)),
+                422,
+                'El legajo seleccionado no está disponible para tu usuario.',
+            );
+        }
+
+        if (! empty($datos['intervencion_id'])) {
+            $intervencion = Intervencion::with('legajo')->findOrFail($datos['intervencion_id']);
+            abort_unless(
+                $intervencion->legajo !== null
+                    && $this->puedeAccederLegajo($usuario, $intervencion->legajo, 'intervenciones'),
+                422,
+                'La intervención seleccionada no está disponible para tu usuario.',
+            );
+        }
+
+        foreach ($datos['recursos'] ?? [] as $recurso) {
+            $accesible = match ($recurso['tipo_recurso']) {
+                'legajo' => ($legajo = Legajo::find($recurso['recurso_id']))
+                    && $this->puedeAccederLegajo($usuario, $legajo, ...array_keys(Legajo::SECCIONES)),
+                'intervencion' => ($intervencion = Intervencion::with('legajo')->find($recurso['recurso_id']))
+                    && $intervencion->legajo !== null
+                    && $this->puedeAccederLegajo($usuario, $intervencion->legajo, 'intervenciones'),
+                'documento' => ($documento = Documento::with('intervencion.legajo')->find($recurso['recurso_id']))
+                    && $documento->intervencion?->legajo !== null
+                    && $documento->activo
+                    && $this->puedeAccederLegajo($usuario, $documento->intervencion->legajo, 'intervenciones'),
+                'mail' => $usuario->esAdmin() && MailMessage::whereKey($recurso['recurso_id'])->exists(),
+                default => false,
+            };
+
+            abort_unless($accesible, 422, 'Uno de los recursos seleccionados no está disponible para tu usuario.');
+        }
 
         $asignadoA = $puedeAsignarOtros && ! empty($datos['asignado_a'])
             ? $datos['asignado_a']
