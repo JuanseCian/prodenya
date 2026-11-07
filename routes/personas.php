@@ -7,6 +7,7 @@ use App\Http\Controllers\FichaController;
 use App\Http\Controllers\GrupoFamiliarController;
 use App\Http\Controllers\IntervencionController;
 use App\Http\Controllers\LegajoController;
+use App\Http\Controllers\MedidaAbrigoController;
 use App\Models\Barrio;
 use App\Models\Localidad;
 use App\Models\Persona;
@@ -44,6 +45,8 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/legajos/{legajo}/intervenciones', [IntervencionController::class, 'store'])->name('legajos.intervenciones.store')->whereNumber('legajo');
         Route::get('/legajos/{legajo}/intervenciones/{intervencion}/edit', [IntervencionController::class, 'edit'])->name('legajos.intervenciones.edit')->whereNumber(['legajo', 'intervencion']);
         Route::put('/legajos/{legajo}/intervenciones/{intervencion}', [IntervencionController::class, 'update'])->name('legajos.intervenciones.update')->whereNumber(['legajo', 'intervencion']);
+        Route::post('/legajos/{legajo}/medidas-abrigo', [MedidaAbrigoController::class, 'store'])
+            ->name('legajos.medidas-abrigo.store')->whereNumber('legajo');
     });
 
     Route::middleware('rol:admin,coordinador,profesional,administrativo')->group(function () {
@@ -83,6 +86,8 @@ Route::middleware(['auth'])->group(function () {
             ->name('legajos.documentacion')->whereNumber('legajo');
         Route::get('/legajos/{legajo}/documentacion/cud/archivos/{cudArchivo}', [CudController::class, 'download'])
             ->name('legajos.cud.archivos.descargar')->whereNumber(['legajo', 'cudArchivo']);
+        Route::get('/legajos/{legajo}/medidas-abrigo/actas/{acta}', [MedidaAbrigoController::class, 'download'])
+            ->name('legajos.medidas-abrigo.actas.descargar')->whereNumber(['legajo', 'acta']);
         Route::get('/legajos/{legajo}', [LegajoController::class, 'show'])->name('legajos.show')->whereNumber('legajo');
         Route::get('/legajos/{legajo}/previsualizar-word', [LegajoController::class, 'previsualizarWord'])
             ->name('legajos.previsualizar-word')->whereNumber('legajo');

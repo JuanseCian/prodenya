@@ -29,6 +29,7 @@ class TiposIntervencionSeeder extends Seeder
             'Acompañamiento',
             'Articulación institucional',
             'Derivación',
+            'Medida de abrigo',
             'Respuesta de oficio',
             'Recepcion de oficio',
             'Otra',

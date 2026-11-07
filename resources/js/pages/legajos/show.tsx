@@ -34,6 +34,8 @@ import {
     FONT_HEADING,
     NivelBadge,
 } from '@/components/detalle';
+import MedidasAbrigoModule from '@/components/medidas-abrigo-module';
+import type { MedidaAbrigoResumen } from '@/components/medidas-abrigo-module';
 import ResumenErrores from '@/components/resumen-errores';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -136,6 +138,7 @@ interface Secciones {
     vinculos: boolean;
     intervenciones: boolean;
     derivaciones: boolean;
+    medidas_abrigo: boolean;
     estadisticas: boolean;
 }
 
@@ -145,6 +148,7 @@ interface Props {
     cud?: CudResumen | null;
     coberturaSalud?: CoberturaResumen | null;
     coberturaSaludHistorial?: CoberturaResumen[];
+    medidasAbrigo?: MedidaAbrigoResumen[];
     status?: string | null;
     intervenciones?: Intervencion[];
     puedeGestionarIntervenciones?: boolean;
@@ -154,6 +158,7 @@ interface Props {
     puedeExportarWord?: boolean;
     puedeGestionarCud: boolean;
     puedeGestionarCoberturaSalud?: boolean;
+    puedeGestionarMedidasAbrigo?: boolean;
     usuarioActualId: number;
     responsablesDisponibles?: ResponsableDisponible[];
     responsables?: Responsable[];
@@ -172,6 +177,7 @@ export default function LegajoShow({
     cud = null,
     coberturaSalud = null,
     coberturaSaludHistorial = [],
+    medidasAbrigo = [],
     status,
     intervenciones = [],
     puedeGestionarIntervenciones = false,
@@ -181,6 +187,7 @@ export default function LegajoShow({
     puedeExportarWord = false,
     puedeGestionarCud,
     puedeGestionarCoberturaSalud = false,
+    puedeGestionarMedidasAbrigo = false,
     usuarioActualId,
     responsablesDisponibles = [],
     responsables = [],
@@ -641,6 +648,14 @@ export default function LegajoShow({
                             cobertura={coberturaSalud}
                             historial={coberturaSaludHistorial}
                             puedeGestionar={puedeGestionarCoberturaSalud}
+                        />
+                    )}
+
+                    {secciones.medidas_abrigo && (
+                        <MedidasAbrigoModule
+                            legajoId={legajo.id}
+                            medidas={medidasAbrigo}
+                            puedeGestionar={puedeGestionarMedidasAbrigo}
                         />
                     )}
 

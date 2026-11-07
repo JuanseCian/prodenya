@@ -31,6 +31,7 @@ class Legajo extends Model
         'vinculos' => 'Vínculos familiares',
         'intervenciones' => 'Intervenciones y registros',
         'derivaciones' => 'Derivaciones y responsables',
+        'medidas_abrigo' => 'Medidas de abrigo',
         'estadisticas' => 'Estadísticas del legajo',
     ];
 
@@ -129,6 +130,14 @@ class Legajo extends Model
     public function auhActual(): HasOne
     {
         return $this->hasOne(Auh::class, 'legajo_id')->where('activo', true);
+    }
+
+    public function medidasAbrigo(): HasMany
+    {
+        return $this->hasMany(MedidaAbrigo::class, 'legajo_id')
+            ->with('actas')
+            ->latest('fecha_inicio')
+            ->latest('id');
     }
 
     public function intervenciones(): HasMany
