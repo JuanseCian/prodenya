@@ -4,17 +4,16 @@ namespace App\Notifications;
 
 use App\Models\User;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\URL;
 
-class RegistroUsuarioNotification extends Notification
+class RegistroUsuarioNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    public function __construct(private readonly string $tipo, private readonly ?string $motivo = null)
-    {
-    }
+    public function __construct(private readonly string $tipo, private readonly ?string $motivo = null) {}
 
     public function via(object $notifiable): array
     {

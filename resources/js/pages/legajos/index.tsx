@@ -189,12 +189,12 @@ export default function LegajosIndex({
                                         : 'Listado'}
                                 </span>
                             </div>
-                            <h2
+                            <h1
                                 className="mt-3 text-3xl font-semibold tracking-tight text-[#173247] sm:text-4xl"
                                 style={{ fontFamily: FONT_HEADING }}
                             >
                                 {esMayores18 ? '+18' : 'Legajos'}
-                            </h2>
+                            </h1>
                             <p className="mt-2 text-sm text-[#2B2F36]/65">
                                 {esMayores18
                                     ? 'Personas que cumplieron 18 años y continúan abiertas en otra instancia de acompañamiento.'
@@ -448,34 +448,68 @@ export default function LegajosIndex({
                                     <table className="w-full min-w-[980px] border-collapse">
                                         <thead className="bg-[#FAFBFA]">
                                             <tr className="border-b border-[#E4E8E5]">
-                                                <th className={thClass}>
+                                                <th
+                                                    scope="col"
+                                                    className={thClass}
+                                                >
                                                     Legajo
                                                 </th>
-                                                <th className={thClass}>
+                                                <th
+                                                    scope="col"
+                                                    className={thClass}
+                                                >
                                                     Persona
                                                 </th>
-                                                <th className={thClass}>
+                                                <th
+                                                    scope="col"
+                                                    className={thClass}
+                                                >
                                                     Edad
                                                 </th>
-                                                <th className={thClass}>
+                                                <th
+                                                    scope="col"
+                                                    className={thClass}
+                                                >
                                                     Problemáticas
                                                 </th>
-                                                <th className={thClass}>
+                                                <th
+                                                    scope="col"
+                                                    className={thClass}
+                                                >
                                                     Riesgo
                                                 </th>
-                                                <th className={thClass}>
+                                                <th
+                                                    scope="col"
+                                                    className={thClass}
+                                                >
                                                     Estado
                                                 </th>
-                                                <th className={thClass}>
+                                                <th
+                                                    scope="col"
+                                                    className={thClass}
+                                                >
                                                     Derivación
                                                 </th>
-                                                <th className={thClass}>
+                                                <th
+                                                    scope="col"
+                                                    className={thClass}
+                                                >
                                                     Profesional
                                                 </th>
-                                                <th className={thClass}>
+                                                <th
+                                                    scope="col"
+                                                    className={thClass}
+                                                >
                                                     Apertura
                                                 </th>
-                                                <th className={thClass}></th>
+                                                <th
+                                                    scope="col"
+                                                    className={thClass}
+                                                >
+                                                    <span className="sr-only">
+                                                        Acciones
+                                                    </span>
+                                                </th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-[#EEF0ED]">

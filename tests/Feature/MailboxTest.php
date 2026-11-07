@@ -53,7 +53,7 @@ test('mailbox users can send and retain an outgoing email', function () {
         ])
         ->assertRedirect();
 
-    Mail::assertSent(MailboxMessage::class, fn (MailboxMessage $mail): bool => $mail->hasTo('destinatario@example.test')
+    Mail::assertQueued(MailboxMessage::class, fn (MailboxMessage $mail): bool => $mail->hasTo('destinatario@example.test')
         && $mail->hasSubject('Información solicitada'));
 
     expect(MailMessage::query()

@@ -9,6 +9,7 @@ use App\Models\CudArchivo;
 use App\Models\Intervencion;
 use App\Models\Legajo;
 use App\Models\MailMessage;
+use App\Models\MedidaAbrigo;
 use App\Models\Persona;
 use App\Models\Problematica;
 use App\Models\Provincia;
@@ -210,6 +211,7 @@ class LegajoController extends Controller
             'derivaciones.destinatario',
             'derivaciones.solicitante',
             'responsablesActivos.usuario.rol',
+            'medidasAbrigo.actas',
         ]);
         $usuario = $request->user();
         $secciones = [
@@ -220,6 +222,7 @@ class LegajoController extends Controller
                 && $usuario->puedeVerSeccionLegajo('vinculos'),
             'intervenciones' => $usuario->puedeVerSeccionLegajo('intervenciones'),
             'derivaciones' => $usuario->puedeVerSeccionLegajo('derivaciones'),
+            'medidas_abrigo' => $usuario->puedeVerSeccionLegajo('medidas_abrigo'),
             'estadisticas' => $usuario->puedeVerSeccionLegajo('estadisticas'),
         ];
         $puedeVerVinculos = $secciones['vinculos'];
@@ -339,6 +342,27 @@ class LegajoController extends Controller
                 ->values()
                 ->all(),
             'puedeGestionarCoberturaSalud' => $secciones['persona'],
+            'puedeGestionarMedidasAbrigo' => $secciones['medidas_abrigo']
+                && $usuario->tieneRol('admin', 'operador', 'coordinador', 'profesional'),
+            'medidasAbrigo' => $secciones['medidas_abrigo'] ? $legajo->medidasAbrigo->map(fn (MedidaAbrigo $medida) => [
+                'id' => $medida->id,
+                'ubicacion' => $medida->ubicacion,
+                'ubicacion_label' => MedidaAbrigo::UBICACION_LABELS[$medida->ubicacion] ?? $medida->ubicacion,
+                'duracion_dias' => $medida->duracion_dias,
+                'fecha_inicio' => $medida->fecha_inicio?->toDateString(),
+                'fecha_fin' => $medida->fecha_fin?->toDateString(),
+                'estado' => $medida->estado(),
+                'dias_restantes' => $medida->diasRestantes(),
+                'observaciones' => $medida->observaciones,
+                'actas' => $medida->actas->map(fn ($acta) => [
+                    'id' => $acta->id,
+                    'tipo' => $acta->tipo,
+                    'tipo_label' => MedidaAbrigo::ACTA_LABELS[$acta->tipo] ?? $acta->tipo,
+                    'nombre' => $acta->nombre_archivo,
+                    'tamanio' => $acta->tamanio_bytes,
+                    'descarga_url' => route('legajos.medidas-abrigo.actas.descargar', [$legajo, $acta]),
+                ])->values()->all(),
+            ])->values()->all() : [],
             'status' => session('status'),
             'usuarioActualId' => $request->user()->id,
             'puedeGestionarIntervenciones' => $secciones['intervenciones'] && $request->user()->tieneRol('admin', 'operador'),

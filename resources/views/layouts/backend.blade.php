@@ -397,11 +397,12 @@
                     {{-- Notificaciones --}}
                     <button
                         type="button"
+                        aria-label="Notificaciones"
                         class="backend-icon-button flex h-10 w-10 items-center justify-center
                                rounded-xl border border-slate-200
                                hover:bg-slate-50 transition"
                     >
-                        <i class="bi bi-bell"></i>
+                        <i class="bi bi-bell" aria-hidden="true"></i>
                     </button>
 
 
@@ -451,6 +452,8 @@
                 @if (session('success'))
 
                     <div
+                        role="status"
+                        aria-live="polite"
                         class="mb-4 p-4
                                bg-emerald-50
                                border border-emerald-200
@@ -466,6 +469,7 @@
                 @if (session('error'))
 
                     <div
+                        role="alert"
                         class="mb-4 p-4
                                bg-red-50
                                border border-red-200

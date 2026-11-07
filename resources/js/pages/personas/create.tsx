@@ -314,14 +314,14 @@ export default function CreatePersona({
                                 {modoLegajo ? 'Nuevo legajo' : 'Nueva alta'}
                             </span>
                         </div>
-                        <h2
+                        <h1
                             className="mt-3 text-3xl font-semibold tracking-tight text-[#173247] sm:text-4xl"
                             style={{ fontFamily: FONT_HEADING }}
                         >
                             {modoLegajo
                                 ? 'Crear un legajo'
                                 : 'Registrar una persona'}
-                        </h2>
+                        </h1>
                         <p className="mt-2 max-w-2xl text-sm leading-6 text-[#697586]">
                             {modoLegajo
                                 ? 'Completá los datos de la persona y del legajo. Se guardará todo en un único registro.'
@@ -872,13 +872,13 @@ export default function CreatePersona({
                                                     />
                                                 </div>
                                             )}
-                                            <div>
-                                                <Label className={labelClass}>
+                                            <fieldset className="m-0 border-0 p-0">
+                                                <legend className={labelClass}>
                                                     Problematica{' '}
                                                     <span className="text-[#A84635]">
                                                         *
                                                     </span>
-                                                </Label>
+                                                </legend>
                                                 <div className="mt-2 grid gap-2 rounded-lg border border-[#D5D1C6] bg-white p-3 sm:grid-cols-2">
                                                     {problematicas.map(
                                                         (problematica) => (
@@ -912,7 +912,7 @@ export default function CreatePersona({
                                                         errors.legajo_problematicas
                                                     }
                                                 />
-                                            </div>
+                                            </fieldset>
                                             <div className="grid gap-5 sm:grid-cols-2">
                                                 <div>
                                                     <Label

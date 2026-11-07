@@ -46,7 +46,7 @@ class Conversacion extends Model
 
     public function ultimoMensaje(): HasOne
     {
-        return $this->hasOne(Mensaje::class, 'conversacion_id')->latestOfMany();
+        return $this->hasOne(Mensaje::class, 'conversacion_id')->latestOfMany('created_at');
     }
 
     public function creador(): BelongsTo

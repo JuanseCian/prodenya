@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { ProdenyaToast } from '@/components/prodenya-toast';
+import { Skeleton } from '@/components/ui/skeleton';
 import notificaciones from '@/routes/notificaciones';
 import type { NotificationItem } from '@/types';
 
@@ -38,9 +39,35 @@ export function NotificationCenter({
     const [open, setOpen] = useState(false);
     const [notifications, setNotifications] = useState(initialNotifications);
     const [unreadCount, setUnreadCount] = useState(initialUnreadCount);
+    const [cargando, setCargando] = useState(standalone);
     const knownIds = useRef(new Set<string>());
     const initialized = useRef(false);
     const entryToastShown = useRef(false);
+    const panelRef = useRef<HTMLDivElement>(null);
+    const triggerRef = useRef<HTMLButtonElement>(null);
+
+    useEffect(() => {
+        if (!open) {
+            return;
+        }
+
+        const panel = panelRef.current;
+        const focusable = panel?.querySelector<HTMLElement>(
+            'button, a, [href], [tabindex]:not([tabindex="-1"])',
+        );
+        focusable?.focus();
+
+        const handleKeyDown = (event: KeyboardEvent): void => {
+            if (event.key === 'Escape') {
+                setOpen(false);
+                triggerRef.current?.focus();
+            }
+        };
+
+        document.addEventListener('keydown', handleKeyDown);
+
+        return () => document.removeEventListener('keydown', handleKeyDown);
+    }, [open]);
 
     usePoll(
         POLLING_INTERVAL,
@@ -58,7 +85,9 @@ export function NotificationCenter({
         return router.on('navigate', (event) => {
             const props = event.detail.page.props;
 
-            setNotifications((props.notificaciones ?? []) as NotificationItem[]);
+            setNotifications(
+                (props.notificaciones ?? []) as NotificationItem[],
+            );
             setUnreadCount(Number(props.notificacionesNoLeidas ?? 0));
         });
     }, [endpoint, standalone]);
@@ -93,10 +122,14 @@ export function NotificationCenter({
 
             setNotifications(data.notificaciones);
             setUnreadCount(data.notificacionesNoLeidas);
+            setCargando(false);
         };
 
         void cargar();
-        const interval = window.setInterval(() => void cargar(), POLLING_INTERVAL);
+        const interval = window.setInterval(
+            () => void cargar(),
+            POLLING_INTERVAL,
+        );
 
         return () => {
             cancelado = true;
@@ -222,10 +255,14 @@ export function NotificationCenter({
             return;
         }
 
-        router.patch(notificaciones.leerTodas().url, {}, {
-            preserveScroll: true,
-            preserveState: true,
-        });
+        router.patch(
+            notificaciones.leerTodas().url,
+            {},
+            {
+                preserveScroll: true,
+                preserveState: true,
+            },
+        );
     };
 
     return (
@@ -235,10 +272,11 @@ export function NotificationCenter({
                     ? 'relative z-[70]'
                     : placement === 'dashboard'
                       ? 'relative z-[70]'
-                    : 'fixed top-20 right-4 z-[70]'
+                      : 'fixed top-20 right-4 z-[70]'
             }
         >
             <button
+                ref={triggerRef}
                 type="button"
                 aria-label="Abrir notificaciones"
                 aria-expanded={open}
@@ -260,7 +298,12 @@ export function NotificationCenter({
             </button>
 
             {open && (
-                <section className="absolute top-[calc(100%+0.75rem)] right-0 w-[min(calc(100vw-2rem),390px)] origin-top-right animate-in overflow-hidden rounded-2xl border border-[#DCE3DF] bg-white shadow-[0_18px_50px_rgba(23,50,71,0.2)] duration-200 fade-in-0 zoom-in-95 dark:border-[#3B4552] dark:bg-[#232A34]">
+                <section
+                    ref={panelRef}
+                    role="region"
+                    aria-label="Notificaciones"
+                    className="absolute top-[calc(100%+0.75rem)] right-0 w-[min(calc(100vw-2rem),390px)] origin-top-right animate-in overflow-hidden rounded-2xl border border-[#DCE3DF] bg-white shadow-[0_18px_50px_rgba(23,50,71,0.2)] duration-200 fade-in-0 zoom-in-95 dark:border-[#3B4552] dark:bg-[#232A34]"
+                >
                     <header className="flex items-center justify-between border-b border-[#E4E8E5] px-4 py-3 dark:border-[#3B4552]">
                         <div>
                             <h2 className="text-sm font-bold text-[#173247] dark:text-white">
@@ -295,7 +338,22 @@ export function NotificationCenter({
                     </header>
 
                     <div className="max-h-[min(65vh,480px)] overflow-y-auto">
-                        {notifications.length === 0 ? (
+                        {cargando ? (
+                            <div className="space-y-0">
+                                {[0, 1, 2].map((index) => (
+                                    <div
+                                        key={index}
+                                        className="flex items-start gap-3 border-b border-[#EEF0ED] px-4 py-3 last:border-b-0 dark:border-[#3B4552]"
+                                    >
+                                        <Skeleton className="mt-1 size-2 shrink-0 rounded-full" />
+                                        <div className="min-w-0 flex-1 space-y-2">
+                                            <Skeleton className="h-3.5 w-2/3 rounded" />
+                                            <Skeleton className="h-3 w-full rounded" />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : notifications.length === 0 ? (
                             <p className="px-4 py-8 text-center text-sm text-[#697586]">
                                 No tenés notificaciones nuevas.
                             </p>

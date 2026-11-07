@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -71,13 +72,7 @@ class ComunicacionController extends Controller
 
         abort_if((int) $datos['usuario_id'] === $request->user()->id, 422, 'No podés iniciar una conversación con vos mismo.');
         $destinatario = User::with('rol')->findOrFail($datos['usuario_id']);
-        abort_unless(
-            $destinatario->activo
-                && $destinatario->estado_cuenta === User::ESTADO_APROBADO
-                && in_array($destinatario->rol?->nombre, self::ROLES, true),
-            422,
-            'El usuario seleccionado no está disponible.',
-        );
+        abort_unless($destinatario->activo && in_array($destinatario->rol?->nombre, self::ROLES, true), 422, 'El usuario seleccionado no está disponible.');
 
         $existente = Conversacion::query()
             ->where('tipo', 'directa')
@@ -197,10 +192,8 @@ class ComunicacionController extends Controller
                         });
                 })
                 ->latest('id')
-                ->limit(20)
+                ->limit(5)
                 ->get()
-                ->filter(fn (Legajo $legajo): bool => $this->puedeAccederLegajo($request->user(), $legajo, 'persona', 'seguimiento', 'situacion', 'intervenciones', 'derivaciones', 'vinculos', 'estadisticas'))
-                ->take(5)
                 ->map(fn (Legajo $legajo) => $this->opcionRecurso(
                     'legajo',
                     $legajo->id,
@@ -217,11 +210,8 @@ class ComunicacionController extends Controller
                         ->orWhereHas('legajo', fn ($legajo) => $legajo->where('numero_legajo', 'like', "%{$buscar}%"));
                 })
                 ->latest('id')
-                ->limit(20)
+                ->limit(5)
                 ->get()
-                ->filter(fn (Intervencion $intervencion): bool => $intervencion->legajo !== null
-                    && $this->puedeAccederLegajo($request->user(), $intervencion->legajo, 'intervenciones'))
-                ->take(5)
                 ->map(fn (Intervencion $intervencion) => $this->opcionRecurso(
                     'intervencion',
                     $intervencion->id,
@@ -236,11 +226,8 @@ class ComunicacionController extends Controller
                 ->whereNotNull('intervencion_id')
                 ->where('nombre_archivo', 'like', "%{$buscar}%")
                 ->latest('id')
-                ->limit(20)
+                ->limit(5)
                 ->get()
-                ->filter(fn (Documento $documento): bool => $documento->intervencion?->legajo !== null
-                    && $this->puedeAccederLegajo($request->user(), $documento->intervencion->legajo, 'intervenciones'))
-                ->take(5)
                 ->map(fn (Documento $documento) => $this->opcionRecurso(
                     'documento',
                     $documento->id,
@@ -291,24 +278,17 @@ class ComunicacionController extends Controller
     private function render(Request $request, ?Conversacion $seleccionada): Response
     {
         $usuario = $request->user();
-        $conversaciones = Conversacion::query()
+        $listado = Conversacion::query()
             ->whereHas('usuarios', fn ($query) => $query->whereKey($usuario->id))
             ->with(['usuarios:id,name', 'ultimoMensaje'])
-            ->withCount(['mensajes as mensajes_no_leidos' => function ($query) use ($usuario): void {
-                $query->join('conversacion_usuario as lectura', function ($join) use ($usuario): void {
-                    $join->on('lectura.conversacion_id', '=', 'mensajes.conversacion_id')
-                        ->where('lectura.usuario_id', $usuario->id);
-                })
-                    ->where('mensajes.usuario_id', '!=', $usuario->id)
-                    ->where(function ($query): void {
-                        $query->whereNull('lectura.ultimo_leido_en')
-                            ->orWhereColumn('mensajes.created_at', '>', 'lectura.ultimo_leido_en');
-                    });
-            }])
             ->orderByDesc('ultimo_mensaje_en')
             ->orderByDesc('id')
-            ->get()
-            ->map(function (Conversacion $conversacion) use ($usuario) {
+            ->get();
+
+        $noLeidosPorConversacion = $this->noLeidosPorConversacion($listado->pluck('id'), $usuario);
+
+        $conversaciones = $listado
+            ->map(function (Conversacion $conversacion) use ($usuario, $noLeidosPorConversacion) {
                 $ultimo = $conversacion->ultimoMensaje;
                 $participantes = $conversacion->usuarios->where('id', '!=', $usuario->id);
 
@@ -317,7 +297,7 @@ class ComunicacionController extends Controller
                     'nombre' => $conversacion->titulo ?: $participantes->pluck('name')->join(', '),
                     'ultimo_mensaje' => $ultimo?->cuerpo ?: ($ultimo ? 'Recurso compartido' : 'Sin mensajes'),
                     'ultimo_mensaje_en' => $ultimo?->created_at?->toIso8601String(),
-                    'no_leidos' => (int) $conversacion->mensajes_no_leidos,
+                    'no_leidos' => (int) ($noLeidosPorConversacion->get($conversacion->id) ?? 0),
                 ];
             })
             ->values();
@@ -355,7 +335,6 @@ class ComunicacionController extends Controller
             'mensajes' => $mensajes,
             'usuarios' => User::query()
                 ->where('activo', true)
-                ->where('estado_cuenta', User::ESTADO_APROBADO)
                 ->where('id', '!=', $usuario->id)
                 ->whereHas('rol', fn ($query) => $query->whereIn('nombre', self::ROLES))
                 ->orderBy('name')
@@ -386,22 +365,32 @@ class ComunicacionController extends Controller
             ->count();
     }
 
+    /**
+     * @param  Collection<int, int>  $conversacionIds
+     * @return Collection<int, int>
+     */
+    private function noLeidosPorConversacion($conversacionIds, User $usuario)
+    {
+        return DB::table('mensajes')
+            ->join('conversacion_usuario', 'conversacion_usuario.conversacion_id', '=', 'mensajes.conversacion_id')
+            ->where('conversacion_usuario.usuario_id', $usuario->id)
+            ->where('mensajes.usuario_id', '!=', $usuario->id)
+            ->whereIn('mensajes.conversacion_id', $conversacionIds)
+            ->where(function ($query) {
+                $query->whereNull('conversacion_usuario.ultimo_leido_en')
+                    ->orWhereColumn('mensajes.created_at', '>', 'conversacion_usuario.ultimo_leido_en');
+            })
+            ->selectRaw('mensajes.conversacion_id, COUNT(*) as total')
+            ->groupBy('mensajes.conversacion_id')
+            ->pluck('total', 'mensajes.conversacion_id');
+    }
+
     private function buscarRecurso(string $tipo, int $id, User $usuario): ?Model
     {
         return match ($tipo) {
-            'legajo' => ($legajo = Legajo::find($id)) && $this->puedeAccederLegajo($usuario, $legajo, ...array_keys(Legajo::SECCIONES))
-                ? $legajo
-                : null,
-            'intervencion' => ($intervencion = Intervencion::with('legajo')->find($id))
-                && $intervencion->legajo !== null
-                && $this->puedeAccederLegajo($usuario, $intervencion->legajo, 'intervenciones')
-                ? $intervencion
-                : null,
-            'documento' => ($documento = Documento::with('intervencion.legajo')->where('activo', true)->whereNotNull('intervencion_id')->find($id))
-                && $documento->intervencion?->legajo !== null
-                && $this->puedeAccederLegajo($usuario, $documento->intervencion->legajo, 'intervenciones')
-                ? $documento
-                : null,
+            'legajo' => Legajo::find($id),
+            'intervencion' => Intervencion::with('legajo')->find($id),
+            'documento' => Documento::where('activo', true)->whereNotNull('intervencion_id')->find($id),
             'mail' => $usuario->esAdmin() ? MailMessage::find($id) : null,
             default => null,
         };

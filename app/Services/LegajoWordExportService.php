@@ -168,10 +168,12 @@ class LegajoWordExportService
         $this->agregarVinculos($section, $legajo);
         $this->agregarResponsables($section, $legajo);
 
-        $ruta = tempnam(sys_get_temp_dir(), 'legajo_').'.docx';
-        IOFactory::createWriter($phpWord, 'Word2007')->save($ruta);
+        $ruta = tempnam(sys_get_temp_dir(), 'legajo_');
+        $rutaDocx = $ruta.'.docx';
+        rename($ruta, $rutaDocx);
+        IOFactory::createWriter($phpWord, 'Word2007')->save($rutaDocx);
 
-        return $ruta;
+        return $rutaDocx;
     }
 
     private function cargarRelaciones(Legajo $legajo): void

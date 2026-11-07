@@ -34,6 +34,8 @@ import {
     FONT_HEADING,
     NivelBadge,
 } from '@/components/detalle';
+import MedidasAbrigoModule from '@/components/medidas-abrigo-module';
+import type { MedidaAbrigoResumen } from '@/components/medidas-abrigo-module';
 import ResumenErrores from '@/components/resumen-errores';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -136,6 +138,7 @@ interface Secciones {
     vinculos: boolean;
     intervenciones: boolean;
     derivaciones: boolean;
+    medidas_abrigo: boolean;
     estadisticas: boolean;
 }
 
@@ -145,6 +148,7 @@ interface Props {
     cud?: CudResumen | null;
     coberturaSalud?: CoberturaResumen | null;
     coberturaSaludHistorial?: CoberturaResumen[];
+    medidasAbrigo?: MedidaAbrigoResumen[];
     status?: string | null;
     intervenciones?: Intervencion[];
     puedeGestionarIntervenciones?: boolean;
@@ -154,6 +158,7 @@ interface Props {
     puedeExportarWord?: boolean;
     puedeGestionarCud: boolean;
     puedeGestionarCoberturaSalud?: boolean;
+    puedeGestionarMedidasAbrigo?: boolean;
     usuarioActualId: number;
     responsablesDisponibles?: ResponsableDisponible[];
     responsables?: Responsable[];
@@ -172,6 +177,7 @@ export default function LegajoShow({
     cud = null,
     coberturaSalud = null,
     coberturaSaludHistorial = [],
+    medidasAbrigo = [],
     status,
     intervenciones = [],
     puedeGestionarIntervenciones = false,
@@ -181,6 +187,7 @@ export default function LegajoShow({
     puedeExportarWord = false,
     puedeGestionarCud,
     puedeGestionarCoberturaSalud = false,
+    puedeGestionarMedidasAbrigo = false,
     usuarioActualId,
     responsablesDisponibles = [],
     responsables = [],
@@ -644,6 +651,14 @@ export default function LegajoShow({
                         />
                     )}
 
+                    {secciones.medidas_abrigo && (
+                        <MedidasAbrigoModule
+                            legajoId={legajo.id}
+                            medidas={medidasAbrigo}
+                            puedeGestionar={puedeGestionarMedidasAbrigo}
+                        />
+                    )}
+
                     {puedeVerVinculos && (
                         <Card className="border-[#DCE3DF] !bg-white py-0 shadow-[0_14px_35px_rgba(23,50,71,0.06)] lg:col-span-2">
                             <CardHeader className="border-b border-[#E4E8E5] bg-[#F8FAF9] px-5 py-4">
@@ -839,16 +854,28 @@ export default function LegajoShow({
                                             <table className="w-full min-w-[560px] text-left text-sm">
                                                 <thead className="bg-[#F3F7F4] text-[0.68rem] font-bold tracking-[0.12em] text-[#6B8F71] uppercase">
                                                     <tr>
-                                                        <th className="px-4 py-3">
+                                                        <th
+                                                            scope="col"
+                                                            className="px-4 py-3"
+                                                        >
                                                             Usuario
                                                         </th>
-                                                        <th className="px-4 py-3">
+                                                        <th
+                                                            scope="col"
+                                                            className="px-4 py-3"
+                                                        >
                                                             Profesión
                                                         </th>
-                                                        <th className="px-4 py-3">
+                                                        <th
+                                                            scope="col"
+                                                            className="px-4 py-3"
+                                                        >
                                                             Rol
                                                         </th>
-                                                        <th className="px-4 py-3">
+                                                        <th
+                                                            scope="col"
+                                                            className="px-4 py-3"
+                                                        >
                                                             Tipo
                                                         </th>
                                                     </tr>

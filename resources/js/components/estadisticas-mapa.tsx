@@ -2,7 +2,10 @@ import L from 'leaflet';
 import { useEffect, useRef, useState } from 'react';
 import 'leaflet/dist/leaflet.css';
 
-import type { EstadisticasData, Problematica } from '@/components/estadisticas-types';
+import type {
+    EstadisticasData,
+    Problematica,
+} from '@/components/estadisticas-types';
 
 type Props = {
     data: EstadisticasData['mapaBarrios'];
@@ -10,7 +13,14 @@ type Props = {
 };
 
 const SAN_NICOLAS_CENTER: L.LatLngExpression = [-33.334, -60.225];
-const COLORS = ['#5B559E', '#397461', '#C66A10', '#2C7A9B', '#A8493C', '#7B5EA7'];
+const COLORS = [
+    '#5B559E',
+    '#397461',
+    '#C66A10',
+    '#2C7A9B',
+    '#A8493C',
+    '#7B5EA7',
+];
 
 function escapeHtml(value: string): string {
     return value.replace(
@@ -130,11 +140,19 @@ export default function EstadisticasMapa({ data, problematicas }: Props) {
                                     checked={active}
                                     onChange={() =>
                                         setSelectedIds((current) => {
-                                            const selected = current ?? availableIds;
+                                            const selected =
+                                                current ?? availableIds;
 
                                             return active
-                                                ? selected.filter((id) => id !== problematica.id)
-                                                : [...selected, problematica.id];
+                                                ? selected.filter(
+                                                      (id) =>
+                                                          id !==
+                                                          problematica.id,
+                                                  )
+                                                : [
+                                                      ...selected,
+                                                      problematica.id,
+                                                  ];
                                         })
                                     }
                                     className="sr-only"
@@ -149,11 +167,76 @@ export default function EstadisticasMapa({ data, problematicas }: Props) {
                     })}
             </div>
             <div className="relative overflow-hidden rounded-xl border border-[#DCE3DF] dark:border-[#3B4552]">
-                <div ref={mapContainer} className="h-[440px] w-full" />
+                <div
+                    ref={mapContainer}
+                    role="img"
+                    aria-label="Mapa con la distribución geográfica agregada de casos por zona. El detalle en texto está disponible debajo."
+                    className="h-[440px] w-full"
+                />
                 <div className="pointer-events-none absolute bottom-3 left-3 rounded-lg bg-white/90 px-3 py-2 text-[0.68rem] text-[#697586] shadow-sm dark:bg-[#20262F]/90 dark:text-[#B7C9D4]">
                     {data.mensaje}
                 </div>
             </div>
+            <details className="rounded-xl border border-[#DCE3DF] p-3 text-sm dark:border-[#3B4552]">
+                <summary className="cursor-pointer font-semibold text-[#2C4A5E] dark:text-[#D8E2E8]">
+                    Ver datos del mapa en formato texto
+                </summary>
+                {data.zonas.length === 0 ? (
+                    <p className="mt-2 text-[#697586] dark:text-[#B7C9D4]">
+                        No hay zonas con datos para mostrar.
+                    </p>
+                ) : (
+                    <table className="mt-2 w-full border-collapse text-left">
+                        <caption className="sr-only">
+                            Casos agregados por zona y problemática
+                        </caption>
+                        <thead>
+                            <tr>
+                                <th scope="col" className="py-1 pr-4">
+                                    Zona
+                                </th>
+                                <th scope="col" className="py-1 pr-4">
+                                    Total de casos
+                                </th>
+                                <th scope="col" className="py-1">
+                                    Problemáticas
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {data.zonas.map((zona, index) => (
+                                <tr
+                                    key={zona.id}
+                                    className="border-t border-[#DCE3DF] dark:border-[#3B4552]"
+                                >
+                                    <th
+                                        scope="row"
+                                        className="py-1.5 pr-4 font-medium"
+                                    >
+                                        Zona {index + 1}
+                                    </th>
+                                    <td className="py-1.5 pr-4">
+                                        {zona.total}
+                                    </td>
+                                    <td className="py-1.5">
+                                        {zona.problematicas
+                                            .filter((problematica) =>
+                                                visibleIds.includes(
+                                                    problematica.id,
+                                                ),
+                                            )
+                                            .map(
+                                                (problematica) =>
+                                                    `${problematica.nombre} (${problematica.total})`,
+                                            )
+                                            .join(', ')}
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                )}
+            </details>
         </div>
     );
 }

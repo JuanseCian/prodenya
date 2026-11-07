@@ -37,6 +37,9 @@ export function TrendChart({
         .join(' ');
     const areaPoints = `${paddingX},${height - paddingY} ${points} ${width - paddingX},${height - paddingY}`;
     const labelStep = Math.max(1, Math.ceil(intervals.length / 7));
+    const valuesSummary = intervals
+        .map((interval, index) => `${interval.label}: ${values[index]}`)
+        .join(', ');
 
     return (
         <div className="overflow-x-auto">
@@ -44,7 +47,7 @@ export function TrendChart({
                 viewBox={`0 0 ${width} ${height}`}
                 className="h-auto w-full min-w-[620px]"
                 role="img"
-                aria-label={label}
+                aria-label={`${label}. ${valuesSummary}`}
             >
                 {[0, 0.25, 0.5, 0.75, 1].map((fraction) => {
                     const y = height - paddingY - fraction * chartHeight;

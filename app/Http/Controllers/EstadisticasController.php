@@ -17,6 +17,7 @@ use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -205,17 +206,21 @@ class EstadisticasController extends Controller
         $tareas = $this->tareasQuery($desde, $hasta, $filtros);
         $agenda = $this->agendaQuery($desde, $hasta, $filtros, $request);
 
+        $conteosPorProblematica = DB::table('legajo_problematica')
+            ->whereIn('legajo_id', (clone $legajos)->select('legajos.id'))
+            ->selectRaw('problematica_id, COUNT(DISTINCT legajo_id) as total')
+            ->groupBy('problematica_id')
+            ->pluck('total', 'problematica_id');
+
         $problematicas = Problematica::query()
             ->whereNull('deleted_at')
             ->orderBy('nombre')
             ->get(['id', 'nombre'])
-            ->map(function (Problematica $problematica) use ($legajos): array {
-                return [
-                    'id' => $problematica->id,
-                    'nombre' => $problematica->nombre,
-                    'total' => (clone $legajos)->whereHas('problematicas', fn ($query) => $query->whereKey($problematica->id))->count(),
-                ];
-            })
+            ->map(fn (Problematica $problematica): array => [
+                'id' => $problematica->id,
+                'nombre' => $problematica->nombre,
+                'total' => (int) ($conteosPorProblematica->get($problematica->id) ?? 0),
+            ])
             ->sortByDesc('total')
             ->values();
 
