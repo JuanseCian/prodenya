@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Passkey;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
@@ -8,6 +9,31 @@ beforeEach(function () {
         ['id' => 1, 'nombre' => 'admin', 'descripcion' => 'Acceso total', 'creado_en' => now()],
         ['id' => 5, 'nombre' => 'profesional', 'descripcion' => 'Intervenciones', 'creado_en' => now()],
     ]);
+});
+
+test('home shows the passkey notice when the user has no passkey', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->get(route('home'))
+        ->assertOk()
+        ->assertSee('data-passkey-enabled="1"', false);
+});
+
+test('home hides the passkey notice when the user has a passkey', function () {
+    $user = User::factory()->create();
+
+    Passkey::create([
+        'user_id' => $user->id,
+        'name' => 'Notebook de trabajo',
+        'credential_id' => 'home-test-credential',
+        'credential' => ['id' => 'home-test-credential'],
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('home'))
+        ->assertOk()
+        ->assertSee('data-passkey-enabled="0"', false);
 });
 
 test('the personal panel returns the user obligations and visible events', function () {

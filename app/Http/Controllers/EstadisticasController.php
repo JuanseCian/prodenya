@@ -106,7 +106,15 @@ class EstadisticasController extends Controller
         $rango = $this->resolverRango($request);
         $filtros = $this->resolverFiltros($request);
         $intervalos = $this->intervalos($rango['desde'], $rango['hasta']);
-        $principal = $this->resumen($rango['desde'], $rango['hasta'], $filtros, $request, $intervalos);
+        $modulosDisponibles = $this->modulosDisponibles($request);
+        $principal = $this->resumen(
+            $rango['desde'],
+            $rango['hasta'],
+            $filtros,
+            $request,
+            $intervalos,
+            $modulosDisponibles,
+        );
         $comparacion = null;
 
         if ($filtros['comparar'] !== 'ninguno') {
@@ -122,12 +130,13 @@ class EstadisticasController extends Controller
                     $filtros,
                     $request,
                     $intervalos,
+                    $modulosDisponibles,
                 )['kpis'],
             ];
         }
 
         return $principal + [
-            'modulosDisponibles' => $this->modulosDisponibles($request),
+            'modulosDisponibles' => $modulosDisponibles,
             'filtros' => $filtros,
             'rango' => [
                 'desde' => $rango['desde']->toDateString(),
@@ -199,12 +208,17 @@ class EstadisticasController extends Controller
         array $filtros,
         Request $request,
         array $intervalos,
+        array $modulosDisponibles,
     ): array {
         $personas = $this->personasQuery($desde, $hasta, $filtros);
         $legajos = $this->legajosQuery($desde, $hasta, $filtros);
         $intervenciones = $this->intervencionesQuery($desde, $hasta, $filtros);
-        $tareas = $this->tareasQuery($desde, $hasta, $filtros);
-        $agenda = $this->agendaQuery($desde, $hasta, $filtros, $request);
+        $tareas = in_array('tareas', $modulosDisponibles, true)
+            ? $this->tareasQuery($desde, $hasta, $filtros)
+            : Tarea::query()->whereRaw('1 = 0');
+        $agenda = in_array('agenda', $modulosDisponibles, true)
+            ? $this->agendaQuery($desde, $hasta, $filtros, $request)
+            : AgendaEvento::query()->whereRaw('1 = 0');
 
         $conteosPorProblematica = DB::table('legajo_problematica')
             ->whereIn('legajo_id', (clone $legajos)->select('legajos.id'))
@@ -230,7 +244,12 @@ class EstadisticasController extends Controller
             ->whereDate('fecha_cierre', '>=', $desde->toDateString())
             ->whereDate('fecha_cierre', '<=', $hasta->toDateString())
             ->count();
-        $modificacionDates = $this->modificacionDates($desde, $hasta, $filtros);
+        $modificacionDates = $this->modificacionDates(
+            $desde,
+            $hasta,
+            $filtros,
+            $modulosDisponibles,
+        );
 
         return [
             'kpis' => [
@@ -240,6 +259,8 @@ class EstadisticasController extends Controller
                 'totalLegajos' => $legajosAltas,
                 'legajosAbiertos' => (clone $legajos)->where('estado', 'Abierto')->count(),
                 'legajosCerrados' => $legajosBajas,
+                'casosRiesgoCritico' => (clone $legajos)->where('nivel_riesgo', 'Critico')->count(),
+                'casosSinAsignar' => (clone $legajos)->whereNull('profesional_id')->count(),
                 'problematicasConCasos' => $problematicas->where('total', '>', 0)->count(),
                 'intervenciones' => (clone $intervenciones)->count(),
                 'tareas' => (clone $tareas)->count(),
@@ -288,7 +309,7 @@ class EstadisticasController extends Controller
                 'tipo' => $evento->tipo,
                 'estado' => $evento->estado,
                 'fecha' => $evento->fecha_inicio?->toIso8601String(),
-                'creador' => $evento->creador?->name,
+                'creador' => null,
             ])->values()->all(),
         ];
     }
@@ -547,15 +568,33 @@ class EstadisticasController extends Controller
         ];
     }
 
-    private function modificacionDates(CarbonInterface $desde, CarbonInterface $hasta, array $filtros): Collection
-    {
+    private function modificacionDates(
+        CarbonInterface $desde,
+        CarbonInterface $hasta,
+        array $filtros,
+        array $modulosDisponibles,
+    ): Collection {
         $dates = collect()
             ->merge((clone $this->personasBaseQuery($filtros))->whereBetween('actualizado_en', [$desde->startOfDay(), $hasta->endOfDay()])->pluck('actualizado_en'))
             ->merge((clone $this->legajosBaseQuery($filtros))->whereBetween('actualizado_en', [$desde->startOfDay(), $hasta->endOfDay()])->pluck('actualizado_en'))
             ->merge(Intervencion::query()->whereBetween('actualizado_en', [$desde->startOfDay(), $hasta->endOfDay()])->pluck('actualizado_en'))
-            ->merge(Tarea::query()->whereBetween('updated_at', [$desde->startOfDay(), $hasta->endOfDay()])->pluck('updated_at'))
-            ->merge(AgendaEvento::query()->whereBetween('updated_at', [$desde->startOfDay(), $hasta->endOfDay()])->pluck('updated_at'))
             ->merge(AuditoriaEvento::query()->where('evento', 'editado')->whereBetween('creado_en', [$desde->startOfDay(), $hasta->endOfDay()])->pluck('creado_en'));
+
+        if (in_array('tareas', $modulosDisponibles, true)) {
+            $dates = $dates->merge(
+                Tarea::query()
+                    ->whereBetween('updated_at', [$desde->startOfDay(), $hasta->endOfDay()])
+                    ->pluck('updated_at'),
+            );
+        }
+
+        if (in_array('agenda', $modulosDisponibles, true)) {
+            $dates = $dates->merge(
+                AgendaEvento::query()
+                    ->whereBetween('updated_at', [$desde->startOfDay(), $hasta->endOfDay()])
+                    ->pluck('updated_at'),
+            );
+        }
 
         return $dates->filter()->values();
     }
@@ -563,7 +602,6 @@ class EstadisticasController extends Controller
     private function modificacionesTimeline(CarbonInterface $desde, CarbonInterface $hasta): array
     {
         return AuditoriaEvento::query()
-            ->with('usuario')
             ->where('evento', 'editado')
             ->whereBetween('creado_en', [$desde->startOfDay(), $hasta->endOfDay()])
             ->latest('creado_en')
@@ -573,7 +611,7 @@ class EstadisticasController extends Controller
                 'id' => $evento->id,
                 'evento' => $evento->evento,
                 'fecha' => $evento->creado_en?->toIso8601String(),
-                'usuario' => $evento->usuario?->name,
+                'usuario' => null,
                 'tipo' => class_basename((string) $evento->auditable_type),
             ])
             ->values()

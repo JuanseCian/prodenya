@@ -36,7 +36,6 @@ export default function EstadisticasProblematicas(props: EstadisticasData) {
             <EstadisticasShell
                 active="problematicas"
                 title="Problemáticas"
-                subtitle="Casos por categoría"
                 modulosDisponibles={props.modulosDisponibles}
             >
                 <div className="stats-page-surface min-h-[calc(100vh-77px)] px-4 py-7 sm:px-7 sm:py-9 lg:px-10">
@@ -134,7 +133,7 @@ export default function EstadisticasProblematicas(props: EstadisticasData) {
                                                     problematica.id,
                                                 )}
                                                 preserveScroll
-                                                className={`group block rounded-md border p-3.5 transition ${props.problematicaSeleccionada?.id === problematica.id ? 'border-[#AAA4E5] bg-[#F8F7FC]' : 'border-[#DFE4EA] bg-[#FBFBFC] hover:border-[#AAA4E5]'}`}
+                                                className={`group block rounded-md border p-3.5 transition ${props.problematicaSeleccionada?.id === problematica.id ? 'border-[#7EAD8B] bg-[#EDF6EF]' : 'border-[#DFE4EA] bg-[#FBFBFC] hover:border-[#7EAD8B]'}`}
                                             >
                                                 <div className="flex items-center justify-between gap-3">
                                                     <span className="min-w-0 truncate text-sm font-semibold text-[#2C4A5E]">

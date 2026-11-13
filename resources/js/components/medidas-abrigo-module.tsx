@@ -168,8 +168,7 @@ export default function MedidasAbrigoModule({
                     )}
                 </div>
                 <p className="mt-1 text-sm text-[#2B2F36]/60">
-                    Registro de medidas de protección y documentación
-                    respaldatoria.
+                    Guardá la medida, su vigencia y las actas que la respaldan.
                 </p>
             </CardHeader>
 
@@ -238,7 +237,7 @@ export default function MedidasAbrigoModule({
                     ))
                 ) : (
                     <p className="rounded-lg border border-dashed border-[#DCE3DF] bg-[#FAFBFA] px-4 py-5 text-sm text-[#697586]">
-                        Todavía no hay medidas de abrigo registradas.
+                        No hay medidas de abrigo cargadas en este legajo.
                     </p>
                 )}
             </CardContent>
@@ -354,8 +353,8 @@ export default function MedidasAbrigoModule({
                                             Actas
                                         </h3>
                                         <p className="mt-1 text-xs text-[#697586]">
-                                            Podés cargar una, dos o las tres
-                                            actas.
+                                            Adjuntá las actas disponibles. Podés
+                                            cargar hasta tres.
                                         </p>
                                     </div>
                                     {tiposDisponibles.length > 0 && (
@@ -423,7 +422,7 @@ export default function MedidasAbrigoModule({
                                                 </select>
                                             </label>
                                             <label className="grid gap-1 text-xs font-semibold text-[#2C4A5E]">
-                                                Archivo
+                                                Archivo del acta
                                                 <input
                                                     required
                                                     type="file"

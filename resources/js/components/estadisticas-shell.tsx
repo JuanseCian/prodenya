@@ -1,15 +1,13 @@
 import { Link, router } from '@inertiajs/react';
 import {
-    BarChart3,
     ChevronRight,
     ClipboardCheck,
     Download,
     FolderOpen,
     HeartPulse,
+    House,
     LayoutDashboard,
     Menu,
-    PanelLeftClose,
-    PanelLeftOpen,
     Moon,
     Sun,
     TriangleAlert,
@@ -39,7 +37,7 @@ const modulos: Array<{
 }> = [
     {
         key: 'resumen',
-        label: 'Resumen',
+        label: 'Resumen institucional',
         href: estadisticasRoute().url,
         icon: LayoutDashboard,
     },
@@ -78,13 +76,11 @@ const modulos: Array<{
 export default function EstadisticasShell({
     active,
     title,
-    subtitle,
     modulosDisponibles,
     children,
 }: {
     active: EstadisticasModulo;
     title: string;
-    subtitle: string;
     modulosDisponibles?: EstadisticasModulo[];
     children: ReactNode;
 }) {
@@ -101,35 +97,61 @@ export default function EstadisticasShell({
         return () => window.clearInterval(refresh);
     }, []);
 
+    const visibleModules = modulos.filter(
+        (modulo) =>
+            !modulosDisponibles || modulosDisponibles.includes(modulo.key),
+    );
+
     return (
-        <div className="stats-module-shell min-h-screen bg-[#F7F8FA] text-[#243140] dark:bg-[#1B2028] dark:text-[#EDF1F5]">
+        <div className="stats-module-shell min-h-screen bg-[#F2F6F5] text-[#173247] dark:bg-[#101A20] dark:text-[#EDF6FB]">
             <div
-                className={`fixed inset-0 z-30 bg-[#243140]/35 lg:hidden dark:bg-black/55 ${mobileOpen ? 'opacity-100' : 'pointer-events-none opacity-0'}`}
+                className={`fixed inset-0 z-30 bg-[#173247]/45 transition-opacity lg:hidden dark:bg-black/60 ${mobileOpen ? 'opacity-100' : 'pointer-events-none opacity-0'}`}
                 onClick={() => setMobileOpen(false)}
                 aria-hidden="true"
             />
 
             <aside
-                className={`fixed inset-y-0 left-0 z-40 flex flex-col border-r border-[#DFE4EA] bg-white transition-[width,transform] duration-300 ease-out dark:border-[#3B4552] dark:bg-[#20262F] ${collapsed ? 'lg:w-[82px]' : 'lg:w-[260px]'} ${mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'} w-[260px]`}
+                className={`fixed inset-y-0 left-0 z-40 flex flex-col border-r border-[#315063] bg-[linear-gradient(180deg,#173247_0%,#1C4850_100%)] transition-[width,transform] duration-300 ease-out dark:border-[#29404D] dark:bg-[linear-gradient(180deg,#142630_0%,#173C42_100%)] ${collapsed ? 'lg:w-[78px]' : 'lg:w-[270px]'} ${mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'} w-[270px]`}
             >
-                <div className="flex items-center justify-between border-b border-[#DFE4EA] px-4 py-5 dark:border-[#3B4552]">
-                    <Link
-                        href={estadisticasRoute().url}
-                        className={`flex min-w-0 items-center gap-3 ${collapsed ? 'lg:mx-auto' : ''}`}
-                        onClick={() => setMobileOpen(false)}
-                    >
-                        <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-[#EEECF7] text-[#5B559E] dark:bg-[#38385A] dark:text-[#AAA4E5]">
-                            <BarChart3 size={21} strokeWidth={1.8} />
-                        </span>
-                        <span className={`${collapsed ? 'lg:hidden' : ''}`}>
-                            <strong className="block text-sm font-bold tracking-[0.08em] text-[#173247] uppercase dark:text-[#EDF6FB]">
-                                Estadísticas
-                            </strong>
-                        </span>
-                    </Link>
+                <div className="flex items-center justify-between border-b border-white/10 px-4 py-5">
                     <button
                         type="button"
-                        className="grid size-8 place-items-center rounded-md text-[#697586] transition hover:bg-[#F1F3F5] hover:text-[#5B559E] lg:hidden dark:text-[#ADB7C3] dark:hover:bg-[#323845] dark:hover:text-[#AAA4E5]"
+                        className={`group flex min-w-0 items-center gap-3 rounded-md text-left outline-none ${collapsed ? 'lg:mx-auto' : ''}`}
+                        onClick={() => {
+                            if (
+                                window.matchMedia('(min-width: 1024px)').matches
+                            ) {
+                                setCollapsed((value) => !value);
+                            }
+
+                            setMobileOpen(false);
+                        }}
+                        aria-label={
+                            collapsed
+                                ? 'Expandir navegación'
+                                : 'Contraer navegación'
+                        }
+                        aria-expanded={!collapsed}
+                    >
+                        <span className="grid size-10 shrink-0 place-items-center rounded-md bg-[#CDE8D6] p-1 shadow-[0_5px_18px_rgba(0,0,0,0.12)] transition group-hover:bg-white">
+                            <img
+                                src="/assets/img/SN.png"
+                                alt=""
+                                className="size-full rounded object-contain"
+                            />
+                        </span>
+                        <span className={`${collapsed ? 'lg:hidden' : ''}`}>
+                            <strong className="block text-sm font-bold tracking-[0.08em] text-white uppercase">
+                                PRODENYA
+                            </strong>
+                            <span className="mt-0.5 block text-xs text-white/55">
+                                Estadísticas
+                            </span>
+                        </span>
+                    </button>
+                    <button
+                        type="button"
+                        className="grid size-8 place-items-center rounded-md text-white/65 transition hover:bg-white/10 hover:text-white lg:hidden"
                         onClick={() => setMobileOpen(false)}
                         aria-label="Cerrar menú de estadísticas"
                     >
@@ -137,23 +159,19 @@ export default function EstadisticasShell({
                     </button>
                 </div>
 
-                <div className={`px-3 pt-6 ${collapsed ? 'lg:px-2' : ''}`}>
+                <div
+                    className={`flex-1 px-3 pt-7 ${collapsed ? 'lg:px-2' : ''}`}
+                >
                     <p
-                        className={`px-3 text-[0.65rem] font-bold tracking-[0.14em] text-[#697586] uppercase dark:text-[#ADB7C3] ${collapsed ? 'lg:hidden' : ''}`}
+                        className={`px-3 text-[0.65rem] font-bold tracking-[0.14em] text-[#B9D5E1]/60 uppercase ${collapsed ? 'lg:hidden' : ''}`}
                     >
-                        Módulos
+                        Análisis
                     </p>
                     <nav
                         className="mt-3 space-y-1.5"
                         aria-label="Módulos de estadísticas"
                     >
-                        {modulos
-                            .filter(
-                                (modulo) =>
-                                    !modulosDisponibles ||
-                                    modulosDisponibles.includes(modulo.key),
-                            )
-                            .map((modulo) => {
+                        {visibleModules.map((modulo) => {
                             const Icon = modulo.icon;
                             const isActive = active === modulo.key;
 
@@ -162,13 +180,13 @@ export default function EstadisticasShell({
                                     key={modulo.key}
                                     href={modulo.href}
                                     onClick={() => setMobileOpen(false)}
-                                    className={`group relative flex items-center gap-3 rounded-lg px-3 py-2.5 transition ${collapsed ? 'lg:justify-center lg:px-0' : ''} ${isActive ? 'bg-[#EEECF7] text-[#5B559E] dark:bg-[#38385A] dark:text-[#AAA4E5]' : 'text-[#697586] hover:bg-[#F1F3F5] hover:text-[#5B559E] dark:text-[#ADB7C3] dark:hover:bg-[#323845] dark:hover:text-[#AAA4E5]'}`}
+                                    className={`group relative flex items-center gap-3 rounded-md px-3 py-2.5 transition ${collapsed ? 'lg:justify-center lg:px-0' : ''} ${isActive ? 'bg-[#D9EBDD] text-[#173247]' : 'text-white/68 hover:bg-white/10 hover:text-white'}`}
                                     title={collapsed ? modulo.label : undefined}
                                 >
                                     <span
-                                        className={`grid size-8 shrink-0 place-items-center rounded-md transition ${isActive ? 'bg-[#DDD9F1] text-[#5B559E] dark:bg-[#4A456C] dark:text-[#AAA4E5]' : 'bg-[#F1F3F5] text-[#697586] group-hover:bg-[#EEECF7] group-hover:text-[#5B559E] dark:bg-[#323845] dark:text-[#ADB7C3] dark:group-hover:bg-[#4A456C] dark:group-hover:text-[#AAA4E5]'}`}
+                                        className={`grid size-8 shrink-0 place-items-center rounded-md transition ${isActive ? 'bg-white/65 text-[#1E5143]' : 'bg-white/8 text-[#B9D5E1] group-hover:bg-white/15 group-hover:text-white'}`}
                                     >
-                                        <Icon size={18} strokeWidth={1.8} />
+                                        <Icon size={17} strokeWidth={1.8} />
                                     </span>
                                     <span
                                         className={`min-w-0 ${collapsed ? 'lg:hidden' : ''}`}
@@ -185,65 +203,49 @@ export default function EstadisticasShell({
                                     )}
                                 </Link>
                             );
-                            })}
+                        })}
                     </nav>
                 </div>
 
-                <div className="mt-auto space-y-3 border-t border-[#DFE4EA] p-3 dark:border-[#3B4552]">
-                    <Link
-                        href="/legajos"
-                        className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold text-[#697586] transition hover:bg-[#F1F3F5] hover:text-[#5B559E] dark:text-[#ADB7C3] dark:hover:bg-[#323845] dark:hover:text-[#AAA4E5] ${collapsed ? 'lg:justify-center lg:px-0' : ''}`}
-                        title={collapsed ? 'Volver a legajos' : undefined}
+                <div className="border-t border-white/10 p-3">
+                    <a
+                        href="/"
+                        onClick={() => setMobileOpen(false)}
+                        className={`flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-semibold text-white/70 transition hover:bg-white/10 hover:text-white ${collapsed ? 'lg:justify-center lg:px-0' : ''}`}
+                        title={collapsed ? 'Inicio' : undefined}
                     >
-                        <FolderOpen size={19} strokeWidth={1.8} />
+                        <House size={18} strokeWidth={1.8} />
                         <span className={`${collapsed ? 'lg:hidden' : ''}`}>
-                            Volver a Legajos
+                            Inicio
                         </span>
-                    </Link>
-                    <button
-                        type="button"
-                        onClick={() => setCollapsed((value) => !value)}
-                        className="hidden w-full items-center justify-center gap-2 rounded-md border border-[#DFE4EA] bg-[#F7F8FA] px-3 py-2.5 text-xs font-semibold text-[#697586] transition hover:border-[#AAA4E5] hover:text-[#5B559E] lg:flex dark:border-[#3B4552] dark:bg-[#2C333E] dark:text-[#ADB7C3] dark:hover:border-[#625CAA] dark:hover:text-[#AAA4E5]"
-                        aria-label={
-                            collapsed ? 'Expandir panel' : 'Plegar panel'
-                        }
-                    >
-                        {collapsed ? (
-                            <PanelLeftOpen size={16} />
-                        ) : (
-                            <PanelLeftClose size={16} />
-                        )}
-                        <span className={collapsed ? 'lg:hidden' : ''}>
-                            {collapsed ? 'Expandir' : 'Plegar panel'}
-                        </span>
-                    </button>
+                    </a>
                 </div>
             </aside>
 
             <div
-                className={`min-h-screen transition-[margin] duration-300 ${collapsed ? 'lg:ml-[82px]' : 'lg:ml-[260px]'}`}
+                className={`min-h-screen transition-[margin] duration-300 ${collapsed ? 'lg:ml-[78px]' : 'lg:ml-[270px]'}`}
             >
-                <header className="sticky top-0 z-20 border-b border-[#DFE4EA] bg-white dark:border-[#3B4552] dark:bg-[#20262F]">
+                <header className="sticky top-0 z-20 border-b border-[#DCE3E6] bg-[#F8FAFA]/95 backdrop-blur dark:border-[#29404D] dark:bg-[#142630]/95">
                     <div className="flex items-center justify-between gap-4 px-4 py-4 sm:px-7 lg:px-10">
-                        <div className="flex items-center gap-3">
+                        <div className="flex min-w-0 items-center gap-3">
                             <button
                                 type="button"
-                                className="grid size-10 place-items-center rounded-md border border-[#DFE4EA] bg-white text-[#5B559E] lg:hidden dark:border-[#3B4552] dark:bg-[#2C333E] dark:text-[#AAA4E5]"
+                                className="grid size-10 shrink-0 place-items-center rounded-md border border-[#DCE3E6] bg-white text-[#2C4A5E] lg:hidden dark:border-[#29404D] dark:bg-[#1D303B] dark:text-[#B9D5E1]"
                                 onClick={() => setMobileOpen(true)}
                                 aria-label="Abrir menú de estadísticas"
                             >
                                 <Menu size={19} />
                             </button>
-                            <div>
-                                <h1 className="mt-0.5 text-xl font-semibold tracking-tight text-[#173247] sm:text-2xl dark:text-[#EDF6FB]">
+                            <div className="min-w-0">
+                                <h1 className="truncate text-xl font-semibold tracking-tight text-[#173247] sm:text-2xl dark:text-[#EDF6FB]">
                                     {title}
                                 </h1>
                             </div>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex shrink-0 items-center gap-2">
                             <a
                                 href={`/estadisticas/exportar${window.location.search}`}
-                                className="hidden size-10 place-items-center rounded-md border border-[#DFE4EA] bg-white text-[#5B559E] transition hover:border-[#AAA4E5] sm:grid dark:border-[#3B4552] dark:bg-[#2C333E] dark:text-[#AAA4E5]"
+                                className="hidden size-10 place-items-center rounded-md border border-[#DCE3E6] bg-white text-[#2C4A5E] transition hover:border-[#7EAD8B] hover:bg-[#F2F8F3] sm:grid dark:border-[#29404D] dark:bg-[#1D303B] dark:text-[#B9D5E1]"
                                 aria-label="Exportar estadísticas en CSV"
                                 title="Exportar CSV"
                             >
@@ -252,18 +254,18 @@ export default function EstadisticasShell({
                             <button
                                 type="button"
                                 onClick={() => window.print()}
-                                className="hidden size-10 place-items-center rounded-md border border-[#DFE4EA] bg-white text-[#5B559E] transition hover:border-[#AAA4E5] sm:grid dark:border-[#3B4552] dark:bg-[#2C333E] dark:text-[#AAA4E5]"
+                                className="hidden h-10 items-center justify-center rounded-md border border-[#DCE3E6] bg-white px-3 text-xs font-bold text-[#2C4A5E] transition hover:border-[#7EAD8B] hover:bg-[#F2F8F3] sm:flex dark:border-[#29404D] dark:bg-[#1D303B] dark:text-[#B9D5E1]"
                                 aria-label="Imprimir estadísticas"
                                 title="Vista imprimible / PDF"
                             >
-                                <span className="text-sm font-bold">PDF</span>
+                                PDF
                             </button>
                             <button
                                 type="button"
                                 onClick={() =>
                                     updateAppearance(isDark ? 'light' : 'dark')
                                 }
-                                className="grid size-10 place-items-center rounded-md border border-[#DFE4EA] bg-white text-[#5B559E] transition hover:border-[#AAA4E5] dark:border-[#3B4552] dark:bg-[#2C333E] dark:text-[#AAA4E5]"
+                                className="grid size-10 place-items-center rounded-md border border-[#DCE3E6] bg-white text-[#2C4A5E] transition hover:border-[#7EAD8B] dark:border-[#29404D] dark:bg-[#1D303B] dark:text-[#B9D5E1]"
                                 aria-label={
                                     isDark
                                         ? 'Activar modo claro'
@@ -277,9 +279,6 @@ export default function EstadisticasShell({
                                     <Moon size={17} />
                                 )}
                             </button>
-                            <p className="hidden max-w-sm text-right text-sm text-[#2C4A5E]/60 sm:block dark:text-[#B7C9D4]">
-                                {subtitle}
-                            </p>
                         </div>
                     </div>
                 </header>

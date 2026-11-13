@@ -14,7 +14,7 @@ type Props = {
 
 const SAN_NICOLAS_CENTER: L.LatLngExpression = [-33.334, -60.225];
 const COLORS = [
-    '#5B559E',
+    '#2C4A5E',
     '#397461',
     '#C66A10',
     '#2C7A9B',
@@ -133,7 +133,7 @@ export default function EstadisticasMapa({ data, problematicas }: Props) {
                         return (
                             <label
                                 key={problematica.id}
-                                className={`inline-flex cursor-pointer items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold transition ${active ? 'border-[#D4D0ED] bg-[#F4F2FC] text-[#514B9F] dark:border-[#625CAA] dark:bg-[#38385A] dark:text-[#D8D3FF]' : 'border-[#DFE4EA] bg-white text-[#8A96A3] dark:border-[#3B4552] dark:bg-[#2C333E]'}`}
+                                className={`inline-flex cursor-pointer items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold transition ${active ? 'border-[#B8D7C2] bg-[#EDF6EF] text-[#2C4A5E] dark:border-[#527460] dark:bg-[#29403A] dark:text-[#CDE8D6]' : 'border-[#DFE4EA] bg-white text-[#8A96A3] dark:border-[#3B4552] dark:bg-[#2C333E]'}`}
                             >
                                 <input
                                     type="checkbox"

@@ -68,6 +68,10 @@ test('statistics are role protected and expose the redesigned data contract', fu
             ->has('kpis.personasAltas')
             ->has('kpis.legajosAltas')
             ->has('kpis.legajosBajas')
+            ->has('kpis.casosRiesgoCritico')
+            ->has('kpis.casosSinAsignar')
+            ->where('kpis.tareas', 0)
+            ->where('kpis.agenda', 0)
             ->has('intervencionesPorTipo')
             ->where('mapaBarrios.disponible', false)
             ->has('mapaBarrios.zonas'));
