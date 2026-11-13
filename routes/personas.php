@@ -3,7 +3,6 @@
 use App\Http\Controllers\CoberturaSaludController;
 use App\Http\Controllers\CudController;
 use App\Http\Controllers\DerivacionCasoController;
-use App\Http\Controllers\FichaController;
 use App\Http\Controllers\GrupoFamiliarController;
 use App\Http\Controllers\IntervencionController;
 use App\Http\Controllers\LegajoController;
@@ -79,7 +78,6 @@ Route::middleware(['auth'])->group(function () {
         })->name('personas.show')->whereNumber('persona');
         Route::get('/legajos', [LegajoController::class, 'index'])->name('legajos.index');
         Route::get('/mayores-18', [LegajoController::class, 'mayores18'])->name('mayores18.index');
-        Route::get('/fichas', [FichaController::class, 'index'])->name('fichas.index');
         Route::get('/legajos/{legajo}/estadisticas', [LegajoController::class, 'estadisticas'])
             ->name('legajos.estadisticas')->whereNumber('legajo');
         Route::get('/legajos/{legajo}/documentacion', [CudController::class, 'show'])

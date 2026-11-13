@@ -18,7 +18,6 @@ export default function EstadisticasIntervenciones(props: EstadisticasData) {
             <EstadisticasShell
                 active="intervenciones"
                 title="Intervenciones"
-                subtitle={props.rango.descripcion}
                 modulosDisponibles={props.modulosDisponibles}
             >
                 <div className="stats-page-surface min-h-[calc(100vh-77px)] px-4 py-7 sm:px-7 sm:py-9 lg:px-10">

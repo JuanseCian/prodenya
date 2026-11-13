@@ -3,7 +3,6 @@ import {
     BarChart3,
     CalendarDays,
     ClipboardCheck,
-    FileText,
     FolderOpen,
     Home,
     LayoutGrid,
@@ -26,7 +25,6 @@ import {
 } from '@/components/ui/sidebar';
 import { dashboard, estadisticas as estadisticasRoute } from '@/routes';
 import agenda from '@/routes/agenda';
-import fichas from '@/routes/fichas';
 import mailbox from '@/routes/mailbox';
 import tareas from '@/routes/tareas';
 import type { NavItem } from '@/types';
@@ -45,11 +43,6 @@ export function AppSidebar() {
             title: 'Consultar legajos',
             href: '/legajos',
             icon: FolderOpen,
-        },
-        {
-            title: 'Todas las fichas',
-            href: fichas.index().url,
-            icon: FileText,
         },
         ...(page.props.can?.accessStatistics
             ? [

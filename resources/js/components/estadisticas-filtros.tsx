@@ -1,12 +1,18 @@
-import { ChevronDown, Filter, RotateCcw, SlidersHorizontal } from 'lucide-react';
+import { router } from '@inertiajs/react';
+import {
+    ChevronDown,
+    Filter,
+    RotateCcw,
+    SlidersHorizontal,
+} from 'lucide-react';
 import { useState } from 'react';
 
-import type { ChangeEventHandler, ReactNode } from 'react';
+import type { ChangeEventHandler, FormEvent, ReactNode } from 'react';
 
 import type { EstadisticasData, Preset } from '@/components/estadisticas-types';
 
 const inputClass =
-    'mt-1.5 h-10 w-full rounded-md border border-[#D5DCE4] bg-white px-3 text-sm font-medium text-[#243140] outline-none transition focus:border-[#5B559E] focus:ring-2 focus:ring-[#AAA4E5]/20 dark:border-[#3B4552] dark:bg-[#2C333E] dark:text-[#EDF1F5]';
+    'mt-1.5 h-10 w-full rounded-md border border-[#D5DCE4] bg-white px-3 text-sm font-medium text-[#243140] outline-none transition focus:border-[#2C4A5E] focus:ring-2 focus:ring-[#7EAD8B]/30 dark:border-[#3B4552] dark:bg-[#2C333E] dark:text-[#EDF1F5]';
 
 function SelectField({
     label,
@@ -77,16 +83,37 @@ export default function EstadisticasFiltros({
     const [advancedOpen, setAdvancedOpen] = useState(
         Boolean(
             filtros.estado ||
-                filtros.problematica ||
-                filtros.profesional ||
-                filtros.responsable ||
-                filtros.edad ||
-                filtros.genero ||
-                filtros.tipo_intervencion ||
-                filtros.tarea_estado ||
-                filtros.agenda_estado,
+            filtros.problematica ||
+            filtros.profesional ||
+            filtros.responsable ||
+            filtros.edad ||
+            filtros.genero ||
+            filtros.tipo_intervencion ||
+            filtros.tarea_estado ||
+            filtros.agenda_estado,
         ),
     );
+    const [submitting, setSubmitting] = useState(false);
+
+    const submitFilters = (event: FormEvent<HTMLFormElement>): void => {
+        event.preventDefault();
+
+        const query: Record<string, string> = {};
+        const formData = new FormData(event.currentTarget);
+
+        formData.forEach((value, key) => {
+            if (typeof value === 'string' && value !== '') {
+                query[key] = value;
+            }
+        });
+
+        router.get(window.location.pathname, query, {
+            preserveScroll: true,
+            replace: true,
+            onStart: () => setSubmitting(true),
+            onFinish: () => setSubmitting(false),
+        });
+    };
 
     const activeFilters = [
         filtros.comparar !== 'ninguno',
@@ -106,14 +133,13 @@ export default function EstadisticasFiltros({
 
     return (
         <form
-            method="get"
-            action={window.location.pathname}
-            className="overflow-hidden rounded-xl border border-[#DFE4EA] bg-white shadow-[0_8px_24px_rgba(23,50,71,0.04)] dark:border-[#3B4552] dark:bg-[#232A34]"
+            onSubmit={submitFilters}
+            className="overflow-hidden rounded-md border border-[#DCE3E6] bg-white shadow-[0_8px_24px_rgba(23,50,71,0.04)] dark:border-[#34424B] dark:bg-[#1D2A31]"
         >
-            <div className="border-b border-[#EDF0F3] px-4 py-4 sm:px-5 dark:border-[#3B4552]">
+            <div className="border-b border-[#E8EEEA] px-4 py-4 sm:px-5 dark:border-[#34424B]">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="flex items-center gap-2">
-                        <span className="grid size-8 place-items-center rounded-md bg-[#EEECF7] text-[#5B559E] dark:bg-[#38385A] dark:text-[#AAA4E5]">
+                        <span className="grid size-8 place-items-center rounded-md bg-[#E8F0F3] text-[#2C4A5E] dark:bg-[#29404D] dark:text-[#B9D5E1]">
                             <Filter size={16} />
                         </span>
                         <div>
@@ -127,13 +153,15 @@ export default function EstadisticasFiltros({
                     </div>
                     <div className="flex items-center gap-2">
                         {activeFilters > 0 && (
-                            <span className="rounded-full bg-[#EEECF7] px-2.5 py-1 text-[11px] font-bold text-[#5B559E] dark:bg-[#38385A] dark:text-[#AAA4E5]">
-                                {activeFilters} filtro{activeFilters === 1 ? '' : 's'} activo{activeFilters === 1 ? '' : 's'}
+                            <span className="rounded-full bg-[#E8F0F3] px-2.5 py-1 text-[11px] font-bold text-[#2C4A5E] dark:bg-[#29404D] dark:text-[#B9D5E1]">
+                                {activeFilters} filtro
+                                {activeFilters === 1 ? '' : 's'} activo
+                                {activeFilters === 1 ? '' : 's'}
                             </span>
                         )}
                         <a
                             href={window.location.pathname}
-                            className="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-semibold text-[#697586] transition hover:bg-[#F5F6F8] hover:text-[#5B559E] dark:hover:bg-[#2C333E] dark:hover:text-[#AAA4E5]"
+                            className="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-semibold text-[#697586] transition hover:bg-[#F5F6F8] hover:text-[#2C4A5E] dark:hover:bg-[#2C333E] dark:hover:text-[#B9D5E1]"
                         >
                             <RotateCcw size={14} /> Limpiar
                         </a>
@@ -155,7 +183,9 @@ export default function EstadisticasFiltros({
                         <option value="hoy">Día actual</option>
                         <option value="mes_actual">Mes actual</option>
                         <option value="anio_actual">Año actual</option>
-                        <option value="personalizado">Rango personalizado</option>
+                        <option value="personalizado">
+                            Rango personalizado
+                        </option>
                     </SelectField>
                     <DateField
                         label="Desde"
@@ -180,9 +210,11 @@ export default function EstadisticasFiltros({
                     </SelectField>
                     <button
                         type="submit"
-                        className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-[#5B559E] px-5 text-sm font-semibold text-white transition hover:bg-[#4F498E] focus:ring-2 focus:ring-[#AAA4E5]/40 focus:outline-none"
+                        className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-[#2C4A5E] px-5 text-sm font-semibold text-white transition hover:bg-[#173247] focus:ring-2 focus:ring-[#7EAD8B]/40 focus:outline-none disabled:cursor-wait disabled:opacity-70"
+                        disabled={submitting}
                     >
-                        <Filter size={16} /> Aplicar
+                        <Filter size={16} />{' '}
+                        {submitting ? 'Actualizando…' : 'Aplicar'}
                     </button>
                 </div>
 
@@ -190,7 +222,7 @@ export default function EstadisticasFiltros({
                     <button
                         type="button"
                         onClick={() => setAdvancedOpen((open) => !open)}
-                        className="inline-flex items-center gap-2 rounded-md py-1 text-sm font-semibold text-[#5B559E] transition hover:text-[#4F498E] focus:ring-2 focus:ring-[#AAA4E5]/40 focus:outline-none dark:text-[#AAA4E5]"
+                        className="inline-flex items-center gap-2 rounded-md py-1 text-sm font-semibold text-[#2C4A5E] transition hover:text-[#173247] focus:ring-2 focus:ring-[#7EAD8B]/40 focus:outline-none dark:text-[#B9D5E1]"
                         aria-expanded={advancedOpen}
                     >
                         <SlidersHorizontal size={16} />
@@ -216,7 +248,9 @@ export default function EstadisticasFiltros({
                                         <option value="">Todos</option>
                                         <option value="Abierto">Abierto</option>
                                         <option value="Cerrado">Cerrado</option>
-                                        <option value="Archivado">Archivado</option>
+                                        <option value="Archivado">
+                                            Archivado
+                                        </option>
                                     </SelectField>
                                     <SelectField
                                         label="Problemática"
@@ -225,7 +259,10 @@ export default function EstadisticasFiltros({
                                     >
                                         <option value="">Todas</option>
                                         {problematicas.map((item) => (
-                                            <option key={item.id} value={item.id}>
+                                            <option
+                                                key={item.id}
+                                                value={item.id}
+                                            >
                                                 {item.nombre}
                                             </option>
                                         ))}
@@ -237,8 +274,14 @@ export default function EstadisticasFiltros({
                                     >
                                         <option value="">Todos</option>
                                         {catalogos.profesionales.map((item) => (
-                                            <option key={item.id} value={item.id}>
-                                                {item.name}{item.profesion ? ` · ${item.profesion}` : ''}
+                                            <option
+                                                key={item.id}
+                                                value={item.id}
+                                            >
+                                                {item.name}
+                                                {item.profesion
+                                                    ? ` · ${item.profesion}`
+                                                    : ''}
                                             </option>
                                         ))}
                                     </SelectField>
@@ -249,7 +292,10 @@ export default function EstadisticasFiltros({
                                     >
                                         <option value="">Todas</option>
                                         {catalogos.edades.map((item) => (
-                                            <option key={item.value} value={item.value}>
+                                            <option
+                                                key={item.value}
+                                                value={item.value}
+                                            >
                                                 {item.label}
                                             </option>
                                         ))}
@@ -261,7 +307,10 @@ export default function EstadisticasFiltros({
                                     >
                                         <option value="">Todos</option>
                                         {catalogos.generos.map((item) => (
-                                            <option key={item.value} value={item.value}>
+                                            <option
+                                                key={item.value}
+                                                value={item.value}
+                                            >
                                                 {item.label}
                                             </option>
                                         ))}
@@ -273,8 +322,14 @@ export default function EstadisticasFiltros({
                                     >
                                         <option value="">Todos</option>
                                         {catalogos.responsables.map((item) => (
-                                            <option key={item.id} value={item.id}>
-                                                {item.name}{item.profesion ? ` · ${item.profesion}` : ''}
+                                            <option
+                                                key={item.id}
+                                                value={item.id}
+                                            >
+                                                {item.name}
+                                                {item.profesion
+                                                    ? ` · ${item.profesion}`
+                                                    : ''}
                                             </option>
                                         ))}
                                     </SelectField>
@@ -292,11 +347,16 @@ export default function EstadisticasFiltros({
                                         defaultValue={filtros.tipo_intervencion}
                                     >
                                         <option value="">Todos</option>
-                                        {catalogos.tiposIntervencion.map((item) => (
-                                            <option key={item.id} value={item.id}>
-                                                {item.nombre}
-                                            </option>
-                                        ))}
+                                        {catalogos.tiposIntervencion.map(
+                                            (item) => (
+                                                <option
+                                                    key={item.id}
+                                                    value={item.id}
+                                                >
+                                                    {item.nombre}
+                                                </option>
+                                            ),
+                                        )}
                                     </SelectField>
                                     <SelectField
                                         label="Estado de tarea"
@@ -304,10 +364,18 @@ export default function EstadisticasFiltros({
                                         defaultValue={filtros.tarea_estado}
                                     >
                                         <option value="">Todos</option>
-                                        <option value="pendiente">Pendiente</option>
-                                        <option value="en_progreso">En progreso</option>
-                                        <option value="completada">Completada</option>
-                                        <option value="cancelada">Cancelada</option>
+                                        <option value="pendiente">
+                                            Pendiente
+                                        </option>
+                                        <option value="en_progreso">
+                                            En progreso
+                                        </option>
+                                        <option value="completada">
+                                            Completada
+                                        </option>
+                                        <option value="cancelada">
+                                            Cancelada
+                                        </option>
                                     </SelectField>
                                     <SelectField
                                         label="Estado de agenda"
@@ -315,9 +383,15 @@ export default function EstadisticasFiltros({
                                         defaultValue={filtros.agenda_estado}
                                     >
                                         <option value="">Todos</option>
-                                        <option value="programado">Programado</option>
-                                        <option value="realizado">Realizado</option>
-                                        <option value="cancelado">Cancelado</option>
+                                        <option value="programado">
+                                            Programado
+                                        </option>
+                                        <option value="realizado">
+                                            Realizado
+                                        </option>
+                                        <option value="cancelado">
+                                            Cancelado
+                                        </option>
                                     </SelectField>
                                 </div>
                             </fieldset>

@@ -1,5 +1,6 @@
 import { createRoot } from 'react-dom/client';
 import { NotificationCenter } from '@/components/notification-center';
+import PasskeyOnboardingModal from '@/components/passkey-onboarding-modal';
 import { Toaster } from '@/components/ui/sonner';
 import type { NotificationItem } from '@/types';
 
@@ -16,6 +17,10 @@ if (notificationMount) {
             notificationMount.dataset.notificationsUnread ?? 0,
         );
         const standalone = notificationMount.dataset.mode !== 'inertia';
+        const passkeyEnabled =
+            notificationMount.dataset.passkeyEnabled === '1';
+        const passkeyPasswordConfirmed =
+            notificationMount.dataset.passkeyPasswordConfirmed === '1';
 
         createRoot(notificationMount).render(
             <>
@@ -25,6 +30,10 @@ if (notificationMount) {
                     standalone={standalone}
                     endpoint={notificationMount.dataset.endpoint}
                     placement="header"
+                />
+                <PasskeyOnboardingModal
+                    enabled={passkeyEnabled}
+                    passwordConfirmed={passkeyPasswordConfirmed}
                 />
                 {standalone && <Toaster />}
             </>,

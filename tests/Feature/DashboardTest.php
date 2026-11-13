@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\TeamRole;
+use App\Models\Passkey;
 use App\Models\Team;
 use App\Models\TeamInvitation;
 use App\Models\User;
@@ -23,6 +24,35 @@ test('authenticated users can visit the dashboard', function () {
         ->get(route('dashboard'));
 
     $response->assertOk();
+});
+
+test('dashboard prompts users without a passkey to configure one', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->get(route('dashboard'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('dashboard')
+            ->where('showPasskeyNotice', true),
+        );
+});
+
+test('dashboard hides the passkey prompt when the user has a passkey', function () {
+    $user = User::factory()->create();
+
+    Passkey::create([
+        'user_id' => $user->id,
+        'name' => 'Notebook de trabajo',
+        'credential_id' => 'dashboard-test-credential',
+        'credential' => ['id' => 'dashboard-test-credential'],
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('dashboard'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('dashboard')
+            ->where('showPasskeyNotice', false),
+        );
 });
 
 test('dashboard includes pending invitations for the authenticated user', function () {

@@ -5,11 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\Legajo;
 use App\Models\MailMessage;
 use App\Models\User;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class AdminHomeController extends Controller
 {
-    public function __invoke(): View
+    public function __invoke(Request $request): View
     {
         $legajosActivos = Legajo::whereHas('persona', fn ($query) => $query->where('activo', true))->count();
         $legajosRegistrados = Legajo::count();
