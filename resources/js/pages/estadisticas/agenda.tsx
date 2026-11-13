@@ -18,7 +18,6 @@ export default function EstadisticasAgenda(props: EstadisticasData) {
             <EstadisticasShell
                 active="agenda"
                 title="Agenda"
-                subtitle={props.rango.descripcion}
                 modulosDisponibles={props.modulosDisponibles}
             >
                 <div className="stats-page-surface min-h-[calc(100vh-77px)] px-4 py-7 sm:px-7 sm:py-9 lg:px-10">
@@ -100,7 +99,7 @@ export default function EstadisticasAgenda(props: EstadisticasData) {
                                         props.agendaTimeline.map((item) => (
                                             <div
                                                 key={item.id}
-                                                className="border-l-2 border-[#AAA4E5] pl-3 text-sm"
+                                                className="border-l-2 border-[#7EAD8B] pl-3 text-sm"
                                             >
                                                 <strong className="text-[#2C4A5E] dark:text-[#D8E2E8]">
                                                     {item.titulo}

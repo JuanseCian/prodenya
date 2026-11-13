@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Passkey;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
@@ -12,6 +13,22 @@ beforeEach(function () {
 
 test('administrators can access the backend home', function () {
     $admin = User::factory()->create(['rol_id' => 1]);
+
+    $this->actingAs($admin)
+        ->get(route('admin.home'))
+        ->assertOk()
+        ->assertViewIs('backend.home.home');
+});
+
+test('administrators with a passkey do not see the passkey notice', function () {
+    $admin = User::factory()->create(['rol_id' => 1]);
+
+    Passkey::create([
+        'user_id' => $admin->id,
+        'name' => 'Notebook de trabajo',
+        'credential_id' => 'admin-home-test-credential',
+        'credential' => ['id' => 'admin-home-test-credential'],
+    ]);
 
     $this->actingAs($admin)
         ->get(route('admin.home'))

@@ -73,6 +73,8 @@ export interface EstadisticasData {
         totalLegajos: number;
         legajosAbiertos: number;
         legajosCerrados: number;
+        casosRiesgoCritico: number;
+        casosSinAsignar: number;
         problematicasConCasos: number;
         intervenciones: number;
         tareas: number;

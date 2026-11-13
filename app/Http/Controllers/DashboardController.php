@@ -8,6 +8,7 @@ use App\Models\TeamInvitation;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use Laravel\Fortify\Features;
 
 class DashboardController extends Controller
 {
@@ -52,6 +53,10 @@ class DashboardController extends Controller
                     'estado' => $legajo->estado,
                     'fechaApertura' => $legajo->fecha_apertura?->format('d/m/Y'),
                 ]) : collect(),
+            'showPasskeyNotice' => Features::canManagePasskeys()
+                && ! $request->user()->passkeys()->exists(),
+            'passkeyPasswordConfirmed' => now()->timestamp - (int) $request->session()->get('auth.password_confirmed_at', 0)
+                <= (int) config('auth.password_timeout'),
             'pendingInvitations' => TeamInvitation::query()
                 ->with(['team', 'inviter'])
                 ->where('email', $request->user()->email)

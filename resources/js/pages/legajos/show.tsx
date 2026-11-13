@@ -48,7 +48,6 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import derivacionesRoutes from '@/routes/derivaciones';
-import fichasRoutes from '@/routes/fichas';
 import legajosRoutes from '@/routes/legajos';
 
 interface LegajoDetalle {
@@ -170,6 +169,10 @@ interface Props {
 
 const tituloCard = 'text-base font-semibold text-[#2C4A5E]';
 const MAX_RESPONSABLES_ACTIVOS = 3;
+const actionPrimaryClass =
+    'inline-flex h-10 items-center gap-2 rounded-xl bg-[#CDE8D6] px-4 text-sm font-bold text-[#1E5143] transition duration-200 hover:-translate-y-0.5 hover:bg-white focus-visible:ring-2 focus-visible:ring-[#CDE8D6] focus-visible:ring-offset-2 focus-visible:ring-offset-[#173247]';
+const actionSecondaryClass =
+    'inline-flex h-10 items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-4 text-sm font-semibold text-white transition duration-200 hover:-translate-y-0.5 hover:bg-white/15 focus-visible:ring-2 focus-visible:ring-[#CDE8D6] focus-visible:ring-offset-2 focus-visible:ring-offset-[#173247]';
 
 export default function LegajoShow({
     legajo,
@@ -313,16 +316,16 @@ export default function LegajoShow({
             <Head title={`Legajo ${legajo.numero_legajo}`} />
 
             <main
-                className="min-h-screen bg-[#F4F6F5] px-4 py-6 sm:px-6 sm:py-8 lg:px-8"
+                className="legajo-detail-page min-h-screen px-4 py-6 sm:px-6 sm:py-8 lg:px-8"
                 style={{ fontFamily: FONT_BODY }}
             >
                 <section className="relative mb-6 overflow-hidden rounded-3xl bg-[#173247] text-white shadow-[0_18px_45px_rgba(23,50,71,0.16)]">
                     <div className="pointer-events-none absolute -top-32 -right-24 size-80 rounded-full border border-white/10" />
                     <div className="pointer-events-none absolute -bottom-44 -left-24 size-80 rounded-full bg-[#6B8F71]/15 blur-2xl" />
-                    <div className="relative p-5 sm:p-7">
+                    <div className="relative p-5 sm:p-8">
                         <Link
                             href="/legajos"
-                            className="inline-flex items-center gap-1.5 text-sm font-semibold text-white/65 transition hover:text-white"
+                            className="inline-flex items-center gap-1.5 text-sm font-semibold text-white/65 transition hover:text-[#CDE8D6]"
                         >
                             <ArrowLeft size={15} />
                             Volver al listado
@@ -334,8 +337,8 @@ export default function LegajoShow({
                                     <FileText size={25} strokeWidth={1.7} />
                                 </div>
                                 <div className="min-w-0">
-                                    <p className="text-xs font-semibold tracking-[0.16em] text-[#9BD2B3] uppercase">
-                                        Ficha de protección
+                                    <p className="text-sm font-medium text-[#9BD2B3]">
+                                        Legajo de protección
                                     </p>
                                     <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
                                         <h1 className="font-mono text-3xl font-semibold tracking-tight sm:text-4xl">
@@ -369,22 +372,13 @@ export default function LegajoShow({
                             </div>
 
                             <div className="flex flex-wrap gap-2 xl:max-w-[560px] xl:justify-end">
-                                <Link
-                                    href={fichasRoutes.index.url({
-                                        query: { legajo: legajo.id },
-                                    })}
-                                    className="inline-flex h-10 items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-4 text-sm font-semibold text-white transition hover:bg-white/15"
-                                >
-                                    <FileText size={15} />
-                                    Ver ficha
-                                </Link>
                                 {puedeEditarLegajo && (
                                     <Link
                                         href={`/legajos/${legajo.id}/edit`}
-                                        className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#CDE8D6] px-4 text-sm font-bold text-[#1E5143] transition hover:bg-white"
+                                        className={actionPrimaryClass}
                                     >
                                         <Pencil size={15} />
-                                        Editar
+                                        Editar legajo
                                     </Link>
                                 )}
                                 {puedeExportarWord && (
@@ -394,10 +388,10 @@ export default function LegajoShow({
                                         )}
                                         target="_blank"
                                         rel="noreferrer"
-                                        className="inline-flex h-10 items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-4 text-sm font-semibold text-white transition hover:bg-white/15"
+                                        className={actionSecondaryClass}
                                     >
                                         <FileDown size={15} />
-                                        Previsualizar Legajo
+                                        Previsualizar documento
                                     </a>
                                 )}
                                 {secciones.estadisticas && (
@@ -407,10 +401,10 @@ export default function LegajoShow({
                                         )}
                                         target="_blank"
                                         rel="noreferrer"
-                                        className="inline-flex h-10 items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-4 text-sm font-semibold text-white transition hover:bg-white/15"
+                                        className={actionSecondaryClass}
                                     >
                                         <BarChart3 size={15} />
-                                        Estadísticas
+                                        Ver estadísticas
                                     </a>
                                 )}
                                 {secciones.derivaciones && (
@@ -419,17 +413,17 @@ export default function LegajoShow({
                                         onClick={() =>
                                             setDerivacionesOpen(true)
                                         }
-                                        className="inline-flex h-10 items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-4 text-sm font-semibold text-white transition hover:bg-white/15"
+                                        className={actionSecondaryClass}
                                     >
                                         <Send size={15} />
-                                        Derivaciones
+                                        Gestionar derivaciones
                                     </button>
                                 )}
                                 {puedeCambiarEstado && (
                                     <button
                                         type="button"
                                         onClick={cambiarEstado}
-                                        className="inline-flex h-10 items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-4 text-sm font-semibold text-white transition hover:bg-white/15"
+                                        className={actionSecondaryClass}
                                     >
                                         {cerrado ? (
                                             <LockOpen size={15} />
@@ -1227,11 +1221,11 @@ export default function LegajoShow({
                                     className={tituloCard}
                                     style={{ fontFamily: FONT_HEADING }}
                                 >
-                                    Intervenciones y registros
+                                    Intervenciones
                                 </CardTitle>
                                 <p className="mt-1 text-sm text-[#2B2F36]/60">
-                                    Actas, oficios, denuncias, mails y
-                                    actuaciones asociadas a este legajo.
+                                    Actuaciones y decisiones que forman parte
+                                    del historial del legajo.
                                 </p>
                             </div>
                             <div className="flex flex-wrap items-center gap-2">
@@ -1271,7 +1265,7 @@ export default function LegajoShow({
                                         className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-[#2C4A5E] px-4 text-sm font-semibold text-white transition hover:bg-[#1F394B]"
                                     >
                                         <Plus size={16} />
-                                        Nueva intervención
+                                        Registrar intervención
                                     </Link>
                                 )}
                             </div>
@@ -1280,13 +1274,13 @@ export default function LegajoShow({
                             {intervenciones.length === 0 ? (
                                 <div className="rounded-md border border-dashed border-[#DCE3DF] bg-[#FAFBFA] px-5 py-8 text-center">
                                     <p className="text-sm font-semibold text-[#2C4A5E]">
-                                        Todavía no hay intervenciones
-                                        registradas.
+                                        Este legajo todavía no tiene
+                                        intervenciones.
                                     </p>
                                     {puedeGestionarIntervenciones && (
                                         <p className="mt-1 text-sm text-[#2B2F36]/60">
                                             Registrá la primera actuación para
-                                            comenzar el historial del legajo.
+                                            dejar asentado el seguimiento.
                                         </p>
                                     )}
                                 </div>

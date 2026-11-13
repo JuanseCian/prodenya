@@ -18,7 +18,6 @@ export default function EstadisticasTareas(props: EstadisticasData) {
             <EstadisticasShell
                 active="tareas"
                 title="Tareas"
-                subtitle={props.rango.descripcion}
                 modulosDisponibles={props.modulosDisponibles}
             >
                 <div className="stats-page-surface min-h-[calc(100vh-77px)] px-4 py-7 sm:px-7 sm:py-9 lg:px-10">

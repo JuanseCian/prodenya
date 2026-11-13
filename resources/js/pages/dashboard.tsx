@@ -16,9 +16,9 @@ import {
 import type { LucideIcon } from 'lucide-react';
 
 import { NotificationCenter } from '@/components/notification-center';
+import PasskeyOnboardingModal from '@/components/passkey-onboarding-modal';
 import agenda from '@/routes/agenda';
 import estadisticasRoutes from '@/routes/estadisticas';
-import fichasRoutes from '@/routes/fichas';
 import legajosRoutes from '@/routes/legajos';
 import mailbox from '@/routes/mailbox';
 import tareas from '@/routes/tareas';
@@ -36,6 +36,8 @@ interface DashboardProps {
     estadisticas: Estadisticas;
     personasRecientes: PersonaReciente[];
     legajosRecientes: LegajoReciente[];
+    showPasskeyNotice: boolean;
+    passkeyPasswordConfirmed: boolean;
 }
 
 interface Estadisticas {
@@ -160,6 +162,8 @@ export default function Dashboard({
     estadisticas,
     personasRecientes,
     legajosRecientes,
+    showPasskeyNotice,
+    passkeyPasswordConfirmed,
 }: DashboardProps) {
     const { auth, can, notificaciones, notificacionesNoLeidas } = usePage<{
         auth: { user: AuthUser | null };
@@ -275,14 +279,6 @@ export default function Dashboard({
                             >
                                 <FolderOpen size={16} />
                                 Consultar legajos
-                            </Link>
-                            <Link
-                                href={fichasRoutes.index().url}
-                                className="inline-flex items-center gap-2 rounded-md border border-[#DCE3DF] bg-white px-4 py-2 text-sm font-semibold text-[#2B2F36] transition hover:border-[#B9C5BD] hover:bg-[#F4F6F5]"
-                                style={{ fontFamily: FONT_BODY }}
-                            >
-                                <FileText size={16} />
-                                Fichas
                             </Link>
                             {can.accessAgenda && (
                                 <Link
@@ -573,6 +569,10 @@ export default function Dashboard({
                     </div>
                 </main>
             </div>
+            <PasskeyOnboardingModal
+                enabled={showPasskeyNotice}
+                passwordConfirmed={passkeyPasswordConfirmed}
+            />
         </>
     );
 }

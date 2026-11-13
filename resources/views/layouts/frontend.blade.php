@@ -12,8 +12,8 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
         @vite('resources/css/app.css')
+        @viteReactRefresh
         @if (isset($page))
-            @viteReactRefresh
             @vite(['resources/js/app.tsx', "resources/js/pages/{$page['component']}.tsx"])
             <x-inertia::head />
         @endif
@@ -796,6 +796,8 @@
                             data-mode="{{ isset($page) ? 'inertia' : 'standalone' }}"
                             data-notifications='@json($headerNotifications)'
                             data-notifications-unread="{{ $headerNotificationsUnread }}"
+                            data-passkey-enabled="{{ (isset($page) ? data_get($page, 'props.showPasskeyNotice', false) : ($showPasskeyNotice ?? false)) ? '1' : '0' }}"
+                            data-passkey-password-confirmed="{{ (isset($page) ? data_get($page, 'props.passkeyPasswordConfirmed', false) : ($passkeyPasswordConfirmed ?? false)) ? '1' : '0' }}"
                         ></div>
                         @php
                             $headerUser = auth()->user();

@@ -9,6 +9,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Facades\Route;
+use Laravel\Fortify\Features;
 
 class HomeController extends Controller
 {
@@ -32,6 +33,10 @@ class HomeController extends Controller
         return view('frontend.home.home', [
             'frontendNotificaciones' => $notificaciones,
             'frontendNotificacionesNoLeidas' => $request->user()->unreadNotifications()->count(),
+            'showPasskeyNotice' => Features::canManagePasskeys()
+                && ! $request->user()->passkeys()->exists(),
+            'passkeyPasswordConfirmed' => now()->timestamp - (int) $request->session()->get('auth.password_confirmed_at', 0)
+                <= (int) config('auth.password_timeout'),
         ]);
     }
 
