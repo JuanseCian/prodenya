@@ -219,7 +219,7 @@ export default function Documentacion({
                                         <label className="grid gap-2 text-sm font-semibold text-[#2B2F36]">Dorso del CUD<Input type="file" accept="application/pdf,image/jpeg,image/png" onChange={(event) => form.setData('dorso', event.target.files?.[0] ?? null)} className={`${inputClass} py-2`} /></label>
                                     </div>
                                     <label className="grid gap-2 text-sm font-semibold text-[#2B2F36]">Recetas <span className="text-xs font-normal text-[#697586]">Opcionales, podés seleccionar varias.</span><Input type="file" multiple accept="application/pdf,image/jpeg,image/png" onChange={(event) => form.setData('recetas', Array.from(event.target.files ?? []))} className={`${inputClass} py-2`} /></label>
-                                    <div className="flex justify-end"><Button type="submit" disabled={form.processing} className="bg-[#2C4A5E] hover:bg-[#173247]"><Upload className="size-4" />{form.processing ? 'Guardando…' : 'Guardar documentación'}</Button></div>
+                                    <div className="flex justify-end"><Button type="submit" disabled={form.processing} className="bg-[#2C4A5E] text-white hover:bg-[#173247]"><Upload className="size-4" />{form.processing ? 'Guardando…' : 'Guardar documentación'}</Button></div>
                                 </form>
                             </CardContent>
                         </Card>

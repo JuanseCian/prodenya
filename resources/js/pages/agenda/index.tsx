@@ -129,7 +129,7 @@ export default function Agenda({ eventos }: Props) {
                             <h1 className="mt-3 text-3xl font-semibold tracking-tight text-[#173247] sm:text-4xl">Agenda</h1>
                             <p className="mt-2 text-sm text-[#697586]">Elegí una fecha para consultar o cargar actividades.</p>
                         </div>
-                        <Button onClick={() => openCreate()} className="w-fit gap-2 bg-[#2C4A5E] hover:bg-[#173247]"><Plus className="size-4" /> Nuevo evento</Button>
+                        <Button onClick={() => openCreate()} className="w-fit gap-2 bg-[#2C4A5E] text-white hover:bg-[#173247]"><Plus className="size-4" /> Nuevo evento</Button>
                     </div>
 
                     <div className="mb-5 flex w-fit rounded-lg border border-[#DCE3DF] bg-white p-1 shadow-sm" role="tablist" aria-label="Tipo de agenda">
@@ -240,7 +240,7 @@ export default function Agenda({ eventos }: Props) {
                         <label className="grid gap-2 text-sm font-semibold text-[#2B2F36]">Visibilidad<select value={visibilidad} onChange={(event) => setVisibilidad(event.target.value as Scope)} className="h-10 rounded-md border border-[#D5D1C6] bg-white px-3 text-sm font-normal"><option value="personal">Personal · solo yo</option><option value="general">General · todos los usuarios</option></select></label>
                         <label className="grid gap-2 text-sm font-semibold text-[#2B2F36]">Lugar o enlace<Input value={lugar} onChange={(event) => setLugar(event.target.value)} placeholder="Ej. Sede central o enlace de videollamada" className="h-10 border-[#D5D1C6] bg-white font-normal" /></label>
                     </div>
-                    <DialogFooter><Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancelar</Button><Button type="button" disabled={!titulo.trim() || !fechaInicio} onClick={crearEvento} className="bg-[#2C4A5E] hover:bg-[#173247]">Agendar evento</Button></DialogFooter>
+                    <DialogFooter><Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancelar</Button><Button type="button" disabled={!titulo.trim() || !fechaInicio} onClick={crearEvento} className="bg-[#2C4A5E] text-white hover:bg-[#173247]">Agendar evento</Button></DialogFooter>
                 </DialogContent>
             </Dialog>
         </>

@@ -170,7 +170,7 @@ export default function Profile({
                                             <Button
                                                 type="submit"
                                                 size="sm"
-                                                className="mt-2 w-full rounded-xl bg-[#173247] shadow-sm hover:bg-[#24546a]"
+                                                className="mt-2 w-full rounded-xl bg-[#173247] text-white shadow-sm hover:bg-[#24546a]"
                                                 disabled={processing}
                                             >
                                                 {processing

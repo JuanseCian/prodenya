@@ -277,7 +277,7 @@ export default function CoberturaSaludModule({
                     <Button
                         type="button"
                         onClick={() => setOpen(true)}
-                        className="shrink-0 bg-[#2C4A5E] hover:bg-[#173247]"
+                        className="shrink-0 bg-[#2C4A5E] text-white hover:bg-[#173247]"
                     >
                         <HeartPulse className="size-4" />
                         Ver cobertura
@@ -439,7 +439,7 @@ export default function CoberturaSaludModule({
                                 <label className="grid gap-1 text-xs font-semibold text-[#2C4A5E]">Constancias <span className="text-xs font-normal text-[#697586]">Podés seleccionar varias.</span><Input type="file" multiple accept="application/pdf,image/jpeg,image/png" onChange={(event) => form.setData('constancias', Array.from(event.target.files ?? []))} className={`${inputClass} py-2 text-xs`} /></label>
                             </div>
                             {form.progress && <progress value={form.progress.percentage} max="100" className="h-2 w-full accent-[#6B8F71]" />}
-                            <div className="flex justify-end"><Button type="submit" disabled={form.processing} className="bg-[#2C4A5E] hover:bg-[#173247]"><Upload className="size-4" />{form.processing ? 'Guardando...' : 'Guardar cobertura'}</Button></div>
+                            <div className="flex justify-end"><Button type="submit" disabled={form.processing} className="bg-[#2C4A5E] text-white hover:bg-[#173247]"><Upload className="size-4" />{form.processing ? 'Guardando...' : 'Guardar cobertura'}</Button></div>
                         </form>
                     )}
 

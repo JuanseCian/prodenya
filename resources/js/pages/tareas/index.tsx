@@ -97,7 +97,7 @@ export default function Tareas({
                             <h1 className="mt-3 text-3xl font-semibold tracking-tight text-[#173247] sm:text-4xl">Tareas</h1>
                             <p className="mt-2 text-sm text-[#697586]">Tus pendientes de trabajo en un solo lugar.</p>
                         </div>
-                        <Button onClick={() => setOpen(true)} className="w-fit gap-2 bg-[#2C4A5E] hover:bg-[#173247]"><Plus className="size-4" /> Nueva tarea</Button>
+                        <Button onClick={() => setOpen(true)} className="w-fit gap-2 bg-[#2C4A5E] text-white hover:bg-[#173247]"><Plus className="size-4" /> Nueva tarea</Button>
                     </div>
 
                     <Card className="overflow-hidden border-[#DCE3DF] !bg-white py-0 shadow-[0_14px_35px_rgba(23,50,71,0.06)]">
@@ -155,7 +155,7 @@ export default function Tareas({
                                 <label className="grid gap-2 text-sm font-semibold text-[#2B2F36]">Responsable<select value={asignadoA} onChange={(event) => setAsignadoA(event.target.value)} className="h-10 rounded-md border border-[#D5D1C6] bg-white px-3 text-sm font-normal">{responsables.map((responsable) => <option key={responsable.id} value={responsable.id}>{responsable.name}{responsable.profesion ? ` · ${responsable.profesion}` : ''}</option>)}</select></label>
                             )}
                     </div>
-                    <DialogFooter><Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancelar</Button><Button type="button" disabled={!titulo.trim()} onClick={crearTarea} className="bg-[#2C4A5E] hover:bg-[#173247]">Crear tarea</Button></DialogFooter>
+                    <DialogFooter><Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancelar</Button><Button type="button" disabled={!titulo.trim()} onClick={crearTarea} className="bg-[#2C4A5E] text-white hover:bg-[#173247]">Crear tarea</Button></DialogFooter>
                 </DialogContent>
             </Dialog>
         </>

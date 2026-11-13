@@ -181,7 +181,7 @@ export default function CudModule({ legajoId, cud, puedeGestionar }: Props) {
                     <Button
                         type="button"
                         onClick={() => setOpen(true)}
-                        className="shrink-0 bg-[#2C4A5E] hover:bg-[#173247]"
+                        className="shrink-0 bg-[#2C4A5E] text-white hover:bg-[#173247]"
                     >
                         <FileCheck2 className="size-4" />
                         Ver documentación
@@ -450,7 +450,7 @@ export default function CudModule({ legajoId, cud, puedeGestionar }: Props) {
                                 <Button
                                     type="submit"
                                     disabled={form.processing}
-                                    className="bg-[#2C4A5E] hover:bg-[#173247]"
+                                    className="bg-[#2C4A5E] text-white hover:bg-[#173247]"
                                 >
                                     <Upload className="size-4" />
                                     {form.processing

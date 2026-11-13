@@ -54,6 +54,27 @@ test('a professional can save a measure with its acts and automatic intervention
     Storage::disk('local')->assertExists(MedidaAbrigoActa::firstOrFail()->ruta_archivo);
 });
 
+test('a measure accepts the 45 and 120 day durations', function () {
+    Storage::fake('local');
+    $professional = User::factory()->create(['rol_id' => 5]);
+    $legajo = crearLegajoParaMedida($professional);
+
+    $this->actingAs($professional)
+        ->post(route('legajos.medidas-abrigo.store', $legajo), [
+            'ubicacion' => 'institucion',
+            'duracion_dias' => 45,
+            'fecha_inicio' => '2026-01-01',
+            'actas' => [[
+                'tipo' => 'per',
+                'archivo' => UploadedFile::fake()->create('per.pdf', 100, 'application/pdf'),
+            ]],
+        ])
+        ->assertRedirect()
+        ->assertSessionHas('status');
+
+    expect(MedidaAbrigo::firstOrFail()->fecha_fin->toDateString())->toBe('2026-02-14');
+});
+
 test('a measure requires at least one valid act and allowed duration', function () {
     $admin = User::factory()->create(['rol_id' => 1]);
     $legajo = crearLegajoParaMedida($admin);
@@ -66,7 +87,7 @@ test('a measure requires at least one valid act and allowed duration', function 
             'actas' => [],
         ])
         ->assertSessionHasErrors([
-            'duracion_dias' => 'La medida debe durar 90 o 180 días.',
+            'duracion_dias' => 'La medida debe durar 45, 90, 120 o 180 días.',
             'actas' => 'Cargá al menos un acta.',
         ]);
 

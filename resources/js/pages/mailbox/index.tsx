@@ -314,7 +314,7 @@ export default function Mailbox({
                                         : 'correos nuevos'}
                                 </Badge>
                             )}
-                            <Button type="button" onClick={abrirNuevoCorreo} className="bg-[#2C4A5E] hover:bg-[#173247]">
+                            <Button type="button" onClick={abrirNuevoCorreo} className="bg-[#2C4A5E] text-white hover:bg-[#173247]">
                                 <PenLine className="size-4" />
                                 Nuevo correo
                             </Button>
@@ -580,7 +580,7 @@ export default function Mailbox({
                     )}
                     <DialogFooter>
                         <Button type="button" variant="outline" onClick={() => setMensajeSeleccionado(null)}>Cancelar</Button>
-                        <Button type="button" onClick={guardarClasificacion} className="bg-[#2C4A5E] hover:bg-[#173247]">Guardar clasificación</Button>
+                        <Button type="button" onClick={guardarClasificacion} className="bg-[#2C4A5E] text-white hover:bg-[#173247]">Guardar clasificación</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
@@ -611,7 +611,7 @@ export default function Mailbox({
                         </label>
                         <DialogFooter>
                             <Button type="button" variant="outline" onClick={() => setComposeOpen(false)}>Cancelar</Button>
-                            <Button type="submit" disabled={sending} className="bg-[#2C4A5E] hover:bg-[#173247]">
+                            <Button type="submit" disabled={sending} className="bg-[#2C4A5E] text-white hover:bg-[#173247]">
                                 <Mail className="size-4" />
                                 {sending ? 'Enviando…' : 'Enviar correo'}
                             </Button>

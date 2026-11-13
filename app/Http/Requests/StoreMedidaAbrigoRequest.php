@@ -40,7 +40,7 @@ class StoreMedidaAbrigoRequest extends FormRequest
             'ubicacion.required' => 'Seleccioná dónde se realizará la medida.',
             'ubicacion.in' => 'La ubicación seleccionada no es válida.',
             'duracion_dias.required' => 'Seleccioná la duración de la medida.',
-            'duracion_dias.in' => 'La medida debe durar 90 o 180 días.',
+            'duracion_dias.in' => 'La medida debe durar 45, 90, 120 o 180 días.',
             'fecha_inicio.required' => 'Ingresá la fecha de inicio.',
             'fecha_inicio.date' => 'La fecha de inicio no es válida.',
             'actas.required' => 'Cargá al menos un acta.',

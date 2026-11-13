@@ -12,7 +12,7 @@ class MedidaAbrigo extends Model
 {
     public const UBICACIONES = ['familia_ampliada', 'institucion'];
 
-    public const DURACIONES = [90, 180];
+    public const DURACIONES = [45, 90, 120, 180];
 
     /** @var array<string, string> */
     public const UBICACION_LABELS = [

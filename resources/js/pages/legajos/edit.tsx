@@ -90,225 +90,241 @@ export default function LegajoEdit({
                 className="min-h-screen bg-[#F4F6F5] px-4 py-8 sm:px-6 sm:py-10 lg:px-8"
                 style={{ fontFamily: FONT_BODY }}
             >
-                <Link
-                    href={`/legajos/${legajo.id}`}
-                    className="mb-5 inline-flex items-center gap-1.5 text-sm font-semibold text-[#2C4A5E] hover:underline"
-                >
-                    <ArrowLeft size={15} />
-                    Volver al legajo
-                </Link>
+                <div className="mx-auto max-w-4xl">
+                    <Link
+                        href={`/legajos/${legajo.id}`}
+                        className="mb-5 inline-flex items-center gap-1.5 text-sm font-semibold text-[#2C4A5E] hover:underline"
+                    >
+                        <ArrowLeft size={15} />
+                        Volver al legajo
+                    </Link>
 
-                <h1
-                    className="text-2xl font-semibold tracking-tight text-[#173247] sm:text-3xl"
-                    style={{ fontFamily: FONT_HEADING }}
-                >
-                    Editar legajo
-                </h1>
-                <p className="mt-2 mb-8 text-sm text-[#2B2F36]/65">
-                    <span className="font-mono font-semibold text-[#2C4A5E]">
-                        {legajo.numero_legajo}
-                    </span>
-                    {legajo.persona && ` · ${legajo.persona}`}. El número y la
-                    persona no se pueden modificar.
-                </p>
+                    <h1
+                        className="text-2xl font-semibold tracking-tight text-[#173247] sm:text-3xl"
+                        style={{ fontFamily: FONT_HEADING }}
+                    >
+                        Editar legajo
+                    </h1>
+                    <p className="mt-2 mb-8 text-sm text-[#2B2F36]/65">
+                        <span className="font-mono font-semibold text-[#2C4A5E]">
+                            {legajo.numero_legajo}
+                        </span>
+                        {legajo.persona && ` · ${legajo.persona}`}. El número y
+                        la persona no se pueden modificar.
+                    </p>
 
-                <form onSubmit={submit} className="max-w-4xl space-y-6">
-                    <ResumenErrores
-                        errors={errors as Record<string, string>}
-                        etiquetas={ETIQUETAS}
-                    />
+                    <form onSubmit={submit} className="space-y-6">
+                        <ResumenErrores
+                            errors={errors as Record<string, string>}
+                            etiquetas={ETIQUETAS}
+                        />
 
-                    <Card className="border-[#DCE3DF] !bg-white py-0 shadow-[0_14px_35px_rgba(23,50,71,0.06)]">
-                        <CardHeader className="border-b border-[#E4E8E5] bg-[#F8FAF9] px-5 py-4">
-                            <CardTitle
-                                className="text-base text-[#2C4A5E]"
-                                style={{ fontFamily: FONT_HEADING }}
-                            >
-                                Datos del caso
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-5 px-5 py-6">
-                            <fieldset className="m-0 border-0 p-0">
-                                <legend className={labelClass}>
-                                    Problemáticas{' '}
-                                    <span className="text-[#A84635]">*</span>
-                                </legend>
-                                <div className="mt-2 grid gap-2 rounded-lg border border-[#D5D1C6] bg-white p-3 sm:grid-cols-2">
-                                    {problematicas.map((problematica) => (
-                                        <label
-                                            key={problematica.id}
-                                            className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm text-[#2B2F36] transition hover:bg-[#F4F6F5]"
-                                        >
-                                            <input
-                                                type="checkbox"
-                                                checked={data.problematicas.includes(
-                                                    problematica.id,
-                                                )}
-                                                onChange={() =>
-                                                    alternarProblematica(
+                        <Card className="border-[#DCE3DF] !bg-white py-0 shadow-[0_14px_35px_rgba(23,50,71,0.06)]">
+                            <CardHeader className="border-b border-[#E4E8E5] bg-[#F8FAF9] px-5 py-4">
+                                <CardTitle
+                                    className="text-base text-[#2C4A5E]"
+                                    style={{ fontFamily: FONT_HEADING }}
+                                >
+                                    Datos del caso
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-5 px-5 py-6">
+                                <fieldset className="m-0 border-0 p-0">
+                                    <legend className={labelClass}>
+                                        Problemáticas{' '}
+                                        <span className="text-[#A84635]">
+                                            *
+                                        </span>
+                                    </legend>
+                                    <div className="mt-2 grid gap-2 rounded-lg border border-[#D5D1C6] bg-white p-3 sm:grid-cols-2">
+                                        {problematicas.map((problematica) => (
+                                            <label
+                                                key={problematica.id}
+                                                className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm text-[#2B2F36] transition hover:bg-[#F4F6F5]"
+                                            >
+                                                <input
+                                                    type="checkbox"
+                                                    checked={data.problematicas.includes(
                                                         problematica.id,
-                                                    )
-                                                }
-                                                className="size-4 rounded border-[#B9C5BD] text-[#2C4A5E] focus:ring-[#2C4A5E]/30"
-                                            />
-                                            {problematica.nombre}
-                                        </label>
-                                    ))}
-                                </div>
-                                {errors.problematicas && (
-                                    <p className={errorClass}>
-                                        {errors.problematicas}
-                                    </p>
-                                )}
-                            </fieldset>
+                                                    )}
+                                                    onChange={() =>
+                                                        alternarProblematica(
+                                                            problematica.id,
+                                                        )
+                                                    }
+                                                    className="size-4 rounded border-[#B9C5BD] text-[#2C4A5E] focus:ring-[#2C4A5E]/30"
+                                                />
+                                                {problematica.nombre}
+                                            </label>
+                                        ))}
+                                    </div>
+                                    {errors.problematicas && (
+                                        <p className={errorClass}>
+                                            {errors.problematicas}
+                                        </p>
+                                    )}
+                                </fieldset>
 
-                            <div className="grid gap-5 sm:grid-cols-2">
+                                <div className="grid gap-5 sm:grid-cols-2">
+                                    <div>
+                                        <Label
+                                            htmlFor="nivel_riesgo"
+                                            className={labelClass}
+                                        >
+                                            Nivel de riesgo{' '}
+                                            <span className="text-[#A84635]">
+                                                *
+                                            </span>
+                                        </Label>
+                                        <select
+                                            id="nivel_riesgo"
+                                            className={selectClass}
+                                            value={data.nivel_riesgo}
+                                            onChange={(event) =>
+                                                setData(
+                                                    'nivel_riesgo',
+                                                    event.target.value,
+                                                )
+                                            }
+                                        >
+                                            <option value="">
+                                                Seleccionar
+                                            </option>
+                                            <option value="Bajo">Bajo</option>
+                                            <option value="Medio">Medio</option>
+                                            <option value="Alto">Alto</option>
+                                            <option value="Critico">
+                                                Crítico
+                                            </option>
+                                        </select>
+                                        {errors.nivel_riesgo && (
+                                            <p className={errorClass}>
+                                                {errors.nivel_riesgo}
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    <div>
+                                        <Label
+                                            htmlFor="profesional_id"
+                                            className={labelClass}
+                                        >
+                                            Profesional asignado
+                                        </Label>
+                                        <select
+                                            id="profesional_id"
+                                            className={selectClass}
+                                            value={data.profesional_id}
+                                            onChange={(event) =>
+                                                setData(
+                                                    'profesional_id',
+                                                    event.target.value,
+                                                )
+                                            }
+                                        >
+                                            <option value="">
+                                                Sin asignar
+                                            </option>
+                                            {profesionales.map(
+                                                (profesional) => (
+                                                    <option
+                                                        key={profesional.id}
+                                                        value={profesional.id}
+                                                    >
+                                                        {
+                                                            profesional.nombre_usuario
+                                                        }
+                                                        {profesional.profesion
+                                                            ? ` · ${profesional.profesion}`
+                                                            : ''}
+                                                    </option>
+                                                ),
+                                            )}
+                                        </select>
+                                        {errors.profesional_id && (
+                                            <p className={errorClass}>
+                                                {errors.profesional_id}
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+
                                 <div>
                                     <Label
-                                        htmlFor="nivel_riesgo"
+                                        htmlFor="origen_derivacion"
                                         className={labelClass}
                                     >
-                                        Nivel de riesgo{' '}
+                                        Origen de la derivación{' '}
                                         <span className="text-[#A84635]">
                                             *
                                         </span>
                                     </Label>
-                                    <select
-                                        id="nivel_riesgo"
-                                        className={selectClass}
-                                        value={data.nivel_riesgo}
+                                    <Input
+                                        id="origen_derivacion"
+                                        value={data.origen_derivacion}
                                         onChange={(event) =>
                                             setData(
-                                                'nivel_riesgo',
+                                                'origen_derivacion',
                                                 event.target.value,
                                             )
                                         }
-                                    >
-                                        <option value="">Seleccionar</option>
-                                        <option value="Bajo">Bajo</option>
-                                        <option value="Medio">Medio</option>
-                                        <option value="Alto">Alto</option>
-                                        <option value="Critico">Crítico</option>
-                                    </select>
-                                    {errors.nivel_riesgo && (
+                                        className="mt-2 h-11 border-[#D5D1C6] bg-white shadow-none focus-visible:border-[#2C4A5E] focus-visible:ring-[#2C4A5E]/20"
+                                    />
+                                    {errors.origen_derivacion && (
                                         <p className={errorClass}>
-                                            {errors.nivel_riesgo}
+                                            {errors.origen_derivacion}
                                         </p>
                                     )}
                                 </div>
 
                                 <div>
                                     <Label
-                                        htmlFor="profesional_id"
+                                        htmlFor="observaciones"
                                         className={labelClass}
                                     >
-                                        Profesional asignado
+                                        Observaciones{' '}
+                                        <span className="font-normal text-[#2B2F36]/45">
+                                            (opcional)
+                                        </span>
                                     </Label>
-                                    <select
-                                        id="profesional_id"
-                                        className={selectClass}
-                                        value={data.profesional_id}
+                                    <textarea
+                                        id="observaciones"
+                                        rows={4}
+                                        value={data.observaciones}
                                         onChange={(event) =>
                                             setData(
-                                                'profesional_id',
+                                                'observaciones',
                                                 event.target.value,
                                             )
                                         }
-                                    >
-                                        <option value="">Sin asignar</option>
-                                        {profesionales.map((profesional) => (
-                                            <option
-                                                key={profesional.id}
-                                                value={profesional.id}
-                                            >
-                                                {profesional.nombre_usuario}
-                                                {profesional.profesion
-                                                    ? ` · ${profesional.profesion}`
-                                                    : ''}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    {errors.profesional_id && (
+                                        className={textareaClass}
+                                    />
+                                    {errors.observaciones && (
                                         <p className={errorClass}>
-                                            {errors.profesional_id}
+                                            {errors.observaciones}
                                         </p>
                                     )}
                                 </div>
-                            </div>
+                            </CardContent>
+                        </Card>
 
-                            <div>
-                                <Label
-                                    htmlFor="origen_derivacion"
-                                    className={labelClass}
-                                >
-                                    Origen de la derivación{' '}
-                                    <span className="text-[#A84635]">*</span>
-                                </Label>
-                                <Input
-                                    id="origen_derivacion"
-                                    value={data.origen_derivacion}
-                                    onChange={(event) =>
-                                        setData(
-                                            'origen_derivacion',
-                                            event.target.value,
-                                        )
-                                    }
-                                    className="mt-2 h-11 border-[#D5D1C6] bg-white shadow-none focus-visible:border-[#2C4A5E] focus-visible:ring-[#2C4A5E]/20"
-                                />
-                                {errors.origen_derivacion && (
-                                    <p className={errorClass}>
-                                        {errors.origen_derivacion}
-                                    </p>
-                                )}
-                            </div>
-
-                            <div>
-                                <Label
-                                    htmlFor="observaciones"
-                                    className={labelClass}
-                                >
-                                    Observaciones{' '}
-                                    <span className="font-normal text-[#2B2F36]/45">
-                                        (opcional)
-                                    </span>
-                                </Label>
-                                <textarea
-                                    id="observaciones"
-                                    rows={4}
-                                    value={data.observaciones}
-                                    onChange={(event) =>
-                                        setData(
-                                            'observaciones',
-                                            event.target.value,
-                                        )
-                                    }
-                                    className={textareaClass}
-                                />
-                                {errors.observaciones && (
-                                    <p className={errorClass}>
-                                        {errors.observaciones}
-                                    </p>
-                                )}
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-end">
-                        <Link
-                            href={`/legajos/${legajo.id}`}
-                            className="inline-flex h-11 items-center justify-center rounded-md px-5 text-sm font-semibold text-[#2B2F36]/65 transition hover:bg-white hover:text-[#2B2F36]"
-                        >
-                            Cancelar
-                        </Link>
-                        <Button
-                            type="submit"
-                            disabled={processing}
-                            className="h-11 bg-[#2C4A5E] px-6 text-sm font-semibold text-white shadow-sm hover:bg-[#1F394B]"
-                        >
-                            {processing ? 'Guardando…' : 'Guardar cambios'}
-                        </Button>
-                    </div>
-                </form>
+                        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-end">
+                            <Link
+                                href={`/legajos/${legajo.id}`}
+                                className="inline-flex h-11 items-center justify-center rounded-md px-5 text-sm font-semibold text-[#2B2F36]/65 transition hover:bg-white hover:text-[#2B2F36]"
+                            >
+                                Cancelar
+                            </Link>
+                            <Button
+                                type="submit"
+                                disabled={processing}
+                                className="h-11 bg-[#2C4A5E] px-6 text-sm font-semibold text-white shadow-sm hover:bg-[#1F394B]"
+                            >
+                                {processing ? 'Guardando…' : 'Guardar cambios'}
+                            </Button>
+                        </div>
+                    </form>
+                </div>
             </main>
         </>
     );

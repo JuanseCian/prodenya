@@ -160,7 +160,7 @@ export default function MedidasAbrigoModule({
                         <Button
                             type="button"
                             onClick={() => setOpen(true)}
-                            className="bg-[#2C4A5E] hover:bg-[#173247]"
+                            className="bg-[#2C4A5E] text-white hover:bg-[#173247]"
                         >
                             <Plus className="size-4" />
                             Registrar medida
@@ -311,7 +311,9 @@ export default function MedidasAbrigoModule({
                                         }
                                         className={inputClass}
                                     >
+                                        <option value={45}>45 días</option>
                                         <option value={90}>90 días</option>
+                                        <option value={120}>120 días</option>
                                         <option value={180}>180 días</option>
                                     </select>
                                 </label>
@@ -501,7 +503,7 @@ export default function MedidasAbrigoModule({
                                 <Button
                                     type="submit"
                                     disabled={form.processing}
-                                    className="bg-[#2C4A5E] hover:bg-[#173247]"
+                                    className="bg-[#2C4A5E] text-white hover:bg-[#173247]"
                                 >
                                     <Upload className="size-4" />
                                     {form.processing

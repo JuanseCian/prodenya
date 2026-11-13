@@ -8,8 +8,10 @@ use App\Models\MailMessage;
 use App\Models\Persona;
 use App\Models\Tarea;
 use App\Models\User;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 
 beforeEach(function () {
     DB::table('roles')->insert([
@@ -68,6 +70,37 @@ test('mailbox can be filtered by subject and only shows incoming mail', function
         ->assertInertia(fn ($page) => $page
             ->has('mensajes.data', 1)
             ->where('mensajes.data.0.id', $coincidencia->id));
+});
+
+test('mailbox users can download an attachment from a message', function () {
+    Storage::fake('local');
+    $admin = User::factory()->create(['rol_id' => 1]);
+    $operador = User::factory()->create(['rol_id' => 2]);
+    $path = UploadedFile::fake()->create('oficio.pdf', 50, 'application/pdf')->store('mail-attachments');
+    $mail = MailMessage::create([
+        'direction' => 'incoming',
+        'from_email' => 'juzgado@example.test',
+        'subject' => 'Oficio con adjunto',
+        'body_text' => 'Contenido del oficio.',
+        'attachments' => [[
+            'path' => $path,
+            'name' => 'oficio.pdf',
+            'mime' => 'application/pdf',
+            'size' => 50 * 1024,
+        ]],
+    ]);
+
+    $this->actingAs($admin)
+        ->get(route('mailbox.attachment', [$mail, 0]))
+        ->assertDownload('oficio.pdf');
+
+    $this->actingAs($operador)
+        ->get(route('mailbox.attachment', [$mail, 0]))
+        ->assertForbidden();
+
+    $this->actingAs($admin)
+        ->get(route('mailbox.attachment', [$mail, 1]))
+        ->assertNotFound();
 });
 
 test('mailbox users can send and retain an outgoing email', function () {
