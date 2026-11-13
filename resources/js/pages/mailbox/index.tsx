@@ -54,7 +54,12 @@ interface Mensaje {
 
 interface Props {
     mensajes: Paginador<Mensaje>;
-    filtros: { buscar: string | null; no_leidos: boolean; estado: string | null };
+    filtros: {
+        buscar: string | null;
+        asunto: string | null;
+        no_leidos: boolean;
+        estado: string | null;
+    };
     noLeidos: number;
     estados: string[];
     responsables: Responsable[];
@@ -103,6 +108,7 @@ export default function Mailbox({
     syncError,
 }: Props) {
     const [buscar, setBuscar] = useState(filtros.buscar ?? '');
+    const [asuntoFiltro, setAsuntoFiltro] = useState(filtros.asunto ?? '');
     const [noLeidosFiltro, setNoLeidosFiltro] = useState(filtros.no_leidos);
     const [estadoFiltro, setEstadoFiltro] = useState(filtros.estado ?? '');
     const [mensajeSeleccionado, setMensajeSeleccionado] =
@@ -125,6 +131,7 @@ export default function Mailbox({
     useEffect(() => {
         if (
             buscar === (filtros.buscar ?? '') &&
+            asuntoFiltro === (filtros.asunto ?? '') &&
             noLeidosFiltro === filtros.no_leidos &&
             estadoFiltro === (filtros.estado ?? '')
         ) {
@@ -136,6 +143,7 @@ export default function Mailbox({
                 mailbox.index.url(),
                 {
                     ...(buscar ? { buscar } : {}),
+                    ...(asuntoFiltro ? { asunto: asuntoFiltro } : {}),
                     ...(noLeidosFiltro ? { no_leidos: 1 } : {}),
                     ...(estadoFiltro ? { estado: estadoFiltro } : {}),
                 },
@@ -146,9 +154,11 @@ export default function Mailbox({
         return () => clearTimeout(timeout);
     }, [
         buscar,
+        asuntoFiltro,
         noLeidosFiltro,
         estadoFiltro,
         filtros.buscar,
+        filtros.asunto,
         filtros.no_leidos,
         filtros.estado,
     ]);
@@ -358,6 +368,33 @@ export default function Mailbox({
                                 </select>
                                 <ChevronDown className="pointer-events-none absolute right-3 size-4 text-[#2B2F36]/40" />
                             </label>
+                        </div>
+
+                        <div className="flex flex-col gap-2 border-b border-[#E4E8E5] bg-[#FBFBFA] px-5 py-3 sm:flex-row sm:items-center sm:px-6">
+                            <span className="text-xs font-semibold tracking-[0.08em] text-[#6B8F71] uppercase">
+                                Correos entrantes por asunto
+                            </span>
+                            <div className="relative w-full sm:max-w-sm">
+                                <Tag className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-[#2B2F36]/40" />
+                                <Input
+                                    value={asuntoFiltro}
+                                    onChange={(event) =>
+                                        setAsuntoFiltro(event.target.value)
+                                    }
+                                    placeholder="Ver solo entrantes con este asunto…"
+                                    className="h-10 border-[#D5D1C6] bg-white pl-10 shadow-none"
+                                />
+                            </div>
+                            {asuntoFiltro && (
+                                <button
+                                    type="button"
+                                    onClick={() => setAsuntoFiltro('')}
+                                    className="inline-flex h-10 items-center gap-1 rounded-md border border-[#D5D1C6] bg-white px-3 text-xs font-semibold text-[#2C4A5E] hover:border-[#2C4A5E]/40"
+                                >
+                                    <X className="size-3.5" />
+                                    Quitar filtro
+                                </button>
+                            )}
                         </div>
 
                         <CardContent className="p-0">

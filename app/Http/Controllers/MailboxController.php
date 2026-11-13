@@ -49,6 +49,7 @@ class MailboxController extends Controller
         }
 
         $buscar = trim((string) $request->query('buscar', ''));
+        $asunto = trim((string) $request->query('asunto', ''));
         $soloNoLeidos = $request->boolean('no_leidos');
         $estado = $request->query('estado');
         $estados = ['Nuevo', 'Clasificado', 'Derivado', 'Respondido', 'Desestimado'];
@@ -62,6 +63,9 @@ class MailboxController extends Controller
                         ->orWhere('body_text', 'like', "%{$buscar}%");
                 });
             })
+            ->when($asunto !== '', fn ($query) => $query
+                ->where('direction', 'incoming')
+                ->where('subject', 'like', "%{$asunto}%"))
             ->when($soloNoLeidos, fn ($query) => $query->where('is_read', false))
             ->when(in_array($estado, $estados, true), fn ($query) => $query->where('estado', $estado))
             ->with([
@@ -108,6 +112,7 @@ class MailboxController extends Controller
             'mensajes' => $mensajes,
             'filtros' => [
                 'buscar' => $buscar !== '' ? $buscar : null,
+                'asunto' => $asunto !== '' ? $asunto : null,
                 'no_leidos' => $soloNoLeidos,
                 'estado' => in_array($estado, $estados, true) ? $estado : null,
             ],
