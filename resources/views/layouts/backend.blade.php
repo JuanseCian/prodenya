@@ -112,6 +112,14 @@
             transition: opacity 160ms ease;
         }
 
+        .backend-sidebar .backend-brand-copy {
+            color: #fff;
+        }
+
+        .backend-sidebar .backend-brand-copy .text-slate-400 {
+            color: rgba(188, 235, 208, 0.68);
+        }
+
         .backend-content-shell {
             transition: margin-left 220ms ease;
         }
@@ -126,7 +134,14 @@
             }
 
             body.backend-sidebar-collapsed .backend-sidebar > div:first-child {
+                flex-direction: column;
                 justify-content: center;
+                align-items: center;
+                gap: 0.625rem;
+                height: auto;
+                min-height: 5rem;
+                padding-top: 0.875rem !important;
+                padding-bottom: 0.875rem !important;
                 padding-left: 0.75rem !important;
                 padding-right: 0.75rem !important;
             }
