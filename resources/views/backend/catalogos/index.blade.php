@@ -14,9 +14,16 @@
         .catalog-page .catalog-primary { background: #397461; }
         .catalog-page .catalog-primary:hover { background: #286047; }
         .catalog-page .catalog-table { border-color: #dce8e3; box-shadow: 0 10px 28px rgba(21, 52, 72, 0.045); }
-        .catalog-page .catalog-table thead { background: #f3f8f5; }
-        .catalog-page .catalog-table tbody tr:hover { background: #f6fbf8; }
+        .catalog-page .catalog-table thead { background: #f3f8f5; border-bottom: 1px solid #dce8e3; }
+        .catalog-page .catalog-table thead th { color: #3b6a57; letter-spacing: 0.09em; }
+        .catalog-page .catalog-table tbody tr:nth-child(even) { background: #fafcfb; }
+        .catalog-page .catalog-table tbody tr:hover { background: #f1f8f4; }
         .catalog-page .catalog-table a:hover { color: #397461; }
+
+        .catalog-action-edit { background: rgba(57, 116, 97, 0.06); border-color: rgba(57, 116, 97, 0.22); color: #397461; }
+        .catalog-action-edit:hover { background: rgba(57, 116, 97, 0.14); border-color: rgba(57, 116, 97, 0.4); box-shadow: 0 4px 10px rgba(57, 116, 97, 0.14); color: #286047; }
+        .catalog-action-delete { background: rgba(185, 58, 77, 0.055); border-color: rgba(185, 58, 77, 0.2); color: #b33a4d; }
+        .catalog-action-delete:hover { background: rgba(185, 58, 77, 0.12); border-color: rgba(185, 58, 77, 0.38); box-shadow: 0 4px 10px rgba(185, 58, 77, 0.14); color: #962f40; }
     </style>
 @endpush
 
@@ -88,13 +95,13 @@
                                 @endforeach
                                 <td class="px-5 py-4">
                                     <div class="flex justify-end gap-2">
-                                        <a href="{{ route('admin.catalogos.edit', ['catalog' => $catalog, 'item' => $item->getKey()]) }}" class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600" title="Editar">
+                                        <a href="{{ route('admin.catalogos.edit', ['catalog' => $catalog, 'item' => $item->getKey()]) }}" class="catalog-action-edit inline-flex h-9 w-9 items-center justify-center rounded-lg border transition" title="Editar">
                                             <i class="bi bi-pencil"></i>
                                         </a>
                                         <form method="POST" action="{{ route('admin.catalogos.destroy', ['catalog' => $catalog, 'item' => $item->getKey()]) }}" onsubmit="return confirm('¿Eliminar este registro?');">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600" title="Eliminar">
+                                            <button type="submit" class="catalog-action-delete inline-flex h-9 w-9 items-center justify-center rounded-lg border transition" title="Eliminar">
                                                 <i class="bi bi-trash3"></i>
                                             </button>
                                         </form>

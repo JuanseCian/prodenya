@@ -64,6 +64,12 @@
         .users-page .bg-indigo-600:hover { background-color: #286047 !important; }
         .users-page .text-indigo-600 { color: #397461 !important; }
         .users-page input:focus, .users-page select:focus, .users-page textarea:focus { border-color: #7db493 !important; box-shadow: 0 0 0 3px rgba(125, 180, 147, 0.18) !important; }
+        .users-page table thead { border-bottom: 1px solid #dce8e3; }
+        .users-page table thead th { color: #3b6a57; letter-spacing: 0.09em; }
+        .users-page table tbody tr:nth-child(even) { background: #fafcfb; }
+        .users-page table tbody tr:hover { background: #f1f8f4; }
+        .users-action-open { background: rgba(57, 116, 97, 0.06); border-color: rgba(57, 116, 97, 0.22); color: #397461; }
+        .users-action-open:hover { background: rgba(57, 116, 97, 0.14); border-color: rgba(57, 116, 97, 0.4); box-shadow: 0 4px 10px rgba(57, 116, 97, 0.14); color: #286047; }
 
         @media (max-width: 700px) {
             .users-detail { max-width: none; }
@@ -142,7 +148,7 @@
                                 <td class="px-5 py-4 text-sm text-slate-600">{{ $usuario->rol?->nombre ? ucfirst($usuario->rol->nombre) : 'Sin asignar' }}</td>
                                 <td class="px-5 py-4"><span class="users-status ring-1 {{ $estadoClasses[$usuario->estado_cuenta] ?? 'bg-slate-100 text-slate-600 ring-slate-200' }}">{{ $estadoLabels[$usuario->estado_cuenta] ?? ucfirst($usuario->estado_cuenta) }}</span></td>
                                 <td class="whitespace-nowrap px-5 py-4 text-sm text-slate-500">{{ $usuario->created_at?->format('d/m/Y') ?: '—' }}</td>
-                                <td class="px-5 py-4 text-right"><a href="{{ $detailUrl($usuario->id) }}" class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600" aria-label="Abrir detalle"><i class="bi bi-arrow-up-right"></i></a></td>
+                                <td class="px-5 py-4 text-right"><a href="{{ $detailUrl($usuario->id) }}" class="users-action-open inline-flex h-9 w-9 items-center justify-center rounded-lg border transition" aria-label="Abrir detalle"><i class="bi bi-arrow-up-right"></i></a></td>
                             </tr>
                         @empty
                             <tr><td colspan="5" class="px-5 py-16 text-center"><i class="bi bi-people text-3xl text-slate-300"></i><p class="mt-3 text-sm font-semibold text-slate-500">No hay usuarios para mostrar.</p><p class="mt-1 text-xs text-slate-400">Probá con otros filtros.</p></td></tr>
