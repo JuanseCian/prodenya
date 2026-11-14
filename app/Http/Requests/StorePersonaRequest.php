@@ -7,8 +7,6 @@ use App\Models\Localidad;
 use App\Models\Persona;
 use App\Models\Problematica;
 use App\Models\Provincia;
-use App\Models\Rol;
-use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -59,13 +57,7 @@ class StorePersonaRequest extends FormRequest
             'legajo_problematicas.*' => [Rule::exists(Problematica::class, 'id')],
             'legajo_nivel_riesgo' => $conLegajo ? ['required', 'in:Bajo,Medio,Alto,Critico'] : ['nullable'],
             'legajo_origen_derivacion' => $conLegajo ? ['required', 'string', 'max:255'] : ['nullable'],
-            'legajo_profesional_id' => [
-                'nullable',
-                Rule::exists(User::class, 'id')
-                    ->where('activo', true)
-                    ->where('estado_cuenta', User::ESTADO_APROBADO)
-                    ->where('rol_id', Rol::query()->where('nombre', 'profesional')->value('id')),
-            ],
+            'legajo_profesional_id' => ['prohibited'],
             'legajo_observaciones' => ['nullable', 'string', 'max:2000'],
         ];
     }
@@ -111,7 +103,7 @@ class StorePersonaRequest extends FormRequest
             'legajo_nivel_riesgo.in' => 'El nivel de riesgo debe ser Bajo, Medio, Alto o Crítico.',
             'legajo_origen_derivacion.required' => 'Indicá la institución o referente que deriva el caso.',
             'legajo_origen_derivacion.max' => 'El origen de la derivación no puede superar los 255 caracteres.',
-            'legajo_profesional_id.exists' => 'El profesional seleccionado no es válido.',
+            'legajo_profesional_id.prohibited' => 'El responsable sólo puede asignarse mediante una derivación.',
             'legajo_observaciones.max' => 'Las observaciones del legajo no pueden superar los 2000 caracteres.',
         ];
     }

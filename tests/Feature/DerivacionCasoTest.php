@@ -4,6 +4,7 @@ use App\Models\CasoResponsable;
 use App\Models\DerivacionCaso;
 use App\Models\Legajo;
 use App\Models\Persona;
+use App\Models\Problematica;
 use App\Models\User;
 use App\Notifications\DerivacionCasoNotification;
 use Illuminate\Support\Facades\DB;
@@ -65,6 +66,7 @@ test('a professional can accept a legajo derivation and become responsible', fun
 
     $derivacion = DerivacionCaso::firstOrFail();
     expect($derivacion->estado)->toBe(DerivacionCaso::ESTADO_PENDIENTE);
+    expect($legajo->fresh()->profesional_id)->toBeNull();
     Notification::assertSentTo($profesional, DerivacionCasoNotification::class, fn ($notification) => $notification->evento === 'derivacion_recibida');
 
     $conversacion = $derivacion->conversaciones()->firstOrFail();
@@ -83,6 +85,56 @@ test('a professional can accept a legajo derivation and become responsible', fun
         ->and($legajo->fresh()->profesional_id)->toBe($profesional->id);
 
     Notification::assertSentTo($coordinador, DerivacionCasoNotification::class, fn ($notification) => $notification->evento === 'derivacion_aceptada');
+});
+
+test('a legajo update cannot assign a responsible directly', function () {
+    $coordinador = User::factory()->create(['rol_id' => 4]);
+    $profesional = User::factory()->create(['rol_id' => 5]);
+    $legajo = crearLegajoParaDerivacion($coordinador);
+    $problematica = Problematica::create(['nombre' => 'Vulneración de derechos']);
+
+    $this->actingAs($coordinador)
+        ->put(route('legajos.update', $legajo), [
+            'nivel_riesgo' => 'Medio',
+            'origen_derivacion' => 'Institución',
+            'profesional_id' => $profesional->id,
+            'problematicas' => [$problematica->id],
+            'observaciones' => 'Actualización del caso.',
+        ])
+        ->assertInvalid(['profesional_id']);
+
+    expect($legajo->fresh()->profesional_id)->toBeNull();
+});
+
+test('a legajo cannot be created with a responsible directly', function () {
+    $coordinador = User::factory()->create(['rol_id' => 4]);
+    $profesional = User::factory()->create(['rol_id' => 5]);
+    $provincia = DB::table('provincias')->insertGetId(['nombre' => 'Buenos Aires']);
+    $localidad = DB::table('localidades')->insertGetId([
+        'nombre' => 'San Nicolás de los Arroyos',
+        'provincia_id' => $provincia,
+        'codigo_postal' => 2900,
+    ]);
+    $problematica = Problematica::create(['nombre' => 'Vulneración de derechos']);
+
+    $this->actingAs($coordinador)
+        ->post(route('legajos.store'), [
+            'nombre' => 'Brenda',
+            'apellido' => 'Sin Responsable',
+            'dni' => '40111222',
+            'fecha_nacimiento' => '2010-01-01',
+            'genero' => 'F',
+            'provincia_id' => $provincia,
+            'localidad_id' => $localidad,
+            'abrir_legajo' => true,
+            'legajo_problematicas' => [$problematica->id],
+            'legajo_nivel_riesgo' => 'Bajo',
+            'legajo_origen_derivacion' => 'Institución',
+            'legajo_profesional_id' => $profesional->id,
+        ])
+        ->assertInvalid(['legajo_profesional_id']);
+
+    expect(Legajo::count())->toBe(0);
 });
 
 test('accepting an additional derivation makes the recipient the principal responsible', function () {

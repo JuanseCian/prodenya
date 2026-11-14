@@ -23,17 +23,9 @@ interface Opcion {
     nombre: string;
 }
 
-interface Profesional {
-    id: number;
-    nombre_usuario: string;
-    email: string;
-    profesion: string | null;
-}
-
 interface CreateLegajoProps {
     personas: PersonaOpcion[];
     problematicas: Opcion[];
-    profesionales: Profesional[];
 }
 
 const FONT_HEADING = "'Lora', serif";
@@ -50,7 +42,6 @@ const ETIQUETAS: Record<string, string> = {
     persona_id: 'Persona',
     problematicas: 'Problemáticas',
     nivel_riesgo: 'Nivel de riesgo',
-    profesional_id: 'Profesional interviniente',
     origen_derivacion: 'Origen de la derivación',
     observaciones: 'Observaciones',
 };
@@ -58,13 +49,11 @@ const ETIQUETAS: Record<string, string> = {
 export default function CreateLegajo({
     personas,
     problematicas,
-    profesionales,
 }: CreateLegajoProps) {
     const { data, setData, post, processing, errors } = useForm({
         persona_id: '',
         nivel_riesgo: '',
         origen_derivacion: '',
-        profesional_id: '',
         problematicas: [] as number[],
         observaciones: '',
     });
@@ -293,7 +282,7 @@ export default function CreateLegajo({
                                 )}
                             </fieldset>
 
-                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <div>
                                 <div>
                                     <label className={labelClass}>
                                         Nivel de riesgo
@@ -328,48 +317,6 @@ export default function CreateLegajo({
                                             className={errorClass}
                                         >
                                             {errors.nivel_riesgo}
-                                        </p>
-                                    )}
-                                </div>
-
-                                <div>
-                                    <label className={labelClass}>
-                                        Profesional interviniente (opcional)
-                                    </label>
-                                    <select
-                                        className={`${inputClass} ${errors.profesional_id ? 'border-[#D59A8E] bg-[#FFF9F7]' : ''}`}
-                                        value={data.profesional_id}
-                                        aria-invalid={Boolean(
-                                            errors.profesional_id,
-                                        )}
-                                        aria-describedby={
-                                            errors.profesional_id
-                                                ? 'profesional_id-error'
-                                                : undefined
-                                        }
-                                        onChange={(e) =>
-                                            setData(
-                                                'profesional_id',
-                                                e.target.value,
-                                            )
-                                        }
-                                    >
-                                        <option value="">Sin asignar</option>
-                                        {profesionales.map((p) => (
-                                            <option key={p.id} value={p.id}>
-                                                {p.nombre_usuario}
-                                                {p.profesion
-                                                    ? ` · ${p.profesion}`
-                                                    : ''}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    {errors.profesional_id && (
-                                        <p
-                                            id="profesional_id-error"
-                                            className={errorClass}
-                                        >
-                                            {errors.profesional_id}
                                         </p>
                                     )}
                                 </div>

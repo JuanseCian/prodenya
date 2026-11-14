@@ -14,20 +14,12 @@ interface Opcion {
     nombre: string;
 }
 
-interface Profesional {
-    id: number;
-    nombre_usuario: string;
-    email: string;
-    profesion: string | null;
-}
-
 interface LegajoEditable {
     id: number;
     numero_legajo: string;
     persona: string | null;
     nivel_riesgo: string;
     origen_derivacion: string | null;
-    profesional_id: number | null;
     observaciones: string | null;
     problematicas: number[];
 }
@@ -35,14 +27,12 @@ interface LegajoEditable {
 interface Props {
     legajo: LegajoEditable;
     problematicas: Opcion[];
-    profesionales: Profesional[];
 }
 
 const ETIQUETAS: Record<string, string> = {
     problematicas: 'Problemáticas',
     nivel_riesgo: 'Nivel de riesgo',
     origen_derivacion: 'Origen de la derivación',
-    profesional_id: 'Profesional asignado',
     observaciones: 'Observaciones',
 };
 
@@ -53,17 +43,10 @@ const selectClass =
 const textareaClass =
     'mt-2 block w-full resize-y rounded-md border border-[#D5D1C6] bg-white px-3.5 py-3 text-sm text-[#2B2F36] outline-none focus:border-[#2C4A5E] focus:ring-2 focus:ring-[#2C4A5E]/20';
 
-export default function LegajoEdit({
-    legajo,
-    problematicas,
-    profesionales,
-}: Props) {
+export default function LegajoEdit({ legajo, problematicas }: Props) {
     const { data, setData, put, processing, errors } = useForm({
         nivel_riesgo: legajo.nivel_riesgo ?? '',
         origen_derivacion: legajo.origen_derivacion ?? '',
-        profesional_id: legajo.profesional_id
-            ? String(legajo.profesional_id)
-            : '',
         observaciones: legajo.observaciones ?? '',
         problematicas: legajo.problematicas as number[],
     });
@@ -165,7 +148,7 @@ export default function LegajoEdit({
                                     )}
                                 </fieldset>
 
-                                <div className="grid gap-5 sm:grid-cols-2">
+                                <div>
                                     <div>
                                         <Label
                                             htmlFor="nivel_riesgo"
@@ -204,49 +187,6 @@ export default function LegajoEdit({
                                         )}
                                     </div>
 
-                                    <div>
-                                        <Label
-                                            htmlFor="profesional_id"
-                                            className={labelClass}
-                                        >
-                                            Profesional asignado
-                                        </Label>
-                                        <select
-                                            id="profesional_id"
-                                            className={selectClass}
-                                            value={data.profesional_id}
-                                            onChange={(event) =>
-                                                setData(
-                                                    'profesional_id',
-                                                    event.target.value,
-                                                )
-                                            }
-                                        >
-                                            <option value="">
-                                                Sin asignar
-                                            </option>
-                                            {profesionales.map(
-                                                (profesional) => (
-                                                    <option
-                                                        key={profesional.id}
-                                                        value={profesional.id}
-                                                    >
-                                                        {
-                                                            profesional.nombre_usuario
-                                                        }
-                                                        {profesional.profesion
-                                                            ? ` · ${profesional.profesion}`
-                                                            : ''}
-                                                    </option>
-                                                ),
-                                            )}
-                                        </select>
-                                        {errors.profesional_id && (
-                                            <p className={errorClass}>
-                                                {errors.profesional_id}
-                                            </p>
-                                        )}
-                                    </div>
                                 </div>
 
                                 <div>
@@ -276,7 +216,6 @@ export default function LegajoEdit({
                                         </p>
                                     )}
                                 </div>
-
                                 <div>
                                     <Label
                                         htmlFor="observaciones"

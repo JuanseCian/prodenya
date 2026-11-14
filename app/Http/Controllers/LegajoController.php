@@ -144,7 +144,6 @@ class LegajoController extends Controller
             'modoLegajo' => true,
             'provincias' => Provincia::orderBy('nombre')->get(['id', 'nombre']),
             'problematicas' => Problematica::orderBy('nombre')->get(['id', 'nombre']),
-            'profesionales' => $this->profesionalesActivos(),
         ]);
     }
 
@@ -453,12 +452,10 @@ class LegajoController extends Controller
                 'persona' => $legajo->persona ? "{$legajo->persona->apellido}, {$legajo->persona->nombre}" : null,
                 'nivel_riesgo' => $legajo->nivel_riesgo,
                 'origen_derivacion' => $legajo->origen_derivacion,
-                'profesional_id' => $legajo->profesional_id,
                 'observaciones' => $legajo->observaciones,
                 'problematicas' => $legajo->problematicas->pluck('id')->values(),
             ],
             'problematicas' => Problematica::orderBy('nombre')->get(['id', 'nombre']),
-            'profesionales' => $this->profesionalesActivos(),
         ]);
     }
 
@@ -471,7 +468,6 @@ class LegajoController extends Controller
                 $legajo->update([
                     'nivel_riesgo' => $datos['nivel_riesgo'],
                     'origen_derivacion' => $datos['origen_derivacion'],
-                    'profesional_id' => $datos['profesional_id'] ?? null,
                     'observaciones' => $datos['observaciones'] ?? null,
                 ]);
 
@@ -591,19 +587,9 @@ class LegajoController extends Controller
         return [
             'nivel_riesgo' => $datos['legajo_nivel_riesgo'],
             'origen_derivacion' => $datos['legajo_origen_derivacion'],
-            'profesional_id' => $datos['legajo_profesional_id'] ?? null,
             'estado' => 'Abierto',
             'observaciones' => $datos['legajo_observaciones'] ?? null,
         ];
-    }
-
-    private function profesionalesActivos()
-    {
-        return User::where('activo', true)
-            ->where('estado_cuenta', User::ESTADO_APROBADO)
-            ->whereHas('rol', fn ($query) => $query->where('nombre', 'profesional'))
-            ->orderBy('name')
-            ->get(['id', 'name as nombre_usuario', 'email', 'profesion']);
     }
 
     private function responsablesActivos()

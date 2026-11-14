@@ -17,7 +17,7 @@ class StoreLegajoRequest extends FormRequest
             'persona_id' => ['required', 'exists:personas,id'],
             'nivel_riesgo' => ['required', 'in:Bajo,Medio,Alto,Critico'],
             'origen_derivacion' => ['required', 'string', 'max:255'],
-            'profesional_id' => ['nullable', 'exists:users,id'],
+            'profesional_id' => ['prohibited'],
             'problematicas' => ['required', 'array', 'min:1'],
             'problematicas.*' => ['exists:problematicas,id'],
             'observaciones' => ['nullable', 'string'],
@@ -35,7 +35,7 @@ class StoreLegajoRequest extends FormRequest
             'problematicas.required' => 'Seleccioná al menos una problemática.',
             'problematicas.min' => 'Seleccioná al menos una problemática.',
             'problematicas.*.exists' => 'Una de las problemáticas seleccionadas no es válida.',
-            'profesional_id.exists' => 'El profesional seleccionado no es válido.',
+            'profesional_id.prohibited' => 'El responsable sólo puede asignarse mediante una derivación.',
         ];
     }
 }
