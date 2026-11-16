@@ -15,8 +15,6 @@ import {
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 
-import Paginacion from '@/components/paginacion-listado';
-import type { Paginador } from '@/components/paginacion-listado';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -52,11 +50,15 @@ interface Mensaje {
     preview: string;
 }
 
+interface Columna {
+    asunto: string;
+    mensajes: Mensaje[];
+}
+
 interface Props {
-    mensajes: Paginador<Mensaje>;
+    columnas: Columna[];
     filtros: {
         buscar: string | null;
-        asunto: string | null;
         no_leidos: boolean;
         estado: string | null;
     };
@@ -100,7 +102,7 @@ const estadoClasses: Record<string, string> = {
 };
 
 export default function Mailbox({
-    mensajes,
+    columnas,
     filtros,
     noLeidos,
     estados,
@@ -108,7 +110,6 @@ export default function Mailbox({
     syncError,
 }: Props) {
     const [buscar, setBuscar] = useState(filtros.buscar ?? '');
-    const [asuntoFiltro, setAsuntoFiltro] = useState(filtros.asunto ?? '');
     const [noLeidosFiltro, setNoLeidosFiltro] = useState(filtros.no_leidos);
     const [estadoFiltro, setEstadoFiltro] = useState(filtros.estado ?? '');
     const [mensajeSeleccionado, setMensajeSeleccionado] =
@@ -131,7 +132,6 @@ export default function Mailbox({
     useEffect(() => {
         if (
             buscar === (filtros.buscar ?? '') &&
-            asuntoFiltro === (filtros.asunto ?? '') &&
             noLeidosFiltro === filtros.no_leidos &&
             estadoFiltro === (filtros.estado ?? '')
         ) {
@@ -143,7 +143,6 @@ export default function Mailbox({
                 mailbox.index.url(),
                 {
                     ...(buscar ? { buscar } : {}),
-                    ...(asuntoFiltro ? { asunto: asuntoFiltro } : {}),
                     ...(noLeidosFiltro ? { no_leidos: 1 } : {}),
                     ...(estadoFiltro ? { estado: estadoFiltro } : {}),
                 },
@@ -154,11 +153,9 @@ export default function Mailbox({
         return () => clearTimeout(timeout);
     }, [
         buscar,
-        asuntoFiltro,
         noLeidosFiltro,
         estadoFiltro,
         filtros.buscar,
-        filtros.asunto,
         filtros.no_leidos,
         filtros.estado,
     ]);
@@ -369,113 +366,92 @@ export default function Mailbox({
                                 <ChevronDown className="pointer-events-none absolute right-3 size-4 text-[#2B2F36]/40" />
                             </label>
                         </div>
+                    </Card>
 
-                        <div className="flex flex-col gap-2 border-b border-[#E4E8E5] bg-[#FBFBFA] px-5 py-3 sm:flex-row sm:items-center sm:px-6">
-                            <span className="text-xs font-semibold tracking-[0.08em] text-[#6B8F71] uppercase">
-                                Correos entrantes por asunto
-                            </span>
-                            <div className="relative w-full sm:max-w-sm">
-                                <Tag className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-[#2B2F36]/40" />
-                                <Input
-                                    value={asuntoFiltro}
-                                    onChange={(event) =>
-                                        setAsuntoFiltro(event.target.value)
-                                    }
-                                    placeholder="Ver solo entrantes con este asunto…"
-                                    className="h-10 border-[#D5D1C6] bg-white pl-10 shadow-none"
-                                />
-                            </div>
-                            {asuntoFiltro && (
-                                <button
-                                    type="button"
-                                    onClick={() => setAsuntoFiltro('')}
-                                    className="inline-flex h-10 items-center gap-1 rounded-md border border-[#D5D1C6] bg-white px-3 text-xs font-semibold text-[#2C4A5E] hover:border-[#2C4A5E]/40"
-                                >
-                                    <X className="size-3.5" />
-                                    Quitar filtro
-                                </button>
-                            )}
-                        </div>
-
-                        <CardContent className="p-0">
-                            {mensajes.data.length === 0 ? (
-                                <div className="px-6 py-16 text-center">
-                                    <Mail className="mx-auto size-8 text-[#6B8F71]" />
-                                    <p className="mt-3 text-sm font-semibold text-[#2B2F36]">
-                                        No hay correos para mostrar.
-                                    </p>
+                    <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
+                        {columnas.map((columna) => (
+                            <Card
+                                key={columna.asunto}
+                                className="overflow-hidden border-[#DCE3DF] !bg-white py-0 shadow-[0_14px_35px_rgba(23,50,71,0.06)]"
+                            >
+                                <div className="flex items-center justify-between gap-2 border-b border-[#E4E8E5] bg-[#F8FAF9] px-4 py-3">
+                                    <h2 className="truncate text-sm font-semibold text-[#173247] capitalize">
+                                        {columna.asunto}
+                                    </h2>
+                                    <span className="shrink-0 rounded-full bg-[#EAF3EF] px-2.5 py-1 text-[11px] font-semibold text-[#397461]">
+                                        {columna.mensajes.length}
+                                    </span>
                                 </div>
-                            ) : (
-                                <div className="divide-y divide-[#EEF0ED]">
-                                    {mensajes.data.map((mensaje) => (
-                                        <article
-                                            key={mensaje.id}
-                                            className={`flex gap-4 px-5 py-5 transition hover:bg-[#FAFBFA] sm:px-6 ${mensaje.is_read ? '' : 'bg-[#F8FAF9]'}`}
-                                        >
-                                            <div className="mt-1 shrink-0 text-[#2C4A5E]">
-                                                <Mail className="size-5" />
-                                            </div>
-                                            <div className="min-w-0 flex-1">
-                                                <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
-                                                    <div className="min-w-0">
+                                <CardContent className="p-0">
+                                    {columna.mensajes.length === 0 ? (
+                                        <div className="px-5 py-12 text-center">
+                                            <Mail className="mx-auto size-6 text-[#6B8F71]" />
+                                            <p className="mt-2 text-xs font-semibold text-[#2B2F36]">
+                                                No hay correos para mostrar.
+                                            </p>
+                                        </div>
+                                    ) : (
+                                        <div className="max-h-[70vh] divide-y divide-[#EEF0ED] overflow-y-auto">
+                                            {columna.mensajes.map((mensaje) => (
+                                                <article
+                                                    key={mensaje.id}
+                                                    className={`flex flex-col gap-2 px-4 py-4 transition hover:bg-[#FAFBFA] ${mensaje.is_read ? '' : 'bg-[#F8FAF9]'}`}
+                                                >
+                                                    <div className="flex items-start justify-between gap-2">
                                                         <p
                                                             className={`truncate text-sm ${mensaje.is_read ? 'font-medium' : 'font-bold'} text-[#173247]`}
                                                         >
                                                             {mensaje.subject}
                                                         </p>
-                                                         <p className="mt-1 truncate text-xs text-[#2B2F36]/60">
-                                                             {mensaje.direction === 'outgoing' ? 'Para: ' : ''}
-                                                             {mensaje.direction === 'outgoing'
-                                                                 ? mensaje.to_email
-                                                                 : `${mensaje.from_name ? `${mensaje.from_name} · ` : ''}${mensaje.from_email}`}
-                                                         </p>
+                                                        <time className="shrink-0 text-xs text-[#2B2F36]/50">
+                                                            {formatDate(mensaje.received_at ?? mensaje.sent_at)}
+                                                        </time>
                                                     </div>
-                                                    <time className="shrink-0 text-xs text-[#2B2F36]/50">
-                                                         {formatDate(mensaje.received_at ?? mensaje.sent_at)}
-                                                    </time>
-                                                </div>
-                                                <p className="mt-3 line-clamp-2 text-sm leading-6 text-[#2B2F36]/70">
-                                                     {mensaje.preview ||
-                                                         'Sin contenido de texto.'}
-                                                 </p>
-                                                <div className="mt-3 flex flex-wrap items-center gap-2">
-                                                    <span className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${estadoClasses[mensaje.estado] ?? estadoClasses.Nuevo}`}>
-                                                        {mensaje.estado}
-                                                    </span>
-                                                    {mensaje.legajos.map((legajo) => (
-                                                        <span key={legajo.id} className="rounded-full bg-[#F4F6F5] px-2.5 py-1 text-[11px] font-medium text-[#697586]">
-                                                            {legajo.numero_legajo}
+                                                    <p className="truncate text-xs text-[#2B2F36]/60">
+                                                        {mensaje.from_name ? `${mensaje.from_name} · ` : ''}
+                                                        {mensaje.from_email}
+                                                    </p>
+                                                    <p className="line-clamp-2 text-sm leading-6 text-[#2B2F36]/70">
+                                                        {mensaje.preview || 'Sin contenido de texto.'}
+                                                    </p>
+                                                    <div className="flex flex-wrap items-center gap-2">
+                                                        <span className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${estadoClasses[mensaje.estado] ?? estadoClasses.Nuevo}`}>
+                                                            {mensaje.estado}
                                                         </span>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                             <button
-                                                 type="button"
-                                                 onClick={() => abrirClasificacion(mensaje)}
-                                                className="inline-flex h-9 shrink-0 items-center gap-1.5 self-start rounded-md border border-[#D5D1C6] bg-white px-3 text-xs font-semibold text-[#2C4A5E] transition hover:border-[#2C4A5E]/40"
-                                            >
-                                                 <Eye className="size-3.5" />
-                                                 <span className="hidden sm:inline">Ver</span>
-                                             </button>
-                                            {!mensaje.is_read && (
-                                                <button
-                                                    type="button"
-                                                    onClick={() =>
-                                                        marcarLeido(mensaje.id)
-                                                    }
-                                                    className="inline-flex h-9 shrink-0 items-center gap-1.5 self-start rounded-md border border-[#D5D1C6] bg-white px-3 text-xs font-semibold text-[#2C4A5E] transition hover:border-[#2C4A5E]/40"
-                                                >
-                                                    <Check className="size-3.5" />
-                                                    Leído
-                                                </button>
-                                            )}
-                                        </article>
-                                    ))}
-                                </div>
-                            )}
-                            <Paginacion paginador={mensajes} unidad="correos" />
-                        </CardContent>
-                    </Card>
+                                                        {mensaje.legajos.map((legajo) => (
+                                                            <span key={legajo.id} className="rounded-full bg-[#F4F6F5] px-2.5 py-1 text-[11px] font-medium text-[#697586]">
+                                                                {legajo.numero_legajo}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => abrirClasificacion(mensaje)}
+                                                            className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#D5D1C6] bg-white px-2.5 text-xs font-semibold text-[#2C4A5E] transition hover:border-[#2C4A5E]/40"
+                                                        >
+                                                            <Eye className="size-3.5" />
+                                                            Ver
+                                                        </button>
+                                                        {!mensaje.is_read && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => marcarLeido(mensaje.id)}
+                                                                className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#D5D1C6] bg-white px-2.5 text-xs font-semibold text-[#2C4A5E] transition hover:border-[#2C4A5E]/40"
+                                                            >
+                                                                <Check className="size-3.5" />
+                                                                Leído
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </article>
+                                            ))}
+                                        </div>
+                                    )}
+                                </CardContent>
+                            </Card>
+                        ))}
+                    </div>
                 </div>
             </main>
             <Dialog

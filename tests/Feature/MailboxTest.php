@@ -42,34 +42,49 @@ test('the mailbox sync command fails safely when Hostinger credentials are missi
         ->assertFailed();
 });
 
-test('mailbox can be filtered by subject and only shows incoming mail', function () {
+test('mailbox groups incoming mail into three subject columns and excludes outgoing mail', function () {
+    config(['services.hostinger_mailbox.enabled' => false]);
+
     $admin = User::factory()->create(['rol_id' => 1]);
-    $coincidencia = MailMessage::create([
+    $correoA = MailMessage::create([
         'direction' => 'incoming',
         'from_email' => 'juzgado@example.test',
-        'subject' => 'Oficio judicial urgente',
+        'subject' => 'Turno AAA',
         'body_text' => 'Contenido del oficio.',
+    ]);
+    $correoB = MailMessage::create([
+        'direction' => 'incoming',
+        'from_email' => 'otro@example.test',
+        'subject' => 'Turno BBB',
+        'body_text' => 'Otro contenido.',
     ]);
     MailMessage::create([
         'direction' => 'incoming',
-        'from_email' => 'otro@example.test',
-        'subject' => 'Consulta general',
-        'body_text' => 'Otro contenido.',
+        'from_email' => 'otro2@example.test',
+        'subject' => 'Turno XYZ',
+        'body_text' => 'No corresponde a ninguna de las columnas.',
     ]);
     MailMessage::create([
         'direction' => 'outgoing',
         'from_email' => 'prodenya@desarrollohumanosn.com',
         'to_email' => 'destino@example.test',
-        'subject' => 'Oficio judicial urgente',
+        'subject' => 'Turno AAA',
         'body_text' => 'Respuesta enviada.',
     ]);
 
     $this->actingAs($admin)
-        ->get(route('mailbox.index', ['asunto' => 'oficio judicial']))
+        ->get(route('mailbox.index'))
         ->assertOk()
         ->assertInertia(fn ($page) => $page
-            ->has('mensajes.data', 1)
-            ->where('mensajes.data.0.id', $coincidencia->id));
+            ->has('columnas', 3)
+            ->where('columnas.0.asunto', 'a')
+            ->has('columnas.0.mensajes', 1)
+            ->where('columnas.0.mensajes.0.id', $correoA->id)
+            ->where('columnas.1.asunto', 'b')
+            ->has('columnas.1.mensajes', 1)
+            ->where('columnas.1.mensajes.0.id', $correoB->id)
+            ->where('columnas.2.asunto', 'c')
+            ->has('columnas.2.mensajes', 0));
 });
 
 test('mailbox users can download an attachment from a message', function () {

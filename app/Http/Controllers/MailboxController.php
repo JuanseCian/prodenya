@@ -36,6 +36,17 @@ class MailboxController extends Controller
         'operador',
     ];
 
+    /**
+     * Asuntos de los correos entrantes que nos interesan, agrupados en columnas.
+     * TODO: reemplazar 'a', 'b' y 'c' por los asuntos reales una vez definidos.
+     *
+     * @var array<int, string>
+     */
+    private const ASUNTOS_COLUMNAS = ['a', 'b', 'c'];
+
+    /** Cantidad máxima de correos a mostrar por columna. */
+    private const MENSAJES_POR_COLUMNA = 50;
+
     public function index(Request $request, HostingerMailboxService $mailbox): Response
     {
         $syncError = null;
@@ -49,70 +60,47 @@ class MailboxController extends Controller
         }
 
         $buscar = trim((string) $request->query('buscar', ''));
-        $asunto = trim((string) $request->query('asunto', ''));
         $soloNoLeidos = $request->boolean('no_leidos');
         $estado = $request->query('estado');
         $estados = ['Nuevo', 'Clasificado', 'Derivado', 'Respondido', 'Desestimado'];
 
-        $mensajes = MailMessage::query()
-            ->when($buscar !== '', function ($query) use ($buscar) {
-                $query->where(function ($query) use ($buscar) {
-                    $query->where('subject', 'like', "%{$buscar}%")
-                        ->orWhere('from_name', 'like', "%{$buscar}%")
-                        ->orWhere('from_email', 'like', "%{$buscar}%")
-                        ->orWhere('body_text', 'like', "%{$buscar}%");
-                });
-            })
-            ->when($asunto !== '', fn ($query) => $query
+        $columnas = array_map(fn (string $asunto) => [
+            'asunto' => $asunto,
+            'mensajes' => MailMessage::query()
                 ->where('direction', 'incoming')
-                ->where('subject', 'like', "%{$asunto}%"))
-            ->when($soloNoLeidos, fn ($query) => $query->where('is_read', false))
-            ->when(in_array($estado, $estados, true), fn ($query) => $query->where('estado', $estado))
-            ->with([
-                'legajos',
-                'tareas' => fn ($query) => $query
-                    ->whereNotIn('estado', ['completada', 'cancelada'])
-                    ->latest(),
-                'derivaciones' => fn ($query) => $query
-                    ->whereNotIn('estado', ['rechazada', 'cancelada'])
-                    ->latest(),
-            ])
-            ->orderByDesc('received_at')
-            ->orderByDesc('id')
-            ->paginate(20)
-            ->withQueryString()
-            ->through(fn (MailMessage $mensaje) => [
-                'id' => $mensaje->id,
-                'direction' => $mensaje->direction,
-                'subject' => $mensaje->subject ?: '(Sin asunto)',
-                'from_name' => $mensaje->from_name,
-                'from_email' => $mensaje->from_email,
-                'to_email' => $mensaje->to_email,
-                'received_at' => $mensaje->received_at?->toIso8601String(),
-                'sent_at' => $mensaje->sent_at?->toIso8601String(),
-                'is_read' => $mensaje->is_read,
-                'estado' => $mensaje->estado,
-                'body_text' => $mensaje->body_text,
-                'attachments' => $mensaje->attachments ?? [],
-                'legajos' => $mensaje->legajos->map(fn (Legajo $legajo) => [
-                    'id' => $legajo->id,
-                    'numero_legajo' => $legajo->numero_legajo,
-                ])->values()->all(),
-                'derivacion' => ($derivacion = $mensaje->derivaciones->first()) ? [
-                    'asignado_a' => $derivacion->destinatario_id,
-                    'fecha_limite' => $derivacion->fecha_limite?->toDateString(),
-                ] : ($mensaje->tareas->first() ? [
-                    'asignado_a' => $mensaje->tareas->first()->asignado_a,
-                    'fecha_limite' => $mensaje->tareas->first()->fecha_limite?->toDateString(),
-                ] : null),
-                'preview' => str($mensaje->body_text)->squish()->limit(180)->toString(),
-            ]);
+                ->where('subject', 'like', "%{$asunto}%")
+                ->when($buscar !== '', function ($query) use ($buscar) {
+                    $query->where(function ($query) use ($buscar) {
+                        $query->where('subject', 'like', "%{$buscar}%")
+                            ->orWhere('from_name', 'like', "%{$buscar}%")
+                            ->orWhere('from_email', 'like', "%{$buscar}%")
+                            ->orWhere('body_text', 'like', "%{$buscar}%");
+                    });
+                })
+                ->when($soloNoLeidos, fn ($query) => $query->where('is_read', false))
+                ->when(in_array($estado, $estados, true), fn ($query) => $query->where('estado', $estado))
+                ->with([
+                    'legajos',
+                    'tareas' => fn ($query) => $query
+                        ->whereNotIn('estado', ['completada', 'cancelada'])
+                        ->latest(),
+                    'derivaciones' => fn ($query) => $query
+                        ->whereNotIn('estado', ['rechazada', 'cancelada'])
+                        ->latest(),
+                ])
+                ->orderByDesc('received_at')
+                ->orderByDesc('id')
+                ->limit(self::MENSAJES_POR_COLUMNA)
+                ->get()
+                ->map(fn (MailMessage $mensaje) => $this->mapMensaje($mensaje))
+                ->values()
+                ->all(),
+        ], self::ASUNTOS_COLUMNAS);
 
         return Inertia::render('mailbox/index', [
-            'mensajes' => $mensajes,
+            'columnas' => $columnas,
             'filtros' => [
                 'buscar' => $buscar !== '' ? $buscar : null,
-                'asunto' => $asunto !== '' ? $asunto : null,
                 'no_leidos' => $soloNoLeidos,
                 'estado' => in_array($estado, $estados, true) ? $estado : null,
             ],
@@ -134,6 +122,39 @@ class MailboxController extends Controller
                 ->values()
                 ->all(),
         ]);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function mapMensaje(MailMessage $mensaje): array
+    {
+        return [
+            'id' => $mensaje->id,
+            'direction' => $mensaje->direction,
+            'subject' => $mensaje->subject ?: '(Sin asunto)',
+            'from_name' => $mensaje->from_name,
+            'from_email' => $mensaje->from_email,
+            'to_email' => $mensaje->to_email,
+            'received_at' => $mensaje->received_at?->toIso8601String(),
+            'sent_at' => $mensaje->sent_at?->toIso8601String(),
+            'is_read' => $mensaje->is_read,
+            'estado' => $mensaje->estado,
+            'body_text' => $mensaje->body_text,
+            'attachments' => $mensaje->attachments ?? [],
+            'legajos' => $mensaje->legajos->map(fn (Legajo $legajo) => [
+                'id' => $legajo->id,
+                'numero_legajo' => $legajo->numero_legajo,
+            ])->values()->all(),
+            'derivacion' => ($derivacion = $mensaje->derivaciones->first()) ? [
+                'asignado_a' => $derivacion->destinatario_id,
+                'fecha_limite' => $derivacion->fecha_limite?->toDateString(),
+            ] : ($mensaje->tareas->first() ? [
+                'asignado_a' => $mensaje->tareas->first()->asignado_a,
+                'fecha_limite' => $mensaje->tareas->first()->fecha_limite?->toDateString(),
+            ] : null),
+            'preview' => str($mensaje->body_text)->squish()->limit(180)->toString(),
+        ];
     }
 
     public function sync(HostingerMailboxService $mailbox): RedirectResponse
