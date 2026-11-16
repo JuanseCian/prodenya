@@ -27,19 +27,27 @@ class HostingerMailboxService
         string $body,
         array $attachments = [],
         ?MailMessage $replyTo = null,
+        ?string $ccEmail = null,
+        ?string $bccEmail = null,
     ): MailMessage {
         Mail::mailer('hostinger')
             ->to($toEmail)
-            ->send(new MailboxMessage($subject, $body, $attachments, $replyTo?->message_id));
+            ->cc($ccEmail ? [$ccEmail] : [])
+            ->bcc($bccEmail ? [$bccEmail] : [])
+            ->send(new MailboxMessage($subject, $body, $attachments, $replyTo?->message_id, $ccEmail, $bccEmail));
 
         return MailMessage::create([
             'message_id' => '<'.Str::uuid().'@prodenya.local>',
+            'provider' => 'hostinger',
+            'folder' => 'sent',
             'direction' => 'outgoing',
             'thread_id' => $replyTo?->thread_id ?: $replyTo?->message_id,
             'in_reply_to' => $replyTo?->message_id,
             'from_name' => config('mail.from.name'),
             'from_email' => config('services.hostinger_mailbox.address'),
             'to_email' => $toEmail,
+            'cc_email' => $ccEmail,
+            'bcc_email' => $bccEmail,
             'subject' => $subject,
             'body_text' => $body,
             'body_html' => null,
@@ -47,6 +55,8 @@ class HostingerMailboxService
             'received_at' => null,
             'synced_at' => now(),
             'is_read' => true,
+            'preview' => str($body)->squish()->limit(180)->toString(),
+            'has_attachments' => $attachments !== [],
             'estado' => 'Respondido',
             'attachments' => $attachments,
         ]);
@@ -134,6 +144,8 @@ class HostingerMailboxService
 
         $record->fill([
             'message_id' => $messageId,
+            'provider' => 'hostinger',
+            'folder' => 'inbox',
             'mailbox_uid' => $uid,
             'direction' => 'incoming',
             'thread_id' => $this->attributeString($message->references)
@@ -147,6 +159,8 @@ class HostingerMailboxService
             'body_text' => $this->textBody($message),
             'body_html' => $message->hasHTMLBody() ? $message->getHTMLBody() : null,
             'attachments' => $this->storeAttachments($message),
+            'preview' => str($this->textBody($message))->squish()->limit(180)->toString(),
+            'has_attachments' => $message->getAttachments() !== [],
             'received_at' => $this->receivedAt($message),
             'synced_at' => now(),
         ]);

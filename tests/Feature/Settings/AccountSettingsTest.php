@@ -15,7 +15,8 @@ test('the authenticated home shows the account menu', function () {
         ->assertOk()
         ->assertSee('María González')
         ->assertSee('Mi perfil')
-        ->assertSee('Seguridad y contraseña')
+        ->assertSee('Configuración personal')
+        ->assertSee('Seguridad de la cuenta')
         ->assertSee('Cerrar sesión');
 });
 

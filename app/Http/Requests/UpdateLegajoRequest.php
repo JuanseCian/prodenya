@@ -13,7 +13,7 @@ class UpdateLegajoRequest extends FormRequest
     {
         $legajo = $this->route('legajo');
 
-        return $this->user()?->tieneRol('admin', 'operador', 'coordinador', 'administrativo')
+        return $this->user()?->tieneRol('admin', 'administrativo')
             && $legajo instanceof Legajo
             && $this->user()->puedeVerSeccionLegajo('seguimiento')
             && $this->user()->puedeVerSeccionLegajo('situacion');

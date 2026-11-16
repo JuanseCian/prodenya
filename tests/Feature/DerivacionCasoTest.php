@@ -88,12 +88,12 @@ test('a professional can accept a legajo derivation and become responsible', fun
 });
 
 test('a legajo update cannot assign a responsible directly', function () {
-    $coordinador = User::factory()->create(['rol_id' => 4]);
+    $admin = User::factory()->create(['rol_id' => 1]);
     $profesional = User::factory()->create(['rol_id' => 5]);
-    $legajo = crearLegajoParaDerivacion($coordinador);
+    $legajo = crearLegajoParaDerivacion($admin);
     $problematica = Problematica::create(['nombre' => 'Vulneración de derechos']);
 
-    $this->actingAs($coordinador)
+    $this->actingAs($admin)
         ->put(route('legajos.update', $legajo), [
             'nivel_riesgo' => 'Medio',
             'origen_derivacion' => 'Institución',

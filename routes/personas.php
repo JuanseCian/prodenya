@@ -19,10 +19,13 @@ Route::middleware(['auth'])->group(function () {
         Route::get('personas/nueva', fn () => redirect()->route('legajos.create'))->name('personas.create');
         Route::get('legajos/create', [LegajoController::class, 'create'])->name('legajos.create');
         Route::post('legajos', [LegajoController::class, 'store'])->name('legajos.store');
-        Route::get('/legajos/{legajo}/edit', [LegajoController::class, 'edit'])->name('legajos.edit')->whereNumber('legajo');
-        Route::put('/legajos/{legajo}', [LegajoController::class, 'update'])->name('legajos.update')->whereNumber('legajo');
         Route::patch('/legajos/{legajo}/cerrar', [LegajoController::class, 'cerrar'])->name('legajos.cerrar')->whereNumber('legajo');
         Route::patch('/legajos/{legajo}/reabrir', [LegajoController::class, 'reabrir'])->name('legajos.reabrir')->whereNumber('legajo');
+    });
+
+    Route::middleware('rol:admin,administrativo')->group(function () {
+        Route::get('/legajos/{legajo}/edit', [LegajoController::class, 'edit'])->name('legajos.edit')->whereNumber('legajo');
+        Route::put('/legajos/{legajo}', [LegajoController::class, 'update'])->name('legajos.update')->whereNumber('legajo');
     });
 
     Route::middleware('rol:admin,coordinador')->group(function () {

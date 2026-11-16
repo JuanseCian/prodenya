@@ -1,4 +1,7 @@
 import { createInertiaApp, router } from '@inertiajs/react';
+import { useEffect, useState } from 'react';
+
+import { NavigationSkeleton } from '@/components/navigation-skeleton';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { initializeTheme } from '@/hooks/use-appearance';
@@ -7,6 +10,49 @@ import AuthLayout from '@/layouts/auth-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Prodenya';
+const skeletonPreviewDuration = import.meta.env.DEV ? 3000 : 0;
+
+function AppShell({ children }: { children: React.ReactNode }) {
+    const [showSkeleton, setShowSkeleton] = useState(false);
+
+    useEffect(() => {
+        let timeout: number | undefined;
+        let hideTimeout: number | undefined;
+        let startedAt = 0;
+
+        const removeStartListener = router.on('start', () => {
+            startedAt = performance.now();
+            window.clearTimeout(timeout);
+            window.clearTimeout(hideTimeout);
+            timeout = window.setTimeout(() => setShowSkeleton(true), 120);
+        });
+        const removeFinishListener = router.on('finish', () => {
+            window.clearTimeout(timeout);
+            const elapsed = performance.now() - startedAt;
+            const remaining = Math.max(0, skeletonPreviewDuration - elapsed);
+
+            hideTimeout = window.setTimeout(
+                () => setShowSkeleton(false),
+                remaining,
+            );
+        });
+
+        return () => {
+            window.clearTimeout(timeout);
+            window.clearTimeout(hideTimeout);
+            removeStartListener();
+            removeFinishListener();
+        };
+    }, []);
+
+    return (
+        <>
+            {children}
+            {showSkeleton && <NavigationSkeleton />}
+            <Toaster />
+        </>
+    );
+}
 
 createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),
@@ -36,11 +82,9 @@ createInertiaApp({
     },
     strictMode: true,
     withApp(app) {
-
         return (
             <TooltipProvider delayDuration={0}>
-                {app}
-                <Toaster />
+                <AppShell>{app}</AppShell>
             </TooltipProvider>
         );
     },

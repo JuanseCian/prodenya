@@ -68,6 +68,11 @@ interface LegajoDetalle {
     } | null;
 }
 
+interface ProblematicaOpcion {
+    id: number;
+    nombre: string;
+}
+
 interface Intervencion {
     id: number;
     fecha: string | null;
@@ -165,6 +170,8 @@ interface Props {
     puedeVerVinculos?: boolean;
     vinculos?: Vinculo[];
     personasDisponibles?: PersonaDisponible[];
+    problematicasDisponibles?: ProblematicaOpcion[];
+    problematicasSeleccionadas?: number[];
 }
 
 const tituloCard = 'text-base font-semibold text-[#2C4A5E]';
@@ -198,6 +205,8 @@ export default function LegajoShow({
     puedeVerVinculos = false,
     vinculos = [],
     personasDisponibles = [],
+    problematicasDisponibles = [],
+    problematicasSeleccionadas = [],
 }: Props) {
     const errors = (usePage().props.errors ?? {}) as Record<string, string>;
     const cerrado = legajo.estado === 'Cerrado';
@@ -238,6 +247,17 @@ export default function LegajoShow({
         detalle: '',
         fecha_limite: '',
     });
+    const legajoEditForm = useForm({
+        nivel_riesgo: legajo.nivel_riesgo ?? '',
+        origen_derivacion: legajo.origen_derivacion ?? '',
+        observaciones: legajo.observaciones ?? '',
+        problematicas: problematicasSeleccionadas,
+    });
+    const [editandoLegajo, setEditandoLegajo] = useState(false);
+    const resumenErrors = {
+        ...errors,
+        ...legajoEditForm.errors,
+    } as Record<string, string>;
 
     useEffect(() => {
         if (
@@ -311,6 +331,30 @@ export default function LegajoShow({
         );
     };
 
+    const iniciarEdicionLegajo = () => {
+        legajoEditForm.setData('nivel_riesgo', legajo.nivel_riesgo ?? '');
+        legajoEditForm.setData(
+            'origen_derivacion',
+            legajo.origen_derivacion ?? '',
+        );
+        legajoEditForm.setData('observaciones', legajo.observaciones ?? '');
+        legajoEditForm.setData('problematicas', problematicasSeleccionadas);
+        legajoEditForm.clearErrors();
+        setEditandoLegajo(true);
+    };
+
+    const cancelarEdicionLegajo = () => {
+        legajoEditForm.clearErrors();
+        setEditandoLegajo(false);
+    };
+
+    const guardarLegajo = () => {
+        legajoEditForm.put(legajosRoutes.update.url(legajo.id), {
+            preserveScroll: true,
+            onSuccess: () => setEditandoLegajo(false),
+        });
+    };
+
     return (
         <>
             <Head title={`Legajo ${legajo.numero_legajo}`} />
@@ -357,10 +401,60 @@ export default function LegajoShow({
                                             : 'Datos reservados para tu usuario'}
                                     </p>
                                     <div className="mt-4 flex flex-wrap items-center gap-2">
-                                        {legajo.nivel_riesgo && (
-                                            <NivelBadge
-                                                nivel={legajo.nivel_riesgo}
-                                            />
+                                        {editandoLegajo ? (
+                                            <label className="grid gap-1 text-[0.65rem] font-bold tracking-[0.08em] text-white/60 uppercase">
+                                                Nivel de riesgo
+                                                <select
+                                                    value={
+                                                        legajoEditForm.data
+                                                            .nivel_riesgo
+                                                    }
+                                                    onChange={(event) =>
+                                                        legajoEditForm.setData(
+                                                            'nivel_riesgo',
+                                                            event.target.value,
+                                                        )
+                                                    }
+                                                    className="h-9 rounded-lg border border-white/20 bg-white/10 px-2 text-sm font-semibold tracking-normal text-white normal-case outline-none focus:border-[#CDE8D6] focus:ring-2 focus:ring-[#CDE8D6]/30"
+                                                >
+                                                    <option
+                                                        value=""
+                                                        className="text-[#2B2F36]"
+                                                    >
+                                                        Seleccionar
+                                                    </option>
+                                                    <option
+                                                        value="Bajo"
+                                                        className="text-[#2B2F36]"
+                                                    >
+                                                        Bajo
+                                                    </option>
+                                                    <option
+                                                        value="Medio"
+                                                        className="text-[#2B2F36]"
+                                                    >
+                                                        Medio
+                                                    </option>
+                                                    <option
+                                                        value="Alto"
+                                                        className="text-[#2B2F36]"
+                                                    >
+                                                        Alto
+                                                    </option>
+                                                    <option
+                                                        value="Critico"
+                                                        className="text-[#2B2F36]"
+                                                    >
+                                                        Crítico
+                                                    </option>
+                                                </select>
+                                            </label>
+                                        ) : (
+                                            legajo.nivel_riesgo && (
+                                                <NivelBadge
+                                                    nivel={legajo.nivel_riesgo}
+                                                />
+                                            )
                                         )}
                                         {legajo.estado && (
                                             <Badge className="border border-white/15 bg-white/10 text-white">
@@ -372,14 +466,25 @@ export default function LegajoShow({
                             </div>
 
                             <div className="flex flex-wrap gap-2 xl:max-w-[560px] xl:justify-end">
-                                {puedeEditarLegajo && (
-                                    <Link
-                                        href={`/legajos/${legajo.id}/edit`}
+                                {puedeEditarLegajo && !editandoLegajo && (
+                                    <button
+                                        type="button"
+                                        onClick={iniciarEdicionLegajo}
                                         className={actionPrimaryClass}
                                     >
                                         <Pencil size={15} />
                                         Editar legajo
-                                    </Link>
+                                    </button>
+                                )}
+                                {puedeEditarLegajo && editandoLegajo && (
+                                    <button
+                                        type="button"
+                                        onClick={cancelarEdicionLegajo}
+                                        className={actionSecondaryClass}
+                                    >
+                                        <XCircle size={15} />
+                                        Cancelar edición
+                                    </button>
                                 )}
                                 {puedeExportarWord && (
                                     <a
@@ -494,7 +599,7 @@ export default function LegajoShow({
 
                 <AvisoEstado mensaje={status} />
                 <div className="mb-6">
-                    <ResumenErrores errors={errors} />
+                    <ResumenErrores errors={resumenErrors} />
                 </div>
 
                 <div className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
@@ -575,7 +680,35 @@ export default function LegajoShow({
                                         {legajo.profesional}
                                     </Dato>
                                     <Dato etiqueta="Origen de la derivación">
-                                        {legajo.origen_derivacion}
+                                        {editandoLegajo ? (
+                                            <div className="grid gap-1.5">
+                                                <Input
+                                                    value={
+                                                        legajoEditForm.data
+                                                            .origen_derivacion
+                                                    }
+                                                    onChange={(event) =>
+                                                        legajoEditForm.setData(
+                                                            'origen_derivacion',
+                                                            event.target.value,
+                                                        )
+                                                    }
+                                                    className="h-10 border-[#D5D1C6] bg-white text-sm font-normal text-[#2B2F36] shadow-none"
+                                                />
+                                                {legajoEditForm.errors
+                                                    .origen_derivacion && (
+                                                    <span className="text-xs font-medium text-[#A84635]">
+                                                        {
+                                                            legajoEditForm
+                                                                .errors
+                                                                .origen_derivacion
+                                                        }
+                                                    </span>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            legajo.origen_derivacion
+                                        )}
                                     </Dato>
                                 </dl>
                             </CardContent>
@@ -605,25 +738,133 @@ export default function LegajoShow({
                             <CardContent className="px-5 py-5">
                                 <dl className="grid gap-4 sm:grid-cols-2">
                                     <Dato etiqueta="Problemáticas">
-                                        {legajo.problematicas.length > 0 && (
-                                            <span className="flex flex-wrap gap-1.5">
-                                                {legajo.problematicas.map(
-                                                    (nombre) => (
-                                                        <Badge
-                                                            key={nombre}
-                                                            className="border-0 bg-[#EDF3EF] text-[#2C4A5E]"
+                                        {editandoLegajo ? (
+                                            <div className="grid gap-2 rounded-lg border border-[#D5D1C6] bg-white p-3 sm:col-span-2">
+                                                {problematicasDisponibles.map(
+                                                    (problematica) => (
+                                                        <label
+                                                            key={
+                                                                problematica.id
+                                                            }
+                                                            className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm text-[#2B2F36] transition hover:bg-[#F4F6F5]"
                                                         >
-                                                            {nombre}
-                                                        </Badge>
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={legajoEditForm.data.problematicas.includes(
+                                                                    problematica.id,
+                                                                )}
+                                                                onChange={() =>
+                                                                    legajoEditForm.setData(
+                                                                        'problematicas',
+                                                                        legajoEditForm.data.problematicas.includes(
+                                                                            problematica.id,
+                                                                        )
+                                                                            ? legajoEditForm.data.problematicas.filter(
+                                                                                  (
+                                                                                      actual,
+                                                                                  ) =>
+                                                                                      actual !==
+                                                                                      problematica.id,
+                                                                              )
+                                                                            : [
+                                                                                  ...legajoEditForm
+                                                                                      .data
+                                                                                      .problematicas,
+                                                                                  problematica.id,
+                                                                              ],
+                                                                    )
+                                                                }
+                                                                className="size-4 rounded border-[#B9C5BD] text-[#2C4A5E] focus:ring-[#2C4A5E]/30"
+                                                            />
+                                                            {
+                                                                problematica.nombre
+                                                            }
+                                                        </label>
                                                     ),
                                                 )}
-                                            </span>
+                                                {legajoEditForm.errors
+                                                    .problematicas && (
+                                                    <span className="text-xs font-medium text-[#A84635]">
+                                                        {
+                                                            legajoEditForm
+                                                                .errors
+                                                                .problematicas
+                                                        }
+                                                    </span>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            legajo.problematicas.length > 0 && (
+                                                <span className="flex flex-wrap gap-1.5">
+                                                    {legajo.problematicas.map(
+                                                        (nombre) => (
+                                                            <Badge
+                                                                key={nombre}
+                                                                className="border-0 bg-[#EDF3EF] text-[#2C4A5E]"
+                                                            >
+                                                                {nombre}
+                                                            </Badge>
+                                                        ),
+                                                    )}
+                                                </span>
+                                            )
                                         )}
                                     </Dato>
                                     <Dato etiqueta="Observaciones">
-                                        {legajo.observaciones}
+                                        {editandoLegajo ? (
+                                            <div className="grid gap-1.5">
+                                                <textarea
+                                                    value={
+                                                        legajoEditForm.data
+                                                            .observaciones
+                                                    }
+                                                    onChange={(event) =>
+                                                        legajoEditForm.setData(
+                                                            'observaciones',
+                                                            event.target.value,
+                                                        )
+                                                    }
+                                                    rows={4}
+                                                    className="w-full resize-y rounded-lg border border-[#D5D1C6] bg-white px-3 py-2 text-sm font-normal text-[#2B2F36] outline-none focus:border-[#2C4A5E] focus:ring-2 focus:ring-[#2C4A5E]/20"
+                                                />
+                                                {legajoEditForm.errors
+                                                    .observaciones && (
+                                                    <span className="text-xs font-medium text-[#A84635]">
+                                                        {
+                                                            legajoEditForm
+                                                                .errors
+                                                                .observaciones
+                                                        }
+                                                    </span>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            legajo.observaciones
+                                        )}
                                     </Dato>
                                 </dl>
+                                {editandoLegajo && (
+                                    <div className="mt-5 flex flex-col gap-2 border-t border-[#E4E8E5] pt-5 sm:flex-row sm:justify-end">
+                                        <button
+                                            type="button"
+                                            onClick={cancelarEdicionLegajo}
+                                            className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-[#D5D1C6] px-4 text-sm font-semibold text-[#2B2F36] transition hover:bg-[#F4F6F5]"
+                                        >
+                                            Cancelar
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={guardarLegajo}
+                                            disabled={legajoEditForm.processing}
+                                            className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-[#2C4A5E] px-4 text-sm font-semibold text-white transition hover:bg-[#1F394B] disabled:cursor-not-allowed disabled:opacity-60"
+                                        >
+                                            <CheckCircle2 size={15} />
+                                            {legajoEditForm.processing
+                                                ? 'Guardando...'
+                                                : 'Guardar cambios'}
+                                        </button>
+                                    </div>
+                                )}
                             </CardContent>
                         </Card>
                     )}

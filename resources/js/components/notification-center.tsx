@@ -1,4 +1,4 @@
-import { usePoll, router } from '@inertiajs/react';
+import { router } from '@inertiajs/react';
 import { Bell, CheckCheck, ExternalLink, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -69,14 +69,6 @@ export function NotificationCenter({
         return () => document.removeEventListener('keydown', handleKeyDown);
     }, [open]);
 
-    usePoll(
-        POLLING_INTERVAL,
-        {
-            only: ['notificaciones', 'notificacionesNoLeidas'],
-        },
-        { mode: 'rest', autoStart: !standalone },
-    );
-
     useEffect(() => {
         if (standalone || !endpoint) {
             return;
@@ -93,7 +85,7 @@ export function NotificationCenter({
     }, [endpoint, standalone]);
 
     useEffect(() => {
-        if (!standalone || !endpoint) {
+        if (!endpoint) {
             return;
         }
 

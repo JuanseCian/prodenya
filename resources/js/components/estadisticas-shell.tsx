@@ -1,4 +1,4 @@
-import { Link, router } from '@inertiajs/react';
+import { Link } from '@inertiajs/react';
 import {
     ChevronRight,
     ClipboardCheck,
@@ -13,7 +13,7 @@ import {
     TriangleAlert,
     X,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import type { ReactNode } from 'react';
 
@@ -88,14 +88,6 @@ export default function EstadisticasShell({
     const [mobileOpen, setMobileOpen] = useState(false);
     const { resolvedAppearance, updateAppearance } = useAppearance();
     const isDark = resolvedAppearance === 'dark';
-
-    useEffect(() => {
-        const refresh = window.setInterval(() => {
-            router.reload({ preserveUrl: true });
-        }, 60_000);
-
-        return () => window.clearInterval(refresh);
-    }, []);
 
     const visibleModules = modulos.filter(
         (modulo) =>

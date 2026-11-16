@@ -60,4 +60,16 @@ return [
         ],
     ],
 
+    'google_gmail' => [
+        'enabled' => env('GOOGLE_GMAIL_ENABLED', false),
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect_uri' => env('GOOGLE_GMAIL_REDIRECT_URI', env('APP_URL').'/auth/google/callback'),
+        'address' => env('GOOGLE_GMAIL_ADDRESS', 'prodenya.sn@gmail.com'),
+        'scopes' => [
+            'https://www.googleapis.com/auth/gmail.readonly',
+            'https://www.googleapis.com/auth/gmail.send',
+        ],
+    ],
+
 ];

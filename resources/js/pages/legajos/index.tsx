@@ -9,7 +9,6 @@ import {
     FolderOpen,
     FolderPlus,
     MoreHorizontal,
-    Pencil,
     Search,
     UsersRound,
     X,
@@ -24,7 +23,6 @@ import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
-    DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
@@ -66,7 +64,6 @@ interface LegajosIndexProps {
     estados: string[];
     problematicas: OpcionFiltro[];
     edades: OpcionFiltro[];
-    puedeEditar: boolean;
     puedeExportarWord: boolean;
     status?: string | null;
 }
@@ -101,12 +98,10 @@ const formatDni = (dni: string): string => {
 
 function LegajoActions({
     legajo,
-    puedeEditar,
     puedeExportarWord,
     mobile = false,
 }: {
     legajo: LegajoFila;
-    puedeEditar: boolean;
     puedeExportarWord: boolean;
     mobile?: boolean;
 }) {
@@ -122,44 +117,33 @@ function LegajoActions({
                 <ArrowUpRight size={14} />
                 Abrir legajo
             </Link>
-            <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                    <button
-                        type="button"
-                        aria-label={`Más acciones para ${legajo.numero_legajo}`}
-                        className="grid size-9 place-items-center rounded-lg border border-[#D7E2DC] bg-white text-[#2C4A5E] transition hover:border-[#AFC7B6] hover:bg-[#F4F8F5] focus-visible:ring-2 focus-visible:ring-[#7EAD8B] focus-visible:outline-none"
-                    >
-                        <MoreHorizontal size={17} />
-                    </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-52">
-                    {puedeEditar && (
+            {puedeExportarWord && (
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <button
+                            type="button"
+                            aria-label={`Más acciones para ${legajo.numero_legajo}`}
+                            className="grid size-9 place-items-center rounded-lg border border-[#D7E2DC] bg-white text-[#2C4A5E] transition hover:border-[#AFC7B6] hover:bg-[#F4F8F5] focus-visible:ring-2 focus-visible:ring-[#7EAD8B] focus-visible:outline-none"
+                        >
+                            <MoreHorizontal size={17} />
+                        </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-52">
                         <DropdownMenuItem asChild>
-                            <Link href={`/legajos/${legajo.id}/edit`}>
-                                <Pencil />
-                                Editar legajo
-                            </Link>
+                            <a
+                                href={legajosRoutes.previsualizarWord.url(
+                                    legajo.id,
+                                )}
+                                target="_blank"
+                                rel="noreferrer"
+                            >
+                                <FileDown />
+                                Previsualizar Word
+                            </a>
                         </DropdownMenuItem>
-                    )}
-                    {puedeExportarWord && (
-                        <>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem asChild>
-                                <a
-                                    href={legajosRoutes.previsualizarWord.url(
-                                        legajo.id,
-                                    )}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                >
-                                    <FileDown />
-                                    Previsualizar Word
-                                </a>
-                            </DropdownMenuItem>
-                        </>
-                    )}
-                </DropdownMenuContent>
-            </DropdownMenu>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            )}
         </div>
     );
 }
@@ -255,7 +239,6 @@ export default function LegajosIndex({
     estados,
     problematicas,
     edades,
-    puedeEditar,
     puedeExportarWord,
     status,
 }: LegajosIndexProps) {
@@ -753,9 +736,6 @@ export default function LegajosIndex({
                                                         <div className="mt-4 border-t border-[#E8EEE9] pt-4">
                                                             <LegajoActions
                                                                 legajo={legajo}
-                                                                puedeEditar={
-                                                                    puedeEditar
-                                                                }
                                                                 puedeExportarWord={
                                                                     puedeExportarWord
                                                                 }
@@ -979,9 +959,6 @@ export default function LegajosIndex({
                                                                             <LegajoActions
                                                                                 legajo={
                                                                                     legajo
-                                                                                }
-                                                                                puedeEditar={
-                                                                                    puedeEditar
                                                                                 }
                                                                                 puedeExportarWord={
                                                                                     puedeExportarWord

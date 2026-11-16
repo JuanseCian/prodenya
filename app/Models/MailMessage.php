@@ -12,8 +12,24 @@ class MailMessage extends Model
 {
     use Auditable;
 
+    protected static function booted(): void
+    {
+        static::saving(function (MailMessage $message): void {
+            if ($message->preview === null && $message->body_text !== null) {
+                $message->preview = str($message->body_text)->squish()->limit(500)->toString();
+            }
+
+            if ($message->attachments !== null) {
+                $message->has_attachments = $message->attachments !== [];
+            }
+        });
+    }
+
     protected $fillable = [
         'message_id',
+        'provider',
+        'provider_message_id',
+        'folder',
         'mailbox_uid',
         'direction',
         'thread_id',
@@ -21,17 +37,23 @@ class MailMessage extends Model
         'from_name',
         'from_email',
         'to_email',
+        'cc_email',
+        'bcc_email',
         'subject',
         'body_text',
         'body_html',
+        'preview',
         'received_at',
         'sent_at',
         'synced_at',
         'is_read',
+        'is_starred',
+        'has_attachments',
         'estado',
         'clasificado_por',
         'clasificado_en',
         'attachments',
+        'labels',
     ];
 
     protected function casts(): array
@@ -41,7 +63,10 @@ class MailMessage extends Model
             'sent_at' => 'datetime',
             'synced_at' => 'datetime',
             'is_read' => 'boolean',
+            'is_starred' => 'boolean',
+            'has_attachments' => 'boolean',
             'attachments' => 'array',
+            'labels' => 'array',
             'clasificado_en' => 'datetime',
         ];
     }

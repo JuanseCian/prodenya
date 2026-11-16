@@ -1,10 +1,15 @@
 import { createRoot } from 'react-dom/client';
+import type { Root } from 'react-dom/client';
 import { NotificationCenter } from '@/components/notification-center';
 import PasskeyOnboardingModal from '@/components/passkey-onboarding-modal';
 import { Toaster } from '@/components/ui/sonner';
 import type { NotificationItem } from '@/types';
 
-const notificationMount = document.querySelector<HTMLElement>(
+type ReactMount = HTMLElement & {
+    __prodenyaRoot?: Root;
+};
+
+const notificationMount = document.querySelector<ReactMount>(
     '[data-site-notification-center]',
 );
 
@@ -22,7 +27,11 @@ if (notificationMount) {
         const passkeyPasswordConfirmed =
             notificationMount.dataset.passkeyPasswordConfirmed === '1';
 
-        createRoot(notificationMount).render(
+        const root =
+            notificationMount.__prodenyaRoot ?? createRoot(notificationMount);
+        notificationMount.__prodenyaRoot = root;
+
+        root.render(
             <>
                 <NotificationCenter
                     initialNotifications={notifications}

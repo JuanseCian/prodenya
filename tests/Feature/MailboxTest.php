@@ -22,6 +22,50 @@ beforeEach(function () {
     ]);
 });
 
+test('gmail connection reports missing OAuth configuration', function () {
+    config([
+        'services.google_gmail.enabled' => true,
+        'services.google_gmail.client_id' => null,
+        'services.google_gmail.client_secret' => null,
+    ]);
+    $admin = User::factory()->create(['rol_id' => 1]);
+
+    $this->actingAs($admin)
+        ->get(route('mailbox.google.redirect'))
+        ->assertRedirect(route('mailbox.index'))
+        ->assertSessionHasErrors([
+            'mailbox' => 'Faltan las credenciales OAuth de Google en el entorno.',
+        ]);
+});
+
+test('gmail connection redirects to Google with a session state', function () {
+    config([
+        'services.google_gmail.enabled' => true,
+        'services.google_gmail.client_id' => 'client-id.apps.googleusercontent.com',
+        'services.google_gmail.client_secret' => 'client-secret',
+        'services.google_gmail.redirect_uri' => 'http://localhost:8001/auth/google/callback',
+    ]);
+    $admin = User::factory()->create(['rol_id' => 1]);
+
+    $response = $this->actingAs($admin)->get(route('mailbox.google.redirect'));
+
+    $response->assertRedirect();
+    expect($response->headers->get('Location'))->toContain('accounts.google.com');
+    expect(session('google_oauth_state'))->toBeString()->toHaveLength(64);
+});
+
+test('gmail callback rejects an invalid OAuth state', function () {
+    $admin = User::factory()->create(['rol_id' => 1]);
+
+    $this->actingAs($admin)
+        ->withSession(['google_oauth_state' => 'valid-state'])
+        ->get(route('mailbox.google.callback', ['state' => 'invalid-state', 'code' => 'code']))
+        ->assertRedirect(route('mailbox.index'))
+        ->assertSessionHasErrors([
+            'mailbox' => 'La validación de seguridad de Google no fue válida.',
+        ]);
+});
+
 test('mailbox is available to the configured operational roles', function () {
     $admin = User::factory()->create(['rol_id' => 1]);
     $coordinador = User::factory()->create(['rol_id' => 3]);
@@ -35,14 +79,40 @@ test('mailbox is available to the configured operational roles', function () {
 });
 
 test('the mailbox sync command fails safely when Hostinger credentials are missing', function () {
-    config(['services.hostinger_mailbox.password' => null]);
+    config([
+        'services.hostinger_mailbox.enabled' => true,
+        'services.hostinger_mailbox.password' => null,
+    ]);
 
     $this->artisan('mailbox:sync')
         ->expectsOutput('Faltan las credenciales IMAP de Hostinger en el entorno.')
         ->assertFailed();
 });
 
-test('mailbox groups incoming mail into three subject columns and excludes outgoing mail', function () {
+test('the mailbox sync command exits cleanly when the integration is disabled', function () {
+    config(['services.hostinger_mailbox.enabled' => false]);
+
+    $this->artisan('mailbox:sync')
+        ->expectsOutput('La sincronización del buzón está deshabilitada en este entorno.')
+        ->assertSuccessful();
+});
+
+test('manual mailbox sync does not connect when the integration is disabled', function () {
+    config([
+        'services.hostinger_mailbox.enabled' => false,
+        'services.google_gmail.enabled' => false,
+    ]);
+    $admin = User::factory()->create(['rol_id' => 1]);
+
+    $this->actingAs($admin)
+        ->post(route('mailbox.sync'))
+        ->assertRedirect()
+        ->assertSessionHasErrors([
+            'mailbox' => 'La sincronización del buzón está deshabilitada en este entorno.',
+        ]);
+});
+
+test('mailbox shows incoming mail and excludes outgoing mail', function () {
     config(['services.hostinger_mailbox.enabled' => false]);
 
     $admin = User::factory()->create(['rol_id' => 1]);
@@ -58,7 +128,7 @@ test('mailbox groups incoming mail into three subject columns and excludes outgo
         'subject' => 'Turno BBB',
         'body_text' => 'Otro contenido.',
     ]);
-    MailMessage::create([
+    $correoC = MailMessage::create([
         'direction' => 'incoming',
         'from_email' => 'otro2@example.test',
         'subject' => 'Turno XYZ',
@@ -76,15 +146,40 @@ test('mailbox groups incoming mail into three subject columns and excludes outgo
         ->get(route('mailbox.index'))
         ->assertOk()
         ->assertInertia(fn ($page) => $page
-            ->has('columnas', 3)
-            ->where('columnas.0.asunto', 'a')
-            ->has('columnas.0.mensajes', 1)
-            ->where('columnas.0.mensajes.0.id', $correoA->id)
-            ->where('columnas.1.asunto', 'b')
-            ->has('columnas.1.mensajes', 1)
-            ->where('columnas.1.mensajes.0.id', $correoB->id)
-            ->where('columnas.2.asunto', 'c')
-            ->has('columnas.2.mensajes', 0));
+            ->has('columnas', 1)
+            ->where('columnas.0.asunto', 'Bandeja de entrada')
+            ->has('columnas.0.mensajes', 3)
+            ->where('columnas.0.mensajes.0.id', $correoC->id)
+            ->where('columnas.0.mensajes.1.id', $correoB->id)
+            ->where('columnas.0.mensajes.2.id', $correoA->id)
+            ->missing('columnas.0.mensajes.3'));
+});
+
+test('mailbox paginates message metadata and loads the body on demand', function () {
+    config(['services.hostinger_mailbox.enabled' => false]);
+
+    $admin = User::factory()->create(['rol_id' => 1]);
+    $mail = MailMessage::create([
+        'direction' => 'incoming',
+        'from_email' => 'juzgado@example.test',
+        'subject' => 'Oficio con contenido diferido',
+        'body_text' => 'Contenido completo que no debe viajar en el listado.',
+    ]);
+
+    $this->actingAs($admin)
+        ->get(route('mailbox.index'))
+        ->assertInertia(fn ($page) => $page
+            ->has('mensajes.data', 1)
+            ->where('mensajes.data.0.id', $mail->id)
+            ->where('mensajes.data.0.body_text', null)
+            ->where('mensajes.data.0.preview', 'Contenido completo que no debe viajar en el listado.')
+        );
+
+    $this->actingAs($admin)
+        ->get(route('mailbox.show', $mail))
+        ->assertOk()
+        ->assertJsonPath('message.id', $mail->id)
+        ->assertJsonPath('message.body_text', 'Contenido completo que no debe viajar en el listado.');
 });
 
 test('mailbox users can download an attachment from a message', function () {
@@ -121,18 +216,25 @@ test('mailbox users can download an attachment from a message', function () {
 test('mailbox users can send and retain an outgoing email', function () {
     $admin = User::factory()->create(['rol_id' => 1]);
     Mail::fake();
-    config(['services.hostinger_mailbox.address' => 'prodenya@desarrollohumanosn.com']);
+    config([
+        'services.google_gmail.enabled' => false,
+        'services.hostinger_mailbox.address' => 'prodenya@desarrollohumanosn.com',
+    ]);
 
     $this->actingAs($admin)
         ->post(route('mailbox.send'), [
             'to_email' => 'destinatario@example.test',
+            'cc_email' => 'copia@example.test',
+            'bcc_email' => 'oculta@example.test',
             'subject' => 'Información solicitada',
             'body' => 'Se envía la información solicitada.',
         ])
         ->assertRedirect();
 
     Mail::assertQueued(MailboxMessage::class, fn (MailboxMessage $mail): bool => $mail->hasTo('destinatario@example.test')
-        && $mail->hasSubject('Información solicitada'));
+        && $mail->hasSubject('Información solicitada')
+        && $mail->ccEmail === 'copia@example.test'
+        && $mail->bccEmail === 'oculta@example.test');
 
     expect(MailMessage::query()
         ->where('direction', 'outgoing')

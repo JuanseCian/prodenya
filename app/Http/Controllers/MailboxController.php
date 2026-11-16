@@ -9,6 +9,7 @@ use App\Models\MailMessage;
 use App\Models\Tarea;
 use App\Models\User;
 use App\Services\DerivacionNotificationService;
+use App\Services\GoogleGmailService;
 use App\Services\HostingerMailboxService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -36,77 +37,98 @@ class MailboxController extends Controller
         'operador',
     ];
 
-    /**
-     * Asuntos de los correos entrantes que nos interesan, agrupados en columnas.
-     * TODO: reemplazar 'a', 'b' y 'c' por los asuntos reales una vez definidos.
-     *
-     * @var array<int, string>
-     */
-    private const ASUNTOS_COLUMNAS = ['a', 'b', 'c'];
+    /** @var array<int, string> */
+    private const MAILBOX_FOLDERS = ['inbox', 'sent', 'archive', 'spam', 'trash'];
 
-    /** Cantidad máxima de correos a mostrar por columna. */
-    private const MENSAJES_POR_COLUMNA = 50;
-
-    public function index(Request $request, HostingerMailboxService $mailbox): Response
+    public function index(Request $request, GoogleGmailService $google): Response
     {
-        $syncError = null;
-        if (config('services.hostinger_mailbox.enabled')) {
-            try {
-                $mailbox->sync();
-            } catch (Throwable $exception) {
-                report($exception);
-                $syncError = 'No se pudo sincronizar el buzón. Verificá la configuración de Hostinger.';
-            }
-        }
-
         $buscar = trim((string) $request->query('buscar', ''));
         $soloNoLeidos = $request->boolean('no_leidos');
         $estado = $request->query('estado');
+        $folder = $request->query('folder', 'inbox');
         $estados = ['Nuevo', 'Clasificado', 'Derivado', 'Respondido', 'Desestimado'];
 
-        $columnas = array_map(fn (string $asunto) => [
-            'asunto' => $asunto,
-            'mensajes' => MailMessage::query()
-                ->where('direction', 'incoming')
-                ->where('subject', 'like', "%{$asunto}%")
-                ->when($buscar !== '', function ($query) use ($buscar) {
-                    $query->where(function ($query) use ($buscar) {
-                        $query->where('subject', 'like', "%{$buscar}%")
-                            ->orWhere('from_name', 'like', "%{$buscar}%")
-                            ->orWhere('from_email', 'like', "%{$buscar}%")
-                            ->orWhere('body_text', 'like', "%{$buscar}%");
-                    });
-                })
-                ->when($soloNoLeidos, fn ($query) => $query->where('is_read', false))
-                ->when(in_array($estado, $estados, true), fn ($query) => $query->where('estado', $estado))
-                ->with([
-                    'legajos',
-                    'tareas' => fn ($query) => $query
-                        ->whereNotIn('estado', ['completada', 'cancelada'])
-                        ->latest(),
-                    'derivaciones' => fn ($query) => $query
-                        ->whereNotIn('estado', ['rechazada', 'cancelada'])
-                        ->latest(),
-                ])
-                ->orderByDesc('received_at')
-                ->orderByDesc('id')
-                ->limit(self::MENSAJES_POR_COLUMNA)
-                ->get()
-                ->map(fn (MailMessage $mensaje) => $this->mapMensaje($mensaje))
-                ->values()
-                ->all(),
-        ], self::ASUNTOS_COLUMNAS);
+        $folder = in_array($folder, self::MAILBOX_FOLDERS, true) ? $folder : 'inbox';
+        $messageQuery = MailMessage::query()
+            ->select([
+                'id',
+                'message_id',
+                'provider',
+                'provider_message_id',
+                'folder',
+                'direction',
+                'thread_id',
+                'from_name',
+                'from_email',
+                'to_email',
+                'subject',
+                'preview',
+                'received_at',
+                'sent_at',
+                'is_read',
+                'is_starred',
+                'has_attachments',
+                'estado',
+            ])
+            ->when($folder === 'sent', fn (Builder $query) => $query->where('direction', 'outgoing'))
+            ->when($folder !== 'sent', fn (Builder $query) => $query
+                ->where('folder', $folder)
+                ->when($folder === 'inbox', fn (Builder $query) => $query->where('direction', 'incoming')))
+            ->when($buscar !== '', function (Builder $query) use ($buscar): void {
+                $query->where(function (Builder $query) use ($buscar): void {
+                    $query->where('subject', 'like', "%{$buscar}%")
+                        ->orWhere('from_name', 'like', "%{$buscar}%")
+                        ->orWhere('from_email', 'like', "%{$buscar}%")
+                        ->orWhere('to_email', 'like', "%{$buscar}%")
+                        ->orWhere('preview', 'like', "%{$buscar}%")
+                        ->orWhere('body_text', 'like', "%{$buscar}%");
+                });
+            })
+            ->when($soloNoLeidos, fn (Builder $query) => $query->where('is_read', false))
+            ->when(in_array($estado, $estados, true), fn (Builder $query) => $query->where('estado', $estado))
+            ->with([
+                'legajos:id,numero_legajo',
+                'tareas' => fn ($query) => $query
+                    ->whereNotIn('estado', ['completada', 'cancelada'])
+                    ->latest(),
+                'derivaciones' => fn ($query) => $query
+                    ->whereNotIn('estado', ['rechazada', 'cancelada'])
+                    ->latest(),
+            ])
+            ->orderByDesc('received_at')
+            ->orderByDesc('id');
+
+        $mensajes = $messageQuery->paginate(25)->withQueryString();
+        $mensajes->setCollection($mensajes->getCollection()->map(
+            fn (MailMessage $mensaje): array => $this->mapMensaje($mensaje),
+        ));
 
         return Inertia::render('mailbox/index', [
-            'columnas' => $columnas,
+            'mensajes' => $mensajes,
+            'columnas' => [[
+                'asunto' => 'Bandeja de entrada',
+                'mensajes' => $mensajes->getCollection()->all(),
+            ]],
             'filtros' => [
                 'buscar' => $buscar !== '' ? $buscar : null,
                 'no_leidos' => $soloNoLeidos,
                 'estado' => in_array($estado, $estados, true) ? $estado : null,
+                'folder' => $folder,
             ],
-            'noLeidos' => MailMessage::where('is_read', false)->count(),
+            'carpetas' => [
+                'inbox' => MailMessage::where('folder', 'inbox')->count(),
+                'sent' => MailMessage::where('direction', 'outgoing')->count(),
+                'archive' => MailMessage::where('folder', 'archive')->count(),
+                'spam' => MailMessage::where('folder', 'spam')->count(),
+                'trash' => MailMessage::where('folder', 'trash')->count(),
+            ],
+            'noLeidos' => MailMessage::where('folder', 'inbox')->where('is_read', false)->count(),
             'estados' => $estados,
-            'syncError' => $syncError,
+            'syncError' => session('errors')?->getBag('default')->first('mailbox'),
+            'googleConfigured' => $google->isConfigured(),
+            'googleConnected' => $google->isConnected(),
+            'googleEmail' => $google->connectedEmail(),
+            'googleSendAccess' => $google->hasSendAccess(),
             'responsables' => User::query()
                 ->with('rol')
                 ->where('activo', true)
@@ -124,25 +146,59 @@ class MailboxController extends Controller
         ]);
     }
 
+    public function show(Request $request, MailMessage $mailMessage): JsonResponse
+    {
+        abort_unless($request->user()?->tieneRol('admin', 'oficios', 'coordinador'), 403);
+
+        $mailMessage->load([
+            'legajos:id,numero_legajo',
+            'tareas' => fn ($query) => $query->whereNotIn('estado', ['completada', 'cancelada'])->latest(),
+            'derivaciones' => fn ($query) => $query->whereNotIn('estado', ['rechazada', 'cancelada'])->latest(),
+        ]);
+
+        return response()->json(['message' => $this->mapMensaje($mailMessage, true)]);
+    }
+
     /**
      * @return array<string, mixed>
      */
-    private function mapMensaje(MailMessage $mensaje): array
+    private function mapMensaje(MailMessage $mensaje, bool $includeContent = false): array
     {
+        $attachments = collect($mensaje->attachments ?? [])->values()->map(
+            fn (array $attachment, int $index): array => [
+                'index' => $index,
+                'name' => $attachment['name'] ?? 'Adjunto',
+                'mime' => $attachment['mime'] ?? 'application/octet-stream',
+                'size' => (int) ($attachment['size'] ?? 0),
+            ],
+        )->all();
+
         return [
             'id' => $mensaje->id,
+            'message_id' => $mensaje->message_id,
+            'provider' => $mensaje->provider,
+            'provider_message_id' => $mensaje->provider_message_id,
+            'folder' => $mensaje->folder,
             'direction' => $mensaje->direction,
             'subject' => $mensaje->subject ?: '(Sin asunto)',
             'from_name' => $mensaje->from_name,
             'from_email' => $mensaje->from_email,
             'to_email' => $mensaje->to_email,
+            'cc_email' => $mensaje->cc_email,
+            'bcc_email' => $mensaje->bcc_email,
             'received_at' => $mensaje->received_at?->toIso8601String(),
             'sent_at' => $mensaje->sent_at?->toIso8601String(),
             'is_read' => $mensaje->is_read,
+            'is_starred' => $mensaje->is_starred,
+            'has_attachments' => $mensaje->has_attachments || $attachments !== [],
             'estado' => $mensaje->estado,
-            'body_text' => $mensaje->body_text,
-            'attachments' => $mensaje->attachments ?? [],
-            'legajos' => $mensaje->legajos->map(fn (Legajo $legajo) => [
+            'body_text' => $includeContent ? $mensaje->body_text : null,
+            'attachments' => $attachments,
+            'legajos' => $mensaje->legajos->filter(fn (Legajo $legajo): bool => $this->puedeAccederLegajo(
+                request()->user(),
+                $legajo,
+                'persona',
+            ))->map(fn (Legajo $legajo) => [
                 'id' => $legajo->id,
                 'numero_legajo' => $legajo->numero_legajo,
             ])->values()->all(),
@@ -153,12 +209,44 @@ class MailboxController extends Controller
                 'asignado_a' => $mensaje->tareas->first()->asignado_a,
                 'fecha_limite' => $mensaje->tareas->first()->fecha_limite?->toDateString(),
             ] : null),
-            'preview' => str($mensaje->body_text)->squish()->limit(180)->toString(),
+            'preview' => $mensaje->preview ?: str($mensaje->body_text)->squish()->limit(180)->toString(),
         ];
     }
 
-    public function sync(HostingerMailboxService $mailbox): RedirectResponse
+    public function sync(HostingerMailboxService $mailbox, GoogleGmailService $google): RedirectResponse
     {
+        if ($google->isEnabled()) {
+            if (! $google->isConnected()) {
+                return back()->withErrors(['mailbox' => 'Vinculá la cuenta de Gmail antes de sincronizar.']);
+            }
+
+            try {
+                $synchronized = $google->sync();
+                Inertia::flash('toast', [
+                    'type' => 'success',
+                    'message' => $synchronized === 1
+                        ? 'Se sincronizó 1 correo nuevo desde Gmail.'
+                        : "Se sincronizaron {$synchronized} correos nuevos desde Gmail.",
+                ]);
+
+                return back();
+            } catch (Throwable $exception) {
+                report($exception);
+
+                $message = str_contains($exception->getMessage(), 'Quota exceeded')
+                    ? 'Google alcanzó el límite temporal de Gmail. Esperá un minuto y volvé a intentar.'
+                    : 'No se pudo sincronizar Gmail. Volvé a vincular la cuenta.';
+
+                return back()->withErrors(['mailbox' => $message]);
+            }
+        }
+
+        if (! config('services.hostinger_mailbox.enabled')) {
+            return back()->withErrors([
+                'mailbox' => 'La sincronización del buzón está deshabilitada en este entorno.',
+            ]);
+        }
+
         try {
             $synchronized = $mailbox->sync();
             Inertia::flash('toast', [
@@ -176,10 +264,80 @@ class MailboxController extends Controller
         return back();
     }
 
-    public function send(Request $request, HostingerMailboxService $mailbox): RedirectResponse
+    public function googleRedirect(Request $request, GoogleGmailService $google): RedirectResponse
+    {
+        if (! $google->isConfigured()) {
+            return redirect()->route('mailbox.index')->withErrors([
+                'mailbox' => 'Faltan las credenciales OAuth de Google en el entorno.',
+            ]);
+        }
+
+        $state = Str::random(64);
+        $request->session()->put('google_oauth_state', $state);
+
+        return redirect()->away($google->authorizationUrl($state));
+    }
+
+    public function googleCallback(Request $request, GoogleGmailService $google): RedirectResponse
+    {
+        $state = (string) $request->session()->pull('google_oauth_state');
+
+        if ($state === '' || ! hash_equals($state, (string) $request->query('state'))) {
+            return redirect()->route('mailbox.index')->withErrors([
+                'mailbox' => 'La validación de seguridad de Google no fue válida.',
+            ]);
+        }
+
+        if ($request->filled('error')) {
+            return redirect()->route('mailbox.index')->withErrors([
+                'mailbox' => 'La autorización de Gmail fue cancelada.',
+            ]);
+        }
+
+        $code = (string) $request->query('code');
+
+        if ($code === '') {
+            return redirect()->route('mailbox.index')->withErrors([
+                'mailbox' => 'Google no devolvió un código de autorización.',
+            ]);
+        }
+
+        try {
+            $token = $google->authorize($code);
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return redirect()->route('mailbox.index')->withErrors([
+                'mailbox' => 'No se pudo vincular la cuenta de Gmail.',
+            ]);
+        }
+
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => "Gmail vinculado: {$token->email}.",
+        ]);
+
+        return redirect()->route('mailbox.index');
+    }
+
+    public function googleDisconnect(GoogleGmailService $google): RedirectResponse
+    {
+        $google->disconnect();
+
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => 'La cuenta de Gmail fue desvinculada.',
+        ]);
+
+        return back();
+    }
+
+    public function send(Request $request, HostingerMailboxService $mailbox, GoogleGmailService $google): RedirectResponse
     {
         $data = $request->validate([
             'to_email' => ['required', 'email', 'max:255'],
+            'cc_email' => ['nullable', 'email', 'max:255'],
+            'bcc_email' => ['nullable', 'email', 'max:255'],
             'subject' => ['required', 'string', 'max:255'],
             'body' => ['required', 'string', 'max:100000'],
             'attachments' => ['nullable', 'array', 'max:5'],
@@ -189,12 +347,20 @@ class MailboxController extends Controller
         $attachments = $this->storeAttachments($request);
 
         try {
-            $mailbox->send($data['to_email'], $data['subject'], $data['body'], $attachments);
+            if ($google->isEnabled()) {
+                $google->send($data['to_email'], $data['subject'], $data['body'], $attachments, null, $data['cc_email'] ?? null, $data['bcc_email'] ?? null);
+            } else {
+                $mailbox->send($data['to_email'], $data['subject'], $data['body'], $attachments, null, $data['cc_email'] ?? null, $data['bcc_email'] ?? null);
+            }
         } catch (Throwable $exception) {
             $this->deleteAttachments($attachments);
             report($exception);
 
-            return back()->withErrors(['mailbox' => 'No se pudo enviar el correo. Verificá la configuración SMTP.']);
+            $message = $google->isEnabled()
+                ? 'No se pudo enviar el correo por Gmail. Volvé a autorizar la cuenta.'
+                : 'No se pudo enviar el correo. Verificá la configuración SMTP.';
+
+            return back()->withErrors(['mailbox' => $message]);
         }
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Correo enviado correctamente.']);
@@ -202,10 +368,12 @@ class MailboxController extends Controller
         return back();
     }
 
-    public function reply(Request $request, MailMessage $mailMessage, HostingerMailboxService $mailbox): RedirectResponse
+    public function reply(Request $request, MailMessage $mailMessage, HostingerMailboxService $mailbox, GoogleGmailService $google): RedirectResponse
     {
         $data = $request->validate([
             'subject' => ['required', 'string', 'max:255'],
+            'cc_email' => ['nullable', 'email', 'max:255'],
+            'bcc_email' => ['nullable', 'email', 'max:255'],
             'body' => ['required', 'string', 'max:100000'],
             'attachments' => ['nullable', 'array', 'max:5'],
             'attachments.*' => ['file', 'max:10240', 'mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png,txt,zip'],
@@ -218,12 +386,20 @@ class MailboxController extends Controller
         $attachments = $this->storeAttachments($request);
 
         try {
-            $mailbox->send($mailMessage->from_email, $data['subject'], $data['body'], $attachments, $mailMessage);
+            if ($google->isEnabled()) {
+                $google->send($mailMessage->from_email, $data['subject'], $data['body'], $attachments, $mailMessage, $data['cc_email'] ?? null, $data['bcc_email'] ?? null);
+            } else {
+                $mailbox->send($mailMessage->from_email, $data['subject'], $data['body'], $attachments, $mailMessage, $data['cc_email'] ?? null, $data['bcc_email'] ?? null);
+            }
         } catch (Throwable $exception) {
             $this->deleteAttachments($attachments);
             report($exception);
 
-            return back()->withErrors(['mailbox' => 'No se pudo enviar la respuesta. Verificá la configuración SMTP.']);
+            $message = $google->isEnabled()
+                ? 'No se pudo enviar la respuesta por Gmail. Volvé a autorizar la cuenta.'
+                : 'No se pudo enviar la respuesta. Verificá la configuración SMTP.';
+
+            return back()->withErrors(['mailbox' => $message]);
         }
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Respuesta enviada correctamente.']);
@@ -294,6 +470,7 @@ class MailboxController extends Controller
         $digitos = preg_replace('/\D/', '', $buscar);
         $legajos = Legajo::query()
             ->with('persona')
+            ->where('estado', '!=', 'eliminado')
             ->where(function ($query) use ($buscar, $digitos) {
                 $query->where('numero_legajo', 'like', "%{$buscar}%")
                     ->orWhereHas('persona', function ($persona) use ($buscar, $digitos) {
@@ -307,7 +484,12 @@ class MailboxController extends Controller
             })
             ->orderBy('numero_legajo')
             ->limit(12)
-            ->get();
+            ->get()
+            ->filter(fn (Legajo $legajo): bool => $this->puedeAccederLegajo(
+                $request->user(),
+                $legajo,
+                'persona',
+            ));
 
         return response()->json($legajos->map(fn (Legajo $legajo) => [
             'id' => $legajo->id,
@@ -341,6 +523,20 @@ class MailboxController extends Controller
 
         if ($datos['estado'] === 'Derivado' && ! $this->responsablesQuery()->whereKey($datos['asignado_a'])->exists()) {
             return back()->withErrors(['asignado_a' => 'La persona seleccionada no está habilitada para recibir derivaciones.']);
+        }
+
+        $legajoIds = array_values(array_unique($datos['legajo_ids'] ?? []));
+        $legajosVisibles = Legajo::query()
+            ->whereKey($legajoIds)
+            ->get()
+            ->filter(fn (Legajo $legajo): bool => $this->puedeAccederLegajo(
+                $request->user(),
+                $legajo,
+                'persona',
+            ));
+
+        if ($legajosVisibles->count() !== count($legajoIds)) {
+            return back()->withErrors(['legajo_ids' => 'No tenés permiso para vincular uno de los legajos seleccionados.']);
         }
 
         $destinatario = $datos['estado'] === 'Derivado'

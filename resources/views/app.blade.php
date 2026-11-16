@@ -4,33 +4,34 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        {{-- Inline script to detect system dark mode preference and apply it immediately --}}
+        {{-- Resolve the stored preference before the stylesheet paints the page. --}}
         <script>
             (function() {
-                const appearance = '{{ $appearance ?? "system" }}';
+                const stored = localStorage.getItem('appearance');
+                const cookie = document.cookie.split('; ').find((entry) => entry.startsWith('appearance='));
+                const cookieAppearance = cookie ? decodeURIComponent(cookie.slice('appearance='.length)) : null;
+                const appearance = ['light', 'dark', 'system'].includes(stored)
+                    ? stored
+                    : (['light', 'dark', 'system'].includes(cookieAppearance) ? cookieAppearance : '{{ $appearance ?? "system" }}');
 
-                if (appearance === 'system') {
-                    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-
-                    if (prefersDark) {
-                        document.documentElement.classList.add('dark');
-                    }
-                }
+                document.documentElement.classList.toggle(
+                    'dark',
+                    appearance === 'dark' || (appearance === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches),
+                );
             })();
         </script>
 
         {{-- Inline style to set the HTML background color based on our theme in app.css --}}
         <style>
             html {
-                background-color: oklch(1 0 0);
+                background-color: #f3f7f5;
             }
 
             html.dark {
-                background-color: oklch(0.145 0 0);
+                background-color: #101a20;
             }
         </style>
-        <link rel="icon" href="/favicon.ico" sizes="any">
-        <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+        <link rel="icon" type="image/png" href="{{ asset('assets/img/SN.png') }}">
         <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
         <link rel="preconnect" href="https://fonts.googleapis.com">

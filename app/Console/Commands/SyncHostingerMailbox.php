@@ -14,6 +14,12 @@ class SyncHostingerMailbox extends Command
 {
     public function handle(HostingerMailboxService $mailbox): int
     {
+        if (! config('services.hostinger_mailbox.enabled')) {
+            $this->warn('La sincronización del buzón está deshabilitada en este entorno.');
+
+            return self::SUCCESS;
+        }
+
         try {
             $days = $this->option('days');
             $synchronized = $mailbox->sync($days !== null ? max(1, (int) $days) : null);

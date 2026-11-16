@@ -2,6 +2,12 @@
 
 @import 'tw-animate-css';
 
+@keyframes skeleton {
+    to {
+        background-position: -200% 0;
+    }
+}
+
 @source '../views';
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 
@@ -19,6 +25,12 @@
 
     --color-background: var(--background);
     --color-foreground: var(--foreground);
+    --color-page: var(--page);
+    --color-surface: var(--surface);
+    --color-surface-soft: var(--surface-soft);
+    --color-ink: var(--ink);
+    --color-brand: var(--brand);
+    --color-brand-strong: var(--brand-strong);
 
     --color-card: var(--card);
     --color-card-foreground: var(--card-foreground);
@@ -68,82 +80,158 @@
 }
 
 :root {
-    --background: #f5f6fb;
-    --foreground: #283044;
+    --background: #f3f7f5;
+    --foreground: #203846;
+    --page: #f3f7f5;
+    --surface: #ffffff;
+    --surface-soft: #f7faf8;
+    --ink: #203846;
+    --brand: #2c4a5e;
+    --brand-strong: #173247;
     --card: #ffffff;
-    --card-foreground: #283044;
+    --card-foreground: #203846;
     --popover: #ffffff;
-    --popover-foreground: #283044;
-    --primary: #6c63c7;
+    --popover-foreground: #203846;
+    --primary: #39795b;
     --primary-foreground: #ffffff;
-    --secondary: #efedff;
-    --secondary-foreground: #514b9f;
-    --muted: #f0f2f7;
-    --muted-foreground: #70798e;
-    --accent: #efedff;
-    --accent-foreground: #514b9f;
-    --destructive: #c65162;
+    --secondary: #e7f2eb;
+    --secondary-foreground: #285e46;
+    --muted: #edf2f0;
+    --muted-foreground: #667a83;
+    --accent: #e7f2eb;
+    --accent-foreground: #285e46;
+    --destructive: #a84635;
     --destructive-foreground: #ffffff;
     --success: #47ad74;
     --success-foreground: #ffffff;
-    --warning: #cf9941;
+    --warning: #a16a00;
     --warning-foreground: #ffffff;
-    --border: #e2e5ee;
-    --input: #dfe3ec;
-    --ring: #aaa4e5;
-    --chart-1: #6c63c7;
-    --chart-2: #53a4c8;
+    --border: #d8e4de;
+    --input: #cbdad3;
+    --ring: #78ad8c;
+    --chart-1: #2c4a5e;
+    --chart-2: #39795b;
     --chart-3: #47ad74;
-    --chart-4: #cf9941;
-    --chart-5: #d77b89;
+    --chart-4: #a16a00;
+    --chart-5: #a8493c;
     --radius: 0.625rem;
     --sidebar: #ffffff;
-    --sidebar-foreground: #283044;
-    --sidebar-primary: #6c63c7;
+    --sidebar-foreground: #203846;
+    --sidebar-primary: #39795b;
     --sidebar-primary-foreground: #ffffff;
-    --sidebar-accent: #efedff;
-    --sidebar-accent-foreground: #514b9f;
-    --sidebar-border: #e2e5ee;
-    --sidebar-ring: #aaa4e5;
+    --sidebar-accent: #e7f2eb;
+    --sidebar-accent-foreground: #285e46;
+    --sidebar-border: #d8e4de;
+    --sidebar-ring: #78ad8c;
 }
 
 .dark {
-    --background: #202138;
-    --foreground: #f8f8ff;
-    --card: #292a45;
-    --card-foreground: #f8f8ff;
-    --popover: #292a45;
-    --popover-foreground: #f8f8ff;
-    --primary: #aaa4e5;
-    --primary-foreground: #292a45;
-    --secondary: #38385a;
-    --secondary-foreground: #f8f8ff;
-    --muted: #38385a;
-    --muted-foreground: #b4b6cc;
-    --accent: #38385a;
-    --accent-foreground: #f8f8ff;
-    --destructive: #df7f8d;
-    --destructive-foreground: #292a45;
+    --background: #101a20;
+    --foreground: #edf6fb;
+    --page: #101a20;
+    --surface: #172832;
+    --surface-soft: #1d303b;
+    --ink: #edf6fb;
+    --brand: #7ead8b;
+    --brand-strong: #b9d5e1;
+    --card: #172832;
+    --card-foreground: #edf6fb;
+    --popover: #1d303b;
+    --popover-foreground: #edf6fb;
+    --primary: #8bc39a;
+    --primary-foreground: #10251c;
+    --secondary: #234338;
+    --secondary-foreground: #d8f0df;
+    --muted: #20343e;
+    --muted-foreground: #a9bdc7;
+    --accent: #234338;
+    --accent-foreground: #d8f0df;
+    --destructive: #d58070;
+    --destructive-foreground: #27120e;
     --success: #77d6a1;
-    --success-foreground: #1a3326;
+    --success-foreground: #10251c;
     --warning: #e5ba6c;
     --warning-foreground: #3a2b0f;
-    --border: #414262;
-    --input: #414262;
-    --ring: #aaa4e5;
-    --chart-1: #aaa4e5;
-    --chart-2: #7dc6e2;
+    --border: #304753;
+    --input: #405864;
+    --ring: #8bc39a;
+    --chart-1: #b9d5e1;
+    --chart-2: #8bc39a;
     --chart-3: #77d6a1;
     --chart-4: #e5ba6c;
-    --chart-5: #e99ba8;
-    --sidebar: #242541;
-    --sidebar-foreground: #f8f8ff;
-    --sidebar-primary: #aaa4e5;
-    --sidebar-primary-foreground: #292a45;
-    --sidebar-accent: #38385a;
-    --sidebar-accent-foreground: #f8f8ff;
-    --sidebar-border: #414262;
-    --sidebar-ring: #aaa4e5;
+    --chart-5: #e99b8e;
+    --sidebar: #142630;
+    --sidebar-foreground: #edf6fb;
+    --sidebar-primary: #8bc39a;
+    --sidebar-primary-foreground: #10251c;
+    --sidebar-accent: #234338;
+    --sidebar-accent-foreground: #d8f0df;
+    --sidebar-border: #304753;
+    --sidebar-ring: #8bc39a;
+}
+
+@layer base {
+    *,
+    ::before,
+    ::after {
+        border-color: var(--border);
+    }
+
+    html {
+        background-color: var(--background);
+        color-scheme: light;
+    }
+
+    html.dark {
+        color-scheme: dark;
+    }
+
+    body {
+        background-color: var(--background);
+        color: var(--foreground);
+    }
+}
+
+/* Legacy modules still contain a small set of fixed light utilities. Keep them
+ * readable while those views are migrated to semantic tokens. */
+.dark [class~='bg-white'],
+.dark [class~='!bg-white'],
+.dark [class~='bg-[#FBFCFB]'],
+.dark [class~='bg-[#FAFBFA]'],
+.dark [class~='bg-[#F8FAF9]'],
+.dark [class~='bg-[#F8FAFA]'],
+.dark [class~='bg-[#F4F6F5]'],
+.dark [class~='bg-[#F3F7F4]'] {
+    background-color: var(--surface) !important;
+}
+
+.dark [class~='bg-[#F2F6F5]'],
+.dark [class~='bg-[#EEF3F0]'],
+.dark [class~='bg-[#F7FAF8]'],
+.dark [class~='bg-[#FAFBFA]'] {
+    background-color: var(--background) !important;
+}
+
+.dark [class~='text-[#173247]'],
+.dark [class~='text-[#2C4A5E]'],
+.dark [class~='text-[#2B2F36]'],
+.dark [class~='text-[#203846]'] {
+    color: var(--foreground) !important;
+}
+
+.dark [class~='text-[#697586]'],
+.dark [class~='text-[#71828A]'],
+.dark [class~='text-[#71828a]'],
+.dark [class~='text-[#819197]'] {
+    color: var(--muted-foreground) !important;
+}
+
+.dark [class~='border-[#DCE3DF]'],
+.dark [class~='border-[#DCE3E6]'],
+.dark [class~='border-[#D7E5DD]'],
+.dark [class~='border-[#E4E8E5]'],
+.dark [class~='border-[#E5EEE8]'] {
+    border-color: var(--border) !important;
 }
 
 .stats-module-shell {

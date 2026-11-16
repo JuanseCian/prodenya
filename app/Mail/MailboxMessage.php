@@ -24,6 +24,8 @@ class MailboxMessage extends Mailable implements ShouldQueue
         public string $bodyText,
         public array $storedAttachments = [],
         public ?string $inReplyTo = null,
+        public ?string $ccEmail = null,
+        public ?string $bccEmail = null,
     ) {}
 
     /**
@@ -36,6 +38,8 @@ class MailboxMessage extends Mailable implements ShouldQueue
                 config('services.hostinger_mailbox.address'),
                 config('mail.from.name'),
             ),
+            cc: $this->ccEmail ? [new Address($this->ccEmail)] : [],
+            bcc: $this->bccEmail ? [new Address($this->bccEmail)] : [],
             subject: $this->subjectLine,
         );
     }

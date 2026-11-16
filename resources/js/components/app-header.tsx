@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import AppLogoIcon from '@/components/app-logo-icon';
+import AppearanceTabs from '@/components/appearance-tabs';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { TeamSwitcher } from '@/components/team-switcher';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -139,6 +140,7 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                                                     <span>{item.title}</span>
                                                 </Link>
                                             ))}
+                                            <AppearanceTabs className="w-fit" />
                                         </div>
 
                                         <div className="flex flex-col space-y-4">
@@ -224,6 +226,7 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                                 ))}
                             </div>
                         </div>
+                        <AppearanceTabs className="hidden border-transparent bg-transparent p-0 sm:inline-flex" />
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button

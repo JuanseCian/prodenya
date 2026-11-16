@@ -104,9 +104,6 @@ class LegajoController extends Controller
         return Inertia::render('legajos/index', [
             'legajos' => $legajos,
             'seccion' => $mayores18 ? 'mayores18' : 'legajos',
-            'puedeEditar' => $usuario->tieneRol('admin', 'operador', 'coordinador', 'administrativo')
-                && $usuario->puedeVerSeccionLegajo('seguimiento')
-                && $usuario->puedeVerSeccionLegajo('situacion'),
             'puedeExportarWord' => $usuario->tieneRol('admin', 'coordinador', 'profesional', 'administrativo')
                 && collect([
                     'persona',
@@ -233,6 +230,9 @@ class LegajoController extends Controller
             'profesional',
             'administrativo',
         );
+        $puedeEditarLegajo = $usuario->tieneRol('admin', 'administrativo')
+            && $secciones['seguimiento']
+            && $secciones['situacion'];
         $cudActual = $secciones['persona']
             ? $legajo->cudActual()->with('archivos')->first()
             : null;
@@ -366,9 +366,13 @@ class LegajoController extends Controller
             'usuarioActualId' => $request->user()->id,
             'puedeGestionarIntervenciones' => $secciones['intervenciones'] && $request->user()->tieneRol('admin', 'operador'),
             'puedeGestionarDerivaciones' => $puedeGestionarDerivaciones,
-            'puedeEditarLegajo' => $request->user()->tieneRol('admin', 'operador', 'coordinador', 'administrativo')
-                && $secciones['seguimiento']
-                && $secciones['situacion'],
+            'puedeEditarLegajo' => $puedeEditarLegajo,
+            'problematicasDisponibles' => $puedeEditarLegajo
+                ? Problematica::orderBy('nombre')->get(['id', 'nombre'])
+                : [],
+            'problematicasSeleccionadas' => $puedeEditarLegajo
+                ? $legajo->problematicas->pluck('id')->values()->all()
+                : [],
             'puedeCambiarEstado' => $request->user()->tieneRol('admin', 'operador', 'coordinador', 'administrativo')
                 && $secciones['seguimiento'],
             'puedeExportarWord' => $request->user()->tieneRol('admin', 'coordinador', 'profesional', 'administrativo')
@@ -437,7 +441,7 @@ class LegajoController extends Controller
     public function edit(Request $request, Legajo $legajo): Response
     {
         abort_unless(
-            $request->user()->tieneRol('admin', 'operador', 'coordinador', 'administrativo')
+            $request->user()->tieneRol('admin', 'administrativo')
                 && $request->user()->puedeVerSeccionLegajo('seguimiento')
                 && $request->user()->puedeVerSeccionLegajo('situacion'),
             403,

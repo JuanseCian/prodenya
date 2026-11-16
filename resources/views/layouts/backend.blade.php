@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" @class(['dark' => ($appearance ?? 'system') === 'dark'])>
 
 <head>
 
@@ -11,6 +11,23 @@
     >
 
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <link rel="icon" type="image/png" href="{{ asset('assets/img/SN.png') }}">
+
+    <script>
+        (function() {
+            const stored = localStorage.getItem('appearance');
+            const cookie = document.cookie.split('; ').find((entry) => entry.startsWith('appearance='));
+            const cookieAppearance = cookie ? decodeURIComponent(cookie.slice('appearance='.length)) : null;
+            const appearance = ['light', 'dark', 'system'].includes(stored)
+                ? stored
+                : (['light', 'dark', 'system'].includes(cookieAppearance) ? cookieAppearance : '{{ $appearance ?? "system" }}');
+
+            document.documentElement.classList.toggle(
+                'dark',
+                appearance === 'dark' || (appearance === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches),
+            );
+        })();
+    </script>
 
     <title>
         @yield('title', 'Panel') | PRODENYA
@@ -38,9 +55,23 @@
             --admin-navy: #153448;
         }
 
+        html.dark {
+            --admin-ink: #edf6fb;
+            --admin-muted: #a9bdc7;
+            --admin-line: #304753;
+            --admin-soft: #172832;
+            --admin-green: #8bc39a;
+            --admin-green-dark: #b9d5e1;
+            --admin-navy: #142630;
+        }
+
         body.backend-body {
             background: #f3f8f5;
             color: var(--admin-ink);
+        }
+
+        html.dark body.backend-body {
+            background: #101a20;
         }
 
         .backend-sidebar {

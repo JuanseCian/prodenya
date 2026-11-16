@@ -14,6 +14,7 @@ export default defineConfig({
                 'resources/js/app.tsx',
                 'resources/js/auth/access.tsx',
                 'resources/js/site-header.tsx',
+                'resources/js/site-footer.tsx',
             ],
             refresh: true,
             hotFile: 'storage/framework/vite.hot',

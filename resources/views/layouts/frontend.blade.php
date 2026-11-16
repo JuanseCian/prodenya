@@ -1,13 +1,30 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" @class(['dark' => ($appearance ?? 'system') === 'dark'])>
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
+    <script>
+        (function() {
+            const stored = localStorage.getItem('appearance');
+            const cookie = document.cookie.split('; ').find((entry) => entry.startsWith('appearance='));
+            const cookieAppearance = cookie ? decodeURIComponent(cookie.slice('appearance='.length)) : null;
+            const appearance = ['light', 'dark', 'system'].includes(stored)
+                ? stored
+                : (['light', 'dark', 'system'].includes(cookieAppearance) ? cookieAppearance : '{{ $appearance ?? "system" }}');
+
+            document.documentElement.classList.toggle(
+                'dark',
+                appearance === 'dark' || (appearance === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches),
+            );
+        })();
+    </script>
+
     <title>@yield('title', 'PRODENYA')</title>
     <meta name="description" content="@yield('description', 'Sistema de Promoción y Protección de los Derechos de Niños, Niñas y Adolescentes')">
+    <link rel="icon" type="image/png" href="{{ asset('assets/img/SN.png') }}">
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
@@ -18,9 +35,10 @@
             <x-inertia::head />
         @endif
         @vite('resources/js/site-header.tsx')
+        @vite('resources/js/site-footer.tsx')
 
     <style>
-        :root {
+         :root {
              --brand: #2c4a5e;
              --brand-dark: #173247;
              --brand-deep: #1f394b;
@@ -30,7 +48,16 @@
              --page: #f4f6f5;
              --line: #dce3df;
              --shadow: 0 16px 40px rgba(23, 50, 71, 0.1);
-        }
+         }
+
+         html.dark {
+             --ink: #edf6fb;
+             --muted: #a9bdc7;
+             --surface: #172832;
+             --page: #101a20;
+             --line: #304753;
+             --shadow: 0 16px 40px rgba(0, 0, 0, 0.28);
+         }
 
         * { box-sizing: border-box; }
 
@@ -189,31 +216,11 @@
 
         .site-main { min-height: calc(100vh - 164px); }
 
-        .site-footer {
-            background: var(--brand-dark);
-            color: rgba(255, 255, 255, 0.78);
-            margin-top: 64px;
-        }
-
-        .site-footer-inner {
-            align-items: center;
-            display: flex;
-            gap: 20px;
-            justify-content: space-between;
-            margin: 0 auto;
-            max-width: 1240px;
-            padding: 22px 24px;
-        }
-
-        .site-footer strong { color: #fff; }
-        .site-footer small { font-size: 0.78rem; }
-        .footer-municipal-logo { height: 58px; object-fit: contain; object-position: left center; width: 225px; }
         .site-mobile-bottom-nav { display: none; }
 
         @media (max-width: 560px) {
             .site-header-inner { padding-left: 16px; padding-right: 16px; }
             .site-account-menu { max-width: calc(100vw - 32px); min-width: 250px; }
-            .site-footer-inner { align-items: flex-start; flex-direction: column; padding: 20px 16px; }
         }
 
         .site-shell { background: var(--page); position: relative; }
@@ -340,7 +347,6 @@
               .site-header-account::before { display: none; }
                .site-header-account .site-account-menu { position: fixed; right: 16px; top: 64px; }
               .site-main { padding-bottom: calc(78px + env(safe-area-inset-bottom)); }
-              .site-footer { padding-bottom: calc(78px + env(safe-area-inset-bottom)); }
               .site-mobile-bottom-nav {
                   align-items: stretch;
                   backdrop-filter: blur(18px) saturate(1.3);
@@ -584,24 +590,24 @@
          .site-sidebar-account-chevron { margin-right: 3px; }
          .site-sidebar-account-options { border-top-color: #d5e8dc; margin-top: 7px; padding: 9px 4px 2px; }
          .site-sidebar-account-email { color: #5d707a; margin: 0 8px 6px; }
-         .site-sidebar-account-link { border-radius: 10px; min-height: 40px; }
-         .site-sidebar-account-link:hover, .site-sidebar-account-link:focus-visible { background: rgba(255, 255, 255, 0.82); }
-         .site-sidebar-logout-form { border-top-color: #d5e8dc; }
+          .site-sidebar-account-link { border-radius: 10px; min-height: 40px; }
+          .site-sidebar-account-link:hover, .site-sidebar-account-link:focus-visible { background: rgba(255, 255, 255, 0.82); }
+          .site-sidebar-logout-form { border-top-color: #d5e8dc; }
          @media (max-width: 1100px) {
              .site-header-inner { gap: 16px; }
              .site-header-brand { min-width: 220px; }
          }
-         @media (max-width: 920px) {
-             .site-header-inner { min-height: 66px; padding-bottom: 9px; padding-top: 9px; }
-             .site-header-brand .brand-mark { flex-basis: 38px; height: 38px; width: 38px; }
-             .site-sidebar { bottom: 8px; max-height: calc(100dvh - 16px); right: 8px; top: 8px; width: min(344px, calc(100vw - 16px)); }
-         }
+          @media (max-width: 920px) {
+              .site-header-inner { min-height: 66px; padding-bottom: 9px; padding-top: 9px; }
+              .site-header-brand .brand-mark { flex-basis: 38px; height: 38px; width: 38px; }
+              .site-sidebar { bottom: 8px; max-height: calc(100dvh - 16px); right: 8px; top: 8px; width: min(344px, calc(100vw - 16px)); }
+          }
           @media (max-width: 480px) {
               .site-header-brand { gap: 9px; }
               .site-header-brand .brand-name { font-size: 0.91rem; }
-              .site-sidebar { border-radius: 18px; }
-              .site-sidebar-header { border-radius: 18px 18px 0 0; }
-          }
+               .site-sidebar { border-radius: 18px; }
+               .site-sidebar-header { border-radius: 18px 18px 0 0; }
+           }
          .dark .site-sidebar {
              background: linear-gradient(180deg, #152532 0%, #10202b 100%);
              border-color: #294252;
@@ -625,13 +631,103 @@
          .dark .site-sidebar-account-trigger:hover, .dark .site-sidebar-account-trigger:focus-visible { background: rgba(255, 255, 255, 0.08); }
          .dark .site-sidebar-account .site-user-avatar { background: #285143; border-color: #40775f; color: #c5f0d6; }
          .dark .site-sidebar-account-copy h2 { color: #edf6fb; }
-         .dark .site-sidebar-account-copy small, .dark .site-sidebar-account-email { color: #a8caba; }
-         .dark .site-sidebar-account-chevron { color: #a8bbc5; }
-         .dark .site-sidebar-account-options, .dark .site-sidebar-logout-form { border-color: #315063; }
+          .dark .site-sidebar-account-copy small, .dark .site-sidebar-account-email { color: #a8caba; }
+          .dark .site-sidebar-account-chevron { color: #a8bbc5; }
+          .dark .site-sidebar-account-options, .dark .site-sidebar-logout-form { border-color: #315063; }
          .dark .site-sidebar-account-link { color: #c2d1d8; }
-         .dark .site-sidebar-account-link:hover, .dark .site-sidebar-account-link:focus-visible { background: rgba(255, 255, 255, 0.08); color: #fff; }
-         .dark .site-sidebar-account-link i { color: #9ccfb2; }
-     </style>
+          .dark .site-sidebar-account-link:hover, .dark .site-sidebar-account-link:focus-visible { background: rgba(255, 255, 255, 0.08); color: #fff; }
+           .dark .site-sidebar-account-link i { color: #9ccfb2; }
+
+          /* Final institutional navigation layer: restrained surfaces, compact rhythm, no decorative blur. */
+          .site-header {
+              background: #173247;
+              box-shadow: 0 5px 18px rgba(16, 44, 62, 0.12);
+          }
+          .site-header-inner { gap: 20px; min-height: 72px; padding: 10px clamp(16px, 3vw, 36px); }
+          .site-header-brand { gap: 12px; min-width: 238px; }
+          .site-header-brand .brand-mark { background: rgba(255, 255, 255, 0.08); border-radius: 10px; box-shadow: none; }
+          .site-header-tools { gap: 4px; }
+          .site-header-quick-link, .site-menu-toggle { border-radius: 8px; min-height: 44px; padding: 9px 11px; transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease; }
+          .site-header-quick-link:hover, .site-header-quick-link:focus-visible, .site-menu-toggle:hover, .site-menu-toggle:focus-visible { box-shadow: none; transform: none; }
+          .site-menu-toggle { flex: 0 0 auto; height: 44px; min-height: 44px; min-width: 44px; padding: 8px 11px; }
+          .site-header-account { position: relative; }
+          .site-account-header-copy { display: flex; flex-direction: column; min-width: 0; text-align: left; }
+          .site-account-visible-role { color: rgba(235, 248, 242, 0.58); font-size: 0.68rem; line-height: 1.2; margin-top: 2px; }
+          .site-header-account .site-account-trigger { min-height: 44px; }
+          .site-header-account .site-account-menu { right: 0; top: calc(100% + 8px); }
+          .site-sidebar-backdrop { background: rgba(10, 29, 40, 0.36); backdrop-filter: none; transition-duration: 180ms; }
+          .site-sidebar { background: #fff; border-left: 1px solid #dbe9e1; border-radius: 0; bottom: 0; box-shadow: -18px 0 42px rgba(18, 52, 67, 0.16); max-height: 100dvh; right: 0; top: 0; transform: translateX(100%); width: 360px; }
+          .site-sidebar-header { background: #f7faf8; border-radius: 0; min-height: 70px; padding: 12px 16px 12px 20px; }
+          .site-sidebar-nav { padding: 18px 14px 12px; }
+          .site-sidebar-group + .site-sidebar-group { margin-top: 14px; padding-top: 14px; }
+          .site-sidebar-link { border-radius: 8px; font-size: 0.86rem; gap: 11px; min-height: 44px; padding: 7px 10px; transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease; }
+          .site-sidebar-link i { background: transparent; border: 0; flex-basis: 22px; height: 22px; width: 22px; }
+          .site-sidebar-link:hover, .site-sidebar-link:focus-visible { box-shadow: none; transform: none; }
+          .site-sidebar-link.is-active { background: #eaf3ed; box-shadow: inset 3px 0 0 #6b8f71; }
+          .site-sidebar-link:hover i, .site-sidebar-link:focus-visible i, .site-sidebar-link.is-active i { background: transparent; border-color: transparent; }
+          .dark .site-sidebar { background: #152532; border-color: #294252; }
+          .dark .site-sidebar-header { background: #1b303f; border-color: #294252; }
+          .dark .site-sidebar-link i { background: transparent; border-color: transparent; }
+          @media (max-width: 920px) {
+              .site-header-inner { min-height: 64px; padding-bottom: 8px; padding-top: 8px; }
+              .site-header-brand { min-width: 0; }
+              .site-header-brand .brand-caption, .site-account-visible-role { display: none; }
+              .site-header-quick-link > span, .site-menu-toggle > span, .site-account-visible-name { display: none; }
+              .site-header-quick-link, .site-menu-toggle, .site-header-account .site-account-trigger { min-height: 44px; min-width: 44px; padding: 8px; }
+              .site-sidebar { width: min(360px, 100vw); }
+          }
+          @media (max-width: 480px) {
+              .site-header-inner { padding-left: 12px; padding-right: 12px; }
+              .site-header-brand .brand-divider { display: none; }
+              .site-header-brand .brand-name { font-size: 0.91rem; }
+              .site-sidebar { width: 100vw; }
+          }
+
+          /* Drawer glass layer: translucent, contained and readable over the page context. */
+          .site-sidebar-backdrop { background: rgba(10, 29, 40, 0.28); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+          .site-sidebar {
+              background: linear-gradient(155deg, rgba(255, 255, 255, 0.9), rgba(239, 248, 243, 0.78));
+              border: 1px solid rgba(255, 255, 255, 0.72);
+              border-radius: 24px;
+              bottom: 14px;
+              box-shadow: -18px 14px 48px rgba(18, 52, 67, 0.2), inset 0 1px rgba(255, 255, 255, 0.8);
+              max-height: calc(100dvh - 28px);
+              right: 14px;
+              top: 14px;
+              transform: translateX(calc(100% + 28px));
+              width: 360px;
+              -webkit-backdrop-filter: blur(24px) saturate(150%);
+              backdrop-filter: blur(24px) saturate(150%);
+          }
+          .site-sidebar-header { background: rgba(248, 252, 249, 0.62); border-bottom-color: rgba(207, 225, 215, 0.8); border-radius: 24px 24px 0 0; min-height: 72px; }
+          .site-sidebar-nav { padding: 18px 16px 12px; }
+          .site-sidebar-group + .site-sidebar-group { margin-top: 16px; padding-top: 15px; }
+          .site-sidebar-link { border-radius: 12px; min-height: 46px; }
+          .site-sidebar-link i { background: rgba(231, 244, 236, 0.72); border: 1px solid rgba(207, 229, 216, 0.8); border-radius: 9px; flex-basis: 30px; height: 30px; width: 30px; }
+          .site-sidebar-link:hover i, .site-sidebar-link:focus-visible i { background: rgba(216, 239, 224, 0.9); border-color: #c5e1cf; }
+          .site-sidebar-link.is-active { background: rgba(223, 242, 230, 0.82); border-color: rgba(192, 222, 202, 0.9); box-shadow: inset 3px 0 #5b9d7b, 0 5px 14px rgba(49, 111, 83, 0.07); }
+          .site-sidebar-link.is-active i { background: rgba(204, 233, 214, 0.95); border-color: #b8ddc6; }
+          .site-sidebar-link-admin { background: rgba(232, 241, 249, 0.62); border-color: rgba(202, 220, 232, 0.72); }
+          .site-sidebar-link-admin i { background: rgba(222, 235, 245, 0.8); border-color: rgba(190, 213, 228, 0.9); color: #35627a; }
+          .site-sidebar-account { background: rgba(235, 247, 240, 0.58); border: 1px solid rgba(207, 229, 216, 0.9); border-radius: 16px; margin: auto 16px 16px; padding: 8px; }
+          .site-sidebar-account-trigger { min-height: 56px; }
+          .site-sidebar-account-options { border-top-color: rgba(207, 229, 216, 0.9); }
+          .site-menu-toggle { gap: 8px; }
+          .site-menu-toggle .site-user-avatar { background: rgba(255, 255, 255, 0.13); border: 2px solid rgba(255, 255, 255, 0.42); }
+          .site-menu-toggle .site-user-avatar-image { border-radius: 999px; object-fit: cover; }
+          .dark .site-sidebar { background: linear-gradient(155deg, rgba(27, 48, 63, 0.94), rgba(17, 35, 47, 0.9)); border-color: rgba(73, 111, 126, 0.62); }
+          .dark .site-sidebar-header { background: rgba(27, 48, 63, 0.7); border-color: rgba(73, 111, 126, 0.58); }
+          .dark .site-sidebar-link i { background: rgba(37, 75, 67, 0.75); border-color: rgba(73, 119, 95, 0.72); }
+          .dark .site-sidebar-link.is-active { background: rgba(37, 82, 66, 0.72); border-color: rgba(73, 119, 95, 0.72); }
+          .dark .site-sidebar-account { background: rgba(28, 53, 68, 0.7); border-color: rgba(73, 111, 126, 0.62); }
+          @media (max-width: 920px) {
+              .site-sidebar { bottom: 8px; max-height: calc(100dvh - 16px); right: 8px; top: 8px; width: min(360px, calc(100vw - 16px)); }
+          }
+          @media (max-width: 480px) {
+              .site-sidebar { border-radius: 20px; bottom: 8px; right: 8px; top: 8px; width: calc(100vw - 16px); }
+              .site-sidebar-header { border-radius: 20px 20px 0 0; }
+          }
+      </style>
 
     @stack('styles')
 </head>
@@ -702,13 +798,13 @@
                         <div class="site-sidebar-group">
                             <p class="site-sidebar-label">Administración</p>
                             @if (Route::has('admin.home'))
-                                <a href="{{ route('admin.home') }}" class="site-sidebar-link {{ request()->routeIs('admin.home') ? 'is-active' : '' }}" @if (request()->routeIs('admin.home')) aria-current="page" @endif>
+                                <a href="{{ route('admin.home') }}" class="site-sidebar-link site-sidebar-link-admin {{ request()->routeIs('admin.home') ? 'is-active' : '' }}" @if (request()->routeIs('admin.home')) aria-current="page" @endif>
                                     <i class="bi bi-speedometer2" aria-hidden="true"></i>
                                     Panel administrativo
                                 </a>
                             @endif
                             @if (Route::has('admin.auditoria.index'))
-                                <a href="{{ route('admin.auditoria.index') }}" class="site-sidebar-link {{ request()->routeIs('admin.auditoria.*') ? 'is-active' : '' }}" @if (request()->routeIs('admin.auditoria.*')) aria-current="page" @endif>
+                                <a href="{{ route('admin.auditoria.index') }}" class="site-sidebar-link site-sidebar-link-admin {{ request()->routeIs('admin.auditoria.*') ? 'is-active' : '' }}" @if (request()->routeIs('admin.auditoria.*')) aria-current="page" @endif>
                                     <i class="bi bi-clipboard2-check" aria-hidden="true"></i>
                                     Auditoría
                                 </a>
@@ -724,20 +820,19 @@
                         ->take(2)
                         ->map(fn ($part) => strtoupper(substr($part, 0, 1)))
                         ->join('');
-                    $panelTeamRole = $panelUser->currentTeam ? $panelUser->teamRole($panelUser->currentTeam)?->label() : null;
-                    $panelTeamName = $panelUser->currentTeam?->name;
+                    $panelRole = $panelUser->rol?->nombre;
                 @endphp
                 <details class="site-sidebar-account" data-disclosure>
-                    <summary class="site-sidebar-account-trigger" aria-expanded="false">
+                    <summary class="site-sidebar-account-trigger" aria-label="Abrir opciones de cuenta" aria-expanded="false">
                         @if ($panelUser->avatar)
                             <img src="{{ $panelUser->avatar }}" class="site-user-avatar site-user-avatar-image" alt="">
                         @else
                             <span class="site-user-avatar" aria-hidden="true">{{ $panelInitials }}</span>
                         @endif
                         <div class="site-sidebar-account-copy">
-                            <h2 id="site-account-title">{{ $panelUser->name }}</h2>
-                            @if ($panelTeamName || $panelTeamRole || $panelUser->rol?->nombre)
-                                <small>{{ ucfirst($panelUser->rol?->nombre ?? '') }}{{ $panelTeamName ? ' · '.$panelTeamName : '' }}{{ $panelTeamRole ? ' · '.$panelTeamRole : '' }}</small>
+                            <h2>{{ $panelUser->name }}</h2>
+                            @if ($panelRole)
+                                <small>{{ ucfirst($panelRole) }}</small>
                             @endif
                         </div>
                         <i class="bi bi-chevron-down site-sidebar-account-chevron" aria-hidden="true"></i>
@@ -750,10 +845,16 @@
                                 Mi perfil
                             </a>
                         @endif
+                        @if (Route::has('appearance.edit'))
+                            <a href="{{ route('appearance.edit') }}" class="site-sidebar-account-link">
+                                <i class="bi bi-sliders2" aria-hidden="true"></i>
+                                Configuración personal
+                            </a>
+                        @endif
                         @if (Route::has('security.edit'))
                             <a href="{{ route('security.edit') }}" class="site-sidebar-account-link">
                                 <i class="bi bi-shield-lock" aria-hidden="true"></i>
-                                Seguridad y contraseña
+                                Seguridad de la cuenta
                             </a>
                         @endif
                         <form method="POST" action="{{ route('logout') }}" class="site-sidebar-logout-form">
@@ -765,6 +866,7 @@
                         </form>
                     </div>
                 </details>
+
             @endauth
         </aside>
         <div class="site-sidebar-backdrop" data-sidebar-close aria-hidden="true"></div>
@@ -807,12 +909,30 @@
                                 ->map(fn ($part) => strtoupper(substr($part, 0, 1)))
                                 ->join('');
                         @endphp
+                        @if (Route::has('mailbox.index') && $headerUser->tieneRol('admin', 'oficios', 'coordinador'))
+                            <a href="{{ route('mailbox.index') }}" class="site-header-quick-link {{ request()->routeIs('mailbox.*') ? 'is-active' : '' }}" aria-label="Correo institucional" @if (request()->routeIs('mailbox.*')) aria-current="page" @endif>
+                                <i class="bi bi-envelope" aria-hidden="true"></i>
+                                <span>Correo</span>
+                            </a>
+                        @endif
+                        @if (Route::has('agenda.index') && $headerUser->tieneRol('admin', 'coordinador', 'profesional', 'administrativo'))
+                            <a href="{{ route('agenda.index') }}" class="site-header-quick-link {{ request()->routeIs('agenda.*') ? 'is-active' : '' }}" aria-label="Agenda" @if (request()->routeIs('agenda.*')) aria-current="page" @endif>
+                                <i class="bi bi-calendar3" aria-hidden="true"></i>
+                                <span>Agenda</span>
+                            </a>
+                        @elseif (Route::has('tareas.index') && $headerUser->tieneRol('admin', 'operador', 'oficios', 'coordinador', 'profesional', 'administrativo'))
+                            <a href="{{ route('tareas.index') }}" class="site-header-quick-link {{ request()->routeIs('tareas.*') ? 'is-active' : '' }}" aria-label="Tareas" @if (request()->routeIs('tareas.*')) aria-current="page" @endif>
+                                <i class="bi bi-check2-square" aria-hidden="true"></i>
+                                <span>Tareas</span>
+                            </a>
+                        @endif
                         <button type="button" class="site-menu-toggle" data-sidebar-toggle aria-expanded="false" aria-controls="site-sidebar" aria-label="Abrir menú de navegación">
                             @if ($headerUser->avatar)
                                 <img src="{{ $headerUser->avatar }}" class="site-user-avatar site-user-avatar-image" alt="">
                             @else
                                 <span class="site-user-avatar" aria-hidden="true">{{ $headerInitials }}</span>
                             @endif
+                            <span>Menú</span>
                         </button>
                     @else
                         <a href="{{ route('login') }}" class="site-header-quick-link">
@@ -832,15 +952,23 @@
             @endif
         </main>
 
-         <footer class="site-footer">
-             <div class="site-footer-inner">
-                 <div class="flex items-center gap-4">
-                     <img src="{{ asset('assets/img/municipalidad_logo.png') }}" class="footer-municipal-logo" alt="Municipalidad de San Nicolás de los Arroyos">
-                     <small><strong>PRODENYA</strong> · Promoción y Protección de Derechos</small>
-                </div>
-                <small>© {{ date('Y') }} · Uso institucional</small>
-             </div>
-         </footer>
+          @php
+              $footerUser = auth()->user();
+              $footerAccess = [
+                  'dashboard' => auth()->check() && Route::has('dashboard'),
+                  'legajos' => auth()->check() && Route::has('legajos.index') && $footerUser->tieneRol('admin', 'operador', 'consulta', 'oficios', 'coordinador', 'profesional', 'administrativo'),
+                  'agenda' => auth()->check() && Route::has('agenda.index') && $footerUser->tieneRol('admin', 'coordinador', 'profesional', 'administrativo'),
+                  'tareas' => auth()->check() && Route::has('tareas.index') && $footerUser->tieneRol('admin', 'operador', 'oficios', 'coordinador', 'profesional', 'administrativo'),
+                  'comunicacion' => auth()->check() && Route::has('comunicacion.index') && $footerUser->tieneRol('admin', 'operador', 'consulta', 'oficios', 'coordinador', 'profesional', 'administrativo'),
+                  'estadisticas' => auth()->check() && Route::has('estadisticas') && $footerUser->tieneRol('admin', 'operador', 'consulta', 'oficios', 'coordinador', 'profesional', 'administrativo'),
+                  'profile' => auth()->check() && Route::has('profile.edit'),
+              ];
+          @endphp
+          <div
+              data-site-footer
+              data-authenticated="{{ auth()->check() ? '1' : '0' }}"
+              data-access='@json($footerAccess)'
+          ></div>
          @auth
              <nav class="site-mobile-bottom-nav" aria-label="Navegación principal móvil">
                  <a href="{{ route('home') }}" class="site-mobile-bottom-link {{ request()->routeIs('home') ? 'is-active' : '' }}" @if (request()->routeIs('home')) aria-current="page" @endif>

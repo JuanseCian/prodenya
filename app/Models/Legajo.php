@@ -92,6 +92,11 @@ class Legajo extends Model
         );
     }
 
+    public function mailMessages(): BelongsToMany
+    {
+        return $this->belongsToMany(MailMessage::class, 'mail_message_legajo', 'legajo_id', 'mail_message_id');
+    }
+
     public function persona(): BelongsTo
     {
         return $this->belongsTo(Persona::class, 'persona_id');
