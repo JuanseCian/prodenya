@@ -4,8 +4,6 @@ namespace App\Http\Requests;
 
 use App\Models\Legajo;
 use App\Models\Problematica;
-use App\Models\Rol;
-use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -26,13 +24,7 @@ class UpdateLegajoRequest extends FormRequest
         return [
             'nivel_riesgo' => ['required', 'in:Bajo,Medio,Alto,Critico'],
             'origen_derivacion' => ['required', 'string', 'max:255'],
-            'profesional_id' => [
-                'nullable',
-                Rule::exists(User::class, 'id')
-                    ->where('activo', true)
-                    ->where('estado_cuenta', User::ESTADO_APROBADO)
-                    ->where('rol_id', Rol::query()->where('nombre', 'profesional')->value('id')),
-            ],
+            'profesional_id' => ['prohibited'],
             'problematicas' => ['required', 'array', 'min:1'],
             'problematicas.*' => [Rule::exists(Problematica::class, 'id')],
             'observaciones' => ['nullable', 'string', 'max:2000'],
@@ -46,7 +38,7 @@ class UpdateLegajoRequest extends FormRequest
             'nivel_riesgo.in' => 'El nivel de riesgo debe ser Bajo, Medio, Alto o Crítico.',
             'origen_derivacion.required' => 'Indicá la institución o referente que deriva el caso.',
             'origen_derivacion.max' => 'El origen de la derivación no puede superar los 255 caracteres.',
-            'profesional_id.exists' => 'El profesional seleccionado no es válido.',
+            'profesional_id.prohibited' => 'El responsable sólo puede modificarse mediante una derivación.',
             'problematicas.required' => 'Seleccioná al menos una problemática.',
             'problematicas.min' => 'Seleccioná al menos una problemática.',
             'problematicas.*.exists' => 'Una de las problemáticas seleccionadas no es válida.',

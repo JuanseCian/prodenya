@@ -30,17 +30,9 @@ interface Opcion {
     nombre: string;
 }
 
-interface Profesional {
-    id: number;
-    nombre_usuario: string;
-    email: string;
-    profesion: string | null;
-}
-
 interface CreatePersonaProps {
     provincias: Opcion[];
     problematicas: Opcion[];
-    profesionales: Profesional[];
     modoLegajo?: boolean;
 }
 
@@ -74,7 +66,6 @@ const FIELD_LABELS: Record<string, string> = {
     abrir_legajo: 'Abrir legajo',
     legajo_problematicas: 'Problemática',
     legajo_nivel_riesgo: 'Nivel de riesgo',
-    legajo_profesional_id: 'Profesional asignado',
     legajo_origen_derivacion: 'Origen de la derivación',
     legajo_observaciones: 'Observaciones del legajo',
 };
@@ -118,7 +109,6 @@ function SectionHeading({
 export default function CreatePersona({
     provincias,
     problematicas,
-    profesionales,
     modoLegajo = false,
 }: CreatePersonaProps) {
     const { data, setData, post, processing, errors } = useForm({
@@ -139,7 +129,6 @@ export default function CreatePersona({
         abrir_legajo: modoLegajo,
         legajo_nivel_riesgo: '',
         legajo_origen_derivacion: '',
-        legajo_profesional_id: '',
         legajo_problematicas: [] as number[],
         legajo_observaciones: '',
     });
@@ -913,7 +902,7 @@ export default function CreatePersona({
                                                     }
                                                 />
                                             </fieldset>
-                                            <div className="grid gap-5 sm:grid-cols-2">
+                                            <div>
                                                 <div>
                                                     <Label
                                                         htmlFor="legajo_nivel_riesgo"
@@ -957,57 +946,6 @@ export default function CreatePersona({
                                                     <FieldError
                                                         message={
                                                             errors.legajo_nivel_riesgo
-                                                        }
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <Label
-                                                        htmlFor="legajo_profesional_id"
-                                                        className={labelClass}
-                                                    >
-                                                        Profesional
-                                                        interviniente
-                                                    </Label>
-                                                    <select
-                                                        id="legajo_profesional_id"
-                                                        className={`${inputClass} block w-full rounded-md border px-3 text-sm`}
-                                                        value={
-                                                            data.legajo_profesional_id
-                                                        }
-                                                        onChange={(event) =>
-                                                            setData(
-                                                                'legajo_profesional_id',
-                                                                event.target
-                                                                    .value,
-                                                            )
-                                                        }
-                                                    >
-                                                        <option value="">
-                                                            Sin asignar
-                                                        </option>
-                                                        {profesionales.map(
-                                                            (profesional) => (
-                                                                <option
-                                                                    key={
-                                                                        profesional.id
-                                                                    }
-                                                                    value={
-                                                                        profesional.id
-                                                                    }
-                                                                >
-                                                                    {
-                                                                        profesional.nombre_usuario
-                                                                    }
-                                                                    {profesional.profesion
-                                                                        ? ` · ${profesional.profesion}`
-                                                                        : ''}
-                                                                </option>
-                                                            ),
-                                                        )}
-                                                    </select>
-                                                    <FieldError
-                                                        message={
-                                                            errors.legajo_profesional_id
                                                         }
                                                     />
                                                 </div>
