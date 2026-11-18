@@ -1,4 +1,5 @@
 import { createRoot } from 'react-dom/client';
+import AppearanceTabs from '@/components/appearance-tabs';
 import PasskeyVerify from '@/components/passkey-verify';
 
 const element = document.querySelector<HTMLElement>('[data-biometric-login]');
@@ -9,7 +10,17 @@ if (element) {
             label="Ingresar con huella o rostro"
             loadingLabel="Esperando confirmación..."
             separator="O ingresá con tu contraseña"
-            buttonClassName="border-[#b7d8c4] bg-[#e7f1eb] text-[#23604f] shadow-none hover:bg-[#d8ebdf] hover:text-[#173247]"
+            buttonClassName="border-[var(--line-strong)] bg-[var(--accent-soft)] text-[var(--accent-dark)] shadow-none hover:text-[var(--ink)] hover:brightness-95"
         />,
+    );
+}
+
+const appearanceElement = document.querySelector<HTMLElement>(
+    '[data-appearance-toggle]',
+);
+
+if (appearanceElement) {
+    createRoot(appearanceElement).render(
+        <AppearanceTabs className="border-transparent bg-transparent p-0" />,
     );
 }

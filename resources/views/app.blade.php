@@ -7,7 +7,10 @@
         {{-- Resolve the stored preference before the stylesheet paints the page. --}}
         <script>
             (function() {
-                const stored = localStorage.getItem('appearance');
+                let stored = null;
+                try {
+                    stored = localStorage.getItem('appearance');
+                } catch (e) {}
                 const cookie = document.cookie.split('; ').find((entry) => entry.startsWith('appearance='));
                 const cookieAppearance = cookie ? decodeURIComponent(cookie.slice('appearance='.length)) : null;
                 const appearance = ['light', 'dark', 'system'].includes(stored)

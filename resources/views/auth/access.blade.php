@@ -4,7 +4,7 @@
 @endphp
 
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" @class(['dark' => ($appearance ?? 'system') === 'dark'])>
 
 <head>
     <meta charset="UTF-8">
@@ -12,6 +12,27 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $showRegister ? 'Crear cuenta' : 'Iniciar sesión' }} | PRODENYA</title>
     <link rel="icon" type="image/png" href="{{ asset('assets/img/SN.png') }}">
+
+    {{-- Resolve the stored preference before the stylesheet paints the page. --}}
+    <script>
+        (function() {
+            let stored = null;
+            try {
+                stored = localStorage.getItem('appearance');
+            } catch (e) {}
+            const cookie = document.cookie.split('; ').find((entry) => entry.startsWith('appearance='));
+            const cookieAppearance = cookie ? decodeURIComponent(cookie.slice('appearance='.length)) : null;
+            const appearance = ['light', 'dark', 'system'].includes(stored)
+                ? stored
+                : (['light', 'dark', 'system'].includes(cookieAppearance) ? cookieAppearance : '{{ $appearance ?? "system" }}');
+
+            document.documentElement.classList.toggle(
+                'dark',
+                appearance === 'dark' || (appearance === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches),
+            );
+        })();
+    </script>
+
     @viteReactRefresh
     @vite(['resources/css/app.css', 'resources/js/auth/access.tsx'])
 
@@ -32,6 +53,24 @@
             --danger-soft: #fff1ef;
             --danger: #a8493c;
             --shadow: 0 24px 70px rgba(21, 45, 59, 0.15);
+        }
+
+        html.dark {
+            --ink: #edf6fb;
+            --ink-soft: #b9d5e1;
+            --muted: #a9bdc7;
+            --paper: #101a20;
+            --surface: #172832;
+            --line: #304753;
+            --line-strong: #3f5c6a;
+            --accent: #8bc39a;
+            --accent-dark: #6fa87f;
+            --accent-soft: #1d3328;
+            --warning-soft: #3a2b0f;
+            --warning: #e5ba6c;
+            --danger-soft: #3d1f1d;
+            --danger: #d58070;
+            --shadow: 0 24px 70px rgba(0, 0, 0, 0.45);
         }
 
         *, *::before, *::after { box-sizing: border-box; }
@@ -163,8 +202,9 @@
         .brand-panel__footer { border-top: 1px solid rgba(255, 255, 255, 0.14); color: rgba(255, 255, 255, 0.54); font-size: 0.68rem; padding-top: 18px; }
 
         .auth-panel { display: flex; flex-direction: column; padding: 36px clamp(32px, 5vw, 70px); }
-        .auth-panel__header { align-items: center; display: flex; justify-content: space-between; }
+        .auth-panel__header { align-items: center; display: flex; justify-content: space-between; gap: 12px; }
         .auth-panel__section { color: var(--muted); font-size: 0.69rem; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; }
+        .auth-panel__tools { align-items: center; display: flex; gap: 12px; }
         .auth-panel__secure { align-items: center; color: var(--accent); display: inline-flex; font-size: 0.7rem; gap: 6px; }
         .secure-dot { background: var(--accent); border-radius: 50%; height: 6px; width: 6px; }
 
@@ -191,8 +231,13 @@
         .field input:hover { border-color: #aebeb5; }
         .field input:focus { background: #fff; border-color: var(--accent); box-shadow: 0 0 0 4px rgba(47, 125, 104, 0.13); }
         .field input[aria-invalid="true"] { border-color: var(--danger); }
+        html.dark .field input { background: #12212b; }
+        html.dark .field input::placeholder { color: #5e7682; }
+        html.dark .field input:hover { border-color: #4a6978; }
+        html.dark .field input:focus { background: #152532; box-shadow: 0 0 0 4px rgba(139, 195, 154, 0.18); }
         .field__control { position: relative; }
         .field__toggle { align-items: center; background: transparent; border: 0; color: #7e918e; cursor: pointer; display: inline-flex; height: 34px; justify-content: center; padding: 0; position: absolute; right: 7px; top: 6px; width: 34px; }
+        html.dark .field__toggle { color: #8aa0a8; }
         .field__toggle:hover, .field__toggle:focus-visible { color: var(--accent-dark); }
         .field__toggle svg { height: 17px; width: 17px; }
         .field__error { color: var(--danger); font-size: 0.72rem; line-height: 1.4; margin: 6px 0 0; }
@@ -208,6 +253,10 @@
         .submit-button:active { transform: translateY(0); }
         .submit-button:disabled { cursor: wait; opacity: 0.72; }
         .submit-button__spinner { animation: spin 800ms linear infinite; border: 2px solid rgba(255, 255, 255, 0.35); border-radius: 50%; border-top-color: #fff; display: none; height: 15px; margin-right: 8px; width: 15px; }
+        /* --accent turns light mint-green in dark mode, so the solid button needs
+         * dark text to keep 4.5:1 contrast — white-on-mint would fail. */
+        html.dark .submit-button { color: #10251c; }
+        html.dark .submit-button__spinner { border-color: rgba(16, 37, 28, 0.35); border-top-color: #10251c; }
         .is-submitting .submit-button__spinner { display: inline-block; }
         .switch-copy { color: var(--muted); font-size: 0.78rem; margin: 23px 0 0; text-align: center; }
         .switch-button { background: transparent; border: 0; color: var(--accent-dark); cursor: pointer; font-size: inherit; font-weight: 800; padding: 0; }
@@ -217,11 +266,14 @@
         .security-checks li { align-items: center; color: #879692; display: flex; font-size: 0.68rem; gap: 6px; }
         .security-checks li::before { border: 1px solid #bcc9c2; border-radius: 50%; content: ""; height: 13px; width: 13px; }
         .security-checks li.is-valid { color: var(--accent); }
-        .security-checks li.is-valid::before { background: var(--accent); border-color: var(--accent); box-shadow: inset 0 0 0 3px #fff; }
+        .security-checks li.is-valid::before { background: var(--accent); border-color: var(--accent); box-shadow: inset 0 0 0 3px var(--surface); }
+        html.dark .security-checks li { color: #5e7682; }
+        html.dark .security-checks li::before { border-color: #3f5c6a; }
         .match-message { color: var(--danger); font-size: 0.7rem; margin: -7px 0 0; }
         .match-message.is-valid { color: var(--accent); }
 
         .auth-bottom { color: #80908c; font-size: 0.68rem; line-height: 1.5; margin: auto 0 0; padding-top: 28px; text-align: center; }
+        html.dark .auth-bottom { color: #5e7682; }
 
         @keyframes auth-enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes spin { to { transform: rotate(360deg); } }
@@ -250,6 +302,7 @@
             .brand-panel__lead { font-size: 0.75rem; line-height: 1.5; }
             .auth-panel { padding: 24px 18px 22px; }
             .auth-panel__secure { font-size: 0; gap: 0; }
+            [data-appearance-toggle] button span { display: none; }
             .auth-view__heading h2 { font-size: 2rem; }
             .form-grid { gap: 14px; grid-template-columns: 1fr; }
             .security-checks { grid-template-columns: 1fr; }
@@ -294,7 +347,10 @@
         <section class="auth-panel" aria-label="Acceso a PRODENYA">
             <header class="auth-panel__header">
                 <span class="auth-panel__section">Cuenta de usuario</span>
-                <span class="auth-panel__secure"><span class="secure-dot" aria-hidden="true"></span>Acceso protegido</span>
+                <div class="auth-panel__tools">
+                    <span class="auth-panel__secure"><span class="secure-dot" aria-hidden="true"></span>Acceso protegido</span>
+                    <div data-appearance-toggle></div>
+                </div>
             </header>
 
             <div class="auth-panel__content">

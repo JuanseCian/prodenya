@@ -307,6 +307,17 @@
         linear-gradient(180deg, rgba(255, 255, 255, 0.42), transparent 22rem);
 }
 
+.dark .legajo-detail-page {
+    background-color: var(--background);
+    background-image:
+        radial-gradient(
+            circle at 94% 2%,
+            rgba(126, 173, 139, 0.08),
+            transparent 25rem
+        ),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 22rem);
+}
+
 .legajo-detail-page::selection {
     background: #b9dfc4;
     color: #173247;
@@ -322,6 +333,15 @@
 .legajo-detail-page [data-slot='card']:hover {
     border-color: #bfd2c6;
     box-shadow: 0 18px 42px rgba(23, 50, 71, 0.08);
+}
+
+.dark .legajo-detail-page [data-slot='card'] {
+    border-color: var(--border);
+}
+
+.dark .legajo-detail-page [data-slot='card']:hover {
+    border-color: #3f5c6a;
+    box-shadow: 0 18px 42px rgba(0, 0, 0, 0.35);
 }
 
 .legajo-detail-page [data-slot='card-header'] {
@@ -355,6 +375,17 @@
             transparent 24rem
         ),
         linear-gradient(180deg, rgba(255, 255, 255, 0.42), transparent 22rem);
+}
+
+.dark .legajos-page {
+    background-color: var(--background);
+    background-image:
+        radial-gradient(
+            circle at 98% 2%,
+            rgba(126, 173, 139, 0.06),
+            transparent 24rem
+        ),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 22rem);
 }
 
 .legajos-page::selection {

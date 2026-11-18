@@ -44,12 +44,29 @@ const getCookie = (name: string): string | null => {
     return cookie ? decodeURIComponent(cookie.slice(name.length + 1)) : null;
 };
 
+const readLocalStorage = (key: string): string | null => {
+    try {
+        return localStorage.getItem(key);
+    } catch {
+        return null;
+    }
+};
+
+const writeLocalStorage = (key: string, value: string): void => {
+    try {
+        localStorage.setItem(key, value);
+    } catch {
+        // Storage unavailable (private browsing, blocked, quota) — the
+        // cookie and in-memory state still keep the theme working.
+    }
+};
+
 const getStoredAppearance = (): Appearance => {
     if (typeof window === 'undefined') {
         return 'system';
     }
 
-    const storedAppearance = localStorage.getItem('appearance');
+    const storedAppearance = readLocalStorage('appearance');
 
     if (isAppearance(storedAppearance)) {
         return storedAppearance;
@@ -98,7 +115,25 @@ const handleSystemThemeChange = (): void => {
     }
 };
 
+const handleStorageChange = (event: StorageEvent): void => {
+    if (event.key !== null && event.key !== 'appearance') {
+        return;
+    }
+
+    const nextAppearance = getStoredAppearance();
+
+    if (nextAppearance === currentAppearance) {
+        return;
+    }
+
+    currentAppearance = nextAppearance;
+    setCookie('appearance', currentAppearance);
+    applyTheme(currentAppearance);
+    notify();
+};
+
 let removeMediaQueryListener: (() => void) | null = null;
+let removeStorageListener: (() => void) | null = null;
 
 export function initializeTheme(): void {
     if (typeof window === 'undefined') {
@@ -106,7 +141,7 @@ export function initializeTheme(): void {
     }
 
     currentAppearance = getStoredAppearance();
-    localStorage.setItem('appearance', currentAppearance);
+    writeLocalStorage('appearance', currentAppearance);
     setCookie('appearance', currentAppearance);
     applyTheme(currentAppearance);
 
@@ -118,6 +153,14 @@ export function initializeTheme(): void {
     removeMediaQueryListener = query
         ? () => query.removeEventListener('change', handleSystemThemeChange)
         : null;
+
+    // Keep every open tab/page in sync: another tab changing the
+    // appearance writes to the same localStorage key, which fires this
+    // event everywhere except the tab that made the change.
+    removeStorageListener?.();
+    window.addEventListener('storage', handleStorageChange);
+    removeStorageListener = () =>
+        window.removeEventListener('storage', handleStorageChange);
 }
 
 export function useAppearance(): UseAppearanceReturn {
@@ -137,7 +180,7 @@ export function useAppearance(): UseAppearanceReturn {
         }
 
         // Store in localStorage for client-side persistence...
-        localStorage.setItem('appearance', mode);
+        writeLocalStorage('appearance', mode);
 
         // Store in cookie for SSR...
         setCookie('appearance', mode);
