@@ -13,3 +13,8 @@ Schedule::call(function () {
 Schedule::command('medidas-abrigo:avisar-vencimientos')
     ->daily()
     ->description('Avisar vencimientos próximos de medidas de abrigo');
+
+Schedule::command('mailbox:gmail-sync')
+    ->everyFiveMinutes()
+    ->withoutOverlapping()
+    ->description('Sincronizar nuevos correos de Gmail con Mailbox');

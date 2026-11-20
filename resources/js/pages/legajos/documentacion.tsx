@@ -67,7 +67,9 @@ const formatDate = (value: string | null): string => {
         return 'Sin fecha';
     }
 
-    return new Intl.DateTimeFormat('es-AR').format(new Date(`${value}T12:00:00`));
+    return new Intl.DateTimeFormat('es-AR').format(
+        new Date(`${value}T12:00:00`),
+    );
 };
 
 const formatSize = (bytes: number): string => {
@@ -127,7 +129,7 @@ export default function Documentacion({
     return (
         <>
             <Head title={`Documentación · ${legajo.numero_legajo}`} />
-            <main className="min-h-screen bg-[#F4F6F5] px-4 py-8 sm:px-6 lg:px-8">
+            <main className="admin-page-shell min-h-screen bg-background px-4 py-7 sm:px-6 sm:py-8 lg:px-8">
                 <div className="mx-auto max-w-6xl">
                     <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
                         <div>
@@ -145,90 +147,343 @@ export default function Documentacion({
                                 Documentación
                             </h1>
                             <p className="mt-2 text-sm text-[#697586]">
-                                {legajo.persona ?? 'Persona sin asociar'} · Certificado Único de Discapacidad
+                                {legajo.persona ?? 'Persona sin asociar'} ·
+                                Certificado Único de Discapacidad
                             </p>
                         </div>
                         {cud && (
-                            <span className={`rounded-full px-3 py-1.5 text-xs font-bold ${estadoClass[cud.estado] ?? 'bg-[#F1F5F3] text-[#60756B]'}`}>
+                            <span
+                                className={`rounded-full px-3 py-1.5 text-xs font-bold ${estadoClass[cud.estado] ?? 'bg-[#F1F5F3] text-[#60756B]'}`}
+                            >
                                 {cud.estado}
                             </span>
                         )}
                     </div>
 
                     <ResumenErrores errors={errors} />
-                    {status && <p className="mb-5 rounded-lg bg-[#EAF6EE] px-4 py-3 text-sm font-semibold text-[#397461]">{status}</p>}
+                    {status && (
+                        <p className="mb-5 rounded-lg bg-[#EAF6EE] px-4 py-3 text-sm font-semibold text-[#397461]">
+                            {status}
+                        </p>
+                    )}
 
                     <div className="grid gap-5 lg:grid-cols-[1.15fr_0.85fr]">
                         <Card className="border-[#DCE3DF] !bg-white py-0 shadow-[0_14px_35px_rgba(23,50,71,0.06)]">
                             <CardHeader className="border-b border-[#E4E8E5] bg-[#F8FAF9] px-5 py-4">
                                 <div className="flex items-center gap-2">
                                     <ShieldCheck className="size-5 text-[#6B8F71]" />
-                                    <CardTitle className="text-base font-semibold text-[#2C4A5E]">CUD vigente</CardTitle>
+                                    <CardTitle className="text-base font-semibold text-[#2C4A5E]">
+                                        CUD vigente
+                                    </CardTitle>
                                 </div>
-                                <p className="mt-1 text-sm text-[#2B2F36]/60">Los archivos reemplazados quedan conservados en el historial.</p>
+                                <p className="mt-1 text-sm text-[#2B2F36]/60">
+                                    Los archivos reemplazados quedan conservados
+                                    en el historial.
+                                </p>
                             </CardHeader>
                             <CardContent className="px-5 py-5">
                                 {cud ? (
                                     <dl className="grid gap-4 sm:grid-cols-2">
-                                        <div><dt className="text-xs font-bold tracking-wide text-[#697586] uppercase">Número CUD</dt><dd className="mt-1 font-mono text-sm font-semibold text-[#173247]">{cud.numero_cud}</dd></div>
-                                        <div><dt className="text-xs font-bold tracking-wide text-[#697586] uppercase">Vigencia</dt><dd className="mt-1 text-sm text-[#2B2F36]">{formatDate(cud.fecha_vigencia)} al {formatDate(cud.fecha_vencimiento)}</dd></div>
+                                        <div>
+                                            <dt className="text-xs font-bold tracking-wide text-[#697586] uppercase">
+                                                Número CUD
+                                            </dt>
+                                            <dd className="mt-1 font-mono text-sm font-semibold text-[#173247]">
+                                                {cud.numero_cud}
+                                            </dd>
+                                        </div>
+                                        <div>
+                                            <dt className="text-xs font-bold tracking-wide text-[#697586] uppercase">
+                                                Vigencia
+                                            </dt>
+                                            <dd className="mt-1 text-sm text-[#2B2F36]">
+                                                {formatDate(cud.fecha_vigencia)}{' '}
+                                                al{' '}
+                                                {formatDate(
+                                                    cud.fecha_vencimiento,
+                                                )}
+                                            </dd>
+                                        </div>
                                     </dl>
                                 ) : (
-                                    <p className="rounded-lg border border-dashed border-[#DCE3DF] bg-[#FAFBFA] px-4 py-5 text-sm text-[#697586]">Todavía no hay un CUD cargado.</p>
+                                    <p className="rounded-lg border border-dashed border-[#DCE3DF] bg-[#FAFBFA] px-4 py-5 text-sm text-[#697586]">
+                                        Todavía no hay un CUD cargado.
+                                    </p>
                                 )}
-                                {cud?.observaciones && <p className="mt-4 whitespace-pre-line text-sm leading-6 text-[#2B2F36]/75">{cud.observaciones}</p>}
+                                {cud?.observaciones && (
+                                    <p className="mt-4 text-sm leading-6 whitespace-pre-line text-[#2B2F36]/75">
+                                        {cud.observaciones}
+                                    </p>
+                                )}
                             </CardContent>
                         </Card>
 
                         <Card className="border-[#DCE3DF] !bg-white py-0 shadow-[0_14px_35px_rgba(23,50,71,0.06)]">
                             <CardHeader className="border-b border-[#E4E8E5] bg-[#F8FAF9] px-5 py-4">
-                                <div className="flex items-center gap-2"><CalendarDays className="size-5 text-[#6B8F71]" /><CardTitle className="text-base font-semibold text-[#2C4A5E]">Archivos actuales</CardTitle></div>
+                                <div className="flex items-center gap-2">
+                                    <CalendarDays className="size-5 text-[#6B8F71]" />
+                                    <CardTitle className="text-base font-semibold text-[#2C4A5E]">
+                                        Archivos actuales
+                                    </CardTitle>
+                                </div>
                             </CardHeader>
                             <CardContent className="space-y-3 px-5 py-5">
-                                {(['frente', 'dorso', 'receta'] as const).map((tipo) => (
-                                    <div key={tipo}>
-                                        <p className="mb-1 text-xs font-bold tracking-wide text-[#697586] uppercase">{tipo === 'receta' ? 'Recetas' : `CUD ${tipo}`}</p>
-                                        {archivos(tipo).length === 0 ? <p className="text-sm text-[#8A9692]">No adjuntado</p> : archivos(tipo).map((archivo) => (
-                                            <div key={archivo.id} className="flex items-center justify-between gap-2 rounded-lg border border-[#E4E8E5] px-3 py-2 text-sm">
-                                                <span className="min-w-0 truncate text-[#2B2F36]">{archivo.nombre}<small className="ml-2 text-xs text-[#8A9692]">{formatSize(archivo.tamanio)}</small></span>
-                                                <span className="flex shrink-0 gap-1">
-                                                    <a href={archivo.descarga_url} className="rounded-md p-1.5 text-[#2C4A5E] hover:bg-[#F4F6F5]" title="Descargar"><Download className="size-4" /></a>
-                                                    {puedeGestionar && <button type="button" onClick={() => quitarArchivo(archivo)} className="rounded-md p-1.5 text-[#9B5964] hover:bg-[#FCF1F3]" title="Quitar"><Trash2 className="size-4" /></button>}
-                                                </span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                ))}
+                                {(['frente', 'dorso', 'receta'] as const).map(
+                                    (tipo) => (
+                                        <div key={tipo}>
+                                            <p className="mb-1 text-xs font-bold tracking-wide text-[#697586] uppercase">
+                                                {tipo === 'receta'
+                                                    ? 'Recetas'
+                                                    : `CUD ${tipo}`}
+                                            </p>
+                                            {archivos(tipo).length === 0 ? (
+                                                <p className="text-sm text-[#8A9692]">
+                                                    No adjuntado
+                                                </p>
+                                            ) : (
+                                                archivos(tipo).map(
+                                                    (archivo) => (
+                                                        <div
+                                                            key={archivo.id}
+                                                            className="flex items-center justify-between gap-2 rounded-lg border border-[#E4E8E5] px-3 py-2 text-sm"
+                                                        >
+                                                            <span className="min-w-0 truncate text-[#2B2F36]">
+                                                                {archivo.nombre}
+                                                                <small className="ml-2 text-xs text-[#8A9692]">
+                                                                    {formatSize(
+                                                                        archivo.tamanio,
+                                                                    )}
+                                                                </small>
+                                                            </span>
+                                                            <span className="flex shrink-0 gap-1">
+                                                                <a
+                                                                    href={
+                                                                        archivo.descarga_url
+                                                                    }
+                                                                    className="rounded-md p-1.5 text-[#2C4A5E] hover:bg-[#F4F6F5]"
+                                                                    title="Descargar"
+                                                                >
+                                                                    <Download className="size-4" />
+                                                                </a>
+                                                                {puedeGestionar && (
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() =>
+                                                                            quitarArchivo(
+                                                                                archivo,
+                                                                            )
+                                                                        }
+                                                                        className="rounded-md p-1.5 text-[#9B5964] hover:bg-[#FCF1F3]"
+                                                                        title="Quitar"
+                                                                    >
+                                                                        <Trash2 className="size-4" />
+                                                                    </button>
+                                                                )}
+                                                            </span>
+                                                        </div>
+                                                    ),
+                                                )
+                                            )}
+                                        </div>
+                                    ),
+                                )}
                             </CardContent>
                         </Card>
                     </div>
 
                     {puedeGestionar && (
                         <Card className="mt-5 border-[#DCE3DF] !bg-white py-0 shadow-[0_14px_35px_rgba(23,50,71,0.06)]">
-                            <CardHeader className="border-b border-[#E4E8E5] bg-[#F8FAF9] px-5 py-4"><CardTitle className="text-base font-semibold text-[#2C4A5E]">{cud ? 'Reemplazar o actualizar CUD' : 'Cargar CUD'}</CardTitle></CardHeader>
+                            <CardHeader className="border-b border-[#E4E8E5] bg-[#F8FAF9] px-5 py-4">
+                                <CardTitle className="text-base font-semibold text-[#2C4A5E]">
+                                    {cud
+                                        ? 'Reemplazar o actualizar CUD'
+                                        : 'Cargar CUD'}
+                                </CardTitle>
+                            </CardHeader>
                             <CardContent className="px-5 py-5">
                                 <form onSubmit={guardar} className="grid gap-4">
                                     <div className="grid gap-4 sm:grid-cols-3">
-                                        <label className="grid gap-2 text-sm font-semibold text-[#2B2F36]">Número CUD<Input required value={form.data.numero_cud} onChange={(event) => form.setData('numero_cud', event.target.value)} className={inputClass} placeholder="Número tal como figura" /></label>
-                                        <label className="grid gap-2 text-sm font-semibold text-[#2B2F36]">Fecha de vigencia<Input required type="date" value={form.data.fecha_vigencia} onChange={(event) => form.setData('fecha_vigencia', event.target.value)} className={inputClass} /></label>
-                                        <label className="grid gap-2 text-sm font-semibold text-[#2B2F36]">Fecha de vencimiento<Input required type="date" value={form.data.fecha_vencimiento} onChange={(event) => form.setData('fecha_vencimiento', event.target.value)} className={inputClass} /></label>
+                                        <label className="grid gap-2 text-sm font-semibold text-[#2B2F36]">
+                                            Número CUD
+                                            <Input
+                                                required
+                                                value={form.data.numero_cud}
+                                                onChange={(event) =>
+                                                    form.setData(
+                                                        'numero_cud',
+                                                        event.target.value,
+                                                    )
+                                                }
+                                                className={inputClass}
+                                                placeholder="Número tal como figura"
+                                            />
+                                        </label>
+                                        <label className="grid gap-2 text-sm font-semibold text-[#2B2F36]">
+                                            Fecha de vigencia
+                                            <Input
+                                                required
+                                                type="date"
+                                                value={form.data.fecha_vigencia}
+                                                onChange={(event) =>
+                                                    form.setData(
+                                                        'fecha_vigencia',
+                                                        event.target.value,
+                                                    )
+                                                }
+                                                className={inputClass}
+                                            />
+                                        </label>
+                                        <label className="grid gap-2 text-sm font-semibold text-[#2B2F36]">
+                                            Fecha de vencimiento
+                                            <Input
+                                                required
+                                                type="date"
+                                                value={
+                                                    form.data.fecha_vencimiento
+                                                }
+                                                onChange={(event) =>
+                                                    form.setData(
+                                                        'fecha_vencimiento',
+                                                        event.target.value,
+                                                    )
+                                                }
+                                                className={inputClass}
+                                            />
+                                        </label>
                                     </div>
-                                    <label className="grid gap-2 text-sm font-semibold text-[#2B2F36]">Observación<textarea value={form.data.observaciones} onChange={(event) => form.setData('observaciones', event.target.value)} rows={3} className={`${inputClass} h-auto py-2`} /></label>
+                                    <label className="grid gap-2 text-sm font-semibold text-[#2B2F36]">
+                                        Observación
+                                        <textarea
+                                            value={form.data.observaciones}
+                                            onChange={(event) =>
+                                                form.setData(
+                                                    'observaciones',
+                                                    event.target.value,
+                                                )
+                                            }
+                                            rows={3}
+                                            className={`${inputClass} h-auto py-2`}
+                                        />
+                                    </label>
                                     <div className="grid gap-4 sm:grid-cols-2">
-                                        <label className="grid gap-2 text-sm font-semibold text-[#2B2F36]">Frente del CUD<Input type="file" accept="application/pdf,image/jpeg,image/png" onChange={(event) => form.setData('frente', event.target.files?.[0] ?? null)} className={`${inputClass} py-2`} /></label>
-                                        <label className="grid gap-2 text-sm font-semibold text-[#2B2F36]">Dorso del CUD<Input type="file" accept="application/pdf,image/jpeg,image/png" onChange={(event) => form.setData('dorso', event.target.files?.[0] ?? null)} className={`${inputClass} py-2`} /></label>
+                                        <label className="grid gap-2 text-sm font-semibold text-[#2B2F36]">
+                                            Frente del CUD
+                                            <Input
+                                                type="file"
+                                                accept="application/pdf,image/jpeg,image/png"
+                                                onChange={(event) =>
+                                                    form.setData(
+                                                        'frente',
+                                                        event.target
+                                                            .files?.[0] ?? null,
+                                                    )
+                                                }
+                                                className={`${inputClass} py-2`}
+                                            />
+                                        </label>
+                                        <label className="grid gap-2 text-sm font-semibold text-[#2B2F36]">
+                                            Dorso del CUD
+                                            <Input
+                                                type="file"
+                                                accept="application/pdf,image/jpeg,image/png"
+                                                onChange={(event) =>
+                                                    form.setData(
+                                                        'dorso',
+                                                        event.target
+                                                            .files?.[0] ?? null,
+                                                    )
+                                                }
+                                                className={`${inputClass} py-2`}
+                                            />
+                                        </label>
                                     </div>
-                                    <label className="grid gap-2 text-sm font-semibold text-[#2B2F36]">Recetas <span className="text-xs font-normal text-[#697586]">Opcionales, podés seleccionar varias.</span><Input type="file" multiple accept="application/pdf,image/jpeg,image/png" onChange={(event) => form.setData('recetas', Array.from(event.target.files ?? []))} className={`${inputClass} py-2`} /></label>
-                                    <div className="flex justify-end"><Button type="submit" disabled={form.processing} className="bg-[#2C4A5E] text-white hover:bg-[#173247]"><Upload className="size-4" />{form.processing ? 'Guardando…' : 'Guardar documentación'}</Button></div>
+                                    <label className="grid gap-2 text-sm font-semibold text-[#2B2F36]">
+                                        Recetas{' '}
+                                        <span className="text-xs font-normal text-[#697586]">
+                                            Opcionales, podés seleccionar
+                                            varias.
+                                        </span>
+                                        <Input
+                                            type="file"
+                                            multiple
+                                            accept="application/pdf,image/jpeg,image/png"
+                                            onChange={(event) =>
+                                                form.setData(
+                                                    'recetas',
+                                                    Array.from(
+                                                        event.target.files ??
+                                                            [],
+                                                    ),
+                                                )
+                                            }
+                                            className={`${inputClass} py-2`}
+                                        />
+                                    </label>
+                                    <div className="flex justify-end">
+                                        <Button
+                                            type="submit"
+                                            disabled={form.processing}
+                                            className="bg-[#2C4A5E] text-white hover:bg-[#173247]"
+                                        >
+                                            <Upload className="size-4" />
+                                            {form.processing
+                                                ? 'Guardando…'
+                                                : 'Guardar documentación'}
+                                        </Button>
+                                    </div>
                                 </form>
                             </CardContent>
                         </Card>
                     )}
 
                     <Card className="mt-5 border-[#DCE3DF] !bg-white py-0 shadow-[0_14px_35px_rgba(23,50,71,0.06)]">
-                        <CardHeader className="border-b border-[#E4E8E5] bg-[#F8FAF9] px-5 py-4"><CardTitle className="text-base font-semibold text-[#2C4A5E]">Historial de certificados</CardTitle></CardHeader>
+                        <CardHeader className="border-b border-[#E4E8E5] bg-[#F8FAF9] px-5 py-4">
+                            <CardTitle className="text-base font-semibold text-[#2C4A5E]">
+                                Historial de certificados
+                            </CardTitle>
+                        </CardHeader>
                         <CardContent className="px-5 py-5">
-                            {historial.length === 0 ? <p className="text-sm text-[#697586]">No hay versiones anteriores.</p> : <div className="space-y-3">{historial.map((version) => <div key={version.id} className="rounded-lg border border-[#E4E8E5] p-4"><div className="flex flex-wrap justify-between gap-2"><p className="font-mono text-sm font-semibold text-[#173247]">{version.numero_cud}</p><span className="text-xs text-[#697586]">Cargado {formatDate(version.creado_en?.slice(0, 10) ?? null)}</span></div><p className="mt-1 text-xs text-[#697586]">Vigencia: {formatDate(version.fecha_vigencia)} al {formatDate(version.fecha_vencimiento)} · {version.archivos.length} archivo(s) conservado(s)</p></div>)}</div>}
+                            {historial.length === 0 ? (
+                                <p className="text-sm text-[#697586]">
+                                    No hay versiones anteriores.
+                                </p>
+                            ) : (
+                                <div className="space-y-3">
+                                    {historial.map((version) => (
+                                        <div
+                                            key={version.id}
+                                            className="rounded-lg border border-[#E4E8E5] p-4"
+                                        >
+                                            <div className="flex flex-wrap justify-between gap-2">
+                                                <p className="font-mono text-sm font-semibold text-[#173247]">
+                                                    {version.numero_cud}
+                                                </p>
+                                                <span className="text-xs text-[#697586]">
+                                                    Cargado{' '}
+                                                    {formatDate(
+                                                        version.creado_en?.slice(
+                                                            0,
+                                                            10,
+                                                        ) ?? null,
+                                                    )}
+                                                </span>
+                                            </div>
+                                            <p className="mt-1 text-xs text-[#697586]">
+                                                Vigencia:{' '}
+                                                {formatDate(
+                                                    version.fecha_vigencia,
+                                                )}{' '}
+                                                al{' '}
+                                                {formatDate(
+                                                    version.fecha_vencimiento,
+                                                )}{' '}
+                                                · {version.archivos.length}{' '}
+                                                archivo(s) conservado(s)
+                                            </p>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </CardContent>
                     </Card>
                 </div>

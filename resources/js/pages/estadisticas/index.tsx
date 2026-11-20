@@ -156,7 +156,7 @@ export default function EstadisticasResumen(props: EstadisticasData) {
                 title="Estadísticas"
                 modulosDisponibles={props.modulosDisponibles}
             >
-                <div className="stats-page-surface min-h-[calc(100vh-77px)] px-4 py-7 sm:px-7 sm:py-9 lg:px-10">
+                <div className="stats-page-surface min-h-[calc(100vh-4rem)] px-4 py-6 sm:px-7 sm:py-8 lg:px-10">
                     <div className="mx-auto max-w-[1480px]">
                         <section className="border-b border-[#DCE3E6] pb-7 dark:border-[#34424B]">
                             <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-end">

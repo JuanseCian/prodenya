@@ -8,6 +8,7 @@ import ManagePasskeys from '@/components/manage-passkeys';
 import type { Props as ManageTwoFactorProps } from '@/components/manage-two-factor';
 import ManageTwoFactor from '@/components/manage-two-factor';
 import PasswordInput from '@/components/password-input';
+import SettingsSection from '@/components/settings-section';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { useUnsavedChanges } from '@/hooks/use-unsaved-changes';
@@ -45,26 +46,12 @@ export default function Security(props: Props) {
             <Head title="Seguridad y contraseña" />
 
             <div className="space-y-6 sm:space-y-8">
-                <div>
-                    <p className="mb-2 text-xs font-bold tracking-[0.16em] text-[#5d9b7a] uppercase">Protección de acceso</p>
-                    <h1 className="text-2xl font-semibold tracking-[-0.03em] text-[#173247] sm:text-3xl">Seguridad</h1>
-                    <p className="mt-2 text-sm leading-6 text-[#63757e] sm:text-base">Protegé tu cuenta y revisá los accesos activos.</p>
-                </div>
-
-                <section
-                    className="rounded-2xl border border-[#d7e5dd] bg-white p-5 shadow-[0_12px_32px_rgba(23,50,71,0.06)] sm:p-7"
-                    aria-labelledby="password-title"
+                <SettingsSection
+                    icon={KeyRound}
+                    eyebrow="Acceso principal"
+                    title="Cambiar contraseña"
+                    description="Usá una contraseña única que no compartas con otras personas."
                 >
-                    <div className="mb-7 flex items-start gap-3 border-b border-[#e5eee8] pb-5">
-                        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#e7f4eb] text-[#4f916d]" aria-hidden="true">
-                            <KeyRound className="size-5" />
-                        </span>
-                        <div>
-                            <h2 id="password-title" className="font-semibold text-[#173247]">Cambiar contraseña</h2>
-                            <p className="mt-1 text-sm leading-5 text-[#71828a]">Usá una contraseña única que no compartas con otras personas.</p>
-                        </div>
-                    </div>
-
                     <Form
                         {...SecurityController.update.form()}
                         options={{ preserveScroll: true }}
@@ -84,12 +71,12 @@ export default function Security(props: Props) {
                                 currentPasswordInput.current?.focus();
                             }
                         }}
-                        className="max-w-xl space-y-5"
+                        className="max-w-2xl space-y-5"
                     >
                         {({ errors, processing, recentlySuccessful }) => (
                             <>
                                 <div className="grid gap-2">
-                                    <Label htmlFor="current_password" className="text-sm font-semibold text-[#31505d]">
+                                    <Label htmlFor="current_password">
                                         Contraseña actual
                                     </Label>
                                     <PasswordInput
@@ -98,7 +85,7 @@ export default function Security(props: Props) {
                                         name="current_password"
                                         autoComplete="current-password"
                                         placeholder="Ingresá tu contraseña actual"
-                                        className="h-11 rounded-xl border-[#d7e5dd] bg-[#fbfdfc] focus-visible:border-[#78b58f] focus-visible:ring-[#c7e7d2]"
+                                        className="h-11"
                                         onChange={() => setPasswordDirty(true)}
                                     />
                                     <InputError
@@ -106,7 +93,7 @@ export default function Security(props: Props) {
                                     />
                                 </div>
                                 <div className="grid gap-2">
-                                    <Label htmlFor="password" className="text-sm font-semibold text-[#31505d]">
+                                    <Label htmlFor="password">
                                         Nueva contraseña
                                     </Label>
                                     <PasswordInput
@@ -116,13 +103,13 @@ export default function Security(props: Props) {
                                         autoComplete="new-password"
                                         placeholder="Ingresá una nueva contraseña"
                                         passwordrules={props.passwordRules}
-                                        className="h-11 rounded-xl border-[#d7e5dd] bg-[#fbfdfc] focus-visible:border-[#78b58f] focus-visible:ring-[#c7e7d2]"
+                                        className="h-11"
                                         onChange={() => setPasswordDirty(true)}
                                     />
                                     <InputError message={errors.password} />
                                 </div>
                                 <div className="grid gap-2">
-                                    <Label htmlFor="password_confirmation" className="text-sm font-semibold text-[#31505d]">
+                                    <Label htmlFor="password_confirmation">
                                         Confirmar contraseña
                                     </Label>
                                     <PasswordInput
@@ -131,16 +118,16 @@ export default function Security(props: Props) {
                                         autoComplete="new-password"
                                         placeholder="Repetí la nueva contraseña"
                                         passwordrules={props.passwordRules}
-                                        className="h-11 rounded-xl border-[#d7e5dd] bg-[#fbfdfc] focus-visible:border-[#78b58f] focus-visible:ring-[#c7e7d2]"
+                                        className="h-11"
                                         onChange={() => setPasswordDirty(true)}
                                     />
                                     <InputError
                                         message={errors.password_confirmation}
                                     />
                                 </div>
-                                <p className="rounded-xl border border-[#e1eee7] bg-[#f5faf7] p-3.5 text-xs leading-relaxed text-[#71828a]">
+                                <p className="rounded-lg border border-border bg-surface-soft p-3.5 text-xs leading-relaxed text-muted-foreground">
                                     Requisitos de contraseña:{' '}
-                                    <span className="font-semibold text-[#31505d]">
+                                    <span className="font-semibold text-foreground">
                                         {props.passwordRequirements}
                                     </span>
                                 </p>
@@ -155,7 +142,7 @@ export default function Security(props: Props) {
                                     </Button>
                                     {recentlySuccessful && (
                                         <span
-                                            className="flex items-center gap-1 text-sm font-medium text-[#397461]"
+                                            className="flex items-center gap-1 text-sm font-medium text-success"
                                             role="status"
                                         >
                                             <Check className="size-4" />{' '}
@@ -166,32 +153,24 @@ export default function Security(props: Props) {
                             </>
                         )}
                     </Form>
-                </section>
+                </SettingsSection>
 
                 {props.canManageSessions && (
-                    <section
-                        className="rounded-2xl border border-[#d7e5dd] bg-white p-5 shadow-[0_12px_32px_rgba(23,50,71,0.06)] sm:p-7"
-                        aria-labelledby="sessions-title"
+                    <SettingsSection
+                        icon={Monitor}
+                        eyebrow="Actividad"
+                        title="Sesiones y accesos"
+                        description="Revisá dónde está abierta tu cuenta y cerrá los accesos que no reconozcas."
                     >
-                        <div className="mb-6 flex items-start gap-3 border-b border-[#e5eee8] pb-5">
-                            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#e7f4eb] text-[#4f916d]" aria-hidden="true">
-                                <Monitor className="size-5" />
-                            </span>
-                            <div>
-                                <h2 id="sessions-title" className="font-semibold text-[#173247]">Sesiones y accesos</h2>
-                                <p className="mt-1 text-sm leading-5 text-[#71828a]">Estos son los accesos reales registrados por el sistema.</p>
-                            </div>
-                        </div>
-
                         <div className="space-y-3">
                             {props.sessions.map((session) => (
                                 <div
                                     key={session.id}
-                                    className="flex flex-col gap-3 rounded-xl border border-[#e1eee7] bg-[#fbfdfc] p-4 transition hover:border-[#cfe3d7] sm:flex-row sm:items-center sm:justify-between"
+                                    className="flex flex-col gap-3 rounded-xl border border-border bg-surface-soft p-4 transition hover:border-primary/50 sm:flex-row sm:items-center sm:justify-between"
                                 >
                                     <div className="flex min-w-0 items-start gap-3">
                                         <Monitor
-                                                className="mt-0.5 size-5 shrink-0 text-[#5d9b7a]"
+                                            className="mt-0.5 size-5 shrink-0 text-primary"
                                             aria-hidden="true"
                                         />
                                         <div className="min-w-0">
@@ -201,12 +180,12 @@ export default function Security(props: Props) {
                                                     : 'Sesión activa'}
                                             </p>
                                             <p
-                                                className="truncate text-sm text-[#63757e]"
+                                                className="truncate text-sm text-muted-foreground"
                                                 title={session.user_agent}
                                             >
                                                 {session.user_agent}
                                             </p>
-                                            <p className="text-xs text-[#819197]">
+                                            <p className="text-xs text-muted-foreground">
                                                 {session.ip_address ??
                                                     'IP no registrada'}{' '}
                                                 · Última actividad:{' '}
@@ -217,7 +196,7 @@ export default function Security(props: Props) {
                                         </div>
                                     </div>
                                     {session.is_current && (
-                                        <span className="w-fit rounded-full bg-[#e1f2e7] px-2.5 py-1 text-xs font-semibold text-[#397461]">
+                                        <span className="w-fit rounded-full bg-secondary px-2.5 py-1 text-xs font-semibold text-secondary-foreground">
                                             Este dispositivo
                                         </span>
                                     )}
@@ -229,7 +208,7 @@ export default function Security(props: Props) {
                             <Button
                                 type="button"
                                 variant="outline"
-                                className="mt-5 rounded-xl border-[#cfe3d7] text-[#315b52] hover:bg-[#eef8f2]"
+                                className="mt-5"
                                 onClick={() => setShowRevokeForm(true)}
                             >
                                 Cerrar las demás sesiones
@@ -238,20 +217,19 @@ export default function Security(props: Props) {
 
                         {showRevokeForm && (
                             <Form
-                                action="/settings/sessions/other"
-                                method="delete"
+                                {...SecurityController.destroyOtherSessions.form()}
                                 options={{ preserveScroll: true }}
                                 resetOnSuccess
                                 onSuccess={() => setShowRevokeForm(false)}
-                                className="mt-5 space-y-4 rounded-2xl border border-[#f1dfb4] bg-[#fff9e8] p-4"
+                                className="mt-5 space-y-4 rounded-xl border border-warning/40 bg-warning/10 p-4"
                             >
                                 {({ processing, errors }) => (
                                     <>
                                         <div>
-                                            <p className="font-semibold text-[#5d4825]">
+                                            <p className="font-semibold text-foreground">
                                                 Confirmá tu identidad
                                             </p>
-                                            <p className="mt-1 text-sm leading-6 text-[#806c4b]">
+                                            <p className="mt-1 text-sm leading-6 text-muted-foreground">
                                                 Ingresá tu contraseña actual
                                                 para cerrar{' '}
                                                 {otherSessions.length === 1
@@ -299,22 +277,15 @@ export default function Security(props: Props) {
                                 )}
                             </Form>
                         )}
-                    </section>
+                    </SettingsSection>
                 )}
 
-                <section
-                    className="rounded-2xl border border-[#d7e5dd] bg-white p-5 shadow-[0_12px_32px_rgba(23,50,71,0.06)] sm:p-7"
-                    aria-labelledby="advanced-security-title"
+                <SettingsSection
+                    icon={ShieldCheck}
+                    eyebrow="Defensa adicional"
+                    title="Protecciones adicionales"
+                    description="Administrá los métodos de seguridad disponibles para tu cuenta."
                 >
-                    <div className="mb-6 flex items-start gap-3 border-b border-[#e5eee8] pb-5">
-                        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#e7f4eb] text-[#4f916d]" aria-hidden="true">
-                            <ShieldCheck className="size-5" />
-                        </span>
-                        <div>
-                            <h2 id="advanced-security-title" className="font-semibold text-[#173247]">Protecciones adicionales</h2>
-                            <p className="mt-1 text-sm leading-5 text-[#71828a]">Administrá los métodos de seguridad disponibles para tu cuenta.</p>
-                        </div>
-                    </div>
                     <div className="space-y-8">
                         <ManageTwoFactor
                             canManageTwoFactor={props.canManageTwoFactor}
@@ -326,7 +297,7 @@ export default function Security(props: Props) {
                             passkeys={props.passkeys}
                         />
                     </div>
-                </section>
+                </SettingsSection>
             </div>
         </>
     );

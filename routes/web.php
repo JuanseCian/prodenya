@@ -4,12 +4,10 @@ use App\Http\Controllers\AdminCatalogController;
 use App\Http\Controllers\AdminHomeController;
 use App\Http\Controllers\AdminUserController;
 use App\Http\Controllers\AuditoriaController;
-use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EstadisticasController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('dashboard', DashboardController::class)->name('dashboard');
     Route::controller(EstadisticasController::class)
         ->prefix('estadisticas')
         ->name('estadisticas')

@@ -1,7 +1,6 @@
 import { router } from '@inertiajs/react';
 import { KeyRound } from 'lucide-react';
 import { destroy } from '@/actions/Laravel/Passkeys/Http/Controllers/PasskeyRegistrationController';
-import Heading from '@/components/heading';
 import PasskeyItem from '@/components/passkey-item';
 import PasskeyRegistration from '@/components/passkey-register';
 import type { Passkey } from '@/types/auth';
@@ -44,14 +43,22 @@ export default function ManagePasskeys(props: Props) {
     }
 
     return (
-        <div className="space-y-6">
-            <Heading
-                variant="small"
-                title="Llaves de acceso"
-                description="Administrá los métodos de acceso sin contraseña."
-            />
+        <div className="space-y-6 rounded-2xl border border-border bg-surface-soft p-5 sm:p-6">
+            <div className="flex items-start gap-3">
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-secondary text-primary">
+                    <KeyRound className="size-4" aria-hidden="true" />
+                </span>
+                <div>
+                    <h3 className="font-semibold text-foreground">
+                        Llaves de acceso
+                    </h3>
+                    <p className="mt-1 text-sm leading-5 text-muted-foreground">
+                        Administrá los métodos de acceso sin contraseña.
+                    </p>
+                </div>
+            </div>
 
-            <div className="overflow-hidden rounded-lg border border-border">
+            <div className="overflow-hidden rounded-2xl border border-border bg-background">
                 {passkeys.length > 0 ? (
                     passkeys.map((passkey) => (
                         <PasskeyItem

@@ -60,7 +60,6 @@ createInertiaApp({
         switch (true) {
             case name === 'welcome':
                 return null;
-            case name === 'dashboard':
             case name.startsWith('estadisticas/'):
             case name === 'mailbox/index':
             case name === 'tareas/index':

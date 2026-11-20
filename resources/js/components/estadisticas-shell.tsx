@@ -95,7 +95,7 @@ export default function EstadisticasShell({
     );
 
     return (
-        <div className="stats-module-shell min-h-screen bg-[#F2F6F5] text-[#173247] dark:bg-[#101A20] dark:text-[#EDF6FB]">
+        <div className="stats-module-shell min-h-screen bg-background text-foreground">
             <div
                 className={`fixed inset-0 z-30 bg-[#173247]/45 transition-opacity lg:hidden dark:bg-black/60 ${mobileOpen ? 'opacity-100' : 'pointer-events-none opacity-0'}`}
                 onClick={() => setMobileOpen(false)}
@@ -103,7 +103,7 @@ export default function EstadisticasShell({
             />
 
             <aside
-                className={`fixed inset-y-0 left-0 z-40 flex flex-col border-r border-[#315063] bg-[linear-gradient(180deg,#173247_0%,#1C4850_100%)] transition-[width,transform] duration-300 ease-out dark:border-[#29404D] dark:bg-[linear-gradient(180deg,#142630_0%,#173C42_100%)] ${collapsed ? 'lg:w-[78px]' : 'lg:w-[270px]'} ${mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'} w-[270px]`}
+                className={`fixed inset-y-0 left-0 z-40 flex flex-col border-r border-white/10 bg-brand-strong transition-[width,transform] duration-300 ease-out ${collapsed ? 'lg:w-20' : 'lg:w-60'} ${mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'} w-72`}
             >
                 <div className="flex items-center justify-between border-b border-white/10 px-4 py-5">
                     <button
@@ -152,7 +152,7 @@ export default function EstadisticasShell({
                 </div>
 
                 <div
-                    className={`flex-1 px-3 pt-7 ${collapsed ? 'lg:px-2' : ''}`}
+                    className={`flex-1 px-3 pt-6 ${collapsed ? 'lg:px-2' : ''}`}
                 >
                     <p
                         className={`px-3 text-[0.65rem] font-bold tracking-[0.14em] text-[#B9D5E1]/60 uppercase ${collapsed ? 'lg:hidden' : ''}`}
@@ -172,11 +172,11 @@ export default function EstadisticasShell({
                                     key={modulo.key}
                                     href={modulo.href}
                                     onClick={() => setMobileOpen(false)}
-                                    className={`group relative flex items-center gap-3 rounded-md px-3 py-2.5 transition ${collapsed ? 'lg:justify-center lg:px-0' : ''} ${isActive ? 'bg-[#D9EBDD] text-[#173247]' : 'text-white/68 hover:bg-white/10 hover:text-white'}`}
+                                    className={`group relative flex items-center gap-3 rounded-lg px-3 py-2.5 transition ${collapsed ? 'lg:justify-center lg:px-0' : ''} ${isActive ? 'bg-secondary text-secondary-foreground' : 'text-white/68 hover:bg-white/10 hover:text-white'}`}
                                     title={collapsed ? modulo.label : undefined}
                                 >
                                     <span
-                                        className={`grid size-8 shrink-0 place-items-center rounded-md transition ${isActive ? 'bg-white/65 text-[#1E5143]' : 'bg-white/8 text-[#B9D5E1] group-hover:bg-white/15 group-hover:text-white'}`}
+                                        className={`grid size-8 shrink-0 place-items-center rounded-md transition ${isActive ? 'bg-card/70 text-primary' : 'bg-white/8 text-white/70 group-hover:bg-white/15 group-hover:text-white'}`}
                                     >
                                         <Icon size={17} strokeWidth={1.8} />
                                     </span>
@@ -215,21 +215,21 @@ export default function EstadisticasShell({
             </aside>
 
             <div
-                className={`min-h-screen transition-[margin] duration-300 ${collapsed ? 'lg:ml-[78px]' : 'lg:ml-[270px]'}`}
+                className={`min-h-screen transition-[margin] duration-300 ${collapsed ? 'lg:ml-20' : 'lg:ml-60'}`}
             >
-                <header className="sticky top-0 z-20 border-b border-[#DCE3E6] bg-[#F8FAFA]/95 backdrop-blur dark:border-[#29404D] dark:bg-[#142630]/95">
-                    <div className="flex items-center justify-between gap-4 px-4 py-4 sm:px-7 lg:px-10">
+                <header className="sticky top-0 z-20 border-b border-border bg-background/95 backdrop-blur">
+                    <div className="flex min-h-16 items-center justify-between gap-4 px-4 py-3 sm:px-7 lg:px-10">
                         <div className="flex min-w-0 items-center gap-3">
                             <button
                                 type="button"
-                                className="grid size-10 shrink-0 place-items-center rounded-md border border-[#DCE3E6] bg-white text-[#2C4A5E] lg:hidden dark:border-[#29404D] dark:bg-[#1D303B] dark:text-[#B9D5E1]"
+                                className="grid size-10 shrink-0 place-items-center rounded-lg border border-border bg-card text-foreground lg:hidden"
                                 onClick={() => setMobileOpen(true)}
                                 aria-label="Abrir menú de estadísticas"
                             >
                                 <Menu size={19} />
                             </button>
                             <div className="min-w-0">
-                                <h1 className="truncate text-xl font-semibold tracking-tight text-[#173247] sm:text-2xl dark:text-[#EDF6FB]">
+                                <h1 className="truncate text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
                                     {title}
                                 </h1>
                             </div>

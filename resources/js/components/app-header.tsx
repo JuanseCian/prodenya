@@ -6,12 +6,10 @@ import {
     LayoutGrid,
     Mail,
     Menu,
-    Search,
     UserRound,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import AppLogoIcon from '@/components/app-logo-icon';
-import AppearanceTabs from '@/components/appearance-tabs';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { TeamSwitcher } from '@/components/team-switcher';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -38,7 +36,7 @@ import { UserMenuContent } from '@/components/user-menu-content';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import { useInitials } from '@/hooks/use-initials';
 import { toUrl } from '@/lib/utils';
-import { dashboard, estadisticas as estadisticasRoute } from '@/routes';
+import { estadisticas as estadisticasRoute, home } from '@/routes';
 import mailbox from '@/routes/mailbox';
 import tareas from '@/routes/tareas';
 import type { BreadcrumbItem, NavItem } from '@/types';
@@ -62,15 +60,15 @@ const rightNavItems: NavItem[] = [
 
 export function AppHeader({ breadcrumbs = [] }: Props) {
     const page = usePage();
-    const { auth, currentTeam } = page.props;
+    const { auth } = page.props;
     const getInitials = useInitials();
     const { isCurrentUrl } = useCurrentUrl();
-    const dashboardUrl = currentTeam ? dashboard().url : '/';
+    const homeUrl = home().url;
 
     const mainNavItems: NavItem[] = [
         {
-            title: 'Panel principal',
-            href: dashboardUrl,
+            title: 'Inicio',
+            href: homeUrl,
             icon: LayoutGrid,
         },
         ...(page.props.can?.accessStatistics
@@ -101,8 +99,8 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
 
     return (
         <>
-            <div className="border-b border-sidebar-border/80">
-                <div className="mx-auto flex h-16 items-center px-4 md:max-w-7xl">
+            <div className="border-b border-white/10 bg-brand-strong text-white shadow-[0_8px_24px_rgba(23,50,71,0.12)]">
+                <div className="mx-auto flex h-16 items-center px-4 sm:px-6 md:max-w-[1440px]">
                     {/* Mobile Menu */}
                     <div className="lg:hidden">
                         <Sheet>
@@ -110,7 +108,7 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                                 <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="mr-2 h-[34px] w-[34px]"
+                                    className="mr-2 h-10 w-10 text-white/80 transition-colors hover:bg-white/10 hover:text-white"
                                 >
                                     <Menu className="h-5 w-5" />
                                 </Button>
@@ -123,7 +121,7 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                                     Navigation menu
                                 </SheetTitle>
                                 <SheetHeader className="flex justify-start text-left">
-                                    <AppLogoIcon className="h-6 w-6 fill-current text-black dark:text-white" />
+                                    <AppLogoIcon className="h-6 w-6 fill-current text-white" />
                                 </SheetHeader>
                                 <div className="flex h-full flex-1 flex-col space-y-4 p-4">
                                     <div className="flex h-full flex-col justify-between text-sm">
@@ -140,23 +138,20 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                                                     <span>{item.title}</span>
                                                 </Link>
                                             ))}
-                                            <AppearanceTabs className="w-fit" />
                                         </div>
 
                                         <div className="flex flex-col space-y-4">
                                             {rightNavItems.map((item) => (
-                                                <a
+                                                <Link
                                                     key={item.title}
                                                     href={toUrl(item.href)}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
                                                     className="flex items-center space-x-2 font-medium"
                                                 >
                                                     {item.icon && (
                                                         <item.icon className="h-5 w-5" />
                                                     )}
                                                     <span>{item.title}</span>
-                                                </a>
+                                                </Link>
                                             ))}
                                         </div>
                                     </div>
@@ -166,7 +161,7 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                     </div>
 
                     <Link
-                        href={dashboardUrl}
+                        href={homeUrl}
                         prefetch
                         className="flex items-center space-x-2"
                     >
@@ -174,12 +169,12 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                     </Link>
 
                     {/* Desktop Navigation */}
-                    <div className="ml-6 hidden h-full items-center gap-1 lg:flex">
+                    <div className="ml-6 hidden h-full items-center gap-0.5 lg:flex">
                         {mainNavItems.map((item, index) => (
                             <Link
                                 key={item.title}
                                 href={item.href}
-                                className={`inline-flex h-10 items-center gap-2 rounded-md px-3 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground ${index === activeNavIndex ? 'bg-accent text-accent-foreground' : 'text-muted-foreground'}`}
+                                className={`inline-flex h-10 items-center gap-2 rounded-lg px-3 text-sm font-medium transition-[background-color,color,transform] duration-200 hover:-translate-y-px hover:bg-white/10 hover:text-white ${index === activeNavIndex ? 'bg-white/15 text-white' : 'text-white/72'}`}
                             >
                                 {item.icon && <item.icon className="size-4" />}
                                 {item.title}
@@ -188,45 +183,33 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                     </div>
 
                     <div className="ml-auto flex items-center space-x-2">
-                        <div className="relative flex items-center space-x-1">
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="group h-9 w-9 cursor-pointer"
-                            >
-                                <Search className="size-5! opacity-80 group-hover:opacity-100" />
-                            </Button>
-                            <div className="ml-1 hidden gap-1 lg:flex">
-                                {rightNavItems.map((item) => (
-                                    <TooltipProvider
-                                        key={item.title}
-                                        delayDuration={0}
-                                    >
-                                        <Tooltip>
-                                            <TooltipTrigger>
-                                                <a
-                                                    href={toUrl(item.href)}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="group inline-flex h-9 w-9 items-center justify-center rounded-md bg-transparent p-0 text-sm font-medium text-accent-foreground ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
-                                                >
-                                                    <span className="sr-only">
-                                                        {item.title}
-                                                    </span>
-                                                    {item.icon && (
-                                                        <item.icon className="size-5 opacity-80 group-hover:opacity-100" />
-                                                    )}
-                                                </a>
-                                            </TooltipTrigger>
-                                            <TooltipContent>
-                                                <p>{item.title}</p>
-                                            </TooltipContent>
-                                        </Tooltip>
-                                    </TooltipProvider>
-                                ))}
-                            </div>
+                        <div className="hidden items-center gap-1 lg:flex">
+                            {rightNavItems.map((item) => (
+                                <TooltipProvider
+                                    key={item.title}
+                                    delayDuration={0}
+                                >
+                                    <Tooltip>
+                                        <TooltipTrigger>
+                                            <Link
+                                                href={toUrl(item.href)}
+                                                className="group inline-flex h-10 w-10 items-center justify-center rounded-lg bg-transparent p-0 text-sm font-medium text-white/80 transition-[background-color,color,transform] duration-200 hover:-translate-y-px hover:bg-white/10 hover:text-white focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:outline-none"
+                                            >
+                                                <span className="sr-only">
+                                                    {item.title}
+                                                </span>
+                                                {item.icon && (
+                                                    <item.icon className="size-5 opacity-80 group-hover:opacity-100" />
+                                                )}
+                                            </Link>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>{item.title}</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            ))}
                         </div>
-                        <AppearanceTabs className="hidden border-transparent bg-transparent p-0 sm:inline-flex" />
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button
@@ -238,7 +221,7 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                                             src={auth.user.avatar}
                                             alt={auth.user.name}
                                         />
-                                        <AvatarFallback className="rounded-lg bg-neutral-200 text-black dark:bg-neutral-700 dark:text-white">
+                                        <AvatarFallback className="rounded-lg bg-white/15 text-white">
                                             {getInitials(auth.user.name)}
                                         </AvatarFallback>
                                     </Avatar>
@@ -255,7 +238,7 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
             </div>
             {breadcrumbs.length > 1 && (
                 <div className="flex w-full border-b border-sidebar-border/70">
-                    <div className="mx-auto flex h-12 w-full items-center justify-start px-4 text-neutral-500 md:max-w-7xl">
+                    <div className="mx-auto flex h-10 w-full items-center justify-start px-4 text-neutral-500 md:max-w-[1440px]">
                         <Breadcrumbs breadcrumbs={breadcrumbs} />
                     </div>
                 </div>

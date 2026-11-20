@@ -26,4 +26,6 @@ Route::middleware(['auth', 'verified', 'rol:admin,oficios,coordinador'])->group(
         ->name('mailbox.reply');
     Route::patch('mailbox/{mailMessage}/clasificar', [MailboxController::class, 'classify'])
         ->name('mailbox.classify');
+    Route::patch('mailbox/{mailMessage}/clasificacion/confirmar', [MailboxController::class, 'confirmClassification'])
+        ->name('mailbox.classification.confirm');
 });

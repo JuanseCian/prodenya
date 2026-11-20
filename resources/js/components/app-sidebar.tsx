@@ -23,7 +23,7 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { dashboard, estadisticas as estadisticasRoute } from '@/routes';
+import { estadisticas as estadisticasRoute, home } from '@/routes';
 import agenda from '@/routes/agenda';
 import mailbox from '@/routes/mailbox';
 import tareas from '@/routes/tareas';
@@ -31,12 +31,12 @@ import type { NavItem } from '@/types';
 
 export function AppSidebar() {
     const page = usePage();
-    const dashboardUrl = page.props.currentTeam ? dashboard().url : '/';
+    const homeUrl = home().url;
 
     const mainNavItems: NavItem[] = [
         {
-            title: 'Panel principal',
-            href: dashboardUrl,
+            title: 'Inicio',
+            href: homeUrl,
             icon: LayoutGrid,
         },
         {
@@ -95,7 +95,7 @@ export function AppSidebar() {
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton size="lg" asChild>
-                            <Link href={dashboardUrl} prefetch>
+                            <Link href={homeUrl} prefetch>
                                 <AppLogo />
                             </Link>
                         </SidebarMenuButton>

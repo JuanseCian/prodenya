@@ -1,11 +1,19 @@
 import { useForm } from '@inertiajs/react';
-import { Download, HeartHandshake, Plus, Upload, X } from 'lucide-react';
+import {
+    ChevronDown,
+    Download,
+    HeartHandshake,
+    Plus,
+    Upload,
+    X,
+} from 'lucide-react';
 import { useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { usePlegable } from '@/hooks/use-plegable';
 import medidasAbrigoRoutes from '@/routes/legajos/medidas-abrigo';
 
 type Ubicacion = 'familia_ampliada' | 'institucion';
@@ -91,6 +99,14 @@ export default function MedidasAbrigoModule({
     puedeGestionar,
 }: Props) {
     const [open, setOpen] = useState(false);
+    const [abierta, alternar, fijarAbierta] = usePlegable('medidas-abrigo');
+    const vigentes = medidas.filter(
+        (medida) => medida.estado === 'Vigente',
+    ).length;
+    const resumen =
+        medidas.length === 0
+            ? 'Sin medidas'
+            : `${vigentes} vigente${vigentes === 1 ? '' : 's'} · ${medidas.length} en total`;
     const form = useForm<FormData>({
         ubicacion: 'familia_ampliada',
         duracion_dias: 90,
@@ -141,21 +157,38 @@ export default function MedidasAbrigoModule({
             onSuccess: () => {
                 form.reset();
                 setOpen(false);
+                fijarAbierta(true);
             },
             onError: () => setOpen(true),
         });
     };
 
     return (
-        <Card className="rounded-2xl border-[#DCE3DF] !bg-white py-0 shadow-[0_14px_35px_rgba(23,50,71,0.06)] lg:col-span-2">
-            <CardHeader className="border-b border-[#E4E8E5] bg-[#F8FAF9] px-5 py-4">
+        <Card className="gap-0 overflow-hidden rounded-2xl border-[#DCE3DF] !bg-white py-0 shadow-[0_14px_35px_rgba(23,50,71,0.06)]">
+            <CardHeader
+                className={`bg-[#F8FAF9] px-5 py-4 ${abierta ? 'border-b border-[#E4E8E5]' : ''}`}
+            >
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div className="flex items-center gap-2">
+                    <button
+                        type="button"
+                        onClick={alternar}
+                        aria-expanded={abierta}
+                        aria-controls="seccion-medidas-abrigo"
+                        className="-m-1 flex min-w-0 flex-1 items-center gap-2 rounded-lg p-1 text-left transition hover:bg-[#EEF3F0]"
+                    >
+                        <ChevronDown
+                            className={`size-4 shrink-0 text-[#697586] transition-transform ${abierta ? '' : '-rotate-90'}`}
+                        />
                         <HeartHandshake size={18} className="text-[#6B8F71]" />
                         <CardTitle className="text-base font-semibold text-[#2C4A5E]">
                             Medidas de abrigo
                         </CardTitle>
-                    </div>
+                        <Badge
+                            className={`ml-1 border-0 ${vigentes > 0 ? 'bg-[#EAF6EE] text-[#397461]' : 'bg-[#F2F7FB] text-[#35627A]'}`}
+                        >
+                            {resumen}
+                        </Badge>
+                    </button>
                     {puedeGestionar && (
                         <Button
                             type="button"
@@ -167,12 +200,19 @@ export default function MedidasAbrigoModule({
                         </Button>
                     )}
                 </div>
-                <p className="mt-1 text-sm text-[#2B2F36]/60">
-                    Guardá la medida, su vigencia y las actas que la respaldan.
-                </p>
+                {abierta && (
+                    <p className="mt-1 text-sm text-[#2B2F36]/60">
+                        Guardá la medida, su vigencia y las actas que la
+                        respaldan.
+                    </p>
+                )}
             </CardHeader>
 
-            <CardContent className="space-y-4 px-5 py-5">
+            <CardContent
+                id="seccion-medidas-abrigo"
+                hidden={!abierta}
+                className="space-y-4 px-5 py-5"
+            >
                 {medidas.length > 0 ? (
                     medidas.map((medida) => (
                         <article

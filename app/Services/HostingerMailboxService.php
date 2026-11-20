@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Jobs\ClassifyMailMessage;
 use App\Mail\MailboxMessage;
 use App\Models\MailMessage;
 use Carbon\CarbonImmutable;
@@ -171,6 +172,10 @@ class HostingerMailboxService
         }
 
         $record->save();
+
+        if ($isNew) {
+            ClassifyMailMessage::dispatch($record->id);
+        }
     }
 
     private function textBody(Message $message): string

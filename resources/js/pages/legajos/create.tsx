@@ -112,7 +112,7 @@ export default function CreateLegajo({
             <Head title="Nuevo legajo" />
 
             <main
-                className="bg-[#F4F6F5] px-4 py-8 sm:px-6 sm:py-10"
+                className="admin-page-shell bg-background px-4 py-7 sm:px-6 sm:py-9"
                 style={{ fontFamily: FONT_BODY }}
             >
                 <h1

@@ -216,9 +216,16 @@ test('legajo detail exposes individual statistics and derivations', function () 
         ->assertOk()
         ->assertInertia(fn ($page) => $page
             ->component('legajos/show')
-            ->where('estadisticas.derivaciones.total', 1)
-            ->has('estadisticas.intervenciones')
             ->has('derivaciones', 1));
+
+    $this->actingAs($coordinador)
+        ->get(route('legajos.estadisticas', $legajo))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('legajos/estadisticas')
+            ->where('estadisticas.resumen.derivaciones', 1)
+            ->where('estadisticas.resumen.derivaciones_pendientes', 1)
+            ->has('estadisticas.actividad'));
 });
 
 test('cannot add a 4th active responsible to a legajo via an additional derivation', function () {

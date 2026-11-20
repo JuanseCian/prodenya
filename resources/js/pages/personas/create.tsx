@@ -291,7 +291,7 @@ export default function CreatePersona({
             <Head title={modoLegajo ? 'Nuevo legajo' : 'Nueva persona'} />
 
             <main
-                className="bg-[#F4F6F5] px-4 py-8 sm:px-6 sm:py-10 lg:px-8"
+                className="admin-page-shell bg-background px-4 py-7 sm:px-6 sm:py-9 lg:px-8"
                 style={{ fontFamily: FONT_BODY }}
             >
                 <div className="mx-auto w-full max-w-6xl">

@@ -20,24 +20,27 @@ export default function AppearanceToggleTab({
     return (
         <div
             className={cn(
-                'inline-flex max-w-full gap-1 rounded-xl border border-border bg-secondary p-1.5',
+                'grid w-full max-w-2xl gap-2 sm:grid-cols-3',
                 className,
             )}
+            aria-label="Modo de apariencia"
             {...props}
         >
             {tabs.map(({ value, icon: Icon, label }) => (
                 <button
                     key={value}
+                    type="button"
                     onClick={() => updateAppearance(value)}
+                    aria-pressed={appearance === value}
                     className={cn(
-                        'flex min-h-10 items-center rounded-lg px-3.5 py-1.5 transition-colors',
+                        'flex min-h-20 flex-col items-start justify-center gap-2 rounded-2xl border px-4 py-3 text-left transition-[border-color,background-color,box-shadow,transform] hover:-translate-y-0.5',
                         appearance === value
-                            ? 'bg-card font-semibold text-foreground shadow-sm'
-                            : 'text-muted-foreground hover:bg-card/70 hover:text-foreground',
+                            ? 'border-primary/40 bg-secondary font-semibold text-secondary-foreground shadow-sm'
+                            : 'border-border bg-surface-soft text-muted-foreground hover:border-primary/30 hover:bg-card hover:text-foreground',
                     )}
                 >
-                    <Icon className="-ml-1 h-4 w-4" />
-                    <span className="ml-1.5 text-sm">{label}</span>
+                    <Icon className="size-4 text-primary" />
+                    <span className="text-sm">{label}</span>
                 </button>
             ))}
         </div>

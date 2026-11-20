@@ -2,6 +2,10 @@
 
 namespace App\Models;
 
+use App\Enums\MailClassificationCategory;
+use App\Enums\MailClassificationMethod;
+use App\Enums\MailClassificationPriority;
+use App\Enums\MailClassificationStatus;
 use App\Models\Concerns\Auditable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -50,6 +54,14 @@ class MailMessage extends Model
         'is_starred',
         'has_attachments',
         'estado',
+        'clasificacion_categoria',
+        'clasificacion_estado',
+        'clasificacion_confianza',
+        'clasificacion_metodo',
+        'clasificacion_revisado_en',
+        'clasificacion_revisado_por',
+        'clasificacion_motivos',
+        'prioridad',
         'clasificado_por',
         'clasificado_en',
         'attachments',
@@ -67,6 +79,13 @@ class MailMessage extends Model
             'has_attachments' => 'boolean',
             'attachments' => 'array',
             'labels' => 'array',
+            'clasificacion_categoria' => MailClassificationCategory::class,
+            'clasificacion_estado' => MailClassificationStatus::class,
+            'clasificacion_confianza' => 'float',
+            'clasificacion_metodo' => MailClassificationMethod::class,
+            'clasificacion_revisado_en' => 'datetime',
+            'clasificacion_motivos' => 'array',
+            'prioridad' => MailClassificationPriority::class,
             'clasificado_en' => 'datetime',
         ];
     }
@@ -89,5 +108,10 @@ class MailMessage extends Model
     public function derivaciones(): HasMany
     {
         return $this->hasMany(DerivacionCaso::class, 'mail_message_id');
+    }
+
+    public function clasificaciones(): HasMany
+    {
+        return $this->hasMany(MailClassificationEvent::class, 'mail_message_id');
     }
 }

@@ -83,7 +83,7 @@ export default function PersonaShow({ persona, legajos, status }: Props) {
             <Head title={`${persona.apellido}, ${persona.nombre}`} />
 
             <main
-                className="min-h-screen bg-[#F4F6F5] px-4 py-8 sm:px-6 sm:py-10 lg:px-8"
+                className="admin-page-shell min-h-screen bg-background px-4 py-7 sm:px-6 sm:py-9 lg:px-8"
                 style={{ fontFamily: FONT_BODY }}
             >
                 <Link

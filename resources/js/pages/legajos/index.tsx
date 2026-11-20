@@ -320,7 +320,7 @@ export default function LegajosIndex({
             <Head title={esMayores18 ? '+18' : 'Legajos'} />
 
             <main
-                className="legajos-page min-h-screen px-4 py-6 sm:px-6 sm:py-8 lg:px-8"
+                className="admin-page-shell legajos-page min-h-screen bg-background px-4 py-6 sm:px-6 sm:py-8 lg:px-8"
                 style={{ fontFamily: FONT_BODY }}
             >
                 <div className="mx-auto max-w-7xl">

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Jobs\ClassifyMailMessage;
 use App\Models\GoogleOAuthToken;
 use App\Models\MailMessage;
 use Carbon\CarbonImmutable;
@@ -9,6 +10,7 @@ use Google\Client;
 use Google\Service\Gmail;
 use Google\Service\Gmail\Message as GmailMessage;
 use Google\Service\Gmail\MessagePart;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use RuntimeException;
@@ -183,7 +185,7 @@ class GoogleGmailService
         ]);
     }
 
-    public function sync(): int
+    public function sync(?int $days = null): int
     {
         $storedToken = GoogleOAuthToken::query()->latest('authorized_at')->first();
 
@@ -194,20 +196,35 @@ class GoogleGmailService
         $client = $this->authenticatedClient($storedToken);
         $gmail = new Gmail($client);
         try {
-            $messages = $gmail->users_messages->listUsersMessages('me', [
-                'q' => 'in:inbox',
-                'maxResults' => 100,
-            ]);
             $synchronized = 0;
+            $pageToken = null;
 
-            foreach ($messages->getMessages() ?? [] as $summary) {
-                $message = $gmail->users_messages->get('me', $summary->getId(), [
-                    'format' => 'full',
-                ]);
+            do {
+                $parameters = [
+                    'q' => 'in:inbox'.($days !== null
+                        ? ' after:'.now()->subDays($days)->format('Y/m/d')
+                        : ''),
+                    'maxResults' => 100,
+                ];
 
-                $this->synchronizeMessage($message);
-                $synchronized++;
-            }
+                if ($pageToken !== null) {
+                    $parameters['pageToken'] = $pageToken;
+                }
+
+                $messages = $gmail->users_messages->listUsersMessages('me', $parameters);
+
+                foreach ($messages->getMessages() ?? [] as $summary) {
+                    $message = $gmail->users_messages->get('me', $summary->getId(), [
+                        'format' => 'full',
+                    ]);
+
+                    if ($this->synchronizeMessage($message)) {
+                        $synchronized++;
+                    }
+                }
+
+                $pageToken = $messages->getNextPageToken();
+            } while ($pageToken !== null && $pageToken !== '');
 
             $storedToken->update([
                 'history_id' => (string) (new Gmail($client))->users->getProfile('me')->getHistoryId(),
@@ -263,7 +280,7 @@ class GoogleGmailService
         return $client;
     }
 
-    private function synchronizeMessage(GmailMessage $message): void
+    private function synchronizeMessage(GmailMessage $message): bool
     {
         $headers = $this->headers($message);
         $messageId = $headers['message-id'] ?? 'gmail:'.$message->getId();
@@ -305,6 +322,12 @@ class GoogleGmailService
         }
 
         $record->save();
+
+        if ($isNew) {
+            ClassifyMailMessage::dispatch($record->id);
+        }
+
+        return $isNew;
     }
 
     private function hasAttachments(?MessagePart $part): bool
@@ -398,9 +421,18 @@ class GoogleGmailService
     private function receivedAt(?string $date, int|string|null $internalDate): CarbonImmutable
     {
         if ($date) {
-            return CarbonImmutable::parse($date);
+            try {
+                return CarbonImmutable::parse($date);
+            } catch (Throwable $exception) {
+                Log::warning('No se pudo interpretar la fecha declarada por Gmail.', [
+                    'date' => $date,
+                    'exception' => $exception->getMessage(),
+                ]);
+            }
         }
 
-        return CarbonImmutable::createFromTimestamp((int) floor(($internalDate ?? 0) / 1000));
+        $timestamp = (int) floor(((int) ($internalDate ?? 0)) / 1000);
+
+        return $timestamp > 0 ? CarbonImmutable::createFromTimestamp($timestamp) : now();
     }
 }

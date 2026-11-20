@@ -1,7 +1,6 @@
 import { Form } from '@inertiajs/react';
 import { ShieldCheck } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import Heading from '@/components/heading';
 import TwoFactorRecoveryCodes from '@/components/two-factor-recovery-codes';
 import TwoFactorSetupModal from '@/components/two-factor-setup-modal';
 import { Button } from '@/components/ui/button';
@@ -45,12 +44,20 @@ export default function ManageTwoFactor(props: Props) {
     }
 
     return (
-        <div className="space-y-6">
-            <Heading
-                variant="small"
-                title="Autenticación en dos pasos"
-                description="Administrá la protección adicional de tu cuenta."
-            />
+        <div className="space-y-6 rounded-2xl border border-border bg-surface-soft p-5 sm:p-6">
+            <div className="flex items-start gap-3">
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-secondary text-primary">
+                    <ShieldCheck className="size-4" aria-hidden="true" />
+                </span>
+                <div>
+                    <h3 className="font-semibold text-foreground">
+                        Autenticación en dos pasos
+                    </h3>
+                    <p className="mt-1 text-sm leading-5 text-muted-foreground">
+                        Administrá la protección adicional de tu cuenta.
+                    </p>
+                </div>
+            </div>
             {twoFactorEnabled ? (
                 <div className="flex flex-col items-start justify-start space-y-4">
                     <p className="text-sm text-muted-foreground">

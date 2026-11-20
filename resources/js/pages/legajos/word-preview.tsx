@@ -116,7 +116,7 @@ export default function WordPreview({ legajo, downloadUrl }: Props) {
     return (
         <>
             <Head title={`Previsualización · Legajo ${legajo.numero_legajo}`} />
-            <main className="min-h-screen bg-[#F0F3F1] px-4 py-6 sm:px-6 lg:px-8">
+            <main className="admin-page-shell min-h-screen bg-background px-4 py-6 sm:px-6 lg:px-8">
                 <div className="mx-auto max-w-5xl">
                     <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <Link

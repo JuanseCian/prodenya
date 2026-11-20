@@ -32,6 +32,7 @@ class Legajo extends Model
         'intervenciones' => 'Intervenciones y registros',
         'derivaciones' => 'Derivaciones y responsables',
         'medidas_abrigo' => 'Medidas de abrigo',
+        'auh' => 'Asignación Universal por Hijo (AUH)',
         'estadisticas' => 'Estadísticas del legajo',
     ];
 

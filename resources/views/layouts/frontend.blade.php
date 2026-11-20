@@ -78,7 +78,7 @@
 
         .site-header {
             animation: site-header-enter 480ms cubic-bezier(0.22, 1, 0.36, 1) both;
-            background: linear-gradient(135deg, var(--brand) 0%, var(--brand-dark) 100%);
+            background: var(--brand-dark);
             box-shadow: 0 5px 22px rgba(57, 51, 119, 0.2);
             color: #fff;
             position: relative;
@@ -229,7 +229,7 @@
         .site-shell { background: var(--page); position: relative; }
         .site-page { display: flex; flex-direction: column; min-height: 100vh; margin-left: 0; }
          .site-sidebar {
-             background: linear-gradient(170deg, #173247 0%, #2c4a5e 58%, #41634a 125%);
+             background: #173247;
              bottom: 0;
              box-shadow: -12px 0 32px rgba(23, 50, 71, 0.18);
             color: #fff;
@@ -352,8 +352,8 @@
               .site-main { padding-bottom: calc(78px + env(safe-area-inset-bottom)); }
               .site-mobile-bottom-nav {
                   align-items: stretch;
-                  backdrop-filter: blur(18px) saturate(1.3);
-                  background: rgba(23, 50, 71, 0.96);
+                   backdrop-filter: none;
+                   background: #173247;
                   border-top: 1px solid rgba(255, 255, 255, 0.14);
                   bottom: 0;
                   box-shadow: 0 -10px 28px rgba(23, 50, 71, 0.18);
@@ -468,9 +468,7 @@
 
          /* Modern visual layer for the institutional header and navigation drawer. */
          .site-header {
-             background:
-                 radial-gradient(circle at 78% -80%, rgba(123, 213, 180, 0.2), transparent 34%),
-                 linear-gradient(112deg, #102c3e 0%, #173c50 58%, #1b5360 100%);
+             background: #173247;
              border-bottom: 1px solid rgba(255, 255, 255, 0.12);
              box-shadow: 0 8px 24px rgba(16, 44, 62, 0.14);
              z-index: 30;
@@ -529,9 +527,9 @@
          }
          .site-menu-toggle .site-user-avatar-image { object-fit: cover; }
 
-         .site-sidebar-backdrop { background: rgba(10, 29, 40, 0.25); backdrop-filter: blur(2px); }
-         .site-sidebar {
-             background: linear-gradient(180deg, #ffffff 0%, #f7fbf9 100%);
+          .site-sidebar-backdrop { background: rgba(10, 29, 40, 0.25); backdrop-filter: none; }
+          .site-sidebar {
+              background: #ffffff;
              border: 1px solid #dbe9e1;
              border-radius: 22px;
              bottom: 14px;
@@ -544,7 +542,7 @@
          }
          .site-shell.sidebar-open .site-sidebar { transform: translateX(0); }
          .site-sidebar-header {
-             background: linear-gradient(135deg, #f9fcfa 0%, #eef7f2 100%);
+              background: #f7faf8;
              border-bottom-color: #e1ece6;
              border-radius: 22px 22px 0 0;
              min-height: 78px;
@@ -582,7 +580,7 @@
          }
          .site-sidebar-link:hover, .site-sidebar-link:focus-visible { background: #f0f8f4; border-color: #d8e9df; box-shadow: 0 5px 12px rgba(49, 111, 83, 0.07); color: #173247; transform: translateX(3px); }
          .site-sidebar-link:hover i, .site-sidebar-link:focus-visible i { background: #e3f2e9; border-color: #cde3d5; color: #397461; }
-         .site-sidebar-link.is-active { background: linear-gradient(105deg, #e5f4eb 0%, #f1f8f4 100%); border-color: #cbe4d4; box-shadow: inset 4px 0 0 #5b9d7b, 0 6px 14px rgba(49, 111, 83, 0.08); color: #173247; }
+          .site-sidebar-link.is-active { background: #eaf3ed; border-color: #cbe4d4; box-shadow: inset 4px 0 0 #5b9d7b; color: #173247; }
          .site-sidebar-link.is-active i { background: #cfead9; border-color: #b8ddc6; color: #31765b; }
          .site-sidebar-account { background: rgba(235, 247, 240, 0.74); border: 1px solid #d5e8dc; border-radius: 16px; margin: auto 16px 16px; padding: 8px; }
          .site-sidebar-account-trigger { border-radius: 11px; min-height: 58px; padding: 7px 8px; }
@@ -612,11 +610,11 @@
                .site-sidebar-header { border-radius: 18px 18px 0 0; }
            }
          .dark .site-sidebar {
-             background: linear-gradient(180deg, #152532 0%, #10202b 100%);
+              background: #152532;
              border-color: #294252;
              color: #edf6fb;
          }
-         .dark .site-sidebar-header { background: linear-gradient(135deg, #1b303f 0%, #152a37 100%); border-color: #294252; }
+          .dark .site-sidebar-header { background: #1b303f; border-color: #294252; }
          .dark .site-sidebar-header h2 { color: #edf6fb; }
          .dark .site-sidebar-header h2::before { color: #9ce0bf; }
          .dark .site-sidebar-close { color: #a8bbc5; }
@@ -628,7 +626,7 @@
          .dark .site-sidebar-link i { background: #1c3544; border-color: #315063; color: #9ccfb2; }
          .dark .site-sidebar-link:hover, .dark .site-sidebar-link:focus-visible { background: #1c3544; border-color: #315063; color: #fff; }
          .dark .site-sidebar-link:hover i, .dark .site-sidebar-link:focus-visible i { background: #285143; border-color: #40775f; color: #b9e8cc; }
-         .dark .site-sidebar-link.is-active { background: linear-gradient(105deg, #214537 0%, #1c3544 100%); border-color: #40775f; color: #fff; }
+          .dark .site-sidebar-link.is-active { background: #214537; border-color: #40775f; color: #fff; }
          .dark .site-sidebar-link.is-active i { background: #2c6249; border-color: #4a916f; color: #c5f0d6; }
          .dark .site-sidebar-account { background: rgba(28, 53, 68, 0.85); border-color: #315063; }
          .dark .site-sidebar-account-trigger:hover, .dark .site-sidebar-account-trigger:focus-visible { background: rgba(255, 255, 255, 0.08); }
@@ -679,50 +677,115 @@
               .site-header-quick-link, .site-menu-toggle, .site-header-account .site-account-trigger { min-height: 44px; min-width: 44px; padding: 8px; }
               .site-sidebar { width: min(360px, 100vw); }
           }
-          @media (max-width: 480px) {
-              .site-header-inner { padding-left: 12px; padding-right: 12px; }
-              .site-header-brand .brand-divider { display: none; }
-              .site-header-brand .brand-name { font-size: 0.91rem; }
-              .site-sidebar { width: 100vw; }
-          }
+           @media (max-width: 480px) {
+               .site-header-inner { padding-left: 12px; padding-right: 12px; }
+               .site-header-brand .brand-divider { display: none; }
+               .site-header-brand .brand-name { font-size: 0.91rem; }
+               .site-sidebar { width: 100vw; }
+           }
 
-          /* Drawer glass layer: translucent, contained and readable over the page context. */
-          .site-sidebar-backdrop { background: rgba(10, 29, 40, 0.28); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+           /* Header controls: one rhythm for notifications, links, profile and drawer. */
+           .site-header {
+               background: #173247;
+               box-shadow: 0 1px 0 rgba(255, 255, 255, 0.12);
+           }
+           .site-header-inner { min-height: 74px; }
+           .site-header-brand .brand-mark { background: transparent; border: 0; box-shadow: none; }
+           .site-header-tools { gap: 6px; }
+           .site-header-quick-link,
+           .site-profile-link,
+           .site-menu-toggle {
+               min-height: 44px;
+               transition: background-color 170ms ease, border-color 170ms ease, color 170ms ease;
+           }
+           .site-header-quick-link:hover,
+           .site-header-quick-link:focus-visible,
+           .site-profile-link:hover,
+           .site-profile-link:focus-visible,
+           .site-menu-toggle:hover,
+           .site-menu-toggle:focus-visible {
+               box-shadow: none;
+               outline: none;
+               transform: none;
+           }
+           .site-profile-link {
+               align-items: center;
+               background: transparent;
+               border: 1px solid transparent;
+               border-radius: 8px;
+               display: inline-flex;
+               justify-content: center;
+               padding: 8px;
+           }
+           .site-profile-link.is-active,
+           .site-profile-link:hover,
+           .site-profile-link:focus-visible {
+               background: rgba(255, 255, 255, 0.1);
+               border-color: rgba(255, 255, 255, 0.16);
+           }
+           .site-profile-link .site-user-avatar {
+               background: rgba(255, 255, 255, 0.12);
+               border: 2px solid rgba(255, 255, 255, 0.36);
+               color: #fff;
+               flex: 0 0 34px;
+               font-size: 0.67rem;
+               height: 34px;
+               width: 34px;
+           }
+           .site-menu-toggle {
+               background: transparent;
+               border-color: rgba(255, 255, 255, 0.18);
+               display: inline-flex;
+               gap: 8px;
+               justify-content: center;
+               min-width: 44px;
+               padding: 8px 11px;
+           }
+           .site-menu-toggle > i { color: #d1e7dc; font-size: 1.2rem; }
+           .site-menu-toggle[aria-expanded='true'] { background: rgba(255, 255, 255, 0.14); }
+           @media (max-width: 920px) {
+               .site-header-quick-link,
+               .site-profile-link,
+               .site-menu-toggle,
+               .site-header-account .site-account-trigger { min-height: 44px; min-width: 44px; padding: 8px; }
+               .site-profile-link .site-user-avatar { flex-basis: 30px; height: 30px; width: 30px; }
+           }
+
+           /* Final institutional layer: compact, opaque and easy to scan. */
+          .site-sidebar-backdrop { background: rgba(10, 29, 40, 0.34); backdrop-filter: none; -webkit-backdrop-filter: none; }
           .site-sidebar {
-              background: linear-gradient(155deg, rgba(255, 255, 255, 0.9), rgba(239, 248, 243, 0.78));
-              border: 1px solid rgba(255, 255, 255, 0.72);
-              border-radius: 24px;
-              bottom: 14px;
-              box-shadow: -18px 14px 48px rgba(18, 52, 67, 0.2), inset 0 1px rgba(255, 255, 255, 0.8);
-              max-height: calc(100dvh - 28px);
-              right: 14px;
-              top: 14px;
-              transform: translateX(calc(100% + 28px));
-              width: 360px;
-              -webkit-backdrop-filter: blur(24px) saturate(150%);
-              backdrop-filter: blur(24px) saturate(150%);
+              background: #ffffff;
+              border: 1px solid #dbe7e0;
+              border-radius: 16px;
+              bottom: 12px;
+              box-shadow: -14px 10px 34px rgba(18, 52, 67, 0.14);
+              max-height: calc(100dvh - 24px);
+              right: 12px;
+              top: 12px;
+              transform: translateX(calc(100% + 24px));
+              width: 352px;
           }
-          .site-sidebar-header { background: rgba(248, 252, 249, 0.62); border-bottom-color: rgba(207, 225, 215, 0.8); border-radius: 24px 24px 0 0; min-height: 72px; }
+          .site-sidebar-header { background: #f7faf8; border-bottom-color: #e1ebe5; border-radius: 16px 16px 0 0; min-height: 68px; }
           .site-sidebar-nav { padding: 18px 16px 12px; }
           .site-sidebar-group + .site-sidebar-group { margin-top: 16px; padding-top: 15px; }
           .site-sidebar-link { border-radius: 12px; min-height: 46px; }
-          .site-sidebar-link i { background: rgba(231, 244, 236, 0.72); border: 1px solid rgba(207, 229, 216, 0.8); border-radius: 9px; flex-basis: 30px; height: 30px; width: 30px; }
-          .site-sidebar-link:hover i, .site-sidebar-link:focus-visible i { background: rgba(216, 239, 224, 0.9); border-color: #c5e1cf; }
-          .site-sidebar-link.is-active { background: rgba(223, 242, 230, 0.82); border-color: rgba(192, 222, 202, 0.9); box-shadow: inset 3px 0 #5b9d7b, 0 5px 14px rgba(49, 111, 83, 0.07); }
-          .site-sidebar-link.is-active i { background: rgba(204, 233, 214, 0.95); border-color: #b8ddc6; }
-          .site-sidebar-link-admin { background: rgba(232, 241, 249, 0.62); border-color: rgba(202, 220, 232, 0.72); }
-          .site-sidebar-link-admin i { background: rgba(222, 235, 245, 0.8); border-color: rgba(190, 213, 228, 0.9); color: #35627a; }
-          .site-sidebar-account { background: rgba(235, 247, 240, 0.58); border: 1px solid rgba(207, 229, 216, 0.9); border-radius: 16px; margin: auto 16px 16px; padding: 8px; }
+          .site-sidebar-link i { background: #edf5f1; border: 1px solid #e1eee7; border-radius: 9px; flex-basis: 30px; height: 30px; width: 30px; }
+          .site-sidebar-link:hover i, .site-sidebar-link:focus-visible i { background: #e3f2e9; border-color: #c5e1cf; }
+          .site-sidebar-link.is-active { background: #eaf3ed; border-color: #c8e0d0; box-shadow: inset 3px 0 #5b9d7b; }
+          .site-sidebar-link.is-active i { background: #cfead9; border-color: #b8ddc6; }
+          .site-sidebar-link-admin { background: #f1f6fa; border-color: #d9e6ee; }
+          .site-sidebar-link-admin i { background: #e4eef5; border-color: #c6dce9; color: #35627a; }
+          .site-sidebar-account { background: #f4faf6; border: 1px solid #d5e8dc; border-radius: 14px; margin: auto 16px 16px; padding: 8px; }
           .site-sidebar-account-trigger { min-height: 56px; }
           .site-sidebar-account-options { border-top-color: rgba(207, 229, 216, 0.9); }
           .site-menu-toggle { gap: 8px; }
           .site-menu-toggle .site-user-avatar { background: rgba(255, 255, 255, 0.13); border: 2px solid rgba(255, 255, 255, 0.42); }
           .site-menu-toggle .site-user-avatar-image { border-radius: 999px; object-fit: cover; }
-          .dark .site-sidebar { background: linear-gradient(155deg, rgba(27, 48, 63, 0.94), rgba(17, 35, 47, 0.9)); border-color: rgba(73, 111, 126, 0.62); }
-          .dark .site-sidebar-header { background: rgba(27, 48, 63, 0.7); border-color: rgba(73, 111, 126, 0.58); }
-          .dark .site-sidebar-link i { background: rgba(37, 75, 67, 0.75); border-color: rgba(73, 119, 95, 0.72); }
-          .dark .site-sidebar-link.is-active { background: rgba(37, 82, 66, 0.72); border-color: rgba(73, 119, 95, 0.72); }
-          .dark .site-sidebar-account { background: rgba(28, 53, 68, 0.7); border-color: rgba(73, 111, 126, 0.62); }
+          .dark .site-sidebar { background: #152532; border-color: #294252; }
+          .dark .site-sidebar-header { background: #1b303f; border-color: #294252; }
+          .dark .site-sidebar-link i { background: #1c3544; border-color: #315063; }
+          .dark .site-sidebar-link.is-active { background: #214537; border-color: #40775f; }
+          .dark .site-sidebar-account { background: #1c3544; border-color: #315063; }
           @media (max-width: 920px) {
               .site-sidebar { bottom: 8px; max-height: calc(100dvh - 16px); right: 8px; top: 8px; width: min(360px, calc(100vw - 16px)); }
           }
@@ -737,7 +800,7 @@
 
 <body>
     <div class="site-shell" id="site-shell">
-        <aside class="site-sidebar" id="site-sidebar" role="dialog" aria-modal="true" aria-labelledby="site-menu-title" aria-hidden="true">
+        <aside class="site-sidebar" id="site-sidebar" role="dialog" aria-modal="true" aria-labelledby="site-menu-title" aria-hidden="true" inert>
             <div class="site-sidebar-header">
                 <h2 id="site-menu-title">Menú</h2>
                 <button type="button" class="site-sidebar-close" data-sidebar-close aria-label="Cerrar menú de navegación">
@@ -774,7 +837,7 @@
                             </a>
                         @endif
                         @if (Route::has('estadisticas') && auth()->user()->tieneRol('admin', 'operador', 'consulta', 'oficios', 'coordinador', 'profesional', 'administrativo'))
-                            <a href="{{ route('estadisticas') }}" class="site-sidebar-link {{ request()->routeIs('estadisticas*', 'dashboard') ? 'is-active' : '' }}" @if (request()->routeIs('estadisticas*', 'dashboard')) aria-current="page" @endif>
+                            <a href="{{ route('estadisticas') }}" class="site-sidebar-link {{ request()->routeIs('estadisticas*') ? 'is-active' : '' }}" @if (request()->routeIs('estadisticas*')) aria-current="page" @endif>
                                 <i class="bi bi-bar-chart-line" aria-hidden="true"></i>
                                 Estadísticas
                             </a>
@@ -886,7 +949,6 @@
                 </a>
 
                  <div class="site-header-tools">
-                    <div data-site-appearance-toggle></div>
                     @auth
                         @php
                             $headerNotifications = isset($page)
@@ -930,12 +992,17 @@
                                 <span>Tareas</span>
                             </a>
                         @endif
+                        @if (Route::has('profile.edit'))
+                            <a href="{{ route('profile.edit') }}" class="site-profile-link {{ request()->routeIs('profile.*') ? 'is-active' : '' }}" aria-label="Abrir mi perfil" @if (request()->routeIs('profile.*')) aria-current="page" @endif>
+                                @if ($headerUser->avatar)
+                                    <img src="{{ $headerUser->avatar }}" class="site-user-avatar site-user-avatar-image" alt="">
+                                @else
+                                    <span class="site-user-avatar" aria-hidden="true">{{ $headerInitials }}</span>
+                                @endif
+                            </a>
+                        @endif
                         <button type="button" class="site-menu-toggle" data-sidebar-toggle aria-expanded="false" aria-controls="site-sidebar" aria-label="Abrir menú de navegación">
-                            @if ($headerUser->avatar)
-                                <img src="{{ $headerUser->avatar }}" class="site-user-avatar site-user-avatar-image" alt="">
-                            @else
-                                <span class="site-user-avatar" aria-hidden="true">{{ $headerInitials }}</span>
-                            @endif
+                            <i class="bi bi-list" aria-hidden="true"></i>
                             <span>Menú</span>
                         </button>
                     @else
@@ -956,22 +1023,8 @@
             @endif
         </main>
 
-          @php
-              $footerUser = auth()->user();
-              $footerAccess = [
-                  'dashboard' => auth()->check() && Route::has('dashboard'),
-                  'legajos' => auth()->check() && Route::has('legajos.index') && $footerUser->tieneRol('admin', 'operador', 'consulta', 'oficios', 'coordinador', 'profesional', 'administrativo'),
-                  'agenda' => auth()->check() && Route::has('agenda.index') && $footerUser->tieneRol('admin', 'coordinador', 'profesional', 'administrativo'),
-                  'tareas' => auth()->check() && Route::has('tareas.index') && $footerUser->tieneRol('admin', 'operador', 'oficios', 'coordinador', 'profesional', 'administrativo'),
-                  'comunicacion' => auth()->check() && Route::has('comunicacion.index') && $footerUser->tieneRol('admin', 'operador', 'consulta', 'oficios', 'coordinador', 'profesional', 'administrativo'),
-                  'estadisticas' => auth()->check() && Route::has('estadisticas') && $footerUser->tieneRol('admin', 'operador', 'consulta', 'oficios', 'coordinador', 'profesional', 'administrativo'),
-                  'profile' => auth()->check() && Route::has('profile.edit'),
-              ];
-          @endphp
           <div
               data-site-footer
-              data-authenticated="{{ auth()->check() ? '1' : '0' }}"
-              data-access='@json($footerAccess)'
           ></div>
          @auth
              <nav class="site-mobile-bottom-nav" aria-label="Navegación principal móvil">
@@ -1023,6 +1076,7 @@
                  const setSidebarState = (isOpen) => {
                      shell.classList.toggle('sidebar-open', isOpen);
                      sidebar.setAttribute('aria-hidden', String(!isOpen));
+                     sidebar.toggleAttribute('inert', !isOpen);
                  toggles.forEach((toggle) => {
                      toggle.setAttribute('aria-expanded', String(isOpen));
                      toggle.setAttribute('aria-label', isOpen ? 'Cerrar menú de navegación' : 'Abrir menú de navegación');

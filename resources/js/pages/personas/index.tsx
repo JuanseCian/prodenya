@@ -69,7 +69,7 @@ export default function PersonasIndex({
             <Head title="Personas" />
 
             <main
-                className="min-h-screen bg-[#F4F6F5] px-4 py-8 sm:px-6 sm:py-10 lg:px-8"
+                className="admin-page-shell min-h-screen bg-background px-4 py-7 sm:px-6 sm:py-9 lg:px-8"
                 style={{ fontFamily: FONT_BODY }}
             >
                 <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">

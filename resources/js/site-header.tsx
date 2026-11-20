@@ -1,6 +1,5 @@
 import { createRoot } from 'react-dom/client';
 import type { Root } from 'react-dom/client';
-import AppearanceTabs from '@/components/appearance-tabs';
 import { NotificationCenter } from '@/components/notification-center';
 import PasskeyOnboardingModal from '@/components/passkey-onboarding-modal';
 import { Toaster } from '@/components/ui/sonner';
@@ -9,20 +8,6 @@ import type { NotificationItem } from '@/types';
 type ReactMount = HTMLElement & {
     __prodenyaRoot?: Root;
 };
-
-const appearanceMount = document.querySelector<ReactMount>(
-    '[data-site-appearance-toggle]',
-);
-
-if (appearanceMount) {
-    const root =
-        appearanceMount.__prodenyaRoot ?? createRoot(appearanceMount);
-    appearanceMount.__prodenyaRoot = root;
-
-    root.render(
-        <AppearanceTabs className="border-transparent bg-transparent p-0" />,
-    );
-}
 
 const notificationMount = document.querySelector<ReactMount>(
     '[data-site-notification-center]',

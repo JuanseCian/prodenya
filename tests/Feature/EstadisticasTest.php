@@ -103,6 +103,6 @@ test('a legajo has an independent statistics page', function () {
         ->assertInertia(fn ($page) => $page
             ->component('legajos/estadisticas')
             ->where('legajo.numero_legajo', 'PRA-ANA-222')
-            ->has('estadisticas.intervenciones')
-            ->has('estadisticas.derivaciones'));
+            ->has('estadisticas.actividad')
+            ->has('estadisticas.circuito'));
 });

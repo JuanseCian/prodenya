@@ -302,7 +302,6 @@
             .brand-panel__lead { font-size: 0.75rem; line-height: 1.5; }
             .auth-panel { padding: 24px 18px 22px; }
             .auth-panel__secure { font-size: 0; gap: 0; }
-            [data-appearance-toggle] button span { display: none; }
             .auth-view__heading h2 { font-size: 2rem; }
             .form-grid { gap: 14px; grid-template-columns: 1fr; }
             .security-checks { grid-template-columns: 1fr; }
@@ -349,7 +348,6 @@
                 <span class="auth-panel__section">Cuenta de usuario</span>
                 <div class="auth-panel__tools">
                     <span class="auth-panel__secure"><span class="secure-dot" aria-hidden="true"></span>Acceso protegido</span>
-                    <div data-appearance-toggle></div>
                 </div>
             </header>
 

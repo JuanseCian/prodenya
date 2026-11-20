@@ -53,9 +53,9 @@ export default function TwoFactorRecoveryCodes({
     const RecoveryCodeIconComponent = codesAreVisible ? EyeOff : Eye;
 
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle className="flex gap-3">
+        <Card className="rounded-2xl border-border bg-background shadow-none">
+            <CardHeader className="gap-2">
+                <CardTitle className="flex items-center gap-2.5 text-sm">
                     <LockKeyhole className="size-4" aria-hidden="true" />
                     Códigos de recuperación de 2FA
                 </CardTitle>
@@ -111,7 +111,7 @@ export default function TwoFactorRecoveryCodes({
                             <>
                                 <div
                                     ref={codesSectionRef}
-                                    className="grid gap-1 rounded-lg bg-muted p-4 font-mono text-sm"
+                                    className="grid gap-1 rounded-2xl border border-border bg-surface-soft p-4 font-mono text-sm"
                                     role="list"
                                     aria-label="Códigos de recuperación"
                                 >

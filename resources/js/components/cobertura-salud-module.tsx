@@ -220,7 +220,7 @@ export default function CoberturaSaludModule({
 
     return (
         <>
-            <Card className="rounded-2xl border-[#DCE3DF] !bg-white py-0 shadow-[0_14px_35px_rgba(23,50,71,0.06)] lg:col-span-2">
+            <Card className="rounded-2xl border-[#DCE3DF] !bg-white py-0 shadow-[0_14px_35px_rgba(23,50,71,0.06)]">
                 <CardHeader className="border-b border-[#E4E8E5] bg-[#F8FAF9] px-5 py-4">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                         <div className="flex items-center gap-2">

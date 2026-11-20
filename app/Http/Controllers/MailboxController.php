@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\MailClassificationCategory;
+use App\Enums\MailClassificationPriority;
+use App\Enums\MailClassificationStatus;
 use App\Models\AuditoriaEvento;
 use App\Models\DerivacionCaso;
 use App\Models\Legajo;
@@ -11,6 +14,7 @@ use App\Models\User;
 use App\Services\DerivacionNotificationService;
 use App\Services\GoogleGmailService;
 use App\Services\HostingerMailboxService;
+use App\Services\MailClassificationService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -45,6 +49,13 @@ class MailboxController extends Controller
         $buscar = trim((string) $request->query('buscar', ''));
         $soloNoLeidos = $request->boolean('no_leidos');
         $estado = $request->query('estado');
+        $clasificacion = $request->query('clasificacion');
+        $clasificacionEstado = $request->query('clasificacion_estado');
+        $prioridad = $request->query('prioridad');
+        $remitente = trim((string) $request->query('remitente', ''));
+        $asunto = trim((string) $request->query('asunto', ''));
+        $conAdjuntos = $request->has('con_adjuntos') ? $request->boolean('con_adjuntos') : null;
+        $legajoId = $request->integer('legajo_id') ?: null;
         $folder = $request->query('folder', 'inbox');
         $estados = ['Nuevo', 'Clasificado', 'Derivado', 'Respondido', 'Desestimado'];
 
@@ -69,6 +80,14 @@ class MailboxController extends Controller
                 'is_starred',
                 'has_attachments',
                 'estado',
+                'clasificacion_categoria',
+                'clasificacion_estado',
+                'clasificacion_confianza',
+                'clasificacion_metodo',
+                'clasificacion_revisado_en',
+                'clasificacion_revisado_por',
+                'clasificacion_motivos',
+                'prioridad',
             ])
             ->when($folder === 'sent', fn (Builder $query) => $query->where('direction', 'outgoing'))
             ->when($folder !== 'sent', fn (Builder $query) => $query
@@ -81,11 +100,22 @@ class MailboxController extends Controller
                         ->orWhere('from_email', 'like', "%{$buscar}%")
                         ->orWhere('to_email', 'like', "%{$buscar}%")
                         ->orWhere('preview', 'like', "%{$buscar}%")
-                        ->orWhere('body_text', 'like', "%{$buscar}%");
+                        ->orWhere('body_text', 'like', "%{$buscar}%")
+                        ->orWhereHas('legajos', fn (Builder $query) => $query->where('numero_legajo', 'like', "%{$buscar}%"));
                 });
             })
             ->when($soloNoLeidos, fn (Builder $query) => $query->where('is_read', false))
             ->when(in_array($estado, $estados, true), fn (Builder $query) => $query->where('estado', $estado))
+            ->when(in_array($clasificacion, MailClassificationCategory::values(), true), fn (Builder $query) => $query->where('clasificacion_categoria', $clasificacion))
+            ->when(in_array($clasificacionEstado, MailClassificationStatus::values(), true), fn (Builder $query) => $query->where('clasificacion_estado', $clasificacionEstado))
+            ->when(in_array($prioridad, MailClassificationPriority::values(), true), fn (Builder $query) => $query->where('prioridad', $prioridad))
+            ->when($remitente !== '', fn (Builder $query) => $query->where(function (Builder $query) use ($remitente): void {
+                $query->where('from_name', 'like', "%{$remitente}%")
+                    ->orWhere('from_email', 'like', "%{$remitente}%");
+            }))
+            ->when($asunto !== '', fn (Builder $query) => $query->where('subject', 'like', "%{$asunto}%"))
+            ->when($conAdjuntos !== null, fn (Builder $query) => $query->where('has_attachments', $conAdjuntos))
+            ->when($legajoId, fn (Builder $query) => $query->whereHas('legajos', fn (Builder $query) => $query->whereKey($legajoId)))
             ->with([
                 'legajos:id,numero_legajo',
                 'tareas' => fn ($query) => $query
@@ -113,6 +143,13 @@ class MailboxController extends Controller
                 'buscar' => $buscar !== '' ? $buscar : null,
                 'no_leidos' => $soloNoLeidos,
                 'estado' => in_array($estado, $estados, true) ? $estado : null,
+                'clasificacion' => in_array($clasificacion, MailClassificationCategory::values(), true) ? $clasificacion : null,
+                'clasificacion_estado' => in_array($clasificacionEstado, MailClassificationStatus::values(), true) ? $clasificacionEstado : null,
+                'prioridad' => in_array($prioridad, MailClassificationPriority::values(), true) ? $prioridad : null,
+                'remitente' => $remitente !== '' ? $remitente : null,
+                'asunto' => $asunto !== '' ? $asunto : null,
+                'con_adjuntos' => $conAdjuntos,
+                'legajo_id' => $legajoId,
                 'folder' => $folder,
             ],
             'carpetas' => [
@@ -124,6 +161,12 @@ class MailboxController extends Controller
             ],
             'noLeidos' => MailMessage::where('folder', 'inbox')->where('is_read', false)->count(),
             'estados' => $estados,
+            'clasificaciones' => collect(MailClassificationCategory::cases())->map(fn (MailClassificationCategory $category) => [
+                'value' => $category->value,
+                'label' => $category->label(),
+            ])->all(),
+            'clasificacionEstados' => MailClassificationStatus::values(),
+            'prioridades' => MailClassificationPriority::values(),
             'syncError' => session('errors')?->getBag('default')->first('mailbox'),
             'googleConfigured' => $google->isConfigured(),
             'googleConnected' => $google->isConnected(),
@@ -192,6 +235,15 @@ class MailboxController extends Controller
             'is_starred' => $mensaje->is_starred,
             'has_attachments' => $mensaje->has_attachments || $attachments !== [],
             'estado' => $mensaje->estado,
+            'clasificacion_categoria' => $mensaje->clasificacion_categoria?->value,
+            'clasificacion_categoria_label' => $mensaje->clasificacion_categoria?->label(),
+            'clasificacion_estado' => $mensaje->clasificacion_estado?->value,
+            'clasificacion_confianza' => $mensaje->clasificacion_confianza,
+            'clasificacion_metodo' => $mensaje->clasificacion_metodo?->value,
+            'clasificacion_revisado_en' => $mensaje->clasificacion_revisado_en?->toIso8601String(),
+            'clasificacion_revisado_por' => $mensaje->clasificacion_revisado_por,
+            'clasificacion_motivos' => $mensaje->clasificacion_motivos ?? [],
+            'prioridad' => $mensaje->prioridad?->value,
             'body_text' => $includeContent ? $mensaje->body_text : null,
             'attachments' => $attachments,
             'legajos' => $mensaje->legajos->filter(fn (Legajo $legajo): bool => $this->puedeAccederLegajo(
@@ -503,6 +555,7 @@ class MailboxController extends Controller
         Request $request,
         MailMessage $mailMessage,
         DerivacionNotificationService $notificador,
+        MailClassificationService $clasificador,
     ): RedirectResponse {
         $estados = ['Nuevo', 'Clasificado', 'Derivado', 'Respondido', 'Desestimado'];
         $datos = $request->validate([
@@ -511,6 +564,10 @@ class MailboxController extends Controller
             'legajo_ids.*' => ['integer', Rule::exists(Legajo::class, 'id')],
             'asignado_a' => ['nullable', 'integer', Rule::exists(User::class, 'id')],
             'fecha_limite' => ['nullable', 'date'],
+            'clasificacion_categoria' => ['nullable', Rule::in(MailClassificationCategory::values())],
+            'prioridad' => ['nullable', Rule::in(MailClassificationPriority::values())],
+            'clasificacion_motivos' => ['nullable', 'array', 'max:10'],
+            'clasificacion_motivos.*' => ['string', 'max:255'],
         ]);
 
         if ($datos['estado'] === 'Derivado' && empty($datos['asignado_a'])) {
@@ -543,7 +600,7 @@ class MailboxController extends Controller
             ? User::findOrFail($datos['asignado_a'])
             : null;
 
-        DB::transaction(function () use ($datos, $mailMessage, $request, $notificador, $destinatario) {
+        DB::transaction(function () use ($datos, $mailMessage, $request, $notificador, $destinatario, $clasificador) {
             $legajoIds = array_values(array_unique($datos['legajo_ids'] ?? []));
             $legajosAnteriores = $mailMessage->legajos()->pluck('legajos.id')->map(fn ($id) => (int) $id)->values()->all();
 
@@ -552,6 +609,16 @@ class MailboxController extends Controller
                 'clasificado_por' => $request->user()->id,
                 'clasificado_en' => now(),
             ]);
+
+            if (! empty($datos['clasificacion_categoria'])) {
+                $clasificador->classifyManually(
+                    $mailMessage,
+                    MailClassificationCategory::from($datos['clasificacion_categoria']),
+                    MailClassificationPriority::from($datos['prioridad'] ?? MailClassificationPriority::Normal->value),
+                    $request->user(),
+                    $datos['clasificacion_motivos'] ?? [],
+                );
+            }
             $mailMessage->legajos()->sync($legajoIds);
             if ($legajosAnteriores !== $legajoIds) {
                 AuditoriaEvento::registrar('mail.legajos_vinculados', $mailMessage, [
@@ -689,6 +756,23 @@ class MailboxController extends Controller
         Inertia::flash('toast', [
             'type' => 'success',
             'message' => 'Clasificación y derivación guardadas.',
+        ]);
+
+        return back();
+    }
+
+    public function confirmClassification(
+        Request $request,
+        MailMessage $mailMessage,
+        MailClassificationService $clasificador,
+    ): RedirectResponse {
+        abort_unless($request->user()?->tieneRol('admin', 'oficios', 'coordinador'), 403);
+
+        DB::transaction(fn () => $clasificador->confirm($mailMessage, $request->user()));
+
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => 'Clasificación confirmada.',
         ]);
 
         return back();

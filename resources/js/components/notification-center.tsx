@@ -26,7 +26,7 @@ type Props = {
     initialUnreadCount: number;
     standalone?: boolean;
     endpoint?: string;
-    placement?: 'floating' | 'header' | 'dashboard';
+    placement?: 'floating' | 'header';
 };
 
 export function NotificationCenter({
@@ -262,23 +262,23 @@ export function NotificationCenter({
             className={
                 placement === 'header'
                     ? 'relative z-[70]'
-                    : placement === 'dashboard'
-                      ? 'relative z-[70]'
-                      : 'fixed top-20 right-4 z-[70]'
+                    : 'fixed top-20 right-4 z-[70]'
             }
         >
             <button
                 ref={triggerRef}
                 type="button"
-                aria-label="Abrir notificaciones"
+                aria-label={
+                    unreadCount > 0
+                        ? `Abrir notificaciones, ${unreadCount} sin leer`
+                        : 'Abrir notificaciones'
+                }
                 aria-expanded={open}
                 onClick={() => setOpen((actual) => !actual)}
-                className={`relative grid size-11 place-items-center rounded-full border transition focus-visible:ring-2 focus-visible:ring-[#6B8F71]/50 focus-visible:outline-none ${
+                className={`relative grid size-11 place-items-center border transition focus-visible:ring-2 focus-visible:ring-[#6B8F71]/50 focus-visible:outline-none ${
                     placement === 'header'
-                        ? 'border-white/20 bg-white/10 text-white shadow-none hover:border-white/30 hover:bg-white/16'
-                        : placement === 'dashboard'
-                          ? 'border-[#DCE3DF] bg-white text-[#2C4A5E] shadow-sm hover:bg-[#F3F7F4]'
-                          : 'border-[#DCE3DF] bg-white text-[#2C4A5E] shadow-[0_8px_24px_rgba(23,50,71,0.16)] hover:bg-[#F3F7F4] dark:border-[#3B4552] dark:bg-[#232A34] dark:text-white dark:hover:bg-[#2E3742]'
+                        ? 'rounded-lg border-white/20 bg-white/10 text-white shadow-none hover:border-white/30 hover:bg-white/16'
+                        : 'rounded-full border-[#DCE3DF] bg-white text-[#2C4A5E] shadow-[0_8px_24px_rgba(23,50,71,0.16)] hover:bg-[#F3F7F4] dark:border-[#3B4552] dark:bg-[#232A34] dark:text-white dark:hover:bg-[#2E3742]'
                 }`}
             >
                 <Bell size={19} />

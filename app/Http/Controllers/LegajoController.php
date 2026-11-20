@@ -4,19 +4,21 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StorePersonaRequest;
 use App\Http\Requests\UpdateLegajoRequest;
+use App\Models\Auh;
+use App\Models\AuhArchivo;
 use App\Models\CoberturaSalud;
 use App\Models\CudArchivo;
 use App\Models\Intervencion;
 use App\Models\Legajo;
-use App\Models\MailMessage;
 use App\Models\MedidaAbrigo;
 use App\Models\Persona;
 use App\Models\Problematica;
 use App\Models\Provincia;
-use App\Models\Tarea;
 use App\Models\User;
 use App\Models\VinculoFamiliar;
+use App\Services\AuhPlanillaService;
 use App\Services\CoberturaSaludService;
+use App\Services\LegajoEstadisticasService;
 use App\Services\LegajoWordExportService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -175,20 +177,23 @@ class LegajoController extends Controller
         return redirect()->route('legajos.index');
     }
 
-    public function estadisticas(Request $request, Legajo $legajo): Response
+    public function estadisticas(Request $request, Legajo $legajo, LegajoEstadisticasService $estadisticas): Response
     {
-        abort_unless($request->user()->puedeVerSeccionLegajo('estadisticas'), 403, 'No tenés permiso para ver las estadísticas de este legajo.');
+        $usuario = $request->user();
+        abort_unless($usuario->puedeVerSeccionLegajo('estadisticas'), 403, 'No tenés permiso para ver las estadísticas de este legajo.');
 
-        $legajo->load(['persona', 'intervenciones.tipo', 'derivaciones']);
+        $legajo->load('persona');
+        $puedeVerPersona = $usuario->puedeVerSeccionLegajo('persona');
 
         return Inertia::render('legajos/estadisticas', [
             'legajo' => [
                 'id' => $legajo->id,
                 'numero_legajo' => $legajo->numero_legajo,
-                'nombre' => $legajo->persona ? "{$legajo->persona->apellido}, {$legajo->persona->nombre}" : null,
+                'nombre' => $puedeVerPersona && $legajo->persona ? "{$legajo->persona->apellido}, {$legajo->persona->nombre}" : null,
                 'estado' => $legajo->estado,
+                'nivel_riesgo' => $usuario->puedeVerSeccionLegajo('situacion') ? $legajo->nivel_riesgo : null,
             ],
-            'estadisticas' => $this->estadisticasDelLegajo($legajo),
+            'estadisticas' => $estadisticas->calcular($legajo, $usuario),
         ]);
     }
 
@@ -219,6 +224,7 @@ class LegajoController extends Controller
             'intervenciones' => $usuario->puedeVerSeccionLegajo('intervenciones'),
             'derivaciones' => $usuario->puedeVerSeccionLegajo('derivaciones'),
             'medidas_abrigo' => $usuario->puedeVerSeccionLegajo('medidas_abrigo'),
+            'auh' => $usuario->puedeVerSeccionLegajo('auh'),
             'estadisticas' => $usuario->puedeVerSeccionLegajo('estadisticas'),
         ];
         $puedeVerVinculos = $secciones['vinculos'];
@@ -235,6 +241,9 @@ class LegajoController extends Controller
             && $secciones['situacion'];
         $cudActual = $secciones['persona']
             ? $legajo->cudActual()->with('archivos')->first()
+            : null;
+        $auhActual = $secciones['auh']
+            ? $legajo->auhActual()->with('archivosActivos')->first()
             : null;
         $coberturaActual = $secciones['persona'] && $legajo->persona
             ? $coberturaSaludService->actual($legajo->persona)
@@ -362,6 +371,8 @@ class LegajoController extends Controller
                     'descarga_url' => route('legajos.medidas-abrigo.actas.descargar', [$legajo, $acta]),
                 ])->values()->all(),
             ])->values()->all() : [],
+            'puedeGestionarAuh' => $secciones['auh'] && $usuario->tieneRol(...Auh::ROLES_GESTION),
+            'auh' => $secciones['auh'] ? $this->resumenAuh($legajo, $auhActual) : null,
             'status' => session('status'),
             'usuarioActualId' => $request->user()->id,
             'puedeGestionarIntervenciones' => $secciones['intervenciones'] && $request->user()->tieneRol('admin', 'operador'),
@@ -416,7 +427,6 @@ class LegajoController extends Controller
                 'solicitante' => $derivacion->solicitante?->name,
                 'motivo_rechazo' => $derivacion->motivo_rechazo,
             ])->values() : [],
-            'estadisticas' => $secciones['estadisticas'] ? $this->estadisticasDelLegajo($legajo) : null,
         ]);
     }
 
@@ -596,6 +606,45 @@ class LegajoController extends Controller
         ];
     }
 
+    /**
+     * @return array{
+     *     id: int|null,
+     *     tipos: array<string, string>,
+     *     planillas: array<int, string>,
+     *     documentacion: array<int, string>,
+     *     tipo_otra: string,
+     *     firmantes: array<string, array<string, string>>,
+     *     formulario: array{datos: array<string, mixed>, personas: array<int, array<string, string>>},
+     *     archivos: array<int, array<string, mixed>>
+     * }
+     */
+    private function resumenAuh(Legajo $legajo, ?Auh $auh): array
+    {
+        return [
+            'formulario' => app(AuhPlanillaService::class)->datosIniciales($legajo, $auh),
+            'id' => $auh?->id,
+            'tipos' => Auh::tipoLabels(),
+            'planillas' => array_keys(Auh::PLANILLAS),
+            'documentacion' => array_keys(Auh::DOCUMENTACION),
+            'tipo_otra' => Auh::TIPO_OTRA,
+            'firmantes' => Auh::FIRMANTES,
+            'archivos' => $auh
+                ? $auh->archivosActivos->map(fn (AuhArchivo $archivo) => [
+                    'id' => $archivo->id,
+                    'tipo' => $archivo->tipo,
+                    'descripcion' => $archivo->descripcion,
+                    'nombre' => $archivo->nombre_archivo,
+                    'tamanio' => $archivo->tamanio_bytes,
+                    'subido_en' => $archivo->creado_en?->toDateString(),
+                    'firmado' => $archivo->firmado,
+                    'firmas' => $archivo->firmas ?? [],
+                    'descarga_url' => route('legajos.auh.archivos.descargar', [$legajo, $archivo]),
+                    'eliminar_url' => route('legajos.auh.archivos.eliminar', [$legajo, $archivo]),
+                ])->values()->all()
+                : [],
+        ];
+    }
+
     private function responsablesActivos()
     {
         return User::query()
@@ -623,37 +672,4 @@ class LegajoController extends Controller
     }
 
     /** @return array<string, mixed> */
-    private function estadisticasDelLegajo(Legajo $legajo): array
-    {
-        $intervenciones = $legajo->intervenciones;
-        $tareas = Tarea::query()->where('legajo_id', $legajo->id)->get(['estado']);
-        $derivaciones = $legajo->derivaciones;
-
-        return [
-            'intervenciones' => [
-                'total' => $intervenciones->count(),
-                'firmadas' => $intervenciones->filter(fn (Intervencion $intervencion) => filled($intervencion->firma_archivo_path) || filled($intervencion->firma_nombre))->count(),
-                'por_tipo' => $intervenciones->groupBy(fn (Intervencion $intervencion) => $intervencion->tipo?->nombre ?: 'Sin tipo')
-                    ->map(fn ($items, string $nombre) => ['nombre' => $nombre, 'total' => $items->count()])
-                    ->sortByDesc('total')
-                    ->values(),
-            ],
-            'tareas' => [
-                'total' => $tareas->count(),
-                'pendientes' => $tareas->whereIn('estado', ['pendiente', 'en_progreso'])->count(),
-                'completadas' => $tareas->where('estado', 'completada')->count(),
-                'canceladas' => $tareas->where('estado', 'cancelada')->count(),
-            ],
-            'derivaciones' => [
-                'total' => $derivaciones->count(),
-                'pendientes' => $derivaciones->where('estado', 'pendiente')->count(),
-                'aceptadas' => $derivaciones->where('estado', 'aceptada')->count(),
-                'rechazadas' => $derivaciones->where('estado', 'rechazada')->count(),
-                'canceladas' => $derivaciones->where('estado', 'cancelada')->count(),
-            ],
-            'documentos' => $legajo->documentos()->count(),
-            'mensajes' => MailMessage::query()->whereHas('legajos', fn ($query) => $query->whereKey($legajo->id))->count(),
-            'accesos' => $legajo->accesos()->count(),
-        ];
-    }
 }

@@ -6,6 +6,7 @@ use App\Models\TeamInvitation;
 use App\Models\User;
 use App\Notifications\RegistroUsuarioNotification;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\URL;
 
 test('registration screen can be rendered', function () {
@@ -53,6 +54,20 @@ test('new users can register', function () {
     expect($user->estado_cuenta)->toBe(User::ESTADO_PENDIENTE);
     expect($user->activo)->toBeFalse();
     Notification::assertSentTo($user, RegistroUsuarioNotification::class);
+});
+
+test('new users receive verification email without a queue worker', function () {
+    Queue::fake();
+
+    $this->post(route('register.store'), [
+        'name' => 'Immediate Mail User',
+        'email' => 'immediate@example.com',
+        'dni' => '30123457',
+        'password' => 'password',
+        'password_confirmation' => 'password',
+    ])->assertRedirect(route('register.pending'));
+
+    Queue::assertNothingPushed();
 });
 
 test('pending users can request another verification email', function () {

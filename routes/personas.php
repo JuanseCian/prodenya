@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AuhController;
 use App\Http\Controllers\CoberturaSaludController;
 use App\Http\Controllers\CudController;
 use App\Http\Controllers\DerivacionCasoController;
@@ -7,6 +8,7 @@ use App\Http\Controllers\GrupoFamiliarController;
 use App\Http\Controllers\IntervencionController;
 use App\Http\Controllers\LegajoController;
 use App\Http\Controllers\MedidaAbrigoController;
+use App\Models\Auh;
 use App\Models\Barrio;
 use App\Models\Localidad;
 use App\Models\Persona;
@@ -40,6 +42,19 @@ Route::middleware(['auth'])->group(function () {
             ->name('legajos.cobertura.store')->whereNumber('legajo');
         Route::get('/legajos/{legajo}/cobertura-salud/archivos/{archivo}', [CoberturaSaludController::class, 'download'])
             ->name('legajos.cobertura.archivos.descargar')->whereNumber(['legajo', 'archivo']);
+    });
+
+    Route::middleware('rol:admin,operador,coordinador,profesional,administrativo')->group(function () {
+        Route::post('/legajos/{legajo}/auh/archivos', [AuhController::class, 'store'])
+            ->name('legajos.auh.archivos.store')->whereNumber('legajo');
+        Route::post('/legajos/{legajo}/auh/planillas/{tipo}', [AuhController::class, 'generarPlanilla'])
+            ->name('legajos.auh.planillas.generar')->whereNumber('legajo')
+            ->whereIn('tipo', array_keys(Auh::PLANILLAS));
+        Route::post('/legajos/{legajo}/auh/planillas/{tipo}/firmar', [AuhController::class, 'firmarPlanilla'])
+            ->name('legajos.auh.planillas.firmar')->whereNumber('legajo')
+            ->whereIn('tipo', array_keys(Auh::PLANILLAS));
+        Route::delete('/legajos/{legajo}/auh/archivos/{auhArchivo}', [AuhController::class, 'destroy'])
+            ->name('legajos.auh.archivos.eliminar')->whereNumber(['legajo', 'auhArchivo']);
     });
 
     Route::middleware('rol:admin,operador,coordinador,profesional')->group(function () {
@@ -89,6 +104,8 @@ Route::middleware(['auth'])->group(function () {
             ->name('legajos.cud.archivos.descargar')->whereNumber(['legajo', 'cudArchivo']);
         Route::get('/legajos/{legajo}/medidas-abrigo/actas/{acta}', [MedidaAbrigoController::class, 'download'])
             ->name('legajos.medidas-abrigo.actas.descargar')->whereNumber(['legajo', 'acta']);
+        Route::get('/legajos/{legajo}/auh/archivos/{auhArchivo}', [AuhController::class, 'download'])
+            ->name('legajos.auh.archivos.descargar')->whereNumber(['legajo', 'auhArchivo']);
         Route::get('/legajos/{legajo}', [LegajoController::class, 'show'])->name('legajos.show')->whereNumber('legajo');
         Route::get('/legajos/{legajo}/previsualizar-word', [LegajoController::class, 'previsualizarWord'])
             ->name('legajos.previsualizar-word')->whereNumber('legajo');
