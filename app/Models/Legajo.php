@@ -90,7 +90,7 @@ class Legajo extends Model
             'legajo_problematica',
             'legajo_id',
             'problematica_id',
-        );
+        )->withPivot('detalle');
     }
 
     public function mailMessages(): BelongsToMany

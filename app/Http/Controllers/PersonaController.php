@@ -75,6 +75,7 @@ class PersonaController extends Controller
         return Inertia::render('personas/create', [
             'provincias' => Provincia::orderBy('nombre')->get(['id', 'nombre']),
             'problematicas' => Problematica::orderBy('nombre')->get(['id', 'nombre']),
+            'problematicaOtrosId' => Problematica::idOtros(),
             // Se expone "name" con el alias "nombre_usuario" para no tocar el front.
             'profesionales' => $profesionales,
         ]);

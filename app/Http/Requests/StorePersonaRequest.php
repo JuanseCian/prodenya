@@ -55,11 +55,25 @@ class StorePersonaRequest extends FormRequest
             'abrir_legajo' => ['required', 'accepted'],
             'legajo_problematicas' => $conLegajo ? ['required', 'array', 'min:1'] : ['nullable', 'array'],
             'legajo_problematicas.*' => [Rule::exists(Problematica::class, 'id')],
+            'legajo_problematica_otros' => [
+                Rule::requiredIf(fn (): bool => $conLegajo && $this->eligioOtros()),
+                'nullable',
+                'string',
+                'max:255',
+            ],
             'legajo_nivel_riesgo' => $conLegajo ? ['required', 'in:Bajo,Medio,Alto,Critico'] : ['nullable'],
             'legajo_origen_derivacion' => $conLegajo ? ['required', 'string', 'max:255'] : ['nullable'],
             'legajo_profesional_id' => ['prohibited'],
             'legajo_observaciones' => ['nullable', 'string', 'max:2000'],
         ];
+    }
+
+    private function eligioOtros(): bool
+    {
+        $idOtros = Problematica::idOtros();
+
+        return $idOtros !== null
+            && in_array($idOtros, array_map('intval', (array) $this->input('legajo_problematicas', [])), true);
     }
 
     public function messages(): array
@@ -99,6 +113,8 @@ class StorePersonaRequest extends FormRequest
             'legajo_problematicas.required' => 'Seleccioná al menos una problemática para abrir el legajo.',
             'legajo_problematicas.min' => 'Seleccioná al menos una problemática para abrir el legajo.',
             'legajo_problematicas.*.exists' => 'Una de las problemáticas seleccionadas no es válida.',
+            'legajo_problematica_otros.required' => 'Contá brevemente cuál es la problemática «Otros».',
+            'legajo_problematica_otros.max' => 'La especificación de «Otros» puede tener hasta 255 caracteres.',
             'legajo_nivel_riesgo.required' => 'Seleccioná el nivel de riesgo (Bajo, Medio, Alto o Crítico).',
             'legajo_nivel_riesgo.in' => 'El nivel de riesgo debe ser Bajo, Medio, Alto o Crítico.',
             'legajo_origen_derivacion.required' => 'Indicá la institución o referente que deriva el caso.',

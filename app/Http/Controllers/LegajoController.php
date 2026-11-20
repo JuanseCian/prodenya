@@ -141,6 +141,7 @@ class LegajoController extends Controller
     {
         return Inertia::render('personas/create', [
             'modoLegajo' => true,
+            'problematicaOtrosId' => Problematica::idOtros(),
             'provincias' => Provincia::orderBy('nombre')->get(['id', 'nombre']),
             'problematicas' => Problematica::orderBy('nombre')->get(['id', 'nombre']),
         ]);
@@ -154,7 +155,12 @@ class LegajoController extends Controller
             $legajo = DB::transaction(function () use ($datos) {
                 $persona = Persona::create($this->datosPersonales($datos));
                 $legajo = Legajo::crearConNumeroUnico($persona, $this->datosLegajo($datos));
-                $legajo->problematicas()->sync($datos['legajo_problematicas']);
+                $idOtros = Problematica::idOtros();
+                $legajo->problematicas()->sync(
+                    collect($datos['legajo_problematicas'])->mapWithKeys(fn ($id) => [
+                        (int) $id => ['detalle' => (int) $id === $idOtros ? ($datos['legajo_problematica_otros'] ?? null) : null],
+                    ])->all(),
+                );
 
                 return $legajo->fresh();
             });
@@ -312,7 +318,9 @@ class LegajoController extends Controller
                 'observaciones' => $secciones['situacion'] ? $legajo->observaciones : null,
                 'fecha_apertura' => $secciones['seguimiento'] ? $legajo->fecha_apertura?->format('d/m/Y') : null,
                 'profesional' => $secciones['seguimiento'] ? $legajo->profesional?->name : null,
-                'problematicas' => $secciones['situacion'] ? $legajo->problematicas->pluck('nombre')->values() : [],
+                'problematicas' => $secciones['situacion']
+                    ? $legajo->problematicas->map(fn (Problematica $problematica) => $problematica->etiquetaEnLegajo())->values()
+                    : [],
                 'persona' => $secciones['persona'] ? [
                     'id' => $legajo->persona->id,
                     'nombre_completo' => "{$legajo->persona->apellido}, {$legajo->persona->nombre}",

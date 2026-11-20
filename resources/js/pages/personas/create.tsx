@@ -12,6 +12,7 @@ import { useEffect, useState } from 'react';
 import type { FormEventHandler, ReactNode } from 'react';
 
 import ResumenErrores from '@/components/resumen-errores';
+import SelectorProblematicas from '@/components/selector-problematicas';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -34,6 +35,7 @@ interface CreatePersonaProps {
     provincias: Opcion[];
     problematicas: Opcion[];
     modoLegajo?: boolean;
+    problematicaOtrosId?: number | null;
 }
 
 const FONT_HEADING = "'Lora', serif";
@@ -65,6 +67,7 @@ const FIELD_LABELS: Record<string, string> = {
     observaciones: 'Observaciones',
     abrir_legajo: 'Abrir legajo',
     legajo_problematicas: 'Problemática',
+    legajo_problematica_otros: 'Especificación de «Otros»',
     legajo_nivel_riesgo: 'Nivel de riesgo',
     legajo_origen_derivacion: 'Origen de la derivación',
     legajo_observaciones: 'Observaciones del legajo',
@@ -110,6 +113,7 @@ export default function CreatePersona({
     provincias,
     problematicas,
     modoLegajo = false,
+    problematicaOtrosId = null,
 }: CreatePersonaProps) {
     const { data, setData, post, processing, errors } = useForm({
         nombre: '',
@@ -130,6 +134,7 @@ export default function CreatePersona({
         legajo_nivel_riesgo: '',
         legajo_origen_derivacion: '',
         legajo_problematicas: [] as number[],
+        legajo_problematica_otros: '',
         legajo_observaciones: '',
     });
 
@@ -212,17 +217,6 @@ export default function CreatePersona({
         return () => controller.abort();
     }, [data.localidad_id]);
 
-    const toggleProblematica = (id: number) => {
-        setData(
-            'legajo_problematicas',
-            data.legajo_problematicas.includes(id)
-                ? data.legajo_problematicas.filter(
-                      (problematica) => problematica !== id,
-                  )
-                : [...data.legajo_problematicas, id],
-        );
-    };
-
     const submit: FormEventHandler = (event) => {
         event.preventDefault();
         post(modoLegajo ? '/legajos' : '/personas', {
@@ -277,7 +271,12 @@ export default function CreatePersona({
             complete: data.abrir_legajo
                 ? Boolean(
                       data.legajo_nivel_riesgo &&
-                      data.legajo_problematicas.length,
+                      data.legajo_problematicas.length &&
+                      (problematicaOtrosId === null ||
+                          !data.legajo_problematicas.includes(
+                              problematicaOtrosId,
+                          ) ||
+                          data.legajo_problematica_otros.trim()),
                   )
                 : true,
         },
@@ -863,44 +862,53 @@ export default function CreatePersona({
                                             )}
                                             <fieldset className="m-0 border-0 p-0">
                                                 <legend className={labelClass}>
-                                                    Problematica{' '}
+                                                    Problemáticas{' '}
                                                     <span className="text-[#A84635]">
                                                         *
                                                     </span>
                                                 </legend>
-                                                <div className="mt-2 grid gap-2 rounded-lg border border-[#D5D1C6] bg-white p-3 sm:grid-cols-2">
-                                                    {problematicas.map(
-                                                        (problematica) => (
-                                                            <label
-                                                                key={
-                                                                    problematica.id
-                                                                }
-                                                                className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm text-[#2B2F36] transition hover:bg-[#F4F6F5]"
-                                                            >
-                                                                <input
-                                                                    type="checkbox"
-                                                                    checked={data.legajo_problematicas.includes(
-                                                                        problematica.id,
-                                                                    )}
-                                                                    onChange={() =>
-                                                                        toggleProblematica(
-                                                                            problematica.id,
-                                                                        )
-                                                                    }
-                                                                    className="size-4 rounded border-[#B9C5BD] text-[#2C4A5E] focus:ring-[#2C4A5E]/30"
-                                                                />
-                                                                {
-                                                                    problematica.nombre
-                                                                }
-                                                            </label>
-                                                        ),
-                                                    )}
+                                                <div className="mt-2">
+                                                    <SelectorProblematicas
+                                                        opciones={problematicas}
+                                                        seleccionadas={
+                                                            data.legajo_problematicas
+                                                        }
+                                                        onChange={(ids) =>
+                                                            setData(
+                                                                'legajo_problematicas',
+                                                                ids,
+                                                            )
+                                                        }
+                                                        error={
+                                                            errors.legajo_problematicas
+                                                        }
+                                                        errorId="legajo_problematicas-error"
+                                                        idOtros={
+                                                            problematicaOtrosId
+                                                        }
+                                                        detalleOtros={
+                                                            data.legajo_problematica_otros
+                                                        }
+                                                        onDetalleOtrosChange={(
+                                                            detalle,
+                                                        ) =>
+                                                            setData(
+                                                                'legajo_problematica_otros',
+                                                                detalle,
+                                                            )
+                                                        }
+                                                        errorOtros={
+                                                            errors.legajo_problematica_otros
+                                                        }
+                                                    />
                                                 </div>
-                                                <FieldError
-                                                    message={
-                                                        errors.legajo_problematicas
-                                                    }
-                                                />
+                                                <div id="legajo_problematicas-error">
+                                                    <FieldError
+                                                        message={
+                                                            errors.legajo_problematicas
+                                                        }
+                                                    />
+                                                </div>
                                             </fieldset>
                                             <div>
                                                 <div>
