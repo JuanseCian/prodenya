@@ -69,7 +69,7 @@ export default function PasskeyOnboardingModal({
     return (
         <Dialog open={isOpen} onOpenChange={handleOpenChange}>
             <DialogContent
-                className="max-w-[min(30rem,calc(100%-2rem))] gap-0 overflow-hidden rounded-[1.35rem] border-[#DCE7E1] bg-[#FCFBF7] p-0 text-[#173247] shadow-[0_24px_80px_rgba(23,50,71,0.2)] sm:max-w-[30rem]"
+                className="max-w-[min(30rem,calc(100%-2rem))] gap-0 overflow-hidden rounded-[1.35rem] border-border bg-card p-0 text-foreground shadow-[0_24px_80px_rgba(23,50,71,0.2)] sm:max-w-[30rem]"
                 onEscapeKeyDown={(event) => {
                     if (isLoading) {
                         event.preventDefault();
@@ -83,7 +83,7 @@ export default function PasskeyOnboardingModal({
             >
                 <div className="px-6 pt-7 pb-6 sm:px-8 sm:pt-8">
                     <DialogHeader className="gap-4 text-left">
-                        <div className="flex size-12 items-center justify-center rounded-2xl border border-[#CDE2D5] bg-[#EAF5ED] text-[#39795B]">
+                        <div className="flex size-12 items-center justify-center rounded-2xl border border-secondary bg-secondary text-primary">
                             <KeyRound
                                 className="size-6"
                                 strokeWidth={1.8}
@@ -91,12 +91,12 @@ export default function PasskeyOnboardingModal({
                             />
                         </div>
                         <div className="space-y-3">
-                            <DialogTitle className="max-w-[22rem] text-[1.55rem] leading-[1.12] tracking-[-0.035em] text-[#173247] sm:text-[1.7rem]">
+                            <DialogTitle className="max-w-[22rem] text-[1.55rem] leading-[1.12] tracking-[-0.035em] text-foreground sm:text-[1.7rem]">
                                 {isComplete
                                     ? 'Llave de acceso activada'
                                     : 'Accedé de forma más rápida y segura'}
                             </DialogTitle>
-                            <DialogDescription className="text-[0.95rem] leading-7 text-[#536B76]">
+                            <DialogDescription className="text-[0.95rem] leading-7 text-muted-foreground">
                                 {isComplete
                                     ? 'Ya podés utilizar tu llave de acceso para ingresar a Prodenya.'
                                     : 'Protegé tu cuenta de Prodenya utilizando una llave de acceso. Podrás iniciar sesión con tu huella digital, reconocimiento facial o el método de desbloqueo de tu dispositivo, sin necesidad de escribir tu contraseña.'}
@@ -105,9 +105,9 @@ export default function PasskeyOnboardingModal({
                     </DialogHeader>
 
                     {isComplete ? (
-                        <div className="mt-6 flex items-start gap-3 rounded-xl border border-[#CDE2D5] bg-[#F1F8F2] p-4 text-sm leading-6 text-[#3E6650]">
+                        <div className="mt-6 flex items-start gap-3 rounded-xl border border-success/30 bg-success/10 p-4 text-sm leading-6 text-success">
                             <ShieldCheck
-                                className="mt-0.5 size-5 shrink-0 text-[#39795B]"
+                                className="mt-0.5 size-5 shrink-0 text-success"
                                 aria-hidden="true"
                             />
                             <span>
@@ -117,16 +117,16 @@ export default function PasskeyOnboardingModal({
                         </div>
                     ) : (
                         <>
-                            <p className="mt-5 text-sm leading-6 text-[#6B7E86]">
+                            <p className="mt-5 text-sm leading-6 text-muted-foreground">
                                 La configuración es sencilla y solo te llevará
                                 unos instantes.
                             </p>
-                            <p className="mt-3 text-xs leading-5 text-[#73858C]">
+                            <p className="mt-3 text-xs leading-5 text-muted-foreground">
                                 También podés configurar tus llaves de acceso
                                 desde{' '}
                                 <a
                                     href={security.edit.url()}
-                                    className="font-semibold text-[#39795B] underline-offset-4 hover:underline"
+                                    className="font-semibold text-primary underline-offset-4 hover:underline"
                                 >
                                     Perfil → Seguridad
                                 </a>
@@ -135,7 +135,7 @@ export default function PasskeyOnboardingModal({
 
                             {error && (
                                 <div
-                                    className="mt-5 rounded-xl border border-[#EBC9C3] bg-[#FFF3F0] px-4 py-3 text-sm leading-6 text-[#9A493D]"
+                                    className="mt-5 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm leading-6 text-destructive"
                                     role="alert"
                                 >
                                     No pudimos registrar la llave de acceso.
@@ -147,11 +147,11 @@ export default function PasskeyOnboardingModal({
                     )}
                 </div>
 
-                <DialogFooter className="border-t border-[#E6ECE8] bg-[#F8F8F4] px-6 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-8">
+                <DialogFooter className="border-t border-border bg-muted px-6 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-8">
                     {isComplete ? (
                         <Button
                             type="button"
-                            className="w-full rounded-lg bg-[#2C4A5E] px-5 text-white hover:bg-[#1F394B] sm:ml-auto sm:w-auto"
+                            className="w-full rounded-lg bg-[#2C4A5E] px-5 text-white hover:bg-[#1F394B] sm:ml-auto sm:w-auto dark:hover:bg-[#3a5873]"
                             onClick={() => setIsOpen(false)}
                         >
                             Continuar
@@ -161,7 +161,7 @@ export default function PasskeyOnboardingModal({
                             <Button
                                 type="button"
                                 variant="ghost"
-                                className="order-2 rounded-lg px-4 text-[#536B76] hover:bg-[#EDF2EF] hover:text-[#2C4A5E] sm:order-1"
+                                className="order-2 rounded-lg px-4 text-muted-foreground hover:bg-accent hover:text-primary sm:order-1"
                                 onClick={dismiss}
                                 disabled={isLoading}
                             >
@@ -169,7 +169,7 @@ export default function PasskeyOnboardingModal({
                             </Button>
                             <Button
                                 type="button"
-                                className="order-1 w-full rounded-lg bg-[#2C4A5E] px-5 text-white shadow-[0_6px_14px_rgba(44,74,94,0.18)] hover:bg-[#1F394B] sm:order-2 sm:w-auto"
+                                className="order-1 w-full rounded-lg bg-[#2C4A5E] px-5 text-white shadow-[0_6px_14px_rgba(44,74,94,0.18)] hover:bg-[#1F394B] sm:order-2 sm:w-auto dark:hover:bg-[#3a5873]"
                                 onClick={handleRegister}
                                 disabled={isLoading}
                             >
