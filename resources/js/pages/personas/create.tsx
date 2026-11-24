@@ -42,9 +42,9 @@ const FONT_HEADING = "'Lora', serif";
 const FONT_BODY = "'Public Sans', sans-serif";
 
 const inputClass =
-    'mt-2 h-11 border-[#D5D1C6] bg-white text-[#2B2F36] shadow-none placeholder:text-[#2B2F36]/35 focus-visible:border-[#2C4A5E] focus-visible:ring-[#2C4A5E]/20';
-const labelClass = 'text-sm font-semibold text-[#2B2F36]';
-const errorClass = 'mt-1.5 text-xs font-medium text-[#A84635]';
+    'mt-2 h-11 border-input bg-background text-foreground shadow-none placeholder:text-foreground/35 focus-visible:border-primary focus-visible:ring-primary/20';
+const labelClass = 'text-sm font-semibold text-foreground';
+const errorClass = 'mt-1.5 text-xs font-medium text-destructive';
 
 function FieldError({ message }: { message?: string }) {
     return message ? <p className={errorClass}>{message}</p> : null;
@@ -85,22 +85,22 @@ function SectionHeading({
     description: string;
 }) {
     return (
-        <CardHeader className="border-b border-[#E4E8E5] bg-[#F8FAF9] px-5 py-5 sm:px-6">
+        <CardHeader className="border-b border-border bg-surface-soft px-5 py-5 sm:px-6">
             <div className="flex items-start gap-3">
                 <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-[#2C4A5E] text-white">
                     {icon}
                 </div>
                 <div>
-                    <p className="text-[0.65rem] font-bold tracking-[0.16em] text-[#6B8F71] uppercase">
+                    <p className="text-[0.65rem] font-bold tracking-[0.16em] text-primary uppercase">
                         {eyebrow}
                     </p>
                     <CardTitle
-                        className="mt-1 text-lg font-semibold text-[#2C4A5E]"
+                        className="mt-1 text-lg font-semibold text-primary"
                         style={{ fontFamily: FONT_HEADING }}
                     >
                         {title}
                     </CardTitle>
-                    <CardDescription className="mt-1 text-sm text-[#697586]">
+                    <CardDescription className="mt-1 text-sm text-muted-foreground">
                         {description}
                     </CardDescription>
                 </div>
@@ -295,22 +295,22 @@ export default function CreatePersona({
             >
                 <div className="mx-auto w-full max-w-6xl">
                     <div className="mb-8 max-w-3xl">
-                        <div className="flex items-center gap-2 text-xs font-semibold tracking-[0.14em] text-[#697586] uppercase">
+                        <div className="flex items-center gap-2 text-xs font-semibold tracking-[0.14em] text-muted-foreground uppercase">
                             <span>{modoLegajo ? 'Legajos' : 'Personas'}</span>
-                            <span className="text-[#B4C1B8]">/</span>
-                            <span className="text-[#2B2F36]/45">
+                            <span className="text-muted-foreground">/</span>
+                            <span className="text-foreground/45">
                                 {modoLegajo ? 'Nuevo legajo' : 'Nueva alta'}
                             </span>
                         </div>
                         <h1
-                            className="mt-3 text-3xl font-semibold tracking-tight text-[#173247] sm:text-4xl"
+                            className="mt-3 text-3xl font-semibold tracking-tight text-foreground sm:text-4xl"
                             style={{ fontFamily: FONT_HEADING }}
                         >
                             {modoLegajo
                                 ? 'Crear un legajo'
                                 : 'Registrar una persona'}
                         </h1>
-                        <p className="mt-2 max-w-2xl text-sm leading-6 text-[#697586]">
+                        <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
                             {modoLegajo
                                 ? 'Completá los datos de la persona y del legajo. Se guardará todo en un único registro.'
                                 : 'Completá la información básica para crear el registro.'}
@@ -329,7 +329,7 @@ export default function CreatePersona({
 
                             <Card
                                 id="datos-personales"
-                                className="scroll-mt-6 overflow-hidden border-[#DCE3DF] !bg-white py-0 shadow-[0_14px_35px_rgba(23,50,71,0.06)]"
+                                className="scroll-mt-6 overflow-hidden border-border bg-card py-0 shadow-[0_14px_35px_rgba(23,50,71,0.06)]"
                             >
                                 <SectionHeading
                                     icon={<UserRound size={19} />}
@@ -344,7 +344,7 @@ export default function CreatePersona({
                                             className={labelClass}
                                         >
                                             Nombre{' '}
-                                            <span className="text-[#A84635]">
+                                            <span className="text-destructive">
                                                 *
                                             </span>
                                         </Label>
@@ -369,7 +369,7 @@ export default function CreatePersona({
                                             className={labelClass}
                                         >
                                             Apellido{' '}
-                                            <span className="text-[#A84635]">
+                                            <span className="text-destructive">
                                                 *
                                             </span>
                                         </Label>
@@ -394,7 +394,7 @@ export default function CreatePersona({
                                             className={labelClass}
                                         >
                                             DNI{' '}
-                                            <span className="text-[#A84635]">
+                                            <span className="text-destructive">
                                                 *
                                             </span>
                                         </Label>
@@ -420,7 +420,7 @@ export default function CreatePersona({
                                             className={labelClass}
                                         >
                                             Fecha de nacimiento{' '}
-                                            <span className="text-[#A84635]">
+                                            <span className="text-destructive">
                                                 *
                                             </span>
                                         </Label>
@@ -518,7 +518,7 @@ export default function CreatePersona({
 
                             <Card
                                 id="domicilio"
-                                className="scroll-mt-6 overflow-hidden border-[#DCE3DF] !bg-white py-0 shadow-[0_14px_35px_rgba(23,50,71,0.06)]"
+                                className="scroll-mt-6 overflow-hidden border-border bg-card py-0 shadow-[0_14px_35px_rgba(23,50,71,0.06)]"
                             >
                                 <SectionHeading
                                     icon={<Home size={19} />}
@@ -578,7 +578,7 @@ export default function CreatePersona({
                                             className={labelClass}
                                         >
                                             Piso / departamento{' '}
-                                            <span className="font-normal text-[#2B2F36]/45">
+                                            <span className="font-normal text-foreground/45">
                                                 (opcional)
                                             </span>
                                         </Label>
@@ -605,7 +605,7 @@ export default function CreatePersona({
                                             className={labelClass}
                                         >
                                             Provincia{' '}
-                                            <span className="text-[#A84635]">
+                                            <span className="text-destructive">
                                                 *
                                             </span>
                                         </Label>
@@ -654,13 +654,13 @@ export default function CreatePersona({
                                             className={labelClass}
                                         >
                                             Localidad{' '}
-                                            <span className="text-[#A84635]">
+                                            <span className="text-destructive">
                                                 *
                                             </span>
                                         </Label>
                                         <select
                                             id="localidad_id"
-                                            className={`${inputClass} block w-full rounded-md border px-3 text-sm disabled:cursor-not-allowed disabled:bg-[#F1F3F1]`}
+                                            className={`${inputClass} block w-full rounded-md border px-3 text-sm disabled:cursor-not-allowed disabled:bg-muted`}
                                             value={data.localidad_id}
                                             disabled={
                                                 !data.provincia_id ||
@@ -709,13 +709,13 @@ export default function CreatePersona({
                                             className={labelClass}
                                         >
                                             Barrio{' '}
-                                            <span className="font-normal text-[#2B2F36]/45">
+                                            <span className="font-normal text-foreground/45">
                                                 (opcional)
                                             </span>
                                         </Label>
                                         <select
                                             id="barrio_id"
-                                            className={`${inputClass} block w-full rounded-md border px-3 text-sm disabled:cursor-not-allowed disabled:bg-[#F1F3F1]`}
+                                            className={`${inputClass} block w-full rounded-md border px-3 text-sm disabled:cursor-not-allowed disabled:bg-muted`}
                                             value={data.barrio_id}
                                             disabled={
                                                 !data.localidad_id ||
@@ -754,7 +754,7 @@ export default function CreatePersona({
 
                             <Card
                                 id="informacion-complementaria"
-                                className="scroll-mt-6 overflow-hidden border-[#DCE3DF] !bg-white py-0 shadow-[0_14px_35px_rgba(23,50,71,0.06)]"
+                                className="scroll-mt-6 overflow-hidden border-border bg-card py-0 shadow-[0_14px_35px_rgba(23,50,71,0.06)]"
                             >
                                 <SectionHeading
                                     icon={<MapPin size={19} />}
@@ -768,7 +768,7 @@ export default function CreatePersona({
                                         className={labelClass}
                                     >
                                         Observaciones{' '}
-                                        <span className="font-normal text-[#2B2F36]/45">
+                                        <span className="font-normal text-foreground/45">
                                             (opcional)
                                         </span>
                                     </Label>
@@ -782,7 +782,7 @@ export default function CreatePersona({
                                                 event.target.value,
                                             )
                                         }
-                                        className="mt-2 block w-full resize-y rounded-md border border-[#D5D1C6] bg-white px-3.5 py-3 text-sm text-[#2B2F36] shadow-none transition outline-none placeholder:text-[#2B2F36]/35 focus:border-[#2C4A5E] focus:ring-2 focus:ring-[#2C4A5E]/20"
+                                        className="mt-2 block w-full resize-y rounded-md border border-input bg-background px-3.5 py-3 text-sm text-foreground shadow-none transition outline-none placeholder:text-foreground/35 focus:border-primary focus:ring-2 focus:ring-primary/20"
                                         placeholder="Agregá información relevante para la gestión…"
                                     />
                                     <FieldError
@@ -793,7 +793,7 @@ export default function CreatePersona({
 
                             <Card
                                 id="abrir-legajo"
-                                className={`scroll-mt-6 overflow-hidden !bg-white py-0 shadow-[0_14px_35px_rgba(23,50,71,0.06)] ${data.abrir_legajo ? 'border-[#2C4A5E]/35' : 'border-[#DCE3DF]'}`}
+                                className={`scroll-mt-6 overflow-hidden bg-card py-0 shadow-[0_14px_35px_rgba(23,50,71,0.06)] ${data.abrir_legajo ? 'border-primary/35' : 'border-border'}`}
                             >
                                 <SectionHeading
                                     icon={<ClipboardPlus size={19} />}
@@ -815,7 +815,7 @@ export default function CreatePersona({
                                 />
                                 <CardContent className="px-5 py-6 sm:px-6">
                                     {!modoLegajo && (
-                                        <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-[#DCE3DF] bg-[#FAFBFA] p-4 transition hover:border-[#2C4A5E]/40">
+                                        <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-border bg-surface-soft p-4 transition hover:border-primary/40">
                                             <input
                                                 type="checkbox"
                                                 checked={data.abrir_legajo}
@@ -825,14 +825,14 @@ export default function CreatePersona({
                                                         event.target.checked,
                                                     )
                                                 }
-                                                className="mt-0.5 size-4 rounded border-[#B9C5BD] text-[#2C4A5E] focus:ring-[#2C4A5E]/30"
+                                                className="mt-0.5 size-4 rounded border-input text-primary focus:ring-primary/30"
                                             />
                                             <span>
-                                                <span className="block text-sm font-semibold text-[#2B2F36]">
+                                                <span className="block text-sm font-semibold text-foreground">
                                                     Abrir un legajo para esta
                                                     persona
                                                 </span>
-                                                <span className="mt-1 block text-xs leading-5 text-[#2B2F36]/60">
+                                                <span className="mt-1 block text-xs leading-5 text-foreground/60">
                                                     Se solicitarán los datos del
                                                     caso y se generará
                                                     automáticamente el número de
@@ -843,19 +843,19 @@ export default function CreatePersona({
                                     )}
 
                                     {data.abrir_legajo && (
-                                        <div className="mt-6 space-y-5 border-t border-[#E4E8E5] pt-5">
+                                        <div className="mt-6 space-y-5 border-t border-border pt-5">
                                             {previaLegajo && (
-                                                <div className="flex items-center justify-between gap-3 rounded-lg bg-[#EDF3EF] px-4 py-3">
+                                                <div className="flex items-center justify-between gap-3 rounded-lg bg-secondary px-4 py-3">
                                                     <div>
-                                                        <p className="text-[0.65rem] font-bold tracking-[0.12em] text-[#41634A] uppercase">
+                                                        <p className="text-[0.65rem] font-bold tracking-[0.12em] text-secondary-foreground uppercase">
                                                             Número estimado
                                                         </p>
-                                                        <p className="mt-1 font-mono text-sm font-semibold tracking-wide text-[#2C4A5E]">
+                                                        <p className="mt-1 font-mono text-sm font-semibold tracking-wide text-primary">
                                                             {previaLegajo}
                                                         </p>
                                                     </div>
                                                     <ShieldCheck
-                                                        className="text-[#6B8F71]"
+                                                        className="text-primary"
                                                         size={20}
                                                     />
                                                 </div>
@@ -863,7 +863,7 @@ export default function CreatePersona({
                                             <fieldset className="m-0 border-0 p-0">
                                                 <legend className={labelClass}>
                                                     Problemáticas{' '}
-                                                    <span className="text-[#A84635]">
+                                                    <span className="text-destructive">
                                                         *
                                                     </span>
                                                 </legend>
@@ -917,7 +917,7 @@ export default function CreatePersona({
                                                         className={labelClass}
                                                     >
                                                         Nivel de riesgo{' '}
-                                                        <span className="text-[#A84635]">
+                                                        <span className="text-destructive">
                                                             *
                                                         </span>
                                                     </Label>
@@ -965,7 +965,7 @@ export default function CreatePersona({
                                                 >
                                                     Institución o referente que
                                                     deriva{' '}
-                                                    <span className="text-[#A84635]">
+                                                    <span className="text-destructive">
                                                         *
                                                     </span>
                                                 </Label>
@@ -995,7 +995,7 @@ export default function CreatePersona({
                                                     className={labelClass}
                                                 >
                                                     Observaciones del legajo{' '}
-                                                    <span className="font-normal text-[#2B2F36]/45">
+                                                    <span className="font-normal text-foreground/45">
                                                         (opcional)
                                                     </span>
                                                 </Label>
@@ -1011,7 +1011,7 @@ export default function CreatePersona({
                                                             event.target.value,
                                                         )
                                                     }
-                                                    className="mt-2 block w-full resize-y rounded-md border border-[#D5D1C6] bg-white px-3.5 py-3 text-sm text-[#2B2F36] transition outline-none placeholder:text-[#2B2F36]/35 focus:border-[#2C4A5E] focus:ring-2 focus:ring-[#2C4A5E]/20"
+                                                    className="mt-2 block w-full resize-y rounded-md border border-input bg-background px-3.5 py-3 text-sm text-foreground transition outline-none placeholder:text-foreground/35 focus:border-primary focus:ring-2 focus:ring-primary/20"
                                                 />
                                                 <FieldError
                                                     message={
@@ -1024,17 +1024,17 @@ export default function CreatePersona({
                                 </CardContent>
                             </Card>
 
-                            <div className="sticky bottom-3 z-20 -mx-1 flex flex-col-reverse gap-3 rounded-lg border border-[#DCE3DF] bg-[#F4F6F5] p-3 sm:flex-row sm:items-center sm:justify-end lg:static lg:mx-0 lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none">
+                            <div className="sticky bottom-3 z-20 -mx-1 flex flex-col-reverse gap-3 rounded-lg border border-border bg-muted p-3 sm:flex-row sm:items-center sm:justify-end lg:static lg:mx-0 lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none">
                                 <Link
                                     href={modoLegajo ? '/legajos' : '/'}
-                                    className="inline-flex h-11 items-center justify-center rounded-md px-5 text-sm font-semibold text-[#2B2F36]/65 transition hover:bg-white hover:text-[#2B2F36]"
+                                    className="inline-flex h-11 items-center justify-center rounded-md px-5 text-sm font-semibold text-foreground/65 transition hover:bg-card hover:text-foreground"
                                 >
                                     Cancelar
                                 </Link>
                                 <Button
                                     type="submit"
                                     disabled={processing}
-                                    className="h-11 bg-[#2C4A5E] px-6 text-sm font-semibold text-white shadow-sm hover:bg-[#1F394B]"
+                                    className="h-11 bg-[#2C4A5E] px-6 text-sm font-semibold text-white shadow-sm hover:bg-[#1F394B] dark:hover:bg-[#3a5873]"
                                 >
                                     {processing
                                         ? 'Guardando…'
@@ -1046,26 +1046,26 @@ export default function CreatePersona({
                         </form>
 
                         <aside className="order-first space-y-4 lg:sticky lg:top-6 lg:order-none">
-                            <Card className="border-[#DCE3DF] !bg-white py-0 shadow-[0_14px_35px_rgba(23,50,71,0.06)]">
+                            <Card className="border-border bg-card py-0 shadow-[0_14px_35px_rgba(23,50,71,0.06)]">
                                 <CardHeader className="px-5 pt-5 pb-3">
                                     <div className="flex items-start justify-between gap-3">
                                         <div className="flex items-center gap-2">
                                             <ShieldCheck
                                                 size={17}
-                                                className="text-[#6B8F71]"
+                                                className="text-primary"
                                             />
                                             <div>
-                                                <CardTitle className="text-sm font-semibold text-[#173247]">
+                                                <CardTitle className="text-sm font-semibold text-foreground">
                                                     Tu progreso
                                                 </CardTitle>
-                                                <p className="mt-1 text-xs text-[#2B2F36]/55">
+                                                <p className="mt-1 text-xs text-foreground/55">
                                                     {seccionesCompletas} de{' '}
                                                     {secciones.length} secciones
                                                     listas
                                                 </p>
                                             </div>
                                         </div>
-                                        <span className="text-xs font-semibold text-[#6B8F71]">
+                                        <span className="text-xs font-semibold text-primary">
                                             {Math.round(
                                                 (seccionesCompletas /
                                                     secciones.length) *
@@ -1075,15 +1075,15 @@ export default function CreatePersona({
                                         </span>
                                     </div>
                                 </CardHeader>
-                                <CardContent className="space-y-2 px-5 pb-5 text-sm text-[#2B2F36]/65">
+                                <CardContent className="space-y-2 px-5 pb-5 text-sm text-foreground/65">
                                     {secciones.map((seccion) => (
                                         <a
                                             key={seccion.id}
                                             href={`#${seccion.id}`}
-                                            className="group flex items-center gap-3 rounded-lg px-2 py-2 transition hover:bg-[#F4F6F5]"
+                                            className="group flex items-center gap-3 rounded-lg px-2 py-2 transition hover:bg-muted"
                                         >
                                             <span
-                                                className={`flex size-6 shrink-0 items-center justify-center rounded-full ${seccion.complete ? 'bg-[#E3F0E6] text-[#41634A]' : 'bg-[#EEF0ED] text-[#A1AAA3]'}`}
+                                                className={`flex size-6 shrink-0 items-center justify-center rounded-full ${seccion.complete ? 'bg-secondary text-secondary-foreground' : 'bg-muted text-muted-foreground'}`}
                                             >
                                                 {seccion.complete ? (
                                                     <Check
@@ -1099,12 +1099,12 @@ export default function CreatePersona({
                                             </span>
                                             <ArrowDown
                                                 size={14}
-                                                className="text-[#2B2F36]/30 transition group-hover:translate-y-0.5 group-hover:text-[#2C4A5E]"
+                                                className="text-foreground/30 transition group-hover:translate-y-0.5 group-hover:text-primary"
                                             />
                                         </a>
                                     ))}
-                                    <Separator className="bg-[#E4E8E5]" />
-                                    <p className="text-xs leading-5 text-[#2B2F36]/50">
+                                    <Separator className="bg-border" />
+                                    <p className="text-xs leading-5 text-foreground/50">
                                         Los campos con * son obligatorios. La
                                         información queda disponible para el
                                         equipo autorizado.
