@@ -4,6 +4,7 @@ import {
     CalendarDays,
     CheckCircle2,
     Clock3,
+    FileDown,
     FileUp,
     Paperclip,
     Save,
@@ -11,8 +12,18 @@ import {
     UserRound,
     UsersRound,
 } from 'lucide-react';
+import { useState } from 'react';
 import type { FormEvent } from 'react';
 
+import ActaHoja from '@/components/acta-hoja';
+import type { DatosActa, TipoActa } from '@/components/acta-hoja';
+import type {
+    DatosPlanilla,
+    MiembroGrupo,
+    TipoPlanilla,
+} from '@/components/auh-planilla-dialog';
+import AuhPlanillaHoja from '@/components/auh-planilla-hoja';
+import type { FirmaEnCurso } from '@/components/auh-planilla-hoja';
 import FirmaDigital from '@/components/firma-digital';
 import ResumenErrores from '@/components/resumen-errores';
 import { Button } from '@/components/ui/button';
@@ -29,7 +40,41 @@ interface LegajoResumen {
 interface Opcion {
     id: number;
     nombre: string;
+    /** Tipo de acta que genera este tipo de intervención, si genera alguno. */
+    acta?: string | null;
 }
+
+interface ConfigActa {
+    label: string;
+    esAuh: boolean;
+    tipoAuh: TipoPlanilla | null;
+    firmantes: Record<string, string>;
+    datos: DatosActa | DatosPlanilla;
+}
+
+interface ActaExistente {
+    etiqueta: string;
+    firmado: boolean;
+    requiere_firma: boolean;
+    descarga_url: string;
+}
+
+interface HojaActa {
+    tipo: string | null;
+    datos: (DatosActa & DatosPlanilla) | null;
+    firmas: Record<string, FirmaEnCurso>;
+}
+
+const miembroVacio: MiembroGrupo = {
+    nombre: '',
+    vinculo: '',
+    fecha_relacion: '',
+    dni: '',
+    fecha_nacimiento: '',
+};
+
+/** Roles del acta que firma el equipo: se proponen con el operador/a. */
+const FIRMANTES_DEL_SERVICIO = ['equipo', 'autoridad'];
 
 interface Profesional {
     id: number;
@@ -74,6 +119,13 @@ interface Props {
     intervencion?: IntervencionInicial;
     adjuntos?: Adjunto[];
     legajosRelacionados?: LegajoRelacionado[];
+    /** Configuración de cada tipo de acta (solo al crear). */
+    actas?: Record<string, ConfigActa>;
+    /** Acta ya generada por esta intervención (al editar). */
+    acta?: ActaExistente | null;
+    /** Barrios que se pueden elegir en las actas. */
+    barrios?: string[];
+    escuelas?: string[];
 }
 
 interface FormData {
@@ -119,34 +171,149 @@ export default function IntervencionForm({
     intervencion,
     adjuntos = [],
     legajosRelacionados = [],
+    actas = {},
+    acta = null,
+    barrios = [],
+    escuelas = [],
 }: Props) {
     const editando = Boolean(intervencion);
-    const { data, setData, post, put, processing, errors } = useForm<FormData>({
-        fecha_intervencion: intervencion?.fecha_intervencion ?? hoy,
-        hora_intervencion: intervencion?.hora_intervencion ?? horaAhora,
-        tipo_intervencion_id: intervencion
-            ? String(intervencion.tipo_intervencion_id)
-            : '',
-        profesional_id: intervencion
-            ? String(intervencion.profesional_id)
-            : String(profesionalPorDefecto ?? ''),
-        detalle: intervencion?.detalle ?? '',
-        firma_nombre: intervencion?.firma_nombre ?? '',
-        firma_aclaracion: intervencion?.firma_aclaracion ?? '',
-        firma_responsable_dibujo: '',
-        firma_responsable_archivo: null,
-        firma_entrevistado_nombre:
-            intervencion?.firma_entrevistado_nombre ?? '',
-        firma_entrevistado_aclaracion:
-            intervencion?.firma_entrevistado_aclaracion ?? '',
-        firma_entrevistado_dibujo: '',
-        firma_entrevistado_archivo: null,
-        archivos: [],
-        legajos_destino_ids: [],
-    });
+    const { data, setData, post, put, processing, errors, transform } =
+        useForm<FormData>({
+            fecha_intervencion: intervencion?.fecha_intervencion ?? hoy,
+            hora_intervencion: intervencion?.hora_intervencion ?? horaAhora,
+            tipo_intervencion_id: intervencion
+                ? String(intervencion.tipo_intervencion_id)
+                : '',
+            profesional_id: intervencion
+                ? String(intervencion.profesional_id)
+                : String(profesionalPorDefecto ?? ''),
+            detalle: intervencion?.detalle ?? '',
+            firma_nombre: intervencion?.firma_nombre ?? '',
+            firma_aclaracion: intervencion?.firma_aclaracion ?? '',
+            firma_responsable_dibujo: '',
+            firma_responsable_archivo: null,
+            firma_entrevistado_nombre:
+                intervencion?.firma_entrevistado_nombre ?? '',
+            firma_entrevistado_aclaracion:
+                intervencion?.firma_entrevistado_aclaracion ?? '',
+            firma_entrevistado_dibujo: '',
+            firma_entrevistado_archivo: null,
+            archivos: [],
+            legajos_destino_ids: [],
+        });
+
+    const tipoActa = editando
+        ? null
+        : (tipos.find((tipo) => String(tipo.id) === data.tipo_intervencion_id)
+              ?.acta ?? null);
+    const configActa = tipoActa ? actas[tipoActa] : undefined;
+
+    const hojaInicial = (tipo: string | null): HojaActa => {
+        const config = tipo ? actas[tipo] : undefined;
+
+        if (!tipo || !config) {
+            return { tipo, datos: null, firmas: {} };
+        }
+
+        const datos = {
+            ...(config.datos as DatosActa & DatosPlanilla),
+            fecha: data.fecha_intervencion,
+            ...(config.esAuh ? {} : { hora: data.hora_intervencion }),
+        };
+
+        if (config.esAuh) {
+            datos.grupo_familiar = [
+                ...(datos.grupo_familiar ?? []),
+                ...Array.from(
+                    {
+                        length: Math.max(
+                            0,
+                            5 - (datos.grupo_familiar?.length ?? 0),
+                        ),
+                    },
+                    () => ({ ...miembroVacio }),
+                ),
+            ];
+        }
+
+        return {
+            tipo,
+            datos,
+            firmas: Object.fromEntries(
+                Object.keys(config.firmantes).map((rol) => [
+                    rol,
+                    {
+                        nombre: FIRMANTES_DEL_SERVICIO.includes(rol)
+                            ? ((config.datos as DatosActa).operador ?? '')
+                            : '',
+                        dibujo: '',
+                    },
+                ]),
+            ),
+        };
+    };
+
+    const [hoja, setHoja] = useState<HojaActa>(() => hojaInicial(tipoActa));
+
+    // Al cambiar de tipo, la hoja del acta se reinicia con los datos del nuevo tipo.
+    if (hoja.tipo !== tipoActa) {
+        setHoja(hojaInicial(tipoActa));
+    }
+
+    const setDatoActa = (campo: string, valor: unknown) => {
+        setHoja((actual) =>
+            actual.datos
+                ? { ...actual, datos: { ...actual.datos, [campo]: valor } }
+                : actual,
+        );
+
+        if (campo === 'fecha' && typeof valor === 'string' && valor) {
+            setData('fecha_intervencion', valor);
+        }
+
+        if (campo === 'hora' && typeof valor === 'string' && valor) {
+            setData('hora_intervencion', valor);
+        }
+    };
+
+    const setFirmaActa = (
+        rol: string,
+        campo: keyof FirmaEnCurso,
+        valor: string,
+    ) =>
+        setHoja((actual) => ({
+            ...actual,
+            firmas: {
+                ...actual.firmas,
+                [rol]: { ...actual.firmas[rol], [campo]: valor },
+            },
+        }));
+
+    const erroresActa = Object.fromEntries(
+        Object.entries(errors as Record<string, string>)
+            .filter(([campo]) => campo.startsWith('acta.'))
+            .map(([campo, mensaje]) => [campo.slice(5), mensaje]),
+    );
 
     const submit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
+
+        transform((datos) =>
+            tipoActa && hoja.datos
+                ? {
+                      ...datos,
+                      detalle: '',
+                      firma_nombre: '',
+                      firma_aclaracion: '',
+                      acta: JSON.parse(
+                          JSON.stringify({
+                              ...hoja.datos,
+                              firmas: hoja.firmas,
+                          }),
+                      ),
+                  }
+                : datos,
+        );
 
         const options = {
             forceFormData: true,
@@ -252,13 +419,26 @@ export default function IntervencionForm({
                                                         value={
                                                             data.fecha_intervencion
                                                         }
-                                                        onChange={(event) =>
+                                                        onChange={(event) => {
                                                             setData(
                                                                 'fecha_intervencion',
                                                                 event.target
                                                                     .value,
-                                                            )
-                                                        }
+                                                            );
+                                                            setHoja((actual) =>
+                                                                actual.datos
+                                                                    ? {
+                                                                          ...actual,
+                                                                          datos: {
+                                                                              ...actual.datos,
+                                                                              fecha: event
+                                                                                  .target
+                                                                                  .value,
+                                                                          },
+                                                                      }
+                                                                    : actual,
+                                                            );
+                                                        }}
                                                         className={`${inputClass} pl-9`}
                                                     />
                                                 </div>
@@ -278,13 +458,27 @@ export default function IntervencionForm({
                                                         value={
                                                             data.hora_intervencion
                                                         }
-                                                        onChange={(event) =>
+                                                        onChange={(event) => {
                                                             setData(
                                                                 'hora_intervencion',
                                                                 event.target
                                                                     .value,
-                                                            )
-                                                        }
+                                                            );
+                                                            setHoja((actual) =>
+                                                                actual.datos &&
+                                                                !configActa?.esAuh
+                                                                    ? {
+                                                                          ...actual,
+                                                                          datos: {
+                                                                              ...actual.datos,
+                                                                              hora: event
+                                                                                  .target
+                                                                                  .value,
+                                                                          },
+                                                                      }
+                                                                    : actual,
+                                                            );
+                                                        }}
                                                         className={`${inputClass} pl-9`}
                                                     />
                                                 </div>
@@ -295,6 +489,7 @@ export default function IntervencionForm({
                                                 </Label>
                                                 <select
                                                     id="tipo_intervencion_id"
+                                                    disabled={Boolean(acta)}
                                                     value={
                                                         data.tipo_intervencion_id
                                                     }
@@ -309,14 +504,24 @@ export default function IntervencionForm({
                                                     <option value="">
                                                         Seleccionar tipo…
                                                     </option>
-                                                    {tipos.map((tipo) => (
-                                                        <option
-                                                            key={tipo.id}
-                                                            value={tipo.id}
-                                                        >
-                                                            {tipo.nombre}
-                                                        </option>
-                                                    ))}
+                                                    {tipos
+                                                        .filter(
+                                                            (tipo) =>
+                                                                !editando ||
+                                                                !tipo.acta ||
+                                                                String(
+                                                                    tipo.id,
+                                                                ) ===
+                                                                    data.tipo_intervencion_id,
+                                                        )
+                                                        .map((tipo) => (
+                                                            <option
+                                                                key={tipo.id}
+                                                                value={tipo.id}
+                                                            >
+                                                                {tipo.nombre}
+                                                            </option>
+                                                        ))}
                                                 </select>
                                             </div>
                                             <div>
@@ -360,31 +565,181 @@ export default function IntervencionForm({
                                             </div>
                                         </div>
 
-                                        <div className="mt-5 border-t border-[#E4E8E5] pt-5">
-                                            <div className="mb-2 flex items-center justify-between gap-3">
-                                                <Label htmlFor="detalle">
-                                                    Detalle / evolución
-                                                </Label>
-                                                <span className="text-xs text-[#697586]">
-                                                    Campo obligatorio
-                                                </span>
+                                        {tipoActa ? (
+                                            <p className="mt-5 border-t border-[#E4E8E5] pt-5 text-sm text-[#697586]">
+                                                Esta intervención se registra
+                                                con su acta: completala abajo.
+                                                El detalle se arma con el relato
+                                                del acta.
+                                            </p>
+                                        ) : (
+                                            <div className="mt-5 border-t border-[#E4E8E5] pt-5">
+                                                <div className="mb-2 flex items-center justify-between gap-3">
+                                                    <Label htmlFor="detalle">
+                                                        Detalle / evolución
+                                                    </Label>
+                                                    <span className="text-xs text-[#697586]">
+                                                        Campo obligatorio
+                                                    </span>
+                                                </div>
+                                                <textarea
+                                                    id="detalle"
+                                                    rows={8}
+                                                    value={data.detalle}
+                                                    onChange={(event) =>
+                                                        setData(
+                                                            'detalle',
+                                                            event.target.value,
+                                                        )
+                                                    }
+                                                    className="block min-h-44 w-full resize-y rounded-lg border border-[#D5D1C6] bg-white px-3.5 py-3 text-sm leading-6 text-[#2B2F36] transition outline-none placeholder:text-[#697586]/55 focus:border-[#2C4A5E] focus:ring-2 focus:ring-[#2C4A5E]/20"
+                                                    placeholder="Describí la actuación, comunicación, acuerdo o situación registrada."
+                                                />
                                             </div>
-                                            <textarea
-                                                id="detalle"
-                                                rows={8}
-                                                value={data.detalle}
-                                                onChange={(event) =>
-                                                    setData(
-                                                        'detalle',
-                                                        event.target.value,
-                                                    )
-                                                }
-                                                className="block min-h-44 w-full resize-y rounded-lg border border-[#D5D1C6] bg-white px-3.5 py-3 text-sm leading-6 text-[#2B2F36] transition outline-none placeholder:text-[#697586]/55 focus:border-[#2C4A5E] focus:ring-2 focus:ring-[#2C4A5E]/20"
-                                                placeholder="Describí la actuación, comunicación, acuerdo o situación registrada."
-                                            />
-                                        </div>
+                                        )}
                                     </CardContent>
                                 </Card>
+
+                                {tipoActa && configActa && hoja.datos && (
+                                    <Card className="overflow-hidden border-[#DCE3DF] !bg-white py-0 shadow-[0_18px_45px_rgba(23,50,71,0.07)]">
+                                        <CardHeader className="border-b border-[#E4E8E5] bg-[#F8FAF9] px-5 py-4 sm:px-6">
+                                            <CardTitle className="text-base text-[#2C4A5E]">
+                                                {configActa.esAuh
+                                                    ? `Planilla de AUH: ${configActa.label}`
+                                                    : configActa.label}
+                                            </CardTitle>
+                                            <p className="mt-1 text-xs text-[#697586]">
+                                                Completá los espacios resaltados
+                                                y firmá sobre cada línea. Se
+                                                guarda en Word junto con la
+                                                intervención.
+                                            </p>
+                                        </CardHeader>
+                                        <CardContent className="bg-[#EEF1EF] px-2 py-5 sm:px-5">
+                                            {configActa.esAuh &&
+                                            configActa.tipoAuh ? (
+                                                <AuhPlanillaHoja
+                                                    barrios={barrios}
+                                                    tipo={configActa.tipoAuh}
+                                                    datos={hoja.datos}
+                                                    firmas={hoja.firmas}
+                                                    errores={erroresActa}
+                                                    set={(campo, valor) =>
+                                                        setDatoActa(
+                                                            campo,
+                                                            valor,
+                                                        )
+                                                    }
+                                                    setResponsable={(
+                                                        campo,
+                                                        valor,
+                                                    ) =>
+                                                        setHoja((actual) =>
+                                                            actual.datos
+                                                                ? {
+                                                                      ...actual,
+                                                                      datos: {
+                                                                          ...actual.datos,
+                                                                          responsable:
+                                                                              {
+                                                                                  ...actual
+                                                                                      .datos
+                                                                                      .responsable,
+                                                                                  [campo]:
+                                                                                      valor,
+                                                                              },
+                                                                      },
+                                                                  }
+                                                                : actual,
+                                                        )
+                                                    }
+                                                    setMiembro={(
+                                                        index,
+                                                        campo,
+                                                        valor,
+                                                    ) =>
+                                                        setDatoActa(
+                                                            'grupo_familiar',
+                                                            hoja.datos!.grupo_familiar.map(
+                                                                (miembro, i) =>
+                                                                    i === index
+                                                                        ? {
+                                                                              ...miembro,
+                                                                              [campo]:
+                                                                                  valor,
+                                                                          }
+                                                                        : miembro,
+                                                            ),
+                                                        )
+                                                    }
+                                                    agregarMiembro={() =>
+                                                        setDatoActa(
+                                                            'grupo_familiar',
+                                                            [
+                                                                ...hoja.datos!
+                                                                    .grupo_familiar,
+                                                                {
+                                                                    ...miembroVacio,
+                                                                },
+                                                            ],
+                                                        )
+                                                    }
+                                                    quitarMiembro={(index) =>
+                                                        setDatoActa(
+                                                            'grupo_familiar',
+                                                            hoja.datos!.grupo_familiar.filter(
+                                                                (_, i) =>
+                                                                    i !== index,
+                                                            ),
+                                                        )
+                                                    }
+                                                    setFirma={setFirmaActa}
+                                                />
+                                            ) : (
+                                                <ActaHoja
+                                                    barrios={barrios}
+                                                    escuelas={escuelas}
+                                                    tipo={tipoActa as TipoActa}
+                                                    datos={hoja.datos}
+                                                    legajoNumero={
+                                                        legajo.numero_legajo
+                                                    }
+                                                    firmas={hoja.firmas}
+                                                    errores={erroresActa}
+                                                    set={(campo, valor) =>
+                                                        setDatoActa(
+                                                            campo,
+                                                            valor,
+                                                        )
+                                                    }
+                                                    setFirma={setFirmaActa}
+                                                />
+                                            )}
+                                        </CardContent>
+                                    </Card>
+                                )}
+
+                                {acta && (
+                                    <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#DCE3DF] bg-white px-5 py-4 shadow-[0_18px_45px_rgba(23,50,71,0.07)]">
+                                        <p className="text-sm text-[#2B2F36]">
+                                            Esta intervención tiene su{' '}
+                                            <strong>{acta.etiqueta}</strong>
+                                            {acta.requiere_firma &&
+                                                (acta.firmado
+                                                    ? ' (firmada)'
+                                                    : ' (sin firmar)')}
+                                            . Para un acta nueva, registrá otra
+                                            intervención.
+                                        </p>
+                                        <a
+                                            href={acta.descarga_url}
+                                            className="inline-flex items-center gap-2 rounded-lg border border-[#DCE3DF] bg-white px-3 py-2 text-xs font-semibold text-[#2C4A5E] transition hover:bg-[#F4F6F5]"
+                                        >
+                                            <FileDown size={14} />
+                                            Descargar acta
+                                        </a>
+                                    </div>
+                                )}
 
                                 {!editando &&
                                     legajosRelacionados.length > 0 && (
@@ -401,9 +756,9 @@ export default function IntervencionForm({
                                                             legajos
                                                         </CardTitle>
                                                         <p className="mt-1 text-xs leading-5 text-[#697586]">
-                                                            Se creará una copia
-                                                            independiente, sin
-                                                            sus firmas.
+                                                            {tipoActa
+                                                                ? 'Se registrará también en cada legajo elegido, con su propia copia del acta firmada.'
+                                                                : 'Se creará una copia independiente, sin sus firmas.'}
                                                         </p>
                                                     </div>
                                                 </div>
@@ -472,235 +827,247 @@ export default function IntervencionForm({
                                         </Card>
                                     )}
 
-                                <Card className="overflow-hidden border-[#DCE3DF] !bg-white py-0 shadow-[0_18px_45px_rgba(23,50,71,0.07)]">
-                                    <CardHeader className="border-b border-[#E4E8E5] bg-[#F8FAF9] px-5 py-4 sm:px-6">
-                                        <div className="flex items-start justify-between gap-4">
-                                            <div>
-                                                <CardTitle className="text-base text-[#2C4A5E]">
-                                                    Firmas digitales
-                                                </CardTitle>
-                                                <p className="mt-1 text-xs text-[#697586]">
-                                                    Dibujá con el dedo o cargá
-                                                    un archivo de firma.
-                                                </p>
-                                            </div>
-                                            <ShieldCheck
-                                                size={20}
-                                                className="text-[#6B8F71]"
-                                            />
-                                        </div>
-                                    </CardHeader>
-                                    <CardContent className="grid gap-5 px-5 py-5 sm:px-6 lg:grid-cols-2">
-                                        <section className="rounded-xl border border-[#DCE3DF] bg-[#FBFCFB] p-4 sm:p-5">
-                                            <div className="mb-4 flex items-start justify-between gap-3">
+                                {!tipoActa && (
+                                    <Card className="overflow-hidden border-[#DCE3DF] !bg-white py-0 shadow-[0_18px_45px_rgba(23,50,71,0.07)]">
+                                        <CardHeader className="border-b border-[#E4E8E5] bg-[#F8FAF9] px-5 py-4 sm:px-6">
+                                            <div className="flex items-start justify-between gap-4">
                                                 <div>
-                                                    <h3 className="text-sm font-semibold text-[#2C4A5E]">
-                                                        Responsable
-                                                    </h3>
-                                                    <p className="mt-1 text-xs leading-5 text-[#697586]">
-                                                        Obligatoria para
-                                                        registrar la
-                                                        intervención.
+                                                    <CardTitle className="text-base text-[#2C4A5E]">
+                                                        Firmas digitales
+                                                    </CardTitle>
+                                                    <p className="mt-1 text-xs text-[#697586]">
+                                                        Dibujá con el dedo o
+                                                        cargá un archivo de
+                                                        firma.
                                                     </p>
                                                 </div>
-                                                <span className="rounded-full bg-[#FCEBD7] px-2 py-1 text-[0.62rem] font-bold tracking-[0.08em] text-[#8A6420] uppercase">
-                                                    Obligatoria
-                                                </span>
-                                            </div>
-                                            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
-                                                <div>
-                                                    <Label htmlFor="firma_nombre">
-                                                        Nombre completo
-                                                    </Label>
-                                                    <input
-                                                        id="firma_nombre"
-                                                        value={
-                                                            data.firma_nombre
-                                                        }
-                                                        onChange={(event) =>
-                                                            setData(
-                                                                'firma_nombre',
-                                                                event.target
-                                                                    .value,
-                                                            )
-                                                        }
-                                                        className={inputClass}
-                                                        placeholder="Nombre y apellido"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <Label htmlFor="firma_aclaracion">
-                                                        Cargo / aclaración
-                                                    </Label>
-                                                    <input
-                                                        id="firma_aclaracion"
-                                                        value={
-                                                            data.firma_aclaracion
-                                                        }
-                                                        onChange={(event) =>
-                                                            setData(
-                                                                'firma_aclaracion',
-                                                                event.target
-                                                                    .value,
-                                                            )
-                                                        }
-                                                        className={inputClass}
-                                                        placeholder="Cargo o función"
-                                                    />
-                                                </div>
-                                            </div>
-                                            <div className="mt-4">
-                                                <FirmaDigital
-                                                    label="Firmar con touch o mouse"
-                                                    value={
-                                                        data.firma_responsable_dibujo
-                                                    }
-                                                    onChange={(value) =>
-                                                        setData(
-                                                            'firma_responsable_dibujo',
-                                                            value,
-                                                        )
-                                                    }
+                                                <ShieldCheck
+                                                    size={20}
+                                                    className="text-[#6B8F71]"
                                                 />
                                             </div>
-                                            <label className="mt-3 flex min-h-10 cursor-pointer items-center gap-2 rounded-lg border border-[#DCE3DF] bg-white px-3 text-xs font-semibold text-[#2C4A5E] transition hover:border-[#2C4A5E]/40 hover:bg-[#F5F8F6]">
-                                                <FileUp size={15} />
-                                                <span className="truncate">
-                                                    {data.firma_responsable_archivo
-                                                        ? data
-                                                              .firma_responsable_archivo
-                                                              .name
-                                                        : 'Subir archivo de firma'}
-                                                </span>
-                                                <input
-                                                    type="file"
-                                                    accept=".png,.jpg,.jpeg,.pdf"
-                                                    className="sr-only"
-                                                    onChange={(event) =>
-                                                        setData(
-                                                            'firma_responsable_archivo',
-                                                            event.target
-                                                                .files?.[0] ??
-                                                                null,
-                                                        )
-                                                    }
-                                                />
-                                            </label>
-                                            {intervencion?.tiene_firma_responsable && (
-                                                <a
-                                                    href={`/legajos/${legajo.id}/intervenciones/${intervencion.id}/firma/responsable/descargar`}
-                                                    className="mt-3 inline-block text-xs font-semibold text-[#267148] underline"
-                                                >
-                                                    Ver firma guardada
-                                                </a>
-                                            )}
-                                        </section>
+                                        </CardHeader>
+                                        <CardContent className="grid gap-5 px-5 py-5 sm:px-6 lg:grid-cols-2">
+                                            <section className="rounded-xl border border-[#DCE3DF] bg-[#FBFCFB] p-4 sm:p-5">
+                                                <div className="mb-4 flex items-start justify-between gap-3">
+                                                    <div>
+                                                        <h3 className="text-sm font-semibold text-[#2C4A5E]">
+                                                            Responsable
+                                                        </h3>
+                                                        <p className="mt-1 text-xs leading-5 text-[#697586]">
+                                                            Obligatoria para
+                                                            registrar la
+                                                            intervención.
+                                                        </p>
+                                                    </div>
+                                                    <span className="rounded-full bg-[#FCEBD7] px-2 py-1 text-[0.62rem] font-bold tracking-[0.08em] text-[#8A6420] uppercase">
+                                                        Obligatoria
+                                                    </span>
+                                                </div>
+                                                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+                                                    <div>
+                                                        <Label htmlFor="firma_nombre">
+                                                            Nombre completo
+                                                        </Label>
+                                                        <input
+                                                            id="firma_nombre"
+                                                            value={
+                                                                data.firma_nombre
+                                                            }
+                                                            onChange={(event) =>
+                                                                setData(
+                                                                    'firma_nombre',
+                                                                    event.target
+                                                                        .value,
+                                                                )
+                                                            }
+                                                            className={
+                                                                inputClass
+                                                            }
+                                                            placeholder="Nombre y apellido"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <Label htmlFor="firma_aclaracion">
+                                                            Cargo / aclaración
+                                                        </Label>
+                                                        <input
+                                                            id="firma_aclaracion"
+                                                            value={
+                                                                data.firma_aclaracion
+                                                            }
+                                                            onChange={(event) =>
+                                                                setData(
+                                                                    'firma_aclaracion',
+                                                                    event.target
+                                                                        .value,
+                                                                )
+                                                            }
+                                                            className={
+                                                                inputClass
+                                                            }
+                                                            placeholder="Cargo o función"
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div className="mt-4">
+                                                    <FirmaDigital
+                                                        label="Firmar con touch o mouse"
+                                                        value={
+                                                            data.firma_responsable_dibujo
+                                                        }
+                                                        onChange={(value) =>
+                                                            setData(
+                                                                'firma_responsable_dibujo',
+                                                                value,
+                                                            )
+                                                        }
+                                                    />
+                                                </div>
+                                                <label className="mt-3 flex min-h-10 cursor-pointer items-center gap-2 rounded-lg border border-[#DCE3DF] bg-white px-3 text-xs font-semibold text-[#2C4A5E] transition hover:border-[#2C4A5E]/40 hover:bg-[#F5F8F6]">
+                                                    <FileUp size={15} />
+                                                    <span className="truncate">
+                                                        {data.firma_responsable_archivo
+                                                            ? data
+                                                                  .firma_responsable_archivo
+                                                                  .name
+                                                            : 'Subir archivo de firma'}
+                                                    </span>
+                                                    <input
+                                                        type="file"
+                                                        accept=".png,.jpg,.jpeg,.pdf"
+                                                        className="sr-only"
+                                                        onChange={(event) =>
+                                                            setData(
+                                                                'firma_responsable_archivo',
+                                                                event.target
+                                                                    .files?.[0] ??
+                                                                    null,
+                                                            )
+                                                        }
+                                                    />
+                                                </label>
+                                                {intervencion?.tiene_firma_responsable && (
+                                                    <a
+                                                        href={`/legajos/${legajo.id}/intervenciones/${intervencion.id}/firma/responsable/descargar`}
+                                                        className="mt-3 inline-block text-xs font-semibold text-[#267148] underline"
+                                                    >
+                                                        Ver firma guardada
+                                                    </a>
+                                                )}
+                                            </section>
 
-                                        <section className="rounded-xl border border-[#DCE3DF] bg-[#FBFCFB] p-4 sm:p-5">
-                                            <div className="mb-4 flex items-start justify-between gap-3">
-                                                <div>
-                                                    <h3 className="text-sm font-semibold text-[#2C4A5E]">
-                                                        Entrevistado
-                                                    </h3>
-                                                    <p className="mt-1 text-xs leading-5 text-[#697586]">
-                                                        Se completa cuando la
-                                                        persona puede firmar.
-                                                    </p>
+                                            <section className="rounded-xl border border-[#DCE3DF] bg-[#FBFCFB] p-4 sm:p-5">
+                                                <div className="mb-4 flex items-start justify-between gap-3">
+                                                    <div>
+                                                        <h3 className="text-sm font-semibold text-[#2C4A5E]">
+                                                            Entrevistado
+                                                        </h3>
+                                                        <p className="mt-1 text-xs leading-5 text-[#697586]">
+                                                            Se completa cuando
+                                                            la persona puede
+                                                            firmar.
+                                                        </p>
+                                                    </div>
+                                                    <span className="rounded-full bg-[#EEF0ED] px-2 py-1 text-[0.62rem] font-bold tracking-[0.08em] text-[#697586] uppercase">
+                                                        Opcional
+                                                    </span>
                                                 </div>
-                                                <span className="rounded-full bg-[#EEF0ED] px-2 py-1 text-[0.62rem] font-bold tracking-[0.08em] text-[#697586] uppercase">
-                                                    Opcional
-                                                </span>
-                                            </div>
-                                            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
-                                                <div>
-                                                    <Label htmlFor="firma_entrevistado_nombre">
-                                                        Nombre completo
-                                                    </Label>
-                                                    <input
-                                                        id="firma_entrevistado_nombre"
+                                                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+                                                    <div>
+                                                        <Label htmlFor="firma_entrevistado_nombre">
+                                                            Nombre completo
+                                                        </Label>
+                                                        <input
+                                                            id="firma_entrevistado_nombre"
+                                                            value={
+                                                                data.firma_entrevistado_nombre
+                                                            }
+                                                            onChange={(event) =>
+                                                                setData(
+                                                                    'firma_entrevistado_nombre',
+                                                                    event.target
+                                                                        .value,
+                                                                )
+                                                            }
+                                                            className={
+                                                                inputClass
+                                                            }
+                                                            placeholder="Nombre y apellido"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <Label htmlFor="firma_entrevistado_aclaracion">
+                                                            Vínculo / aclaración
+                                                        </Label>
+                                                        <input
+                                                            id="firma_entrevistado_aclaracion"
+                                                            value={
+                                                                data.firma_entrevistado_aclaracion
+                                                            }
+                                                            onChange={(event) =>
+                                                                setData(
+                                                                    'firma_entrevistado_aclaracion',
+                                                                    event.target
+                                                                        .value,
+                                                                )
+                                                            }
+                                                            className={
+                                                                inputClass
+                                                            }
+                                                            placeholder="Entrevistado/a, familiar…"
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div className="mt-4">
+                                                    <FirmaDigital
+                                                        label="Firmar con touch o mouse"
                                                         value={
-                                                            data.firma_entrevistado_nombre
+                                                            data.firma_entrevistado_dibujo
                                                         }
-                                                        onChange={(event) =>
+                                                        onChange={(value) =>
                                                             setData(
-                                                                'firma_entrevistado_nombre',
-                                                                event.target
-                                                                    .value,
+                                                                'firma_entrevistado_dibujo',
+                                                                value,
                                                             )
                                                         }
-                                                        className={inputClass}
-                                                        placeholder="Nombre y apellido"
                                                     />
                                                 </div>
-                                                <div>
-                                                    <Label htmlFor="firma_entrevistado_aclaracion">
-                                                        Vínculo / aclaración
-                                                    </Label>
+                                                <label className="mt-3 flex min-h-10 cursor-pointer items-center gap-2 rounded-lg border border-[#DCE3DF] bg-white px-3 text-xs font-semibold text-[#2C4A5E] transition hover:border-[#2C4A5E]/40 hover:bg-[#F5F8F6]">
+                                                    <FileUp size={15} />
+                                                    <span className="truncate">
+                                                        {data.firma_entrevistado_archivo
+                                                            ? data
+                                                                  .firma_entrevistado_archivo
+                                                                  .name
+                                                            : 'Subir archivo de firma'}
+                                                    </span>
                                                     <input
-                                                        id="firma_entrevistado_aclaracion"
-                                                        value={
-                                                            data.firma_entrevistado_aclaracion
-                                                        }
+                                                        type="file"
+                                                        accept=".png,.jpg,.jpeg,.pdf"
+                                                        className="sr-only"
                                                         onChange={(event) =>
                                                             setData(
-                                                                'firma_entrevistado_aclaracion',
+                                                                'firma_entrevistado_archivo',
                                                                 event.target
-                                                                    .value,
+                                                                    .files?.[0] ??
+                                                                    null,
                                                             )
                                                         }
-                                                        className={inputClass}
-                                                        placeholder="Entrevistado/a, familiar…"
                                                     />
-                                                </div>
-                                            </div>
-                                            <div className="mt-4">
-                                                <FirmaDigital
-                                                    label="Firmar con touch o mouse"
-                                                    value={
-                                                        data.firma_entrevistado_dibujo
-                                                    }
-                                                    onChange={(value) =>
-                                                        setData(
-                                                            'firma_entrevistado_dibujo',
-                                                            value,
-                                                        )
-                                                    }
-                                                />
-                                            </div>
-                                            <label className="mt-3 flex min-h-10 cursor-pointer items-center gap-2 rounded-lg border border-[#DCE3DF] bg-white px-3 text-xs font-semibold text-[#2C4A5E] transition hover:border-[#2C4A5E]/40 hover:bg-[#F5F8F6]">
-                                                <FileUp size={15} />
-                                                <span className="truncate">
-                                                    {data.firma_entrevistado_archivo
-                                                        ? data
-                                                              .firma_entrevistado_archivo
-                                                              .name
-                                                        : 'Subir archivo de firma'}
-                                                </span>
-                                                <input
-                                                    type="file"
-                                                    accept=".png,.jpg,.jpeg,.pdf"
-                                                    className="sr-only"
-                                                    onChange={(event) =>
-                                                        setData(
-                                                            'firma_entrevistado_archivo',
-                                                            event.target
-                                                                .files?.[0] ??
-                                                                null,
-                                                        )
-                                                    }
-                                                />
-                                            </label>
-                                            {intervencion?.tiene_firma_entrevistado && (
-                                                <a
-                                                    href={`/legajos/${legajo.id}/intervenciones/${intervencion.id}/firma/entrevistado/descargar`}
-                                                    className="mt-3 inline-block text-xs font-semibold text-[#267148] underline"
-                                                >
-                                                    Ver firma guardada
-                                                </a>
-                                            )}
-                                        </section>
-                                    </CardContent>
-                                </Card>
+                                                </label>
+                                                {intervencion?.tiene_firma_entrevistado && (
+                                                    <a
+                                                        href={`/legajos/${legajo.id}/intervenciones/${intervencion.id}/firma/entrevistado/descargar`}
+                                                        className="mt-3 inline-block text-xs font-semibold text-[#267148] underline"
+                                                    >
+                                                        Ver firma guardada
+                                                    </a>
+                                                )}
+                                            </section>
+                                        </CardContent>
+                                    </Card>
+                                )}
                             </div>
 
                             <aside className="space-y-5 lg:sticky lg:top-5">

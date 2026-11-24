@@ -7,6 +7,26 @@
 @section('content')
     @php
         $homeDate = now()->translatedFormat('l d \\d\\e F');
+        $quickActaTimeline = collect(\App\Models\Acta::TIPOS)->map(function (array $config, string $tipo): array {
+            return [
+                'id' => $tipo,
+                'title' => $config['label'],
+                'date' => $config['grupo'],
+                'content' => $config['descripcion'],
+                'category' => $config['grupo'],
+                'icon' => match ($tipo) {
+                    'inicial' => 'book',
+                    'domiciliaria' => 'home',
+                    'telefonica' => 'phone',
+                    'citacion' => 'clipboard',
+                    'constancia' => 'school',
+                    'auh_nota_elevacion' => 'file',
+                    'auh_declaracion_jurada' => 'form',
+                    default => 'check',
+                },
+                'href' => route('actas.create', ['tipo' => $tipo]),
+            ];
+        })->values();
     @endphp
 
     <div class="home-page">
@@ -26,14 +46,17 @@
             <h1 class="sr-only">Inicio</h1>
 
             <section class="home-overview" aria-label="Acciones principales">
+                @if (Route::has('actas.create') && auth()->user()->tieneRol(...\App\Models\Acta::ROLES))
+                    <div id="home-quick-acta-orbital" class="home-quick-acta-orbital"></div>
+                @endif
                 <div class="home-overview-copy">
                     <p class="home-eyebrow">CENTRO DE TRABAJO</p>
                     <p class="home-overview-date"><i class="bi bi-calendar3" aria-hidden="true"></i> {{ ucfirst($homeDate) }}</p>
                 </div>
                 <div class="home-overview-actions">
-                        <button type="button" class="home-panel-launch" data-personal-panel-open>
-                            <span class="home-panel-launch-icon"><i class="bi bi-grid-1x2" aria-hidden="true"></i></span>
-                            <span><strong>Abrir mi panel</strong><small>Prioridades y agenda de los próximos 3 días</small></span>
+                    <button type="button" class="home-panel-launch" data-personal-panel-open>
+                        <span class="home-panel-launch-icon"><i class="bi bi-grid-1x2" aria-hidden="true"></i></span>
+                        <span><strong>Abrir mi panel</strong><small>Prioridades y agenda de los próximos 3 días</small></span>
                         <i class="bi bi-arrow-up-right" aria-hidden="true"></i>
                     </button>
                 </div>
@@ -183,12 +206,14 @@
         .home-toast button { align-items: center; background: transparent; border: 0; border-radius: 8px; color: currentColor; cursor: pointer; display: inline-flex; height: 28px; justify-content: center; opacity: 0.6; padding: 0; width: 28px; }
         .home-toast button:hover { background: rgba(38, 113, 72, 0.1); opacity: 1; }
         .home-toast--error { background: #fff1ef; border-color: #f1c5bf; color: #a8493c; }
-        .home-overview { align-items: center; animation: home-section-enter 560ms 80ms cubic-bezier(0.22, 1, 0.36, 1) both; border-bottom: 1px solid #dce7ed; display: flex; gap: 24px; justify-content: space-between; min-height: 182px; padding: 42px 0 36px; }
+        .home-overview { align-items: center; animation: home-section-enter 560ms 80ms cubic-bezier(0.22, 1, 0.36, 1) both; border-bottom: 1px solid #dce7ed; display: grid; gap: 24px; grid-template-areas: 'copy orbital actions'; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); min-height: 182px; padding: 32px 0 28px; }
         .home-overview-copy { min-width: 0; }
         .home-overview-date { align-items: center; color: #526873; display: flex; font-size: 0.9rem; gap: 8px; margin: 10px 0 0; text-transform: capitalize; }
         .home-overview-date i { color: #397461; }
         .home-eyebrow { color: #397461; font-size: 0.68rem; font-weight: 800; letter-spacing: 0.16em; margin: 0; text-transform: uppercase; }
-        .home-overview-actions { flex: 0 0 auto; }
+        .home-overview-copy { grid-area: copy; }
+        .home-overview-actions { display: flex; grid-area: actions; justify-content: flex-end; }
+        .home-quick-acta-orbital { grid-area: orbital; justify-self: center; max-width: 100%; width: 300px; }
         .home-panel-launch { align-items: center; background: #173247; border: 0; border-radius: 14px; box-shadow: 0 15px 28px rgba(23, 50, 71, 0.18); color: #fff; cursor: pointer; display: flex; gap: 12px; max-width: 290px; padding: 12px 14px; text-align: left; transition: box-shadow 160ms ease, transform 160ms ease; width: 100%; }
         .home-panel-launch:hover { box-shadow: 0 18px 35px rgba(23, 50, 71, 0.25); transform: translateY(-2px); }
         .home-panel-launch:focus-visible, .home-panel-close:focus-visible, .home-shortcut:focus-visible { outline: 3px solid rgba(107, 143, 113, 0.45); outline-offset: 3px; }
@@ -307,10 +332,15 @@
         .dark .home-control-summary span, .dark .home-obligation-copy small { color: #9bb2c1; }
         .dark .home-obligation { border-color: #294252; }
 
+        @media (max-width: 1000px) {
+            .home-overview { grid-template-areas: 'copy actions' 'orbital orbital'; grid-template-columns: minmax(0, 1fr) auto; }
+            .home-quick-acta-orbital { justify-self: center; }
+        }
         @media (max-width: 720px) {
             .home-container { padding-left: 16px; padding-right: 16px; }
-            .home-overview { align-items: stretch; flex-direction: column; gap: 22px; min-height: auto; padding-bottom: 28px; padding-top: 32px; }
+            .home-overview { align-items: stretch; gap: 22px; grid-template-areas: 'copy' 'orbital' 'actions'; grid-template-columns: minmax(0, 1fr); min-height: auto; padding-bottom: 28px; padding-top: 32px; }
             .home-overview-actions, .home-panel-launch { max-width: none; }
+            .home-quick-acta-orbital { justify-self: center; max-width: 100%; }
             .home-shortcut-grid { grid-template-columns: 1fr; }
             .home-daily-preview { margin-bottom: 56px; padding: 18px; }
             .home-preview-columns { grid-template-columns: 1fr; }
@@ -334,6 +364,10 @@
     </style>
 
     @push('scripts')
+        @vite('resources/js/home-orbital.tsx')
+        @if (Route::has('actas.create') && auth()->user()->tieneRol(...\App\Models\Acta::ROLES))
+            <script type="application/json" id="home-quick-acta-data">@json($quickActaTimeline)</script>
+        @endif
         <script>
             (() => {
                 const shell = document.querySelector('.home-page');

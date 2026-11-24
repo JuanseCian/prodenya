@@ -6,6 +6,7 @@ use App\Models\Auh;
 use App\Models\Legajo;
 use App\Models\Persona;
 use App\Models\VinculoFamiliar;
+use App\Support\Barrios;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
 use PhpOffice\PhpWord\TemplateProcessor;
@@ -28,12 +29,12 @@ class AuhPlanillaService
      * Datos con los que se abre el formulario: lo último guardado o, si no
      * hay nada, lo que se puede deducir del legajo.
      *
-     * @return array{datos: array<string, mixed>, personas: array<int, array<string, string>>}
+     * @return array{datos: array<string, mixed>, personas: array<int, array<string, string>>, barrios: array<int, string>}
      */
-    public function datosIniciales(Legajo $legajo, ?Auh $auh): array
+    public function datosIniciales(?Legajo $legajo, ?Auh $auh): array
     {
-        $legajo->loadMissing('persona.localidad.provincia', 'persona.barrio');
-        $nino = $legajo->persona;
+        $legajo?->loadMissing('persona.localidad.provincia', 'persona.barrio');
+        $nino = $legajo?->persona;
         $personas = $this->personasVinculadas($nino);
 
         $sugeridos = [
@@ -71,6 +72,7 @@ class AuhPlanillaService
         return [
             'datos' => $datos,
             'personas' => $personas->values()->all(),
+            'barrios' => Barrios::nombres(),
         ];
     }
 

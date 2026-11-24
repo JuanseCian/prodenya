@@ -22,6 +22,7 @@ declare module '@inertiajs/core' {
                 accessStatistics: boolean;
                 accessTasks: boolean;
                 accessAgenda: boolean;
+                accessActas: boolean;
             };
             notificaciones: NotificationItem[];
             notificacionesNoLeidas: number;

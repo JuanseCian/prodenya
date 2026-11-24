@@ -3,11 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\Barrio;
+use App\Models\Escuela;
 use App\Models\Localidad;
 use App\Models\Problematica;
 use App\Models\Provincia;
 use App\Models\Rol;
 use App\Models\TipoDocumento;
+use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
@@ -108,6 +110,14 @@ class AdminCatalogController extends Controller
         $definition = $this->definition($catalog);
         $model = $definition['model']::query()->findOrFail($item);
 
+        if ($definition['logical_delete'] ?? false) {
+            $model->update(['activo' => false]);
+
+            return redirect()
+                ->route('admin.catalogos.index', ['catalog' => $catalog])
+                ->with('success', "{$definition['singular']} desactivada correctamente.");
+        }
+
         try {
             $this->setAuditUser($model, 'deleted_by');
 
@@ -205,6 +215,30 @@ class AdminCatalogController extends Controller
                 'columns' => [['label' => 'Nombre', 'key' => 'nombre']],
                 'fields' => [['name' => 'nombre', 'label' => 'Nombre', 'type' => 'text', 'maxlength' => 190, 'required' => true]],
             ],
+            'escuelas' => [
+                'title' => 'Escuelas',
+                'singular' => 'Escuela',
+                'model' => Escuela::class,
+                'search' => ['nombre', 'orientadora', 'celular', 'mail'],
+                'with' => [],
+                'logical_delete' => true,
+                'columns' => [
+                    ['label' => 'Nombre', 'key' => 'nombre'],
+                    ['label' => 'Nivel/es', 'key' => 'niveles', 'type' => 'list'],
+                    ['label' => 'Orientadora', 'key' => 'orientadora'],
+                    ['label' => 'Celular', 'key' => 'celular'],
+                    ['label' => 'Mail', 'key' => 'mail'],
+                    ['label' => 'Estado', 'key' => 'activo', 'type' => 'boolean'],
+                ],
+                'fields' => [
+                    ['name' => 'nombre', 'label' => 'Nombre', 'type' => 'text', 'maxlength' => 190, 'required' => true, 'unique' => true],
+                    ['name' => 'niveles', 'label' => 'Nivel/es', 'type' => 'checkboxes', 'options' => Escuela::NIVELES],
+                    ['name' => 'orientadora', 'label' => 'Orientadora', 'type' => 'text', 'maxlength' => 190],
+                    ['name' => 'celular', 'label' => 'Celular', 'type' => 'text', 'maxlength' => 50],
+                    ['name' => 'mail', 'label' => 'Mail', 'type' => 'text', 'maxlength' => 190],
+                    ['name' => 'activo', 'label' => 'Activa', 'type' => 'checkbox'],
+                ],
+            ],
             default => abort(404),
         };
     }
@@ -237,6 +271,9 @@ class AdminCatalogController extends Controller
             if ($field['type'] === 'checkbox') {
                 $fieldRules[] = 'nullable';
                 $fieldRules[] = 'boolean';
+            } elseif ($field['type'] === 'checkboxes') {
+                $fieldRules[] = 'nullable';
+                $fieldRules[] = 'array';
             } else {
                 $fieldRules[] = ($field['required'] ?? false) ? 'required' : 'nullable';
                 $fieldRules[] = $field['type'] === 'select' ? 'integer' : 'string';
@@ -254,7 +291,19 @@ class AdminCatalogController extends Controller
                 $fieldRules[] = 'exists:localidades,id';
             }
 
-            if ($field['unique'] ?? false) {
+            if (($field['unique'] ?? false) && $catalog === 'escuelas' && $name === 'nombre') {
+                $fieldRules[] = function (string $attribute, mixed $value, Closure $fail) use ($model): void {
+                    $query = Escuela::query()->where('nombre_normalizado', Escuela::normalizarNombre((string) $value));
+
+                    if ($model) {
+                        $query->where('id', '!=', $model->getKey());
+                    }
+
+                    if ($query->exists()) {
+                        $fail('Ya existe una escuela con ese nombre.');
+                    }
+                };
+            } elseif ($field['unique'] ?? false) {
                 $unique = Rule::unique($table, $name);
 
                 if ($model) {
@@ -270,6 +319,10 @@ class AdminCatalogController extends Controller
             }
 
             $rules[$name] = $fieldRules;
+
+            if ($field['type'] === 'checkboxes') {
+                $rules[$name.'.*'] = ['string', Rule::in($field['options'] ?? [])];
+            }
         }
 
         return $rules;
@@ -280,6 +333,15 @@ class AdminCatalogController extends Controller
         foreach ($definition['fields'] as $field) {
             if ($field['type'] === 'checkbox') {
                 $datos[$field['name']] = $request->boolean($field['name']);
+            }
+        }
+
+        if ($definition['model'] === Escuela::class) {
+            $datos['nombre'] = trim((string) ($datos['nombre'] ?? ''));
+            $datos['niveles'] = array_values($datos['niveles'] ?? []);
+
+            if (! $request->has('activo')) {
+                unset($datos['activo']);
             }
         }
 

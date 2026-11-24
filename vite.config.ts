@@ -12,6 +12,7 @@ export default defineConfig({
             input: [
                 'resources/css/app.css',
                 'resources/js/app.tsx',
+                'resources/js/home-orbital.tsx',
                 'resources/js/auth/access.tsx',
                 'resources/js/site-header.tsx',
                 'resources/js/site-footer.tsx',

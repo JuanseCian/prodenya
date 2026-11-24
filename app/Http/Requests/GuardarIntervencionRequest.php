@@ -2,10 +2,13 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Acta;
+use App\Models\Intervencion;
 use App\Models\Legajo;
 use App\Models\Rol;
 use App\Models\TipoIntervencion;
 use App\Models\User;
+use App\Support\ValidacionActa;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
@@ -24,12 +27,88 @@ class GuardarIntervencionRequest extends FormRequest
             && $this->user()->puedeVerSeccionLegajo('intervenciones');
     }
 
+    private ?string $tipoActaResuelto = null;
+
+    private bool $tipoActaCalculado = false;
+
+    /**
+     * Tipo de acta que genera el tipo de intervención elegido, si genera alguno.
+     */
+    public function tipoActa(): ?string
+    {
+        if (! $this->tipoActaCalculado) {
+            $nombre = TipoIntervencion::query()->whereKey($this->integer('tipo_intervencion_id'))->value('nombre');
+            $this->tipoActaResuelto = Acta::tipoDesdeIntervencion($nombre);
+            $this->tipoActaCalculado = true;
+        }
+
+        return $this->tipoActaResuelto;
+    }
+
+    /**
+     * Al crear una intervención de tipo acta se completa la hoja del acta, que reemplaza al detalle y las firmas.
+     */
+    public function generaActa(): bool
+    {
+        return $this->isMethod('post') && $this->tipoActa() !== null;
+    }
+
+    private function tipoActualId(): ?int
+    {
+        $intervencion = $this->route('intervencion');
+
+        return $intervencion instanceof Intervencion ? (int) $intervencion->tipo_intervencion_id : null;
+    }
+
+    private function intervencionConActa(): bool
+    {
+        $intervencion = $this->route('intervencion');
+
+        return $intervencion instanceof Intervencion && $intervencion->acta()->exists();
+    }
+
+    protected function prepareForValidation(): void
+    {
+        if ($this->generaActa() && is_array($this->input('acta'))) {
+            $this->merge(['acta' => ValidacionActa::prepararFirmas($this->tipoActa(), $this->input('acta'))]);
+        }
+    }
+
     public function rules(): array
+    {
+        $reglas = $this->reglasBase();
+
+        if ($this->generaActa()) {
+            $reglas['detalle'] = ['nullable', 'string', 'max:10000'];
+            $reglas['firma_nombre'] = ['nullable', 'string', 'max:150'];
+            $reglas['firma_aclaracion'] = ['nullable', 'string', 'max:150'];
+            $reglas['acta'] = ['nullable', 'array'];
+            $reglas += ValidacionActa::reglas($this->tipoActa(), 'acta.');
+        }
+
+        if ($this->isMethod('put') && $this->intervencionConActa()) {
+            $reglas['firma_nombre'] = ['nullable', 'string', 'max:150'];
+            $reglas['firma_aclaracion'] = ['nullable', 'string', 'max:150'];
+        }
+
+        return $reglas;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function reglasBase(): array
     {
         return [
             'fecha_intervencion' => ['required', 'date', 'before_or_equal:today', 'after:2000-01-01'],
             'hora_intervencion' => ['required', 'date_format:H:i'],
-            'tipo_intervencion_id' => ['required', Rule::exists(TipoIntervencion::class, 'id')->where('activo', true)],
+            // Solo tipos visibles; al editar se acepta además el tipo que ya tenía (aunque esté oculto).
+            'tipo_intervencion_id' => [
+                'required',
+                Rule::exists(TipoIntervencion::class, 'id')->where(fn ($query) => $query
+                    ->where('activo', true)
+                    ->when($this->tipoActualId(), fn ($actual, int $id) => $actual->orWhere('id', $id))),
+            ],
             'profesional_id' => [
                 'required',
                 Rule::exists(User::class, 'id')
@@ -59,7 +138,7 @@ class GuardarIntervencionRequest extends FormRequest
 
     public function messages(): array
     {
-        return [
+        return ($this->generaActa() ? ValidacionActa::mensajes($this->tipoActa(), 'acta.') : []) + [
             'fecha_intervencion.required' => 'Ingresá la fecha de la intervención.',
             'fecha_intervencion.date' => 'La fecha de la intervención no es válida.',
             'fecha_intervencion.before_or_equal' => 'La fecha de la intervención no puede ser posterior a hoy.',
@@ -95,6 +174,16 @@ class GuardarIntervencionRequest extends FormRequest
     protected function withValidator(Validator $validator): void
     {
         $validator->after(function (Validator $validator) {
+            if ($this->isMethod('put')) {
+                $this->validarTipoAlEditar($validator);
+            }
+
+            if ($this->generaActa()) {
+                ValidacionActa::validarFirmas($validator, $this->tipoActa(), (array) $this->input('acta', []), 'acta.');
+
+                return;
+            }
+
             if ($this->isMethod('post') && ! $this->filled('firma_responsable_dibujo') && ! $this->hasFile('firma_responsable_archivo')) {
                 $validator->errors()->add('firma_responsable_digital', 'Dibujá la firma o subí un archivo de firma.');
             }
@@ -120,5 +209,25 @@ class GuardarIntervencionRequest extends FormRequest
                 $validator->errors()->add('firma_entrevistado_digital', 'Dibujá la firma del entrevistado o subí un archivo.');
             }
         });
+    }
+
+    /**
+     * Una intervención con acta conserva su tipo, y un acta solo se genera al registrar una intervención nueva.
+     */
+    private function validarTipoAlEditar(Validator $validator): void
+    {
+        $intervencion = $this->route('intervencion');
+
+        if (! $intervencion instanceof Intervencion) {
+            return;
+        }
+
+        $cambiaTipo = (int) $this->input('tipo_intervencion_id') !== (int) $intervencion->tipo_intervencion_id;
+
+        if ($this->intervencionConActa() && $cambiaTipo) {
+            $validator->errors()->add('tipo_intervencion_id', 'Esta intervención tiene un acta: no se puede cambiar su tipo.');
+        } elseif (! $this->intervencionConActa() && $this->tipoActa() !== null) {
+            $validator->errors()->add('tipo_intervencion_id', 'Para hacer un acta, registrá una nueva intervención de ese tipo.');
+        }
     }
 }

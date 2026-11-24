@@ -55,6 +55,7 @@ export interface PersonaVinculada extends Responsable {
 export interface FormularioPlanillas {
     datos: DatosPlanilla;
     personas: PersonaVinculada[];
+    barrios?: string[];
 }
 
 interface Props {
@@ -406,6 +407,7 @@ export default function AuhPlanillaDialog({
                     onClick={alTocarFuera}
                 >
                     <AuhPlanillaHoja
+                        barrios={formulario.barrios}
                         tipo={tipo}
                         datos={datos}
                         firmas={firmas}

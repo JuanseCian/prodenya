@@ -3,12 +3,12 @@
 namespace App\Http\Requests;
 
 use App\Models\Auh;
-use Illuminate\Support\Str;
+use App\Support\FirmaPng;
 use Illuminate\Validation\Validator;
 
 class FirmarAuhPlanillaRequest extends GenerarAuhPlanillaRequest
 {
-    private const PREFIJO_PNG = 'data:image/png;base64,';
+    private const PREFIJO_PNG = FirmaPng::PREFIJO;
 
     /**
      * La aclaración del responsable o del solicitante a cobrar es su propio
@@ -110,14 +110,6 @@ class FirmarAuhPlanillaRequest extends GenerarAuhPlanillaRequest
 
     private function imagenPng(string $dibujo): ?string
     {
-        $contenido = base64_decode(Str::after($dibujo, self::PREFIJO_PNG), true);
-
-        if ($contenido === false || ! str_starts_with($contenido, "\x89PNG\r\n\x1a\n")) {
-            return null;
-        }
-
-        $dimensiones = @getimagesizefromstring($contenido);
-
-        return $dimensiones !== false && $dimensiones[2] === IMAGETYPE_PNG ? $contenido : null;
+        return FirmaPng::decodificar($dibujo);
     }
 }

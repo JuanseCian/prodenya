@@ -157,7 +157,13 @@ class EstadisticasController extends Controller
                     ->where('estado_cuenta', User::ESTADO_APROBADO)
                     ->orderBy('name')
                     ->get(['id', 'name', 'profesion']),
-                'tiposIntervencion' => TipoIntervencion::query()->where('activo', true)->orderBy('nombre')->get(['id', 'nombre']),
+                // También los tipos ocultos que tienen intervenciones, para poder filtrar el historial.
+                'tiposIntervencion' => TipoIntervencion::query()
+                    ->where(fn ($query) => $query
+                        ->where('activo', true)
+                        ->orWhereIn('id', Intervencion::query()->select('tipo_intervencion_id')->distinct()))
+                    ->orderBy('nombre')
+                    ->get(['id', 'nombre']),
                 'generos' => [
                     ['value' => 'M', 'label' => 'Masculino'],
                     ['value' => 'F', 'label' => 'Femenino'],

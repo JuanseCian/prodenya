@@ -88,6 +88,8 @@
                                             <span class="inline-flex rounded-full px-2.5 py-1 text-xs font-bold {{ $value ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500' }}">
                                                 {{ $value ? 'Activo' : 'Inactivo' }}
                                             </span>
+                                        @elseif (($column['type'] ?? null) === 'list')
+                                            <span>{{ collect($value ?? [])->implode(' / ') ?: '—' }}</span>
                                         @else
                                             <span class="{{ $loop->first ? 'font-bold text-slate-800' : '' }}">{{ $value ?: '—' }}</span>
                                         @endif
@@ -98,11 +100,11 @@
                                         <a href="{{ route('admin.catalogos.edit', ['catalog' => $catalog, 'item' => $item->getKey()]) }}" class="catalog-action-edit inline-flex h-9 w-9 items-center justify-center rounded-lg border transition" title="Editar">
                                             <i class="bi bi-pencil"></i>
                                         </a>
-                                        <form method="POST" action="{{ route('admin.catalogos.destroy', ['catalog' => $catalog, 'item' => $item->getKey()]) }}" onsubmit="return confirm('¿Eliminar este registro?');">
+                                        <form method="POST" action="{{ route('admin.catalogos.destroy', ['catalog' => $catalog, 'item' => $item->getKey()]) }}" onsubmit="return confirm('{{ ($definition['logical_delete'] ?? false) ? '¿Desactivar este registro?' : '¿Eliminar este registro?' }}');">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="catalog-action-delete inline-flex h-9 w-9 items-center justify-center rounded-lg border transition" title="Eliminar">
-                                                <i class="bi bi-trash3"></i>
+                                            <button type="submit" class="catalog-action-delete inline-flex h-9 w-9 items-center justify-center rounded-lg border transition" title="{{ ($definition['logical_delete'] ?? false) ? 'Desactivar' : 'Eliminar' }}">
+                                                <i class="bi bi-{{ ($definition['logical_delete'] ?? false) ? 'slash-circle' : 'trash3' }}"></i>
                                             </button>
                                         </form>
                                     </div>

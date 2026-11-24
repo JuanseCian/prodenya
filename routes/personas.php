@@ -69,6 +69,8 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware('rol:admin,coordinador,profesional,administrativo')->group(function () {
         Route::post('/legajos/{legajo}/vinculos', [GrupoFamiliarController::class, 'store'])
             ->name('legajos.vinculos.store')->whereNumber('legajo');
+        Route::patch('/legajos/{legajo}/vinculos/{vinculo}/familiar', [GrupoFamiliarController::class, 'actualizarFamiliar'])
+            ->name('legajos.vinculos.familiar')->whereNumber(['legajo', 'vinculo']);
         Route::delete('/legajos/{legajo}/vinculos/{vinculo}', [GrupoFamiliarController::class, 'destroy'])
             ->name('legajos.vinculos.destroy')->whereNumber(['legajo', 'vinculo']);
     });

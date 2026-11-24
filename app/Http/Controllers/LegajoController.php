@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StorePersonaRequest;
 use App\Http\Requests\UpdateLegajoRequest;
+use App\Models\Acta;
 use App\Models\Auh;
 use App\Models\AuhArchivo;
 use App\Models\CoberturaSalud;
@@ -20,6 +21,7 @@ use App\Services\AuhPlanillaService;
 use App\Services\CoberturaSaludService;
 use App\Services\LegajoEstadisticasService;
 use App\Services\LegajoWordExportService;
+use App\Support\Barrios;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -215,6 +217,7 @@ class LegajoController extends Controller
             'intervenciones.tipo',
             'intervenciones.profesional',
             'intervenciones.creadoPor',
+            'intervenciones.acta',
             'derivaciones.destinatario',
             'derivaciones.solicitante',
             'responsablesActivos.usuario.rol',
@@ -258,11 +261,10 @@ class LegajoController extends Controller
             ? $coberturaSaludService->historial($legajo->persona)
             : collect();
         $vinculos = [];
-        $personasDisponibles = [];
 
         if ($puedeVerVinculos) {
             $vinculos = VinculoFamiliar::query()
-                ->with(['grupo', 'persona.legajos', 'personaRelacionada.legajos'])
+                ->with(['grupo', 'persona.legajos', 'persona.barrio', 'personaRelacionada.legajos', 'personaRelacionada.barrio'])
                 ->whereNull('desvinculado_en')
                 ->where(function ($query) use ($legajo) {
                     $query->where('persona_id', $legajo->persona_id)
@@ -274,36 +276,41 @@ class LegajoController extends Controller
                     $otraPersona = $vinculo->persona_id === $legajo->persona_id
                         ? $vinculo->personaRelacionada
                         : $vinculo->persona;
-                    $otroLegajo = $otraPersona?->legajos->first();
+
+                    if (! $otraPersona) {
+                        return null;
+                    }
+
+                    $otroLegajo = $otraPersona->legajos->first();
 
                     return [
                         'id' => $vinculo->id,
                         'tipo' => $vinculo->tipo_vinculo,
                         'grupo' => $vinculo->grupo?->nombre,
-                        'persona' => $otroLegajo ? [
-                            'id' => $otroLegajo->id,
+                        'persona' => [
+                            'id' => $otraPersona->id,
                             'nombre' => "{$otraPersona->apellido}, {$otraPersona->nombre}",
-                            'numero_legajo' => $otroLegajo->numero_legajo,
-                        ] : null,
+                            'apellido' => $otraPersona->apellido,
+                            'nombre_propio' => $otraPersona->nombre,
+                            'dni' => $otraPersona->dni,
+                            'fecha_nacimiento' => $otraPersona->fecha_nacimiento?->toDateString(),
+                            'edad' => $otraPersona->edad,
+                            'genero' => $otraPersona->genero,
+                            'telefono' => $otraPersona->telefono,
+                            'direccion_calle' => $otraPersona->direccion_calle,
+                            'direccion_numero' => $otraPersona->direccion_numero,
+                            'barrio' => $otraPersona->barrio?->nombre,
+                            'observaciones' => $otraPersona->observaciones,
+                            // Sin legajo propio: familiar registrado externamente.
+                            'externo' => $otroLegajo === null,
+                            'legajo' => $otroLegajo ? [
+                                'id' => $otroLegajo->id,
+                                'numero_legajo' => $otroLegajo->numero_legajo,
+                            ] : null,
+                        ],
                     ];
                 })
-                ->filter(fn (array $vinculo) => $vinculo['persona'] !== null)
-                ->values()
-                ->all();
-
-            $personasDisponibles = Persona::query()
-                ->where('activo', true)
-                ->whereHas('legajos')
-                ->where('id', '!=', $legajo->persona_id)
-                ->with('legajos')
-                ->orderBy('apellido')
-                ->orderBy('nombre')
-                ->get(['id', 'nombre', 'apellido'])
-                ->map(fn (Persona $persona) => [
-                    'id' => $persona->id,
-                    'nombre' => "{$persona->apellido}, {$persona->nombre}",
-                    'numero_legajo' => $persona->legajos->first()?->numero_legajo,
-                ])
+                ->filter()
                 ->values()
                 ->all();
         }
@@ -399,12 +406,19 @@ class LegajoController extends Controller
             'responsablesDisponibles' => $puedeGestionarDerivaciones ? $this->responsablesActivos() : [],
             'puedeVerVinculos' => $puedeVerVinculos,
             'vinculos' => $vinculos,
-            'personasDisponibles' => $personasDisponibles,
+            'tiposVinculo' => $puedeVerVinculos ? VinculoFamiliar::TIPOS : [],
+            'barrios' => $puedeVerVinculos ? Barrios::nombres() : [],
             'intervenciones' => $secciones['intervenciones'] ? $legajo->intervenciones->map(fn (Intervencion $intervencion) => [
                 'id' => $intervencion->id,
                 'fecha' => $intervencion->fecha_intervencion?->format('d/m/Y'),
                 'hora' => $intervencion->hora_intervencion,
                 'tipo' => $intervencion->tipo?->nombre,
+                'acta' => $intervencion->acta ? [
+                    'etiqueta' => $intervencion->acta->etiqueta(),
+                    'firmado' => $intervencion->acta->firmado,
+                    'requiere_firma' => Acta::firmantesDe($intervencion->acta->tipo) !== [],
+                    'descarga_url' => route('actas.descargar', $intervencion->acta),
+                ] : null,
                 'detalle' => $intervencion->detalle,
                 'profesional' => $intervencion->profesional?->name,
                 'creado_por' => $intervencion->creadoPor?->name,
@@ -622,7 +636,7 @@ class LegajoController extends Controller
      *     documentacion: array<int, string>,
      *     tipo_otra: string,
      *     firmantes: array<string, array<string, string>>,
-     *     formulario: array{datos: array<string, mixed>, personas: array<int, array<string, string>>},
+     *     formulario: array{datos: array<string, mixed>, personas: array<int, array<string, string>>, barrios: array<int, string>},
      *     archivos: array<int, array<string, mixed>>
      * }
      */

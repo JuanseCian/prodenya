@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Acta;
 use Illuminate\Http\Request;
 use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Facades\DB;
@@ -20,7 +21,7 @@ class HandleInertiaRequests extends Middleware
 
     public function rootView(Request $request)
     {
-        if ($request->routeIs('legajos.*', 'mayores18.*', 'mailbox.index', 'comunicacion.*', 'tareas.*', 'agenda.*')) {
+        if ($request->routeIs('legajos.*', 'mayores18.*', 'mailbox.index', 'comunicacion.*', 'tareas.*', 'agenda.*', 'actas.*')) {
             return 'layouts.frontend';
         }
 
@@ -73,6 +74,7 @@ class HandleInertiaRequests extends Middleware
                     'profesional',
                     'administrativo',
                 ) ?? false,
+                'accessActas' => $user?->tieneRol(...Acta::ROLES) ?? false,
                 'accessAgenda' => $user?->tieneRol(
                     'admin',
                     'coordinador',

@@ -6,6 +6,7 @@ use App\Models\Concerns\Auditable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Intervencion extends Model
 {
@@ -45,6 +46,11 @@ class Intervencion extends Model
             'firmada_en' => 'datetime',
             'firma_entrevistado_en' => 'datetime',
         ];
+    }
+
+    public function acta(): HasOne
+    {
+        return $this->hasOne(Acta::class, 'intervencion_id');
     }
 
     public function legajo(): BelongsTo

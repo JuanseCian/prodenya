@@ -3,6 +3,7 @@ import {
     BarChart3,
     CalendarDays,
     ClipboardCheck,
+    FileText,
     FolderOpen,
     Home,
     LayoutGrid,
@@ -24,6 +25,7 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { estadisticas as estadisticasRoute, home } from '@/routes';
+import actas from '@/routes/actas';
 import agenda from '@/routes/agenda';
 import mailbox from '@/routes/mailbox';
 import tareas from '@/routes/tareas';
@@ -70,6 +72,9 @@ export function AppSidebar() {
                       icon: CalendarDays,
                   },
               ]
+            : []),
+        ...(page.props.can?.accessActas
+            ? [{ title: 'Actas', href: actas.index().url, icon: FileText }]
             : []),
         ...(page.props.can?.accessMailbox
             ? [{ title: 'Mailbox', href: mailbox.index().url, icon: Mail }]

@@ -51,6 +51,20 @@
         </x-inertia::head>
     </head>
     <body class="font-sans antialiased">
+        <div
+            id="initial-app-loader"
+            role="status"
+            aria-live="polite"
+            aria-label="Cargando aplicacion"
+            style="align-items:center;background:#f3f7f5;color:#39795b;display:flex;inset:0;justify-content:center;position:fixed;z-index:99999;"
+        >
+            <div style="align-items:center;display:flex;flex-direction:column;gap:14px;">
+                <div style="align-items:center;border:1px solid rgba(57,121,91,.2);border-radius:16px;display:flex;height:76px;justify-content:center;padding:14px;width:76px;">
+                    <img src="{{ asset('assets/img/SN.png') }}" alt="" style="height:100%;object-fit:contain;width:100%;">
+                </div>
+                <span style="font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;">PRODENYA</span>
+            </div>
+        </div>
         <x-inertia::app />
     </body>
 </html>

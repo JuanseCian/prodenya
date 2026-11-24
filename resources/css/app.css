@@ -8,6 +8,41 @@
     }
 }
 
+@keyframes skeleton-shimmer {
+    from {
+        background-position: 200% 0;
+    }
+
+    to {
+        background-position: -200% 0;
+    }
+}
+
+@keyframes loading-progress {
+    0% {
+        transform: translateX(-120%);
+    }
+
+    50% {
+        transform: translateX(140%);
+    }
+
+    100% {
+        transform: translateX(360%);
+    }
+}
+
+.skeleton-surface {
+    background: linear-gradient(
+        90deg,
+        color-mix(in srgb, var(--muted) 86%, transparent) 20%,
+        color-mix(in srgb, var(--surface) 82%, var(--muted)) 45%,
+        color-mix(in srgb, var(--muted) 86%, transparent) 70%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.45s ease-in-out infinite;
+}
+
 @source '../views';
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 
@@ -490,6 +525,57 @@
     transform-origin: top center;
 }
 
+@keyframes legajo-panel-enter-next {
+    from {
+        opacity: 0;
+        transform: translate3d(24px, 0, 0);
+        filter: blur(2px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+        filter: blur(0);
+    }
+}
+
+@keyframes legajo-panel-enter-previous {
+    from {
+        opacity: 0;
+        transform: translate3d(-24px, 0, 0);
+        filter: blur(2px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+        filter: blur(0);
+    }
+}
+
+.legajo-panel-enter-next,
+.legajo-panel-enter-previous {
+    animation-duration: 360ms;
+    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+    animation-fill-mode: both;
+    will-change: opacity, transform, filter;
+}
+
+.legajo-panel-enter-next {
+    animation-name: legajo-panel-enter-next;
+}
+
+.legajo-panel-enter-previous {
+    animation-name: legajo-panel-enter-previous;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .legajo-panel-enter-next,
+    .legajo-panel-enter-previous {
+        animation: none;
+    }
+}
+
 @keyframes prodenya-toast-in {
     0% {
         opacity: 0;
@@ -603,6 +689,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+    .skeleton-surface,
     #nprogress .peg,
     .prodenya-page-transition,
     .prodenya-toast-motion,

@@ -824,6 +824,12 @@
                                 Mayores de 18
                             </a>
                         @endif
+                        @if (Route::has('actas.index') && auth()->user()->tieneRol(...\App\Models\Acta::ROLES))
+                            <a href="{{ route('actas.index') }}" class="site-sidebar-link {{ request()->routeIs('actas.*') ? 'is-active' : '' }}" @if (request()->routeIs('actas.*')) aria-current="page" @endif>
+                                <i class="bi bi-file-earmark-text" aria-hidden="true"></i>
+                                Actas
+                            </a>
+                        @endif
                         @if (Route::has('tareas.index') && auth()->user()->tieneRol('admin', 'operador', 'oficios', 'coordinador', 'profesional', 'administrativo'))
                             <a href="{{ route('tareas.index') }}" class="site-sidebar-link {{ request()->routeIs('tareas.*') ? 'is-active' : '' }}" @if (request()->routeIs('tareas.*')) aria-current="page" @endif>
                                 <i class="bi bi-check2-square" aria-hidden="true"></i>

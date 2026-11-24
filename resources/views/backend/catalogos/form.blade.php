@@ -55,6 +55,19 @@
                                 {{ $field['label'] }}
                             </label>
                         </div>
+                    @elseif ($field['type'] === 'checkboxes')
+                        <div>
+                            <span class="mb-2 block text-sm font-bold text-slate-700">{{ $field['label'] }}</span>
+                            <div class="grid gap-2 sm:grid-cols-3">
+                                @foreach ($field['options'] ?? [] as $option)
+                                    <label class="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700">
+                                        <input type="checkbox" name="{{ $field['name'] }}[]" value="{{ $option }}" @checked(in_array($option, (array) $fieldValue, true)) class="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                                        {{ $option }}
+                                    </label>
+                                @endforeach
+                            </div>
+                            @error($field['name'])<p class="mt-1.5 text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror
+                        </div>
                     @elseif ($field['type'] === 'select')
                         <div>
                             <label for="{{ $field['name'] }}" class="mb-2 block text-sm font-bold text-slate-700">{{ $field['label'] }} @if ($field['required'] ?? false)<span class="text-rose-500">*</span>@endif</label>

@@ -366,6 +366,10 @@
                     <i class="bi bi-journal-medical w-5"></i>
                     <span>Problemáticas</span>
                 </a>
+                <a href="{{ route('admin.catalogos.index', ['catalog' => 'escuelas']) }}" title="Escuelas" class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-slate-300 transition hover:bg-slate-800 hover:text-white {{ request()->route('catalog') === 'escuelas' ? 'bg-slate-800 text-white' : '' }}">
+                    <i class="bi bi-building w-5"></i>
+                    <span>Escuelas</span>
+                </a>
                 @endif
             </nav>
 

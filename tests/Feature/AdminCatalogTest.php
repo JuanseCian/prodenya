@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Escuela;
 use App\Models\Provincia;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -49,9 +50,41 @@ test('non administrators cannot access catalog management', function () {
 test('all administrative catalogs are available', function () {
     $admin = User::factory()->create(['rol_id' => 1]);
 
-    foreach (['roles', 'provincias', 'localidades', 'barrios', 'tipos-documento', 'problematicas'] as $catalog) {
+    foreach (['roles', 'provincias', 'localidades', 'barrios', 'tipos-documento', 'problematicas', 'escuelas'] as $catalog) {
         $this->actingAs($admin)
             ->get(route('admin.catalogos.index', ['catalog' => $catalog]))
             ->assertOk();
     }
+});
+
+test('administrators can create and logically deactivate schools', function () {
+    $admin = User::factory()->create(['rol_id' => 1]);
+
+    $this->actingAs($admin)
+        ->post(route('admin.catalogos.store', ['catalog' => 'escuelas']), [
+            'nombre' => ' Escuela de Prueba ',
+            'niveles' => ['Inicial', 'Primario'],
+            'orientadora' => 'Orientadora de prueba',
+            'celular' => '3364000000',
+            'mail' => 'escuela@example.test',
+        ])
+        ->assertRedirect();
+
+    $escuela = Escuela::query()->where('nombre_normalizado', 'escuela de prueba')->firstOrFail();
+
+    expect($escuela->nombre)->toBe('Escuela de Prueba')
+        ->and($escuela->niveles)->toBe(['Inicial', 'Primario'])
+        ->and($escuela->activo)->toBeTrue();
+
+    $this->actingAs($admin)
+        ->post(route('admin.catalogos.store', ['catalog' => 'escuelas']), [
+            'nombre' => 'ESCUÉLA   DE PRUEBA',
+        ])
+        ->assertSessionHasErrors('nombre');
+
+    $this->actingAs($admin)
+        ->delete(route('admin.catalogos.destroy', ['catalog' => 'escuelas', 'item' => $escuela->id]))
+        ->assertRedirect();
+
+    expect($escuela->fresh()->activo)->toBeFalse();
 });

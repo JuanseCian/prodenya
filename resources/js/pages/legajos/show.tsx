@@ -5,11 +5,12 @@ import {
     CalendarDays,
     Check,
     CheckCircle2,
+    ChevronLeft,
+    ChevronRight,
     Clock3,
     Copy,
     FileDown,
     FileText,
-    Link2,
     Lock,
     LockOpen,
     MapPin,
@@ -17,9 +18,7 @@ import {
     Pencil,
     Plus,
     Send,
-    Unlink,
     UserRound,
-    UsersRound,
     XCircle,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
@@ -40,6 +39,8 @@ import {
 } from '@/components/detalle';
 import MedidasAbrigoModule from '@/components/medidas-abrigo-module';
 import type { MedidaAbrigoResumen } from '@/components/medidas-abrigo-module';
+import RedFamiliarModule from '@/components/red-familiar-module';
+import type { VinculoFamiliar } from '@/components/red-familiar-module';
 import ResumenErrores from '@/components/resumen-errores';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -98,23 +99,12 @@ interface Intervencion {
     firma_entrevistado_nombre: string | null;
     firma_entrevistado_aclaracion: string | null;
     tiene_firma_entrevistado: boolean;
-}
-
-interface Vinculo {
-    id: number;
-    tipo: string;
-    grupo: string | null;
-    persona: {
-        id: number;
-        nombre: string;
-        numero_legajo: string | null;
-    };
-}
-
-interface PersonaDisponible {
-    id: number;
-    nombre: string;
-    numero_legajo: string | null;
+    acta: {
+        etiqueta: string;
+        firmado: boolean;
+        requiere_firma: boolean;
+        descarga_url: string;
+    } | null;
 }
 
 interface ResponsableDisponible {
@@ -182,8 +172,9 @@ interface Props {
     responsables?: Responsable[];
     derivaciones?: Derivacion[];
     puedeVerVinculos?: boolean;
-    vinculos?: Vinculo[];
-    personasDisponibles?: PersonaDisponible[];
+    vinculos?: VinculoFamiliar[];
+    tiposVinculo?: string[];
+    barrios?: string[];
     problematicasDisponibles?: ProblematicaOpcion[];
     problematicasSeleccionadas?: number[];
 }
@@ -233,7 +224,8 @@ export default function LegajoShow({
     derivaciones = [],
     puedeVerVinculos = false,
     vinculos = [],
-    personasDisponibles = [],
+    tiposVinculo = [],
+    barrios = [],
     problematicasDisponibles = [],
     problematicasSeleccionadas = [],
 }: Props) {
@@ -244,6 +236,10 @@ export default function LegajoShow({
     const [derivacionesOpen, setDerivacionesOpen] = useState(false);
     const [filtroTipoIntervencion, setFiltroTipoIntervencion] =
         useState('todas');
+    const [seccionActiva, setSeccionActiva] = useState('resumen');
+    const [direccionTransicion, setDireccionTransicion] = useState<
+        'next' | 'previous'
+    >('next');
     const tiposIntervencionDisponibles = useMemo(
         () =>
             Array.from(
@@ -265,10 +261,6 @@ export default function LegajoShow({
                   ),
         [intervenciones, filtroTipoIntervencion],
     );
-    const vinculoForm = useForm({
-        persona_relacionada_id: '',
-        tipo_vinculo: 'hermano/a',
-    });
     const derivacionForm = useForm({
         destinatario_id: '',
         modo: 'adicional',
@@ -312,24 +304,6 @@ export default function LegajoShow({
                 { preserveScroll: true },
             );
         }
-    };
-
-    const agregarVinculo = (event: FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
-        vinculoForm.post(`/legajos/${legajo.id}/vinculos`, {
-            preserveScroll: true,
-            onSuccess: () => vinculoForm.reset(),
-        });
-    };
-
-    const quitarVinculo = (id: number) => {
-        if (!window.confirm('¿Querés desvincular estas personas?')) {
-            return;
-        }
-
-        router.delete(`/legajos/${legajo.id}/vinculos/${id}`, {
-            preserveScroll: true,
-        });
     };
 
     const crearDerivacion = (event: FormEvent<HTMLFormElement>) => {
@@ -476,6 +450,50 @@ export default function LegajoShow({
             visible: secciones.intervenciones,
         },
     ].filter((seccion) => seccion.visible);
+
+    const seccionActivaVisible = seccionesNavegables.some(
+        (seccion) => seccion.id === seccionActiva,
+    )
+        ? seccionActiva
+        : (seccionesNavegables[0]?.id ?? '');
+    const indiceSeccionActiva = Math.max(
+        0,
+        seccionesNavegables.findIndex(
+            (seccion) => seccion.id === seccionActivaVisible,
+        ),
+    );
+
+    const desplazarASeccion = (id: string) => {
+        const indiceDestino = seccionesNavegables.findIndex(
+            (seccion) => seccion.id === id,
+        );
+
+        if (indiceDestino < 0 || id === seccionActivaVisible) {
+            return;
+        }
+
+        setDireccionTransicion(
+            indiceDestino > indiceSeccionActiva ? 'next' : 'previous',
+        );
+        setSeccionActiva(id);
+    };
+
+    const desplazarSeccion = (direccion: -1 | 1) => {
+        const siguienteIndice = Math.min(
+            Math.max(indiceSeccionActiva + direccion, 0),
+            seccionesNavegables.length - 1,
+        );
+        const siguiente = seccionesNavegables[siguienteIndice];
+
+        if (siguiente) {
+            desplazarASeccion(siguiente.id);
+        }
+    };
+
+    const clasePanel = (id: string): string =>
+        seccionActivaVisible === id
+            ? `legajo-panel-enter legajo-panel-enter-${direccionTransicion}`
+            : 'hidden';
 
     return (
         <>
@@ -789,29 +807,80 @@ export default function LegajoShow({
                     <ul className="flex gap-1.5 overflow-x-auto">
                         {seccionesNavegables.map((seccion) => (
                             <li key={seccion.id} className="shrink-0">
-                                <a
-                                    href={`#${seccion.id}`}
-                                    className="inline-flex h-8 items-center rounded-lg px-3 text-xs font-semibold text-[#2C4A5E] transition hover:bg-white hover:text-[#173247] dark:text-foreground dark:hover:bg-white/10"
+                                <button
+                                    type="button"
+                                    onClick={() => desplazarASeccion(seccion.id)}
+                                    aria-current={
+                                        seccionActivaVisible === seccion.id
+                                            ? 'page'
+                                            : undefined
+                                    }
+                                    className={`inline-flex h-8 items-center rounded-lg px-3 text-xs font-semibold transition hover:bg-white hover:text-[#173247] dark:text-foreground dark:hover:bg-white/10 ${seccionActivaVisible === seccion.id ? 'bg-white text-[#173247] shadow-sm dark:bg-white/10 dark:text-white' : 'text-[#2C4A5E]'}`}
                                 >
                                     {seccion.label}
-                                </a>
+                                </button>
                             </li>
                         ))}
                     </ul>
                 </nav>
 
-                <div className="space-y-8">
+                <div className="relative">
+                    <div className="mb-3 flex items-center justify-between gap-3 px-1">
+                        <div>
+                            <p className="text-xs font-bold tracking-[0.14em] text-[#6B8F71] uppercase">
+                                Recorrido del legajo
+                            </p>
+                            <p className="mt-1 text-xs text-[#697586]">
+                                Elegí una sección o avanzá con las flechas.
+                            </p>
+                        </div>
+                        {seccionesNavegables.length > 1 && (
+                            <div className="flex items-center gap-1.5">
+                                <button
+                                    type="button"
+                                    onClick={() => desplazarSeccion(-1)}
+                                    disabled={indiceSeccionActiva === 0}
+                                    aria-label="Sección anterior"
+                                    className="grid size-9 place-items-center rounded-xl border border-[#DCE3DF] bg-white text-[#2C4A5E] shadow-sm transition hover:border-[#B9CFC0] hover:bg-[#F4F8F5] disabled:cursor-not-allowed disabled:opacity-35"
+                                >
+                                    <ChevronLeft size={17} />
+                                </button>
+                                <span className="min-w-14 text-center text-xs font-bold text-[#697586] tabular-nums">
+                                    {indiceSeccionActiva + 1} / {seccionesNavegables.length}
+                                </span>
+                                <button
+                                    type="button"
+                                    onClick={() => desplazarSeccion(1)}
+                                    disabled={
+                                        indiceSeccionActiva ===
+                                        seccionesNavegables.length - 1
+                                    }
+                                    aria-label="Siguiente sección"
+                                    className="grid size-9 place-items-center rounded-xl border border-[#DCE3DF] bg-white text-[#2C4A5E] shadow-sm transition hover:border-[#B9CFC0] hover:bg-[#F4F8F5] disabled:cursor-not-allowed disabled:opacity-35"
+                                >
+                                    <ChevronRight size={17} />
+                                </button>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="relative overflow-hidden rounded-2xl">
                     {(secciones.persona ||
                         secciones.seguimiento ||
                         secciones.situacion) && (
-                        <section
-                            id="resumen"
-                            aria-labelledby="titulo-resumen"
-                            className="scroll-mt-20"
+                        <div
+                            data-legajo-section="resumen"
+                            aria-hidden={seccionActivaVisible !== 'resumen'}
+                            className={clasePanel('resumen')}
                         >
-                            <GrupoTitulo id="titulo-resumen">
-                                Resumen del caso
-                            </GrupoTitulo>
+                            <section
+                                id="resumen"
+                                aria-labelledby="titulo-resumen"
+                                className="scroll-mt-20"
+                            >
+                                <GrupoTitulo id="titulo-resumen">
+                                    Resumen del caso
+                                </GrupoTitulo>
                             <div
                                 className={`grid gap-5 ${
                                     (secciones.persona ||
@@ -1143,249 +1212,104 @@ export default function LegajoShow({
                                     </Card>
                                 )}
                             </div>
-                        </section>
+                            </section>
+                        </div>
                     )}
 
                     {secciones.persona && (
-                        <section
-                            id="salud"
-                            aria-labelledby="titulo-salud"
-                            className="scroll-mt-20"
+                        <div
+                            data-legajo-section="salud"
+                            aria-hidden={seccionActivaVisible !== 'salud'}
+                            className={clasePanel('salud')}
                         >
-                            <GrupoTitulo id="titulo-salud">
-                                Salud y documentación
-                            </GrupoTitulo>
-                            <div className="grid gap-5 xl:grid-cols-2">
-                                <CudModule
-                                    legajoId={legajo.id}
-                                    cud={cud}
-                                    puedeGestionar={puedeGestionarCud}
-                                />
-                                <CoberturaSaludModule
-                                    legajoId={legajo.id}
-                                    cobertura={coberturaSalud}
-                                    historial={coberturaSaludHistorial}
-                                    puedeGestionar={
-                                        puedeGestionarCoberturaSalud
-                                    }
-                                />
-                            </div>
-                        </section>
+                            <section
+                                id="salud"
+                                aria-labelledby="titulo-salud"
+                                className="scroll-mt-20"
+                            >
+                                <GrupoTitulo id="titulo-salud">
+                                    Salud y documentación
+                                </GrupoTitulo>
+                                <div className="grid gap-5 xl:grid-cols-2">
+                                    <CudModule
+                                        legajoId={legajo.id}
+                                        cud={cud}
+                                        puedeGestionar={puedeGestionarCud}
+                                    />
+                                    <CoberturaSaludModule
+                                        legajoId={legajo.id}
+                                        cobertura={coberturaSalud}
+                                        historial={coberturaSaludHistorial}
+                                        puedeGestionar={
+                                            puedeGestionarCoberturaSalud
+                                        }
+                                    />
+                                </div>
+                            </section>
+                        </div>
                     )}
 
                     {(secciones.medidas_abrigo || (secciones.auh && auh)) && (
-                        <section
-                            id="tramites"
-                            aria-labelledby="titulo-tramites"
-                            className="scroll-mt-20"
+                        <div
+                            data-legajo-section="tramites"
+                            aria-hidden={seccionActivaVisible !== 'tramites'}
+                            className={clasePanel('tramites')}
                         >
-                            <GrupoTitulo id="titulo-tramites">
-                                Medidas y trámites
-                            </GrupoTitulo>
-                            <div className="space-y-4">
-                                {secciones.medidas_abrigo && (
-                                    <MedidasAbrigoModule
-                                        legajoId={legajo.id}
-                                        medidas={medidasAbrigo}
-                                        puedeGestionar={
-                                            puedeGestionarMedidasAbrigo
-                                        }
-                                    />
-                                )}
+                            <section
+                                id="tramites"
+                                aria-labelledby="titulo-tramites"
+                                className="scroll-mt-20"
+                            >
+                                <GrupoTitulo id="titulo-tramites">
+                                    Medidas y trámites
+                                </GrupoTitulo>
+                                <div className="space-y-4">
+                                    {secciones.medidas_abrigo && (
+                                        <MedidasAbrigoModule
+                                            legajoId={legajo.id}
+                                            medidas={medidasAbrigo}
+                                            puedeGestionar={
+                                                puedeGestionarMedidasAbrigo
+                                            }
+                                        />
+                                    )}
 
-                                {secciones.auh && auh && (
-                                    <AuhModule
-                                        auh={auh}
-                                        legajoId={legajo.id}
-                                        puedeGestionar={puedeGestionarAuh}
-                                    />
-                                )}
-                            </div>
-                        </section>
+                                    {secciones.auh && auh && (
+                                        <AuhModule
+                                            auh={auh}
+                                            legajoId={legajo.id}
+                                            puedeGestionar={puedeGestionarAuh}
+                                        />
+                                    )}
+                                </div>
+                            </section>
+                        </div>
                     )}
 
                     {puedeVerVinculos && (
-                        <section
-                            id="vinculos"
-                            aria-labelledby="titulo-vinculos"
-                            className="scroll-mt-20"
+                        <div
+                            data-legajo-section="vinculos"
+                            aria-hidden={seccionActivaVisible !== 'vinculos'}
+                            className={clasePanel('vinculos')}
                         >
-                            <GrupoTitulo id="titulo-vinculos">
-                                Red familiar
-                            </GrupoTitulo>
-                            <Card className="border-[#DCE3DF] !bg-white py-0 shadow-[0_14px_35px_rgba(23,50,71,0.06)]">
-                                <CardHeader className="border-b border-[#E4E8E5] bg-[#F8FAF9] px-5 py-4">
-                                    <div className="flex items-center gap-2">
-                                        <UsersRound
-                                            size={18}
-                                            className="text-[#6B8F71]"
-                                        />
-                                        <CardTitle
-                                            className={tituloCard}
-                                            style={{ fontFamily: FONT_HEADING }}
-                                        >
-                                            Vínculos familiares
-                                        </CardTitle>
-                                    </div>
-                                    <p className="mt-1 text-sm text-[#2B2F36]/60">
-                                        Relacioná este legajo con otros sin
-                                        mezclar sus historiales.
-                                    </p>
-                                </CardHeader>
-                                <CardContent className="space-y-5 px-5 py-5">
-                                    {vinculos.length > 0 ? (
-                                        <div className="grid gap-3 sm:grid-cols-2">
-                                            {vinculos.map((vinculo) => (
-                                                <div
-                                                    key={vinculo.id}
-                                                    className="flex items-center justify-between gap-3 rounded-lg border border-[#DCE3DF] bg-[#FBFCFB] p-3"
-                                                >
-                                                    <div className="min-w-0">
-                                                        <div className="flex items-center gap-2 text-xs font-semibold text-[#6B8F71]">
-                                                            <Link2 size={13} />
-                                                            {vinculo.tipo}
-                                                        </div>
-                                                        <Link
-                                                            href={`/legajos/${vinculo.persona.id}`}
-                                                            className="mt-1 block truncate text-sm font-semibold text-[#2C4A5E] hover:underline"
-                                                        >
-                                                            {
-                                                                vinculo.persona
-                                                                    .nombre
-                                                            }
-                                                        </Link>
-                                                        <p className="mt-1 font-mono text-xs text-[#697586]">
-                                                            {vinculo.persona
-                                                                .numero_legajo ??
-                                                                'Sin número de legajo'}
-                                                        </p>
-                                                    </div>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() =>
-                                                            quitarVinculo(
-                                                                vinculo.id,
-                                                            )
-                                                        }
-                                                        className="shrink-0 rounded-md p-2 text-[#8A6A63] transition hover:bg-[#FFF1EF] hover:text-[#A8493C]"
-                                                        aria-label={`Desvincular a ${vinculo.persona.nombre}`}
-                                                    >
-                                                        <Unlink size={16} />
-                                                    </button>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        <p className="rounded-lg border border-dashed border-[#DCE3DF] bg-[#FAFBFA] px-4 py-5 text-sm text-[#697586]">
-                                            Todavía no hay vínculos registrados.
-                                        </p>
-                                    )}
-
-                                    {personasDisponibles.length > 0 && (
-                                        <form
-                                            onSubmit={agregarVinculo}
-                                            className="grid gap-3 border-t border-[#E4E8E5] pt-5 sm:grid-cols-[minmax(0,1fr)_190px_auto] sm:items-end"
-                                        >
-                                            <div>
-                                                <label
-                                                    htmlFor="persona_relacionada_id"
-                                                    className="text-xs font-semibold text-[#2C4A5E]"
-                                                >
-                                                    Legajo relacionado
-                                                </label>
-                                                <select
-                                                    id="persona_relacionada_id"
-                                                    value={
-                                                        vinculoForm.data
-                                                            .persona_relacionada_id
-                                                    }
-                                                    onChange={(event) =>
-                                                        vinculoForm.setData(
-                                                            'persona_relacionada_id',
-                                                            event.target.value,
-                                                        )
-                                                    }
-                                                    className="mt-2 h-10 w-full rounded-lg border border-[#D5D1C6] bg-white px-3 text-sm text-[#2B2F36] outline-none focus:border-[#2C4A5E] focus:ring-2 focus:ring-[#2C4A5E]/20"
-                                                    required
-                                                >
-                                                    <option value="">
-                                                        Seleccionar persona...
-                                                    </option>
-                                                    {personasDisponibles.map(
-                                                        (persona) => (
-                                                            <option
-                                                                key={persona.id}
-                                                                value={
-                                                                    persona.id
-                                                                }
-                                                            >
-                                                                {persona.nombre}{' '}
-                                                                ·{' '}
-                                                                {
-                                                                    persona.numero_legajo
-                                                                }
-                                                            </option>
-                                                        ),
-                                                    )}
-                                                </select>
-                                            </div>
-                                            <div>
-                                                <label
-                                                    htmlFor="tipo_vinculo"
-                                                    className="text-xs font-semibold text-[#2C4A5E]"
-                                                >
-                                                    Tipo de vínculo
-                                                </label>
-                                                <select
-                                                    id="tipo_vinculo"
-                                                    value={
-                                                        vinculoForm.data
-                                                            .tipo_vinculo
-                                                    }
-                                                    onChange={(event) =>
-                                                        vinculoForm.setData(
-                                                            'tipo_vinculo',
-                                                            event.target.value,
-                                                        )
-                                                    }
-                                                    className="mt-2 h-10 w-full rounded-lg border border-[#D5D1C6] bg-white px-3 text-sm text-[#2B2F36] outline-none focus:border-[#2C4A5E] focus:ring-2 focus:ring-[#2C4A5E]/20"
-                                                >
-                                                    <option>hermano/a</option>
-                                                    <option>primo/a</option>
-                                                    <option>tío/a</option>
-                                                    <option>sobrino/a</option>
-                                                    <option>madre</option>
-                                                    <option>padre</option>
-                                                    <option>hijo/a</option>
-                                                    <option>abuelo/a</option>
-                                                    <option>nieto/a</option>
-                                                    <option>tutor/a</option>
-                                                    <option>
-                                                        referente afectivo
-                                                    </option>
-                                                    <option>pareja</option>
-                                                    <option>
-                                                        otro familiar
-                                                    </option>
-                                                </select>
-                                            </div>
-                                            <button
-                                                type="submit"
-                                                disabled={
-                                                    vinculoForm.processing
-                                                }
-                                                className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-[#2C4A5E] px-4 text-sm font-semibold text-white transition hover:bg-[#1F394B] disabled:cursor-not-allowed disabled:opacity-60"
-                                            >
-                                                <Plus size={15} />
-                                                {vinculoForm.processing
-                                                    ? 'Guardando...'
-                                                    : 'Agregar'}
-                                            </button>
-                                        </form>
-                                    )}
-                                </CardContent>
-                            </Card>
-                        </section>
+                            <section
+                                id="vinculos"
+                                aria-labelledby="titulo-vinculos"
+                                className="scroll-mt-20"
+                            >
+                                <GrupoTitulo id="titulo-vinculos">
+                                    Red familiar
+                                </GrupoTitulo>
+                                <RedFamiliarModule
+                                    legajoId={legajo.id}
+                                    personaId={legajo.persona?.id ?? null}
+                                    vinculos={vinculos}
+                                    tiposVinculo={tiposVinculo}
+                                    barrios={barrios}
+                                    fontHeading={FONT_HEADING}
+                                />
+                            </section>
+                        </div>
                     )}
 
                     {secciones.derivaciones && (
@@ -1781,18 +1705,21 @@ export default function LegajoShow({
                             </DialogContent>
                         </Dialog>
                     )}
-                </div>
-
                 {secciones.intervenciones && (
-                    <section
-                        id="intervenciones"
-                        aria-labelledby="titulo-intervenciones"
-                        className="mt-8 scroll-mt-20"
+                    <div
+                        data-legajo-section="intervenciones"
+                        aria-hidden={seccionActivaVisible !== 'intervenciones'}
+                        className={clasePanel('intervenciones')}
                     >
-                        <GrupoTitulo id="titulo-intervenciones">
-                            Historial
-                        </GrupoTitulo>
-                        <Card className="rounded-2xl border-[#DCE3DF] !bg-white py-0 shadow-[0_14px_35px_rgba(23,50,71,0.06)]">
+                        <section
+                            id="intervenciones"
+                            aria-labelledby="titulo-intervenciones"
+                            className="scroll-mt-20"
+                        >
+                            <GrupoTitulo id="titulo-intervenciones">
+                                Historial
+                            </GrupoTitulo>
+                            <Card className="rounded-2xl border-[#DCE3DF] !bg-white py-0 shadow-[0_14px_35px_rgba(23,50,71,0.06)]">
                             <CardHeader className="flex flex-col gap-3 border-b border-[#E4E8E5] bg-[#F8FAF9] px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
                                 <div>
                                     <CardTitle
@@ -1923,6 +1850,38 @@ export default function LegajoShow({
                                                                         intervencion.detalle
                                                                     }
                                                                 </p>
+                                                                {intervencion.acta && (
+                                                                    <a
+                                                                        href={
+                                                                            intervencion
+                                                                                .acta
+                                                                                .descarga_url
+                                                                        }
+                                                                        className="mt-3 inline-flex items-center gap-2 rounded-lg border border-[#DCE3DF] bg-white px-3 py-2 text-xs font-semibold text-[#2C4A5E] transition hover:bg-[#F4F6F5]"
+                                                                    >
+                                                                        <FileDown
+                                                                            size={
+                                                                                14
+                                                                            }
+                                                                        />
+                                                                        {
+                                                                            intervencion
+                                                                                .acta
+                                                                                .etiqueta
+                                                                        }
+                                                                        {intervencion
+                                                                            .acta
+                                                                            .requiere_firma && (
+                                                                            <span className="font-normal text-[#697586]">
+                                                                                {intervencion
+                                                                                    .acta
+                                                                                    .firmado
+                                                                                    ? 'Firmada'
+                                                                                    : 'Sin firmar'}
+                                                                            </span>
+                                                                        )}
+                                                                    </a>
+                                                                )}
                                                             </div>
                                                             {puedeGestionarIntervenciones && (
                                                                 <Link
@@ -1993,9 +1952,12 @@ export default function LegajoShow({
                                     </div>
                                 )}
                             </CardContent>
-                        </Card>
-                    </section>
+                            </Card>
+                        </section>
+                    </div>
                 )}
+                    </div>
+                </div>
             </main>
         </>
     );

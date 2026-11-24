@@ -21,6 +21,7 @@ class VinculoFamiliar extends Model
         'referente afectivo',
         'pareja',
         'otro familiar',
+        'otro responsable',
     ];
 
     protected $table = 'vinculos_familiares';

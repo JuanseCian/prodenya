@@ -3,11 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\GuardarIntervencionRequest;
+use App\Models\Acta;
 use App\Models\Intervencion;
 use App\Models\Legajo;
 use App\Models\TipoIntervencion;
 use App\Models\User;
 use App\Models\VinculoFamiliar;
+use App\Services\ActaService;
+use App\Support\Barrios;
+use App\Support\Escuelas;
+use App\Support\ValidacionActa;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -23,13 +28,16 @@ class IntervencionController extends Controller
 {
     private const DISCO = 'local'; // privado: storage/app/private (no accesible por URL)
 
-    public function create(Request $request, Legajo $legajo): Response
+    public function create(Request $request, Legajo $legajo, ActaService $actas): Response
     {
         $this->authorizeLegajoSection($request->user(), $legajo, 'intervenciones');
 
         return Inertia::render('intervenciones/create', [
             'legajo' => $this->resumenLegajo($legajo),
             'tipos' => $this->tipos(),
+            'actas' => $actas->configuracionParaHojas($legajo, $request->user()),
+            'barrios' => Barrios::nombres(),
+            'escuelas' => Escuelas::nombres(),
             'profesionales' => $this->profesionales(),
             'profesionalPorDefecto' => $request->user()->id,
             'hoy' => now()->toDateString(),
@@ -40,9 +48,11 @@ class IntervencionController extends Controller
         ]);
     }
 
-    public function store(GuardarIntervencionRequest $request, Legajo $legajo)
+    public function store(GuardarIntervencionRequest $request, Legajo $legajo, ActaService $actas)
     {
         $datos = $request->validated();
+        $tipoActa = $request->generaActa() ? $request->tipoActa() : null;
+        $acta = $tipoActa ? $this->datosDelActa($request, $tipoActa, $datos, $actas) : null;
         $legajosDestino = $this->legajosDestinoValidos($legajo, $datos['legajos_destino_ids'] ?? []);
 
         if ($legajosDestino->count() !== count($datos['legajos_destino_ids'] ?? [])) {
@@ -56,7 +66,7 @@ class IntervencionController extends Controller
         $rutasObsoletas = [];
 
         try {
-            DB::transaction(function () use ($request, $legajo, $datos, $legajosDestino, $grupoCopiaId, &$rutas, &$rutasObsoletas) {
+            DB::transaction(function () use ($request, $legajo, $datos, $legajosDestino, $grupoCopiaId, $acta, $tipoActa, $actas, &$rutas, &$rutasObsoletas) {
                 $intervencion = Intervencion::create([
                     'legajo_id' => $legajo->id,
                     'grupo_copia_id' => $grupoCopiaId,
@@ -64,16 +74,22 @@ class IntervencionController extends Controller
                     'profesional_id' => $datos['profesional_id'],
                     'fecha_intervencion' => $datos['fecha_intervencion'],
                     'hora_intervencion' => $datos['hora_intervencion'],
-                    'detalle' => $datos['detalle'],
-                    'firma_nombre' => $datos['firma_nombre'],
-                    'firma_aclaracion' => $datos['firma_aclaracion'],
-                    'firma_entrevistado_nombre' => $datos['firma_entrevistado_nombre'] ?? null,
-                    'firma_entrevistado_aclaracion' => $datos['firma_entrevistado_aclaracion'] ?? null,
+                    'detalle' => $acta ? $acta['detalle'] : $datos['detalle'],
+                    'firma_nombre' => $acta ? $acta['firmante'] : $datos['firma_nombre'],
+                    'firma_aclaracion' => $acta ? $acta['firmante'] : $datos['firma_aclaracion'],
+                    'firmada_en' => $acta && $acta['firmante'] ? now() : null,
+                    'firma_entrevistado_nombre' => $acta ? null : ($datos['firma_entrevistado_nombre'] ?? null),
+                    'firma_entrevistado_aclaracion' => $acta ? null : ($datos['firma_entrevistado_aclaracion'] ?? null),
                     'creado_por' => $request->user()->id,
                 ]);
 
                 $this->guardarArchivos($request, $legajo, $intervencion, $rutas);
-                $this->guardarFirmas($request, $intervencion, $rutas, $rutasObsoletas);
+
+                if ($acta) {
+                    $actas->registrar($tipoActa, $acta['datos'], $acta['firmas'], $request->user(), $legajo, null, $intervencion, $rutas);
+                } else {
+                    $this->guardarFirmas($request, $intervencion, $rutas, $rutasObsoletas);
+                }
 
                 foreach ($legajosDestino as $legajoDestino) {
                     $copia = Intervencion::create([
@@ -84,11 +100,20 @@ class IntervencionController extends Controller
                         'profesional_id' => $datos['profesional_id'],
                         'fecha_intervencion' => $datos['fecha_intervencion'],
                         'hora_intervencion' => $datos['hora_intervencion'],
-                        'detalle' => $datos['detalle'],
+                        'detalle' => $acta ? $acta['detalle'] : $datos['detalle'],
+                        // El acta copiada es el mismo documento firmado: conserva quién firmó por el Servicio.
+                        'firma_nombre' => $acta['firmante'] ?? null,
+                        'firma_aclaracion' => $acta['firmante'] ?? null,
+                        'firmada_en' => ($acta['firmante'] ?? null) ? now() : null,
                         'creado_por' => $request->user()->id,
                     ]);
 
                     $this->copiarAdjuntos($intervencion, $legajoDestino, $copia, $request->user()->id, $rutas);
+
+                    if ($acta) {
+                        // Cada legajo tiene su propia acta, con su número de legajo en el documento.
+                        $actas->registrar($tipoActa, $acta['datos'], $acta['firmas'], $request->user(), $legajoDestino, null, $copia, $rutas);
+                    }
                 }
             });
             Storage::disk(self::DISCO)->delete($rutasObsoletas);
@@ -101,9 +126,12 @@ class IntervencionController extends Controller
             ]);
         }
 
-        $mensaje = $legajosDestino->isEmpty()
-            ? 'Intervención registrada correctamente.'
-            : 'Intervención registrada y copiada en los legajos vinculados seleccionados.';
+        $mensaje = match (true) {
+            $acta !== null && $legajosDestino->isNotEmpty() => 'Intervención registrada con su '.mb_strtolower(Acta::etiquetaDe($tipoActa)).' y copiada en los legajos de los familiares seleccionados.',
+            $acta !== null => 'Intervención registrada con su '.mb_strtolower(Acta::etiquetaDe($tipoActa)).'.',
+            $legajosDestino->isEmpty() => 'Intervención registrada correctamente.',
+            default => 'Intervención registrada y copiada en los legajos vinculados seleccionados.',
+        };
 
         return redirect()->route('legajos.show', $legajo->id)->with('status', $mensaje);
     }
@@ -133,7 +161,13 @@ class IntervencionController extends Controller
                 'tiene_firma_entrevistado' => filled($intervencion->firma_entrevistado_archivo_path),
             ],
             'adjuntos' => $this->adjuntosDe($intervencion->id),
-            'tipos' => $this->tipos(),
+            'acta' => ($acta = $intervencion->acta) ? [
+                'etiqueta' => $acta->etiqueta(),
+                'firmado' => $acta->firmado,
+                'requiere_firma' => Acta::firmantesDe($acta->tipo) !== [],
+                'descarga_url' => route('actas.descargar', $acta),
+            ] : null,
+            'tipos' => $this->tipos($intervencion->tipo_intervencion_id),
             'profesionales' => $this->profesionales(),
             'hoy' => now()->toDateString(),
             'horaAhora' => now()->format('H:i'),
@@ -158,8 +192,8 @@ class IntervencionController extends Controller
                     'fecha_intervencion' => $datos['fecha_intervencion'],
                     'hora_intervencion' => $datos['hora_intervencion'],
                     'detalle' => $datos['detalle'],
-                    'firma_nombre' => $datos['firma_nombre'],
-                    'firma_aclaracion' => $datos['firma_aclaracion'],
+                    'firma_nombre' => $datos['firma_nombre'] ?? $intervencion->firma_nombre,
+                    'firma_aclaracion' => $datos['firma_aclaracion'] ?? $intervencion->firma_aclaracion,
                     'firma_entrevistado_nombre' => $datos['firma_entrevistado_nombre'] ?? null,
                     'firma_entrevistado_aclaracion' => $datos['firma_entrevistado_aclaracion'] ?? null,
                     'actualizado_por' => $request->user()->id,
@@ -446,9 +480,47 @@ class IntervencionController extends Controller
         ];
     }
 
-    private function tipos()
+    /**
+     * @return Collection<int, array{id: int, nombre: string, acta: string|null}>
+     */
+    private function tipos(?int $incluirId = null)
     {
-        return TipoIntervencion::where('activo', true)->orderBy('nombre')->get(['id', 'nombre']);
+        return TipoIntervencion::query()
+            ->where(fn ($query) => $query->where('activo', true)->when($incluirId, fn ($actual, int $id) => $actual->orWhere('id', $id)))
+            ->orderBy('nombre')
+            ->get(['id', 'nombre'])
+            ->map(fn (TipoIntervencion $tipo) => [
+                'id' => $tipo->id,
+                'nombre' => $tipo->nombre,
+                'acta' => Acta::tipoDesdeIntervencion($tipo->nombre),
+            ]);
+    }
+
+    /**
+     * Datos del acta de una intervención: la fecha y hora son las de la intervención.
+     *
+     * @param  array<string, mixed>  $datos
+     * @return array{datos: array<string, mixed>, firmas: array<string, array{nombre: string, png: string}>, detalle: string, firmante: string|null}
+     */
+    private function datosDelActa(GuardarIntervencionRequest $request, string $tipo, array $datos, ActaService $actas): array
+    {
+        $datosActa = ValidacionActa::datos($datos['acta'] ?? []);
+        $datosActa['fecha'] = $datos['fecha_intervencion'];
+
+        if (! Acta::esAuh($tipo)) {
+            $datosActa['hora'] = $datos['hora_intervencion'];
+        }
+
+        $firmas = ValidacionActa::firmas($tipo, (array) $request->input('acta', []));
+
+        return [
+            'datos' => $datosActa,
+            'firmas' => $firmas,
+            'detalle' => $actas->resumen($tipo, $datosActa),
+            'firmante' => $actas->firmanteDelServicio(
+                collect($firmas)->map(fn (array $firma, string $rol) => ['rol' => $rol, 'nombre' => $firma['nombre']])->values()->all(),
+            ),
+        ];
     }
 
     private function profesionales()

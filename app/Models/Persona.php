@@ -109,8 +109,20 @@ class Persona extends Model
             ->whereNull('desvinculado_en');
     }
 
-    public function getEdadAttribute(): int
+    public function getEdadAttribute(): ?int
     {
-        return $this->fecha_nacimiento->age;
+        return $this->fecha_nacimiento?->age;
+    }
+
+    /**
+     * Calle, número y piso/depto en una sola línea.
+     */
+    public function domicilio(): string
+    {
+        return trim(implode(' ', array_filter([
+            $this->direccion_calle,
+            $this->direccion_numero,
+            $this->direccion_piso_depto,
+        ])));
     }
 }

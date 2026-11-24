@@ -9,6 +9,7 @@ import type {
     TipoPlanilla,
 } from '@/components/auh-planilla-dialog';
 import FirmaDigital from '@/components/firma-digital';
+import SelectorBarrio from '@/components/selector-barrio';
 
 export interface FirmaEnCurso {
     nombre: string;
@@ -33,6 +34,8 @@ interface Props {
     agregarMiembro: () => void;
     quitarMiembro: (index: number) => void;
     setFirma: (rol: string, campo: keyof FirmaEnCurso, valor: string) => void;
+    /** Barrios que se pueden elegir; sin lista, el barrio se escribe libre. */
+    barrios?: string[];
 }
 
 const MESES = [
@@ -54,7 +57,7 @@ const MESES = [
  * Espacio en blanco de la planilla: un campo en línea con el texto, punteado
  * como en el modelo impreso.
  */
-function Blank({
+export function Blank({
     value,
     onChange,
     placeholder,
@@ -94,7 +97,7 @@ function Blank({
 /**
  * Espacio de firma: se firma sobre la línea, como en papel.
  */
-function Firma({
+export function Firma({
     rol,
     firmas,
     setFirma,
@@ -128,7 +131,7 @@ function Firma({
     );
 }
 
-function Hoja({
+export function Hoja({
     children,
     className = '',
 }: {
@@ -343,7 +346,7 @@ function DeclaracionJurada(props: Props) {
 /**
  * Renglón vacío del modelo (párrafo en blanco), para respetar las alturas.
  */
-function Renglon({ alto = 'h-7' }: { alto?: string }) {
+export function Renglon({ alto = 'h-7' }: { alto?: string }) {
     return <div aria-hidden className={alto} />;
 }
 
@@ -351,7 +354,7 @@ function Renglon({ alto = 'h-7' }: { alto?: string }) {
  * Recuadro para firmar en pantalla, sin etiqueta propia: la planilla ya dice
  * qué se firma en cada lugar.
  */
-function PadFirma({
+export function PadFirma({
     rol,
     firmas,
     setFirma,
@@ -553,14 +556,24 @@ function InformeRelacion(props: Props) {
     ) => (
         <span className="whitespace-nowrap">
             {etiqueta}
-            <Blank
-                type={type}
-                value={datos.responsable[campo]}
-                onChange={(valor) => setResponsable(campo, valor)}
-                placeholder={etiqueta.replace(/[:.]$/, '').toLowerCase()}
-                ancho={ancho}
-                error={errores[`responsable.${campo}`]}
-            />
+            {campo === 'barrio' && props.barrios?.length ? (
+                <SelectorBarrio
+                    value={datos.responsable.barrio}
+                    onChange={(valor) => setResponsable('barrio', valor)}
+                    barrios={props.barrios}
+                    ancho={ancho}
+                    error={errores['responsable.barrio']}
+                />
+            ) : (
+                <Blank
+                    type={type}
+                    value={datos.responsable[campo]}
+                    onChange={(valor) => setResponsable(campo, valor)}
+                    placeholder={etiqueta.replace(/[:.]$/, '').toLowerCase()}
+                    ancho={ancho}
+                    error={errores[`responsable.${campo}`]}
+                />
+            )}
         </span>
     );
 

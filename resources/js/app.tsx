@@ -1,7 +1,10 @@
 import { createInertiaApp, router } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 
-import { NavigationSkeleton } from '@/components/navigation-skeleton';
+import {
+    NavigationSkeleton,
+    SaveLoadingOverlay,
+} from '@/components/navigation-skeleton';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { initializeTheme } from '@/hooks/use-appearance';
@@ -10,36 +13,39 @@ import AuthLayout from '@/layouts/auth-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Prodenya';
-const skeletonPreviewDuration = import.meta.env.DEV ? 3000 : 0;
+type LoadingRequest = {
+    kind: 'navigation' | 'mutation';
+    targetUrl: string;
+};
 
 function AppShell({ children }: { children: React.ReactNode }) {
-    const [showSkeleton, setShowSkeleton] = useState(false);
+    const [loadingRequest, setLoadingRequest] = useState<LoadingRequest | null>(null);
 
     useEffect(() => {
-        let timeout: number | undefined;
-        let hideTimeout: number | undefined;
-        let startedAt = 0;
+        document.getElementById('initial-app-loader')?.remove();
 
-        const removeStartListener = router.on('start', () => {
-            startedAt = performance.now();
+        let timeout: number | undefined;
+
+        const removeStartListener = router.on('start', (event) => {
             window.clearTimeout(timeout);
-            window.clearTimeout(hideTimeout);
-            timeout = window.setTimeout(() => setShowSkeleton(true), 120);
+            const visit = event.detail.visit;
+            const method = String(visit.method).toLowerCase();
+
+            timeout = window.setTimeout(() => {
+                setLoadingRequest({
+                    kind: method === 'get' ? 'navigation' : 'mutation',
+                    targetUrl: String(visit.url),
+                });
+            }, 250);
         });
+
         const removeFinishListener = router.on('finish', () => {
             window.clearTimeout(timeout);
-            const elapsed = performance.now() - startedAt;
-            const remaining = Math.max(0, skeletonPreviewDuration - elapsed);
-
-            hideTimeout = window.setTimeout(
-                () => setShowSkeleton(false),
-                remaining,
-            );
+            setLoadingRequest(null);
         });
 
         return () => {
             window.clearTimeout(timeout);
-            window.clearTimeout(hideTimeout);
             removeStartListener();
             removeFinishListener();
         };
@@ -48,7 +54,10 @@ function AppShell({ children }: { children: React.ReactNode }) {
     return (
         <>
             {children}
-            {showSkeleton && <NavigationSkeleton />}
+            {loadingRequest?.kind === 'navigation' && (
+                <NavigationSkeleton targetUrl={loadingRequest.targetUrl} />
+            )}
+            {loadingRequest?.kind === 'mutation' && <SaveLoadingOverlay />}
             <Toaster />
         </>
     );
@@ -69,6 +78,7 @@ createInertiaApp({
             case name.startsWith('personas/'):
             case name.startsWith('legajos/'):
             case name.startsWith('intervenciones/'):
+            case name.startsWith('actas/'):
                 return null;
             case name.startsWith('auth/'):
                 return AuthLayout;
@@ -87,11 +97,7 @@ createInertiaApp({
             </TooltipProvider>
         );
     },
-    progress: {
-        color: '#9ce0bf',
-        delay: 120,
-        showSpinner: false,
-    },
+    progress: false,
 });
 
 router.on('start', () => {

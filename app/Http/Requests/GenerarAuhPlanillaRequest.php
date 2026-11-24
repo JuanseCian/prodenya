@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Models\Auh;
 use App\Models\Legajo;
+use App\Support\Barrios;
 use Illuminate\Foundation\Http\FormRequest;
 
 class GenerarAuhPlanillaRequest extends FormRequest
@@ -38,7 +39,7 @@ class GenerarAuhPlanillaRequest extends FormRequest
             'responsable.fecha_nacimiento' => ['nullable', 'date'],
             'responsable.nacionalidad' => $texto,
             'responsable.domicilio' => $texto,
-            'responsable.barrio' => $texto,
+            'responsable.barrio' => ['nullable', 'string', Barrios::regla()],
             'responsable.localidad' => $texto,
             'responsable.provincia' => $texto,
             'responsable.telefono' => ['nullable', 'string', 'max:50'],
@@ -63,6 +64,7 @@ class GenerarAuhPlanillaRequest extends FormRequest
     {
         return [
             'fecha.date' => 'La fecha no es válida.',
+            'responsable.barrio.in' => 'Elegí un barrio de la lista.',
             'responsable.fecha_nacimiento.date' => 'La fecha de nacimiento del responsable no es válida.',
             'no_conviviente_desde.integer' => 'Ingresá un año válido (por ejemplo, 2022).',
             'no_conviviente_desde.between' => 'Ingresá un año válido (por ejemplo, 2022).',
