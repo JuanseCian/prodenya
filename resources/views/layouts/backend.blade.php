@@ -38,6 +38,11 @@
 
     {{-- Tailwind --}}
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'selector',
+        };
+    </script>
 
     {{-- Bootstrap Icons --}}
     <link
@@ -67,6 +72,53 @@
             --admin-green-dark: #b9d5e1;
             --admin-navy: #142630;
         }
+
+        /* Safety net for raw Tailwind utility classes used across admin Blade
+         * pages that predate dark mode. New pages should prefer native
+         * `dark:` utilities now that tailwind.config sets darkMode:'selector'. */
+        html.dark [class~="bg-white"],
+        html.dark [class~="bg-slate-50"] { background-color: var(--admin-soft) !important; }
+        html.dark [class~="bg-slate-100"] { background-color: #1d2f39 !important; }
+        html.dark [class~="border-slate-100"],
+        html.dark [class~="border-slate-200"],
+        html.dark [class~="divide-slate-100"] { border-color: var(--admin-line) !important; }
+        html.dark [class~="text-slate-900"],
+        html.dark [class~="text-slate-800"] { color: var(--admin-ink) !important; }
+        html.dark [class~="text-slate-700"],
+        html.dark [class~="text-slate-600"] { color: #c3d2d9 !important; }
+        html.dark [class~="text-slate-500"],
+        html.dark [class~="text-slate-400"],
+        html.dark [class~="text-slate-300"] { color: var(--admin-muted) !important; }
+        html.dark [class~="hover:bg-slate-50"]:hover,
+        html.dark [class~="hover:bg-slate-100"]:hover,
+        html.dark [class~="hover:bg-slate-50/70"]:hover { background-color: #22343e !important; }
+
+        html.dark [class~="bg-indigo-50"] { background-color: rgba(139, 195, 154, 0.14) !important; }
+        html.dark [class~="text-indigo-500"],
+        html.dark [class~="text-indigo-600"],
+        html.dark [class~="text-indigo-700"] { color: #8bc39a !important; }
+        html.dark [class~="bg-indigo-600"] { background-color: #2f6350 !important; }
+        html.dark [class~="hover:bg-indigo-700"]:hover,
+        html.dark [class~="hover:bg-indigo-100"]:hover { background-color: #26503f !important; }
+        html.dark [class~="hover:bg-indigo-50"]:hover { background-color: rgba(139, 195, 154, 0.1) !important; }
+        html.dark [class~="hover:text-indigo-600"]:hover { color: #b9e8cc !important; }
+        html.dark [class~="focus:border-indigo-400"]:focus { border-color: #7db493 !important; }
+        html.dark [class~="focus:ring-indigo-100"]:focus { --tw-ring-color: rgba(139, 195, 154, 0.18) !important; }
+
+        html.dark [class~="bg-amber-50"] { background-color: rgba(229, 186, 108, 0.16) !important; }
+        html.dark [class~="text-amber-700"] { color: #e5ba6c !important; }
+        html.dark [class~="ring-amber-200"] { --tw-ring-color: rgba(229, 186, 108, 0.4) !important; }
+        html.dark [class~="bg-emerald-50"] { background-color: rgba(139, 195, 154, 0.16) !important; }
+        html.dark [class~="text-emerald-700"] { color: #8bc39a !important; }
+        html.dark [class~="ring-emerald-200"],
+        html.dark [class~="border-emerald-200"] { --tw-ring-color: rgba(139, 195, 154, 0.4) !important; border-color: rgba(139, 195, 154, 0.4) !important; }
+        html.dark [class~="bg-rose-50"] { background-color: rgba(213, 128, 112, 0.16) !important; }
+        html.dark [class~="text-rose-700"] { color: #d58070 !important; }
+        html.dark [class~="ring-rose-200"],
+        html.dark [class~="border-rose-200"] { --tw-ring-color: rgba(213, 128, 112, 0.4) !important; border-color: rgba(213, 128, 112, 0.4) !important; }
+        html.dark [class~="bg-orange-50"] { background-color: rgba(229, 186, 108, 0.16) !important; }
+        html.dark [class~="text-orange-700"] { color: #e5ba6c !important; }
+        html.dark [class~="ring-orange-200"] { --tw-ring-color: rgba(229, 186, 108, 0.4) !important; }
 
         body.backend-body {
             background: #f3f8f5;

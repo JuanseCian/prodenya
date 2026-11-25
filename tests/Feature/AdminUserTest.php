@@ -88,6 +88,28 @@ test('a coordinator cannot assign the admin role', function () {
         ->assertForbidden();
 });
 
+test('archiving a user requires a reason and records it', function () {
+    $admin = User::factory()->create(['rol_id' => 1]);
+    $approved = User::factory()->create([
+        'rol_id' => 5,
+        'estado_cuenta' => User::ESTADO_APROBADO,
+        'activo' => true,
+    ]);
+
+    $this->actingAs($admin)
+        ->post(route('admin.usuarios.archivar', $approved))
+        ->assertSessionHasErrors('motivo');
+
+    expect($approved->fresh()->estado_cuenta)->toBe(User::ESTADO_APROBADO);
+
+    $this->actingAs($admin)
+        ->post(route('admin.usuarios.archivar', $approved), ['motivo' => 'Egreso institucional'])
+        ->assertRedirect();
+
+    expect($approved->fresh()->estado_cuenta)->toBe(User::ESTADO_ARCHIVADO);
+    expect($approved->fresh()->motivo_archivado)->toBe('Egreso institucional');
+});
+
 test('pending users cannot log in', function () {
     $pending = User::factory()->create([
         'estado_cuenta' => User::ESTADO_PENDIENTE,

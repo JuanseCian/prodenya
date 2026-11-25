@@ -16,6 +16,16 @@
         .catalog-form input:focus, .catalog-form select:focus, .catalog-form textarea:focus { border-color: #7db493 !important; box-shadow: 0 0 0 3px rgba(125, 180, 147, 0.18) !important; }
         .catalog-form .catalog-submit { background: #397461; }
         .catalog-form .catalog-submit:hover { background: #286047; }
+
+        html.dark .catalog-form { color: var(--admin-ink); }
+        html.dark .catalog-form .catalog-form-card { background: var(--admin-soft); border-color: var(--admin-line); }
+        html.dark .catalog-form .catalog-form-head, html.dark .catalog-form .catalog-form-actions { background: #1d2f39; border-color: var(--admin-line); }
+        html.dark .catalog-form .catalog-kicker { color: #8bc39a; }
+        html.dark .catalog-form h2 { color: var(--admin-ink); }
+        html.dark .catalog-form input, html.dark .catalog-form select, html.dark .catalog-form textarea { background: #172832; border-color: var(--admin-line); color: var(--admin-ink); }
+        html.dark .catalog-form input:focus, html.dark .catalog-form select:focus, html.dark .catalog-form textarea:focus { border-color: #4a916f !important; box-shadow: 0 0 0 3px rgba(139, 195, 154, 0.18) !important; }
+        html.dark .catalog-form .catalog-submit { background: #2f6350; }
+        html.dark .catalog-form .catalog-submit:hover { background: #26503f; }
     </style>
 @endpush
 

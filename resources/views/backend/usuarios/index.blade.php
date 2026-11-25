@@ -24,7 +24,7 @@
 
 @push('styles')
     <style>
-        .users-page { color: #162b3a; }
+        .users-page { color: var(--admin-ink); }
         .users-hero { background: radial-gradient(circle at 90% 0%, rgba(156, 224, 191, 0.23), transparent 28%), linear-gradient(125deg, #123348, #2d735f); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 22px; box-shadow: 0 18px 40px rgba(21, 52, 72, 0.14); color: #fff; overflow: hidden; padding: 28px; position: relative; }
         .users-hero::after { border: 1px solid rgba(255, 255, 255, 0.13); border-radius: 50%; content: ''; height: 250px; position: absolute; right: -90px; top: -135px; width: 250px; }
         .users-hero-content { position: relative; z-index: 1; }
@@ -70,6 +70,38 @@
         .users-page table tbody tr:hover { background: #f1f8f4; }
         .users-action-open { background: rgba(57, 116, 97, 0.06); border-color: rgba(57, 116, 97, 0.22); color: #397461; }
         .users-action-open:hover { background: rgba(57, 116, 97, 0.14); border-color: rgba(57, 116, 97, 0.4); box-shadow: 0 4px 10px rgba(57, 116, 97, 0.14); color: #286047; }
+
+        html.dark .users-stat { background: var(--admin-soft); border-color: var(--admin-line); }
+        html.dark .users-stat:hover { background: #1c3544; border-color: #3f5c6a; }
+        html.dark .users-stat strong { color: var(--admin-ink); }
+        html.dark .users-stat span { color: var(--admin-muted); }
+        html.dark .users-filter { background: var(--admin-soft); border-color: var(--admin-line); }
+        html.dark .users-detail { background: #172832; }
+        html.dark .users-detail-header { border-color: var(--admin-line); }
+        html.dark .users-detail-avatar { background: rgba(139, 195, 154, 0.16); color: #8bc39a; }
+        html.dark .users-detail h2 { color: var(--admin-ink); }
+        html.dark .users-detail-email { color: var(--admin-muted); }
+        html.dark .users-detail-close { background: #20343e; color: #a9bdc7; }
+        html.dark .users-detail-close:hover { background: #28404c; color: #edf6fb; }
+        html.dark .users-detail-section { border-color: var(--admin-line); }
+        html.dark .users-detail-section h3 { color: var(--admin-ink); }
+        html.dark .users-detail-grid dt { color: var(--admin-muted); }
+        html.dark .users-detail-grid dd { color: #c3d2d9; }
+        html.dark .users-action-box { background: #1d2f39; border-color: var(--admin-line); }
+        html.dark .users-action-box h4 { color: var(--admin-ink); }
+        html.dark .users-timeline-item { border-color: var(--admin-line); }
+        html.dark .users-timeline-item strong { color: #c3d2d9; }
+        html.dark .users-timeline-item small { color: var(--admin-muted); }
+        html.dark .users-page .bg-indigo-600 { background-color: #2f6350 !important; }
+        html.dark .users-page .bg-indigo-600:hover { background-color: #26503f !important; }
+        html.dark .users-page .text-indigo-600 { color: #8bc39a !important; }
+        html.dark .users-page input:focus, html.dark .users-page select:focus, html.dark .users-page textarea:focus { border-color: #4a916f !important; box-shadow: 0 0 0 3px rgba(139, 195, 154, 0.18) !important; }
+        html.dark .users-page table thead { border-color: var(--admin-line); }
+        html.dark .users-page table thead th { color: #8bc39a; }
+        html.dark .users-page table tbody tr:nth-child(even) { background: rgba(255, 255, 255, 0.02); }
+        html.dark .users-page table tbody tr:hover { background: rgba(139, 195, 154, 0.08); }
+        html.dark .users-action-open { background: rgba(139, 195, 154, 0.1); border-color: rgba(139, 195, 154, 0.3); color: #8bc39a; }
+        html.dark .users-action-open:hover { background: rgba(139, 195, 154, 0.18); border-color: rgba(139, 195, 154, 0.46); color: #b9e8cc; }
 
         @media (max-width: 700px) {
             .users-detail { max-width: none; }
@@ -215,11 +247,11 @@
                 @endif
 
                 @if ($seleccionado->estado_cuenta === 'aprobado' && $seleccionado->id !== auth()->id())
-                    <section class="users-detail-section"><h3>Acciones de acceso</h3><div class="users-action-box"><h4>Suspender cuenta</h4><form method="POST" action="{{ route('admin.usuarios.suspender', $seleccionado) }}">@csrf<textarea name="motivo" required rows="2" placeholder="Motivo obligatorio" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"></textarea><button class="mt-2 rounded-lg bg-orange-600 px-3 py-2 text-xs font-bold text-white hover:bg-orange-700">Suspender</button></form></div><form method="POST" action="{{ route('admin.usuarios.archivar', $seleccionado) }}" onsubmit="return confirm('¿Archivar esta cuenta?');">@csrf<button class="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50">Archivar cuenta</button></form></section>
+                    <section class="users-detail-section"><h3>Acciones de acceso</h3><div class="users-action-box"><h4>Suspender cuenta</h4><form method="POST" action="{{ route('admin.usuarios.suspender', $seleccionado) }}">@csrf<textarea name="motivo" required rows="2" placeholder="Motivo obligatorio" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"></textarea><button class="mt-2 rounded-lg bg-orange-600 px-3 py-2 text-xs font-bold text-white hover:bg-orange-700">Suspender</button></form></div><div class="users-action-box"><h4>Archivar cuenta</h4><form method="POST" action="{{ route('admin.usuarios.archivar', $seleccionado) }}">@csrf<textarea name="motivo" required rows="2" placeholder="Motivo obligatorio" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"></textarea><button class="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50">Archivar cuenta</button></form></div></section>
                 @elseif ($seleccionado->estado_cuenta === 'suspendido')
                     <section class="users-detail-section"><h3>Acciones de acceso</h3><form method="POST" action="{{ route('admin.usuarios.reactivar', $seleccionado) }}">@csrf<button class="w-full rounded-lg bg-emerald-600 px-3 py-2 text-xs font-bold text-white hover:bg-emerald-700">Reactivar cuenta</button></form></section>
                 @elseif ($seleccionado->estado_cuenta === 'archivado')
-                    <section class="users-detail-section"><h3>Archivo</h3><form method="POST" action="{{ route('admin.usuarios.restaurar', $seleccionado) }}">@csrf<button class="w-full rounded-lg bg-indigo-600 px-3 py-2 text-xs font-bold text-white hover:bg-indigo-700">Restaurar cuenta</button></form></section>
+                    <section class="users-detail-section"><h3>Archivo</h3>@if ($seleccionado->motivo_archivado)<div class="mb-3 rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600"><strong>Motivo:</strong> {{ $seleccionado->motivo_archivado }}</div>@endif<form method="POST" action="{{ route('admin.usuarios.restaurar', $seleccionado) }}">@csrf<button class="w-full rounded-lg bg-indigo-600 px-3 py-2 text-xs font-bold text-white hover:bg-indigo-700">Restaurar cuenta</button></form></section>
                 @endif
 
                 <section class="users-detail-section"><h3>Actividad administrativa</h3>@if ($actividad->isNotEmpty())<div class="users-timeline">@foreach ($actividad as $evento)<div class="users-timeline-item"><strong>{{ ucfirst(str_replace('_', ' ', $evento->evento)) }}</strong><small>{{ $evento->creado_en?->format('d/m/Y H:i') }} · {{ $evento->usuario?->name ?: 'Sistema' }}</small></div>@endforeach</div>@else<p class="text-xs text-slate-400">Todavía no hay acciones administrativas registradas.</p>@endif</section>

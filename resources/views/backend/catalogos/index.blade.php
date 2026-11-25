@@ -24,6 +24,24 @@
         .catalog-action-edit:hover { background: rgba(57, 116, 97, 0.14); border-color: rgba(57, 116, 97, 0.4); box-shadow: 0 4px 10px rgba(57, 116, 97, 0.14); color: #286047; }
         .catalog-action-delete { background: rgba(185, 58, 77, 0.055); border-color: rgba(185, 58, 77, 0.2); color: #b33a4d; }
         .catalog-action-delete:hover { background: rgba(185, 58, 77, 0.12); border-color: rgba(185, 58, 77, 0.38); box-shadow: 0 4px 10px rgba(185, 58, 77, 0.14); color: #962f40; }
+
+        html.dark .catalog-page { color: var(--admin-ink); }
+        html.dark .catalog-page .catalog-hero { background: var(--admin-soft); border-color: var(--admin-line); }
+        html.dark .catalog-page .catalog-kicker { color: #8bc39a; }
+        html.dark .catalog-page h2 { color: var(--admin-ink); }
+        html.dark .catalog-page input:focus { border-color: #4a916f !important; box-shadow: 0 0 0 3px rgba(139, 195, 154, 0.18) !important; }
+        html.dark .catalog-page .catalog-primary { background: #2f6350; }
+        html.dark .catalog-page .catalog-primary:hover { background: #26503f; }
+        html.dark .catalog-page .catalog-table { background: var(--admin-soft); border-color: var(--admin-line); }
+        html.dark .catalog-page .catalog-table thead { background: #1d2f39; border-color: var(--admin-line); }
+        html.dark .catalog-page .catalog-table thead th { color: #8bc39a; }
+        html.dark .catalog-page .catalog-table tbody tr:nth-child(even) { background: rgba(255, 255, 255, 0.02); }
+        html.dark .catalog-page .catalog-table tbody tr:hover { background: rgba(139, 195, 154, 0.08); }
+        html.dark .catalog-page .catalog-table a:hover { color: #8bc39a; }
+        html.dark .catalog-action-edit { background: rgba(139, 195, 154, 0.1); border-color: rgba(139, 195, 154, 0.3); color: #8bc39a; }
+        html.dark .catalog-action-edit:hover { background: rgba(139, 195, 154, 0.18); border-color: rgba(139, 195, 154, 0.46); color: #b9e8cc; }
+        html.dark .catalog-action-delete { background: rgba(213, 128, 112, 0.1); border-color: rgba(213, 128, 112, 0.3); color: #d58070; }
+        html.dark .catalog-action-delete:hover { background: rgba(213, 128, 112, 0.18); border-color: rgba(213, 128, 112, 0.46); color: #e99b8e; }
     </style>
 @endpush
 

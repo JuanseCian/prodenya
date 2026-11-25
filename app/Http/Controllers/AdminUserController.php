@@ -255,6 +255,7 @@ class AdminUserController extends Controller
         $this->authorizeManagement($request->user(), $user);
         abort_if($user->id === $request->user()->id, 422, 'No podés archivar tu propia cuenta.');
         $this->ensureNotLastAdmin($user);
+        $datos = $request->validate(['motivo' => ['required', 'string', 'max:2000']]);
 
         $antes = $this->snapshot($user);
         $user->forceFill([
@@ -262,8 +263,9 @@ class AdminUserController extends Controller
             'activo' => false,
             'archivado_en' => now(),
             'archivado_por' => $request->user()->id,
+            'motivo_archivado' => $datos['motivo'],
         ])->saveQuietly();
-        $this->audit('usuario_archivado', $user, $antes);
+        $this->audit('usuario_archivado', $user, $antes, ['motivo' => $datos['motivo']]);
 
         return back()->with('success', 'Cuenta archivada correctamente.');
     }
@@ -280,6 +282,7 @@ class AdminUserController extends Controller
             'activo' => true,
             'archivado_en' => null,
             'archivado_por' => null,
+            'motivo_archivado' => null,
         ])->saveQuietly();
         $this->audit('usuario_restaurado', $user, $antes);
 
@@ -315,7 +318,7 @@ class AdminUserController extends Controller
 
     private function snapshot(User $user): array
     {
-        return $user->only(['estado_cuenta', 'activo', 'rol_id', 'profesion', 'motivo_rechazo', 'motivo_suspension', 'secciones_legajo_visibles']);
+        return $user->only(['estado_cuenta', 'activo', 'rol_id', 'profesion', 'motivo_rechazo', 'motivo_suspension', 'motivo_archivado', 'secciones_legajo_visibles']);
     }
 
     /**

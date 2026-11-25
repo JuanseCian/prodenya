@@ -10,11 +10,11 @@ use App\Models\Provincia;
 use App\Models\Rol;
 use App\Models\TipoDocumento;
 use Closure;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
-use Throwable;
 
 class AdminCatalogController extends Controller
 {
@@ -126,7 +126,7 @@ class AdminCatalogController extends Controller
             }
 
             $model->delete();
-        } catch (Throwable $exception) {
+        } catch (QueryException $exception) {
             report($exception);
 
             return back()->withErrors([
