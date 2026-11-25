@@ -72,3 +72,4 @@ require __DIR__.'/comunicacion.php';
 require __DIR__.'/notificaciones.php';
 require __DIR__.'/workflow.php';
 require __DIR__.'/actas.php';
+require __DIR__.'/legal.php';

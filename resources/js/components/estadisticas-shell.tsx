@@ -103,7 +103,7 @@ export default function EstadisticasShell({
             />
 
             <aside
-                className={`fixed inset-y-0 left-0 z-40 flex flex-col border-r border-white/10 bg-brand-strong transition-[width,transform] duration-300 ease-out ${collapsed ? 'lg:w-20' : 'lg:w-60'} ${mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'} w-72`}
+                className={`fixed inset-y-0 left-0 z-40 flex flex-col border-r border-white/10 bg-brand-strong transition-[width,transform] duration-300 ease-out dark:bg-[#173247] ${collapsed ? 'lg:w-20' : 'lg:w-60'} ${mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'} w-72`}
             >
                 <div className="flex items-center justify-between border-b border-white/10 px-4 py-5">
                     <button

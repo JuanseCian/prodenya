@@ -498,6 +498,8 @@
                         </ul>
                         <p class="match-message" id="password-match" role="status" aria-live="polite"></p>
 
+                        <p class="field__hint">Al crear una cuenta aceptás los <a class="text-link" href="{{ route('legal.terminos') }}" target="_blank" rel="noopener">términos y condiciones de uso</a>.</p>
+
                         <button class="submit-button" type="submit"><span class="submit-button__spinner" aria-hidden="true"></span><span data-submit-label>Crear cuenta</span></button>
                     </form>
 

@@ -161,7 +161,7 @@ export default function PasskeyOnboardingModal({
                             <Button
                                 type="button"
                                 variant="ghost"
-                                className="order-2 rounded-lg px-4 text-muted-foreground hover:bg-accent hover:text-primary sm:order-1"
+                                className="order-2 rounded-lg px-4 text-[#365160] hover:bg-accent hover:text-primary sm:order-1 dark:text-[#a9bdc7]"
                                 onClick={dismiss}
                                 disabled={isLoading}
                             >

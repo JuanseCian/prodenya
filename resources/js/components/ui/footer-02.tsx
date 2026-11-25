@@ -1,10 +1,11 @@
 import { Link } from '@inertiajs/react';
 import { home } from '@/routes';
+import { terminos } from '@/routes/legal';
 
 export function Footer02() {
 
     return (
-        <footer className="border-t border-white/10 bg-brand-strong pb-[calc(78px+env(safe-area-inset-bottom))] text-white lg:pb-0">
+        <footer className="border-t border-white/10 bg-brand-strong pb-[calc(78px+env(safe-area-inset-bottom))] text-white lg:pb-0 dark:bg-[#173247]">
             <div className="mx-auto flex w-full max-w-7xl flex-col items-center px-5 py-12 sm:px-8 lg:py-14">
                 <Link
                     href={home()}
@@ -39,6 +40,9 @@ export function Footer02() {
             <div className="border-t border-white/10 bg-black/10">
                 <div className="mx-auto flex w-full max-w-7xl flex-col gap-2 px-5 py-5 text-center text-xs text-white/50 sm:px-8 md:flex-row md:items-center md:justify-between md:text-left">
                     <span>© {new Date().getFullYear()} PRODENYA</span>
+                    <a href={terminos.url()} className="text-white/60 underline-offset-2 hover:text-white hover:underline">
+                        Términos y condiciones
+                    </a>
                     <span>Uso institucional · San Nicolás de los Arroyos</span>
                 </div>
             </div>
