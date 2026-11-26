@@ -82,7 +82,7 @@ const NIVEL_ESTILO: Record<string, string> = {
 };
 
 const thClass =
-    'px-4 py-3 text-left text-[0.68rem] font-bold tracking-[0.12em] text-primary uppercase whitespace-nowrap';
+    'px-4 py-3 text-left text-[length:calc(0.68rem_+_2px)] font-bold tracking-[0.12em] text-primary uppercase whitespace-nowrap';
 const tdClass = 'px-4 py-3.5 align-top text-sm text-foreground';
 const selectClass =
     'h-11 rounded-lg border border-input bg-background px-3 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20';
@@ -185,7 +185,7 @@ function DetalleExpandido({ legajo }: { legajo: LegajoFila }) {
     return (
         <div className="grid gap-4 border-t border-border bg-surface-soft px-5 py-4 sm:grid-cols-2 lg:grid-cols-4">
             <div>
-                <p className="text-[0.68rem] font-bold tracking-[0.12em] text-primary uppercase">
+                <p className="text-[length:calc(0.68rem_+_2px)] font-bold tracking-[0.12em] text-primary uppercase">
                     Estado
                 </p>
                 <p className="mt-1 text-sm font-semibold text-foreground">
@@ -193,7 +193,7 @@ function DetalleExpandido({ legajo }: { legajo: LegajoFila }) {
                 </p>
             </div>
             <div>
-                <p className="text-[0.68rem] font-bold tracking-[0.12em] text-primary uppercase">
+                <p className="text-[length:calc(0.68rem_+_2px)] font-bold tracking-[0.12em] text-primary uppercase">
                     Profesional responsable
                 </p>
                 <p className="mt-1 text-sm text-foreground">
@@ -201,7 +201,7 @@ function DetalleExpandido({ legajo }: { legajo: LegajoFila }) {
                 </p>
             </div>
             <div>
-                <p className="text-[0.68rem] font-bold tracking-[0.12em] text-primary uppercase">
+                <p className="text-[length:calc(0.68rem_+_2px)] font-bold tracking-[0.12em] text-primary uppercase">
                     Derivación
                 </p>
                 <p className="mt-1 text-sm text-foreground">
@@ -209,7 +209,7 @@ function DetalleExpandido({ legajo }: { legajo: LegajoFila }) {
                 </p>
             </div>
             <div className="sm:col-span-2 lg:col-span-1">
-                <p className="text-[0.68rem] font-bold tracking-[0.12em] text-primary uppercase">
+                <p className="text-[length:calc(0.68rem_+_2px)] font-bold tracking-[0.12em] text-primary uppercase">
                     Problemáticas completas
                 </p>
                 <div className="mt-2 flex flex-wrap gap-1.5">
@@ -430,7 +430,7 @@ export default function LegajosIndex({
                                 <Filter size={15} />
                                 Filtros avanzados
                                 {cantidadFiltros > 0 && (
-                                    <span className="grid size-5 place-items-center rounded-full bg-primary text-[0.68rem] text-primary-foreground">
+                                    <span className="grid size-5 place-items-center rounded-full bg-primary text-[length:calc(0.68rem_+_2px)] text-primary-foreground">
                                         {cantidadFiltros}
                                     </span>
                                 )}

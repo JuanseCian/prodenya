@@ -10,6 +10,7 @@ use App\Models\TipoIntervencion;
 use App\Models\User;
 use App\Models\VinculoFamiliar;
 use App\Services\ActaService;
+use App\Services\PuntajeService;
 use App\Support\Barrios;
 use App\Support\Escuelas;
 use App\Support\ValidacionActa;
@@ -48,11 +49,13 @@ class IntervencionController extends Controller
         ]);
     }
 
-    public function store(GuardarIntervencionRequest $request, Legajo $legajo, ActaService $actas)
+    public function store(GuardarIntervencionRequest $request, Legajo $legajo, ActaService $actas, PuntajeService $puntaje)
     {
         $datos = $request->validated();
         $tipoActa = $request->generaActa() ? $request->tipoActa() : null;
-        $acta = $tipoActa ? $this->datosDelActa($request, $tipoActa, $datos, $actas) : null;
+        // El responsable del acta es el profesional elegido para la intervención.
+        $profesional = User::find($datos['profesional_id']);
+        $acta = $tipoActa ? $this->datosDelActa($request, $tipoActa, $datos, $actas, $profesional) : null;
         $legajosDestino = $this->legajosDestinoValidos($legajo, $datos['legajos_destino_ids'] ?? []);
 
         if ($legajosDestino->count() !== count($datos['legajos_destino_ids'] ?? [])) {
@@ -64,9 +67,10 @@ class IntervencionController extends Controller
         $grupoCopiaId = $legajosDestino->isNotEmpty() ? (string) Str::uuid() : null;
         $rutas = [];
         $rutasObsoletas = [];
+        $intervencionPrincipalId = null;
 
         try {
-            DB::transaction(function () use ($request, $legajo, $datos, $legajosDestino, $grupoCopiaId, $acta, $tipoActa, $actas, &$rutas, &$rutasObsoletas) {
+            DB::transaction(function () use ($request, $legajo, $datos, $legajosDestino, $grupoCopiaId, $acta, $tipoActa, $actas, $profesional, &$rutas, &$rutasObsoletas, &$intervencionPrincipalId) {
                 $intervencion = Intervencion::create([
                     'legajo_id' => $legajo->id,
                     'grupo_copia_id' => $grupoCopiaId,
@@ -82,11 +86,12 @@ class IntervencionController extends Controller
                     'firma_entrevistado_aclaracion' => $acta ? null : ($datos['firma_entrevistado_aclaracion'] ?? null),
                     'creado_por' => $request->user()->id,
                 ]);
+                $intervencionPrincipalId = $intervencion->id;
 
                 $this->guardarArchivos($request, $legajo, $intervencion, $rutas);
 
                 if ($acta) {
-                    $actas->registrar($tipoActa, $acta['datos'], $acta['firmas'], $request->user(), $legajo, null, $intervencion, $rutas);
+                    $actas->registrar($tipoActa, $acta['datos'], $acta['firmas'], $request->user(), $legajo, null, $intervencion, $rutas, $profesional);
                 } else {
                     $this->guardarFirmas($request, $intervencion, $rutas, $rutasObsoletas);
                 }
@@ -112,11 +117,15 @@ class IntervencionController extends Controller
 
                     if ($acta) {
                         // Cada legajo tiene su propia acta, con su número de legajo en el documento.
-                        $actas->registrar($tipoActa, $acta['datos'], $acta['firmas'], $request->user(), $legajoDestino, null, $copia, $rutas);
+                        $actas->registrar($tipoActa, $acta['datos'], $acta['firmas'], $request->user(), $legajoDestino, null, $copia, $rutas, $profesional);
                     }
                 }
             });
             Storage::disk(self::DISCO)->delete($rutasObsoletas);
+
+            if ($acta === null && $intervencionPrincipalId !== null) {
+                $puntaje->registrarIntervencion(Intervencion::findOrFail($intervencionPrincipalId));
+            }
         } catch (Throwable $e) {
             Storage::disk(self::DISCO)->delete($rutas);
             report($e);
@@ -136,7 +145,7 @@ class IntervencionController extends Controller
         return redirect()->route('legajos.show', $legajo->id)->with('status', $mensaje);
     }
 
-    public function edit(Legajo $legajo, Intervencion $intervencion): Response
+    public function edit(Legajo $legajo, Intervencion $intervencion, ActaService $actas): Response
     {
         $this->authorizeLegajoSection(request()->user(), $legajo, 'intervenciones');
         abort_unless($intervencion->legajo_id === $legajo->id, 404);
@@ -166,7 +175,14 @@ class IntervencionController extends Controller
                 'firmado' => $acta->firmado,
                 'requiere_firma' => Acta::firmantesDe($acta->tipo) !== [],
                 'descarga_url' => route('actas.descargar', $acta),
+                'vista_url' => route('actas.vista', $acta),
             ] : null,
+            // La hoja del acta se muestra igual que el Word: editable mientras no tenga firmas.
+            'actaHoja' => $intervencion->acta && ! Acta::esAuh($intervencion->acta->tipo)
+                ? $actas->hoja($intervencion->acta)
+                : null,
+            'barrios' => Barrios::nombres(),
+            'escuelas' => Escuelas::nombres(),
             'tipos' => $this->tipos($intervencion->tipo_intervencion_id),
             'profesionales' => $this->profesionales(),
             'hoy' => now()->toDateString(),
@@ -175,32 +191,51 @@ class IntervencionController extends Controller
         ]);
     }
 
-    public function update(GuardarIntervencionRequest $request, Legajo $legajo, Intervencion $intervencion)
+    public function update(GuardarIntervencionRequest $request, Legajo $legajo, Intervencion $intervencion, ActaService $actas)
     {
         $this->authorizeLegajoSection($request->user(), $legajo, 'intervenciones');
         abort_unless($intervencion->legajo_id === $legajo->id, 404);
         $datos = $request->validated();
         $legajo = $intervencion->legajo()->firstOrFail();
+        $actaEditable = $request->actaEditable();
+        $profesional = User::find($datos['profesional_id']);
+        $hojaActa = $actaEditable ? $this->datosDelActa($request, $actaEditable->tipo, $datos, $actas, $profesional) : null;
+        // Una firma ya registrada no se cambia al editar: ni la imagen ni a quién pertenece.
+        $responsableFirmado = filled($intervencion->firma_archivo_path);
+        $entrevistadoFirmado = filled($intervencion->firma_entrevistado_archivo_path);
         $rutas = [];
         $rutasObsoletas = [];
 
         try {
-            DB::transaction(function () use ($request, $legajo, $intervencion, $datos, &$rutas, &$rutasObsoletas) {
+            DB::transaction(function () use ($request, $legajo, $intervencion, $datos, $actaEditable, $hojaActa, $actas, $profesional, $responsableFirmado, $entrevistadoFirmado, &$rutas, &$rutasObsoletas) {
                 $intervencion->update([
                     'tipo_intervencion_id' => $datos['tipo_intervencion_id'],
                     'profesional_id' => $datos['profesional_id'],
                     'fecha_intervencion' => $datos['fecha_intervencion'],
                     'hora_intervencion' => $datos['hora_intervencion'],
-                    'detalle' => $datos['detalle'],
-                    'firma_nombre' => $datos['firma_nombre'] ?? $intervencion->firma_nombre,
-                    'firma_aclaracion' => $datos['firma_aclaracion'] ?? $intervencion->firma_aclaracion,
-                    'firma_entrevistado_nombre' => $datos['firma_entrevistado_nombre'] ?? null,
-                    'firma_entrevistado_aclaracion' => $datos['firma_entrevistado_aclaracion'] ?? null,
+                    'detalle' => $hojaActa ? $hojaActa['detalle'] : ($datos['detalle'] ?? $intervencion->detalle),
+                    'firma_nombre' => match (true) {
+                        $responsableFirmado => $intervencion->firma_nombre,
+                        $hojaActa !== null => $hojaActa['firmante'] ?? $intervencion->firma_nombre,
+                        default => $datos['firma_nombre'] ?? $intervencion->firma_nombre,
+                    },
+                    'firma_aclaracion' => match (true) {
+                        $responsableFirmado => $intervencion->firma_aclaracion,
+                        $hojaActa !== null => $hojaActa['firmante'] ?? $intervencion->firma_aclaracion,
+                        default => $datos['firma_aclaracion'] ?? $intervencion->firma_aclaracion,
+                    },
+                    'firma_entrevistado_nombre' => $entrevistadoFirmado
+                        ? $intervencion->firma_entrevistado_nombre
+                        : ($datos['firma_entrevistado_nombre'] ?? null),
+                    'firma_entrevistado_aclaracion' => $entrevistadoFirmado
+                        ? $intervencion->firma_entrevistado_aclaracion
+                        : ($datos['firma_entrevistado_aclaracion'] ?? null),
                     'actualizado_por' => $request->user()->id,
                 ]);
 
                 if (
-                    blank($datos['firma_entrevistado_nombre'] ?? null)
+                    ! $entrevistadoFirmado
+                    && blank($datos['firma_entrevistado_nombre'] ?? null)
                     && blank($datos['firma_entrevistado_aclaracion'] ?? null)
                     && ! $request->hasFile('firma_entrevistado_archivo')
                     && ! $request->filled('firma_entrevistado_dibujo')
@@ -213,8 +248,16 @@ class IntervencionController extends Controller
                     ]);
                 }
 
+                if ($actaEditable && $hojaActa) {
+                    $actas->actualizar($actaEditable, $hojaActa['datos'], $hojaActa['firmas'], $request->user(), $rutas, $rutasObsoletas, $profesional);
+
+                    if ($hojaActa['firmante'] && ! $intervencion->firmada_en) {
+                        $intervencion->update(['firmada_en' => now()]);
+                    }
+                }
+
                 $this->guardarArchivos($request, $legajo, $intervencion, $rutas);
-                $this->guardarFirmas($request, $intervencion, $rutas, $rutasObsoletas);
+                $this->guardarFirmas($request, $intervencion, $rutas, $rutasObsoletas, conservarExistentes: true);
             });
             Storage::disk(self::DISCO)->delete($rutasObsoletas);
         } catch (Throwable $e) {
@@ -316,7 +359,10 @@ class IntervencionController extends Controller
         }
     }
 
-    private function guardarFirmas(Request $request, Intervencion $intervencion, array &$rutas, array &$rutasObsoletas): void
+    /**
+     * @param  bool  $conservarExistentes  Al editar, una firma ya guardada no se reemplaza.
+     */
+    private function guardarFirmas(Request $request, Intervencion $intervencion, array &$rutas, array &$rutasObsoletas, bool $conservarExistentes = false): void
     {
         $firmas = [
             'responsable' => [
@@ -335,6 +381,10 @@ class IntervencionController extends Controller
 
         foreach ($firmas as $nombre => $firma) {
             $ruta = null;
+
+            if ($conservarExistentes && filled($intervencion->{$firma['columna']})) {
+                continue;
+            }
 
             if ($request->hasFile($firma['archivo'])) {
                 $archivo = $request->file($firma['archivo']);
@@ -502,7 +552,7 @@ class IntervencionController extends Controller
      * @param  array<string, mixed>  $datos
      * @return array{datos: array<string, mixed>, firmas: array<string, array{nombre: string, png: string}>, detalle: string, firmante: string|null}
      */
-    private function datosDelActa(GuardarIntervencionRequest $request, string $tipo, array $datos, ActaService $actas): array
+    private function datosDelActa(GuardarIntervencionRequest $request, string $tipo, array $datos, ActaService $actas, ?User $autor): array
     {
         $datosActa = ValidacionActa::datos($datos['acta'] ?? []);
         $datosActa['fecha'] = $datos['fecha_intervencion'];
@@ -512,6 +562,7 @@ class IntervencionController extends Controller
         }
 
         $firmas = ValidacionActa::firmas($tipo, (array) $request->input('acta', []));
+        $actas->aplicarResponsable($tipo, $datosActa, $firmas, $autor);
 
         return [
             'datos' => $datosActa,

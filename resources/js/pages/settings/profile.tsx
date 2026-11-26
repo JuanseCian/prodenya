@@ -65,7 +65,7 @@ function AccountFact({
         <div className="rounded-2xl border border-border bg-surface-soft p-4 transition-colors hover:border-primary/30">
             <div className="flex items-center gap-2 text-primary">
                 <Icon className="size-4" aria-hidden="true" />
-                <p className="text-[0.65rem] font-bold tracking-[0.13em] uppercase">
+                <p className="text-[length:calc(0.65rem_+_2px)] font-bold tracking-[0.13em] uppercase">
                     {label}
                 </p>
             </div>
@@ -161,10 +161,10 @@ export default function Profile({
                                 </Avatar>
                                 <div className="min-w-0 pb-1">
                                     <div className="mb-2 flex flex-wrap items-center gap-2">
-                                        <span className="rounded-full bg-white/10 px-2.5 py-1 text-[0.65rem] font-bold tracking-[0.13em] text-white/80 uppercase ring-1 ring-white/15">
+                                        <span className="rounded-full bg-white/10 px-2.5 py-1 text-[length:calc(0.65rem_+_2px)] font-bold tracking-[0.13em] text-white/80 uppercase ring-1 ring-white/15">
                                             Perfil personal
                                         </span>
-                                        <span className="inline-flex items-center gap-1.5 rounded-full bg-success/20 px-2.5 py-1 text-[0.65rem] font-semibold text-[#b9f0cf]">
+                                        <span className="inline-flex items-center gap-1.5 rounded-full bg-success/20 px-2.5 py-1 text-[length:calc(0.65rem_+_2px)] font-semibold text-[#b9f0cf]">
                                             <span className="size-1.5 rounded-full bg-[#9ce0bf]" />
                                             Activa
                                         </span>
@@ -444,7 +444,7 @@ export default function Profile({
                         <div className="rounded-2xl border border-border bg-surface-soft p-4 sm:col-span-2 lg:col-span-4">
                             <div className="flex items-center gap-2 text-primary">
                                 <Clock3 className="size-4" />
-                                <p className="text-[0.65rem] font-bold tracking-[0.13em] uppercase">
+                                <p className="text-[length:calc(0.65rem_+_2px)] font-bold tracking-[0.13em] uppercase">
                                     Último acceso
                                 </p>
                             </div>

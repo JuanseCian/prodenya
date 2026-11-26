@@ -354,7 +354,7 @@ export default function AuhPlanillaDialog({
                                 <FileText className="size-5" />
                             </span>
                             <div className="min-w-0">
-                                <p className="text-[11px] font-semibold tracking-[0.08em] text-[#6B8F71] uppercase">
+                                <p className="text-[length:calc(11px_+_2px)] font-semibold tracking-[0.08em] text-[#6B8F71] uppercase">
                                     Planilla AUH
                                 </p>
                                 <h2

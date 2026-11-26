@@ -39,6 +39,15 @@ return [
         'token' => env('MAPBOX_ACCESS_TOKEN'),
     ],
 
+    /*
+     * LibreOffice convierte los Word de las actas a PDF (modo headless).
+     * En macOS suele estar en /Applications/LibreOffice.app/Contents/MacOS/soffice.
+     */
+    'libreoffice' => [
+        'binary' => env('LIBREOFFICE_BINARY', 'soffice'),
+        'timeout' => (int) env('LIBREOFFICE_TIMEOUT', 60),
+    ],
+
     'hostinger_mailbox' => [
         'enabled' => env('HOSTINGER_MAILBOX_ENABLED', false),
         'host' => env('HOSTINGER_IMAP_HOST', 'imap.hostinger.com'),

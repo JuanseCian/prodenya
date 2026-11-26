@@ -46,7 +46,7 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
             <div className="mx-auto max-w-[1280px]">
                 <header className="mb-8 flex flex-col gap-5 border-b border-border/70 pb-8 sm:mb-10 sm:flex-row sm:items-end sm:justify-between">
                     <div>
-                        <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-secondary px-3 py-1.5 text-[0.65rem] font-bold tracking-[0.15em] text-secondary-foreground uppercase">
+                        <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-secondary px-3 py-1.5 text-[length:calc(0.65rem_+_2px)] font-bold tracking-[0.15em] text-secondary-foreground uppercase">
                             <span className="size-1.5 rounded-full bg-primary" />
                             Centro de cuenta
                         </div>

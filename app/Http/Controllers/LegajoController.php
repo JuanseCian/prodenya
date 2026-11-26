@@ -7,6 +7,7 @@ use App\Http\Requests\UpdateLegajoRequest;
 use App\Models\Acta;
 use App\Models\Auh;
 use App\Models\AuhArchivo;
+use App\Models\CasoResponsable;
 use App\Models\CoberturaSalud;
 use App\Models\CudArchivo;
 use App\Models\Intervencion;
@@ -139,13 +140,17 @@ class LegajoController extends Controller
         ]);
     }
 
-    public function create(): Response
+    public function create(Request $request): Response
     {
         return Inertia::render('personas/create', [
             'modoLegajo' => true,
             'problematicaOtrosId' => Problematica::idOtros(),
             'provincias' => Provincia::orderBy('nombre')->get(['id', 'nombre']),
             'problematicas' => Problematica::orderBy('nombre')->get(['id', 'nombre']),
+            'requiereResponsable' => $request->user()->tieneRol('administrativo'),
+            'responsables' => $request->user()->tieneRol('administrativo')
+                ? $this->responsablesActivos()
+                : [],
         ]);
     }
 
@@ -154,15 +159,26 @@ class LegajoController extends Controller
         $datos = $request->validated();
 
         try {
-            $legajo = DB::transaction(function () use ($datos) {
+            $legajo = DB::transaction(function () use ($datos, $request) {
                 $persona = Persona::create($this->datosPersonales($datos));
-                $legajo = Legajo::crearConNumeroUnico($persona, $this->datosLegajo($datos));
+                $profesionalId = $request->user()->tieneRol('administrativo')
+                    ? (int) $datos['legajo_profesional_id']
+                    : $request->user()->id;
+                $legajo = Legajo::crearConNumeroUnico($persona, $this->datosLegajo($datos, $profesionalId));
                 $idOtros = Problematica::idOtros();
                 $legajo->problematicas()->sync(
                     collect($datos['legajo_problematicas'])->mapWithKeys(fn ($id) => [
                         (int) $id => ['detalle' => (int) $id === $idOtros ? ($datos['legajo_problematica_otros'] ?? null) : null],
                     ])->all(),
                 );
+                CasoResponsable::create([
+                    'legajo_id' => $legajo->id,
+                    'usuario_id' => $profesionalId,
+                    'asignado_por' => $request->user()->id,
+                    'es_principal' => true,
+                    'activo' => true,
+                    'asignado_en' => now(),
+                ]);
 
                 return $legajo->fresh();
             });
@@ -418,6 +434,8 @@ class LegajoController extends Controller
                     'firmado' => $intervencion->acta->firmado,
                     'requiere_firma' => Acta::firmantesDe($intervencion->acta->tipo) !== [],
                     'descarga_url' => route('actas.descargar', $intervencion->acta),
+                    'vista_url' => route('actas.vista', $intervencion->acta),
+                    'hoja_url' => route('actas.hoja', $intervencion->acta),
                 ] : null,
                 'detalle' => $intervencion->detalle,
                 'profesional' => $intervencion->profesional?->name,
@@ -618,11 +636,12 @@ class LegajoController extends Controller
         ];
     }
 
-    private function datosLegajo(array $datos): array
+    private function datosLegajo(array $datos, int $profesionalId): array
     {
         return [
             'nivel_riesgo' => $datos['legajo_nivel_riesgo'],
             'origen_derivacion' => $datos['legajo_origen_derivacion'],
+            'profesional_id' => $profesionalId,
             'estado' => 'Abierto',
             'observaciones' => $datos['legajo_observaciones'] ?? null,
         ];

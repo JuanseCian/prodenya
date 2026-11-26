@@ -50,7 +50,7 @@ export default function Login({ status }: LoginProps) {
                 <div className="w-full max-w-sm rounded-lg border border-[#E3E0D8] bg-white p-8 shadow-sm sm:p-10">
                     <div className="border-b border-[#E3E0D8] pb-6 text-center">
                         <span
-                            className="text-[0.65rem] font-semibold tracking-[0.2em] text-[#6B8F71] uppercase"
+                            className="text-[length:calc(0.65rem_+_2px)] font-semibold tracking-[0.2em] text-[#6B8F71] uppercase"
                             style={{ fontFamily: FONT_BODY }}
                         >
                             Sistema de gestión

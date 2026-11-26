@@ -45,7 +45,7 @@ function Panel({
         >
             <div>
                 {eyebrow && (
-                    <p className="text-[0.66rem] font-bold tracking-[0.13em] text-[#39795B] uppercase dark:text-[#8BC9A9]">
+                    <p className="text-[length:calc(0.66rem_+_2px)] font-bold tracking-[0.13em] text-[#39795B] uppercase dark:text-[#8BC9A9]">
                         {eyebrow}
                     </p>
                 )}
@@ -176,7 +176,7 @@ export default function EstadisticasResumen(props: EstadisticasData) {
                                     </p>
                                 </div>
                                 <div className="shrink-0 border-l-2 border-[#7EAD8B] pl-4">
-                                    <p className="text-[0.66rem] font-bold tracking-[0.13em] text-[#697586] uppercase dark:text-[#8EA5B0]">
+                                    <p className="text-[length:calc(0.66rem_+_2px)] font-bold tracking-[0.13em] text-[#697586] uppercase dark:text-[#8EA5B0]">
                                         Período analizado
                                     </p>
                                     <p className="mt-1 text-sm font-semibold text-[#2C4A5E] dark:text-[#D8E2E8]">
@@ -201,7 +201,7 @@ export default function EstadisticasResumen(props: EstadisticasData) {
                         >
                             <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
                                 <div>
-                                    <p className="text-[0.66rem] font-bold tracking-[0.13em] text-[#39795B] uppercase dark:text-[#8BC9A9]">
+                                    <p className="text-[length:calc(0.66rem_+_2px)] font-bold tracking-[0.13em] text-[#39795B] uppercase dark:text-[#8BC9A9]">
                                         Resumen ejecutivo
                                     </p>
                                     <h2

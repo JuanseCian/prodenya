@@ -64,10 +64,14 @@ function LoadingBrand({ compact = false }: { compact?: boolean }) {
     return (
         <div className={`flex items-center ${compact ? 'gap-3' : 'gap-4'}`}>
             <span className="flex size-11 items-center justify-center rounded-xl border border-primary/20 bg-primary/8 p-2 shadow-sm">
-                <img src="/assets/img/SN.png" alt="" className="size-full object-contain" />
+                <img
+                    src="/assets/img/SN.png"
+                    alt=""
+                    className="size-full object-contain"
+                />
             </span>
             <div className="space-y-1">
-                <p className="text-[0.65rem] font-bold tracking-[0.16em] text-primary uppercase">
+                <p className="text-[length:calc(0.65rem_+_2px)] font-bold tracking-[0.16em] text-primary uppercase">
                     PRODENYA
                 </p>
                 {!compact && (
@@ -97,7 +101,10 @@ function StatsRow() {
     return (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             {Array.from({ length: 4 }).map((_, index) => (
-                <div className="rounded-xl border border-border bg-card p-4" key={index}>
+                <div
+                    className="rounded-xl border border-border bg-card p-4"
+                    key={index}
+                >
                     <div className="flex items-start justify-between gap-3">
                         <div className="space-y-2">
                             <Skeleton className="h-3 w-24" />
@@ -193,7 +200,10 @@ function MainSkeleton({ variant }: { variant: SkeletonVariant }) {
                         </div>
                         <div className="grid grid-cols-7 gap-px overflow-hidden rounded-lg border border-border">
                             {Array.from({ length: 42 }).map((_, index) => (
-                                <Skeleton className="h-20 rounded-none sm:h-24" key={index} />
+                                <Skeleton
+                                    className="h-20 rounded-none sm:h-24"
+                                    key={index}
+                                />
                             ))}
                         </div>
                     </div>
@@ -201,7 +211,10 @@ function MainSkeleton({ variant }: { variant: SkeletonVariant }) {
                         <Skeleton className="h-6 w-44" />
                         <div className="mt-5 space-y-3">
                             {Array.from({ length: 4 }).map((_, index) => (
-                                <div className="rounded-lg border border-border p-3" key={index}>
+                                <div
+                                    className="rounded-lg border border-border p-3"
+                                    key={index}
+                                >
                                     <Skeleton className="h-4 w-2/3" />
                                     <Skeleton className="mt-3 h-3 w-1/2" />
                                 </div>
@@ -250,7 +263,10 @@ function MainSkeleton({ variant }: { variant: SkeletonVariant }) {
                     {variant === 'settings' && (
                         <div className="space-y-2 rounded-xl border border-border bg-card p-3">
                             {Array.from({ length: 5 }).map((_, index) => (
-                                <Skeleton className="h-10 w-full rounded-lg" key={index} />
+                                <Skeleton
+                                    className="h-10 w-full rounded-lg"
+                                    key={index}
+                                />
                             ))}
                         </div>
                     )}
@@ -258,7 +274,9 @@ function MainSkeleton({ variant }: { variant: SkeletonVariant }) {
                         <Skeleton className="h-6 w-48" />
                         <Skeleton className="mt-2 h-3 w-72 max-w-full" />
                         <div className="mt-7">
-                            <FormFields count={variant === 'settings' ? 5 : 8} />
+                            <FormFields
+                                count={variant === 'settings' ? 5 : 8}
+                            />
                         </div>
                         <div className="mt-7 flex justify-end gap-3">
                             <Skeleton className="h-10 w-24 rounded-lg" />
@@ -314,7 +332,10 @@ function MainSkeleton({ variant }: { variant: SkeletonVariant }) {
                         <Skeleton className="h-10 w-full rounded-lg" />
                         <div className="mt-4 space-y-3">
                             {Array.from({ length: 7 }).map((_, index) => (
-                                <div className="flex gap-3 rounded-lg border border-border p-3" key={index}>
+                                <div
+                                    className="flex gap-3 rounded-lg border border-border p-3"
+                                    key={index}
+                                >
                                     <Skeleton className="size-10 rounded-full" />
                                     <div className="min-w-0 flex-1 space-y-2">
                                         <Skeleton className="h-3.5 w-3/4" />
@@ -381,10 +402,18 @@ export function SaveLoadingOverlay() {
             <div className="flex w-full max-w-xs flex-col items-center rounded-2xl border border-border bg-card p-8 text-center shadow-2xl shadow-black/10">
                 <div className="relative flex size-20 items-center justify-center rounded-2xl border border-primary/20 bg-primary/8 p-4">
                     <span className="absolute inset-1 rounded-xl border-2 border-primary/20 border-t-primary motion-safe:animate-spin motion-reduce:border-t-primary" />
-                    <img src="/assets/img/SN.png" alt="" className="relative size-full object-contain" />
+                    <img
+                        src="/assets/img/SN.png"
+                        alt=""
+                        className="relative size-full object-contain"
+                    />
                 </div>
-                <p className="mt-5 text-sm font-semibold text-foreground">Guardando cambios</p>
-                <p className="mt-1 text-xs text-muted-foreground">No cierres esta ventana.</p>
+                <p className="mt-5 text-sm font-semibold text-foreground">
+                    Guardando cambios
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                    No cierres esta ventana.
+                </p>
             </div>
         </div>
     );

@@ -48,7 +48,20 @@ class StoreActaRequest extends FormRequest
      */
     public function after(): array
     {
-        return [fn (Validator $validator) => ValidacionActa::validarFirmas($validator, $this->tipo(), $this->all())];
+        return [
+            fn (Validator $validator) => ValidacionActa::validarFirmas($validator, $this->tipo(), $this->all()),
+            function (Validator $validator) {
+                // Un administrativo carga actas de otra persona: tiene que indicar quién es la responsable.
+                if (
+                    $this->routeIs('actas.store')
+                    && ! Acta::esAuh($this->tipo())
+                    && $this->user()?->tieneRol('administrativo')
+                    && blank($this->input('operador'))
+                ) {
+                    $validator->errors()->add('operador', 'Indicá quién realizó el acta: es su responsable.');
+                }
+            },
+        ];
     }
 
     public function tipo(): string

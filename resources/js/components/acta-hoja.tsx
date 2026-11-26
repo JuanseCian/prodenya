@@ -1,7 +1,12 @@
-import { useState } from 'react';
+import { useContext, useState } from 'react';
 import type { ReactNode } from 'react';
 
-import { Blank, Firma, Hoja } from '@/components/auh-planilla-hoja';
+import {
+    Blank,
+    Firma,
+    Hoja,
+    HojaSoloLecturaContext,
+} from '@/components/auh-planilla-hoja';
 import type { FirmaEnCurso } from '@/components/auh-planilla-hoja';
 import SelectorBarrio from '@/components/selector-barrio';
 
@@ -40,6 +45,68 @@ interface Props {
     barrios: string[];
     /** Escuelas que se pueden elegir, incluidas las inactivas. */
     escuelas: string[];
+    /**
+     * Responsable del acta: figura como operador/a y firma por el Servicio, sin poder
+     * cambiarse. Cadena vacía: todavía no se eligió. null o ausente (p. ej. un
+     * administrativo en Acta rápida): se indica a mano.
+     */
+    responsableFijo?: string | null;
+}
+
+/** Roles que firman por el Servicio: los firma el responsable del acta. */
+const FIRMANTES_DEL_SERVICIO = ['equipo', 'autoridad'];
+
+/** Nombre del responsable, fijo: se muestra como un dato completado del acta. */
+function ResponsableFijo({ nombre }: { nombre: string }) {
+    return (
+        <span
+            className={`mx-1 inline border-b border-dotted border-[#2B2F36]/50 px-1 align-baseline ${
+                nombre
+                    ? 'font-semibold text-[#173247]'
+                    : 'text-[#8A6A35]/70 italic'
+            }`}
+            title="Responsable del acta"
+        >
+            {nombre || 'elegí el profesional'}
+        </span>
+    );
+}
+
+const tieneResponsableFijo = (
+    props: Props,
+): props is Props & {
+    responsableFijo: string;
+} => typeof props.responsableFijo === 'string';
+
+/** Operador/a del acta: fijo si hay responsable; si no, se escribe y se copia a la firma del Servicio. */
+function operador(props: Props, placeholder: string, ancho: string) {
+    if (tieneResponsableFijo(props)) {
+        return <ResponsableFijo nombre={props.responsableFijo} />;
+    }
+
+    return (
+        <Blank
+            value={props.datos.operador}
+            onChange={(valor) => {
+                const anterior = props.datos.operador;
+                props.set('operador', valor);
+
+                for (const rol of FIRMANTES_DEL_SERVICIO) {
+                    const actual = props.firmas[rol];
+
+                    if (
+                        actual &&
+                        (actual.nombre === '' || actual.nombre === anterior)
+                    ) {
+                        props.setFirma(rol, 'nombre', valor);
+                    }
+                }
+            }}
+            placeholder={placeholder}
+            ancho={ancho}
+            error={props.errores.operador}
+        />
+    );
 }
 
 const MESES = [
@@ -100,6 +167,7 @@ function FechaEnPartes({
 }) {
     const [partes, setPartes] = useState(() => partesDe(fecha));
     const [fechaPrevia, setFechaPrevia] = useState(fecha);
+    const soloLectura = useContext(HojaSoloLecturaContext);
 
     // Si la fecha cambia desde afuera (p. ej. el campo «Fecha» del encabezado), se refleja acá.
     if (fecha !== fechaPrevia) {
@@ -134,19 +202,28 @@ function FechaEnPartes({
                 error={error}
             />
             días del mes{conDe ? ' de' : ''}
-            <select
-                value={partes.mes}
-                onChange={(event) => cambiar('mes', event.target.value)}
-                aria-label="mes"
-                className="mx-1 inline-block w-32 rounded-sm border-0 border-b-2 border-dotted border-[#2B2F36]/50 bg-[#FFFBEA] px-1 py-0 font-[inherit] text-[#173247] text-[inherit] outline-none focus:border-solid focus:border-[#2C4A5E]"
-            >
-                <option value="">mes</option>
-                {MESES.map((nombre, index) => (
-                    <option key={nombre} value={String(index + 1)}>
-                        {nombre}
-                    </option>
-                ))}
-            </select>
+            {soloLectura ? (
+                <Blank
+                    value={partes.mes ? MESES[Number(partes.mes) - 1] : ''}
+                    onChange={() => undefined}
+                    placeholder="mes"
+                    ancho="w-32"
+                />
+            ) : (
+                <select
+                    value={partes.mes}
+                    onChange={(event) => cambiar('mes', event.target.value)}
+                    aria-label="mes"
+                    className="mx-1 inline-block w-32 rounded-sm border-0 border-b-2 border-dotted border-[#2B2F36]/50 bg-[#FFFBEA] px-1 py-0 font-[inherit] text-[#173247] text-[inherit] outline-none focus:border-solid focus:border-[#2C4A5E]"
+                >
+                    <option value="">mes</option>
+                    {MESES.map((nombre, index) => (
+                        <option key={nombre} value={String(index + 1)}>
+                            {nombre}
+                        </option>
+                    ))}
+                </select>
+            )}
             del año
             <Blank
                 type="number"
@@ -177,6 +254,23 @@ function Relato({
     error?: string;
     filas?: number;
 }) {
+    const soloLectura = useContext(HojaSoloLecturaContext);
+
+    if (soloLectura) {
+        return (
+            <div
+                className="mt-1 w-full px-1 font-[inherit] leading-8 break-words whitespace-pre-wrap text-[#173247] text-[inherit]"
+                style={{
+                    minHeight: `${filas * 32}px`,
+                    backgroundImage:
+                        'repeating-linear-gradient(transparent, transparent 31px, rgba(43,47,54,0.35) 31px, rgba(43,47,54,0.35) 32px)',
+                }}
+            >
+                {value}
+            </div>
+        );
+    }
+
     return (
         <textarea
             value={value}
@@ -214,8 +308,17 @@ function Aclaracion({
     props: Props;
     children?: ReactNode;
 }) {
+    if (tieneResponsableFijo(props) && FIRMANTES_DEL_SERVICIO.includes(rol)) {
+        return (
+            <span className="mt-1 text-[length:calc(13px_+_2px)]">
+                {children ?? 'Aclaración'}
+                <ResponsableFijo nombre={props.responsableFijo} />
+            </span>
+        );
+    }
+
     return (
-        <span className="mt-1 text-[13px]">
+        <span className="mt-1 text-[length:calc(13px_+_2px)]">
             {children ?? 'Aclaración'}
             <Blank
                 value={props.firmas[rol]?.nombre ?? ''}
@@ -252,7 +355,7 @@ function Inicial(props: Props) {
     const { datos, legajoNumero, set, errores } = props;
 
     return (
-        <Hoja className="font-['Verdana','Arial',sans-serif] text-[14px] leading-8">
+        <Hoja className="font-['Verdana','Arial',sans-serif] text-[length:calc(14px_+_2px)] leading-8">
             <p className="text-center font-['Times_New_Roman',serif] text-lg font-bold underline">
                 ACTA
             </p>
@@ -276,7 +379,7 @@ function Inicial(props: Props) {
                 </p>
                 <p>
                     Op. Responsable:
-                    {campo(props, 'operador', 'operador/a', 'w-44')}
+                    {operador(props, 'operador/a', 'w-44')}
                 </p>
             </div>
 
@@ -325,19 +428,20 @@ function Inicial(props: Props) {
                 )}{' '}
                 DNI Nº {campo(props, 'nino_dni', 'DNI', 'w-32')} fecha de
                 Nacimiento{' '}
-                 {campo(props, 'nino_fecha_nacimiento', 'fecha', 'w-40', 'date')}{' '}
-                 que concurre a la escuela{' '}
-                 <SelectorBarrio
-                     value={datos.nino_escuela}
-                     onChange={(valor) => set('nino_escuela', valor)}
-                     barrios={props.barrios}
-                     opciones={props.escuelas}
-                     etiqueta="escuela"
-                     placeholder="escuela"
-                     ancho="w-48"
-                     error={errores.nino_escuela}
-                 /> y acredita que
-                el vínculo de {campo(props, 'vinculo', 'vínculo', 'w-36')}.
+                {campo(props, 'nino_fecha_nacimiento', 'fecha', 'w-40', 'date')}{' '}
+                que concurre a la escuela{' '}
+                <SelectorBarrio
+                    value={datos.nino_escuela}
+                    onChange={(valor) => set('nino_escuela', valor)}
+                    barrios={props.barrios}
+                    opciones={props.escuelas}
+                    etiqueta="escuela"
+                    placeholder="escuela"
+                    ancho="w-48"
+                    error={errores.nino_escuela}
+                />{' '}
+                y acredita que el vínculo de{' '}
+                {campo(props, 'vinculo', 'vínculo', 'w-36')}.
             </p>
             <p className="mt-4 text-justify">
                 Quien puesto en conocimiento de los principios rectores del
@@ -398,7 +502,7 @@ function Domiciliaria(props: Props) {
     const { datos, legajoNumero, set, errores } = props;
 
     return (
-        <Hoja className="font-['Verdana','Arial',sans-serif] text-[14px] leading-8">
+        <Hoja className="font-['Verdana','Arial',sans-serif] text-[length:calc(14px_+_2px)] leading-8">
             <div className="border border-black px-3 py-4 sm:px-5">
                 <p className="text-center font-bold underline">
                     ACTA VISITA DOMICILIARIA
@@ -419,7 +523,7 @@ function Domiciliaria(props: Props) {
                     <p>
                         Operador/es interviniente/s:
                         <span className="no-underline">
-                            {campo(props, 'operador', 'operador/es', 'w-56')}
+                            {operador(props, 'operador/es', 'w-56')}
                         </span>
                     </p>
                 </div>
@@ -467,16 +571,16 @@ function Domiciliaria(props: Props) {
                         'w-72',
                     )}
                     , que concurre a la{' '}
-                     <SelectorBarrio
-                         value={datos.nino_escuela}
-                         onChange={(valor) => set('nino_escuela', valor)}
-                         barrios={props.barrios}
-                         opciones={props.escuelas}
-                         etiqueta="escuela"
-                         placeholder="escuela"
-                         ancho="w-56"
-                         error={errores.nino_escuela}
-                     />{' '}
+                    <SelectorBarrio
+                        value={datos.nino_escuela}
+                        onChange={(valor) => set('nino_escuela', valor)}
+                        barrios={props.barrios}
+                        opciones={props.escuelas}
+                        etiqueta="escuela"
+                        placeholder="escuela"
+                        ancho="w-56"
+                        error={errores.nino_escuela}
+                    />{' '}
                     acreditando el vínculo de{' '}
                     {campo(props, 'vinculo', 'vínculo', 'w-36')}.
                 </p>
@@ -524,7 +628,7 @@ function Telefonica(props: Props) {
     const { datos, set, errores } = props;
 
     return (
-        <Hoja className="font-['Arial',sans-serif] text-[14px] leading-8">
+        <Hoja className="font-['Arial',sans-serif] text-[length:calc(14px_+_2px)] leading-8">
             <Membrete />
             <p className="mt-6 text-center font-bold underline">
                 ACTA TELEFÓNICA
@@ -532,7 +636,7 @@ function Telefonica(props: Props) {
             <p className="mt-2 font-bold">
                 Op. Responsable:
                 <span className="font-normal">
-                    {campo(props, 'operador', 'operador/a', 'w-56')}
+                    {operador(props, 'operador/a', 'w-56')}
                 </span>
             </p>
             <p className="mt-2 text-justify indent-12">
@@ -584,7 +688,7 @@ function Citacion(props: Props) {
     const { datos, set, errores } = props;
 
     return (
-        <Hoja className="font-['Arial',sans-serif] text-[14px] leading-7">
+        <Hoja className="font-['Arial',sans-serif] text-[length:calc(14px_+_2px)] leading-7">
             <Membrete />
             <p className="mt-8 text-center font-['Times_New_Roman',serif] font-bold">
                 SERVICIO LOCAL DE NIÑEZ Y ADOLESCENCIA
@@ -640,7 +744,7 @@ function Constancia(props: Props) {
     const { datos, set, errores } = props;
 
     return (
-        <Hoja className="font-['Times_New_Roman',serif] text-[16px] leading-7">
+        <Hoja className="font-['Times_New_Roman',serif] text-[length:calc(16px_+_2px)] leading-7">
             <Membrete />
             <p className="mt-8 text-center font-bold">
                 Municipalidad de San Nicolás

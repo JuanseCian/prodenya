@@ -7,6 +7,8 @@ use App\Models\Localidad;
 use App\Models\Persona;
 use App\Models\Problematica;
 use App\Models\Provincia;
+use App\Models\Rol;
+use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -63,7 +65,23 @@ class StorePersonaRequest extends FormRequest
             ],
             'legajo_nivel_riesgo' => $conLegajo ? ['required', 'in:Bajo,Medio,Alto,Critico'] : ['nullable'],
             'legajo_origen_derivacion' => $conLegajo ? ['required', 'string', 'max:255'] : ['nullable'],
-            'legajo_profesional_id' => ['prohibited'],
+            'legajo_profesional_id' => [
+                'nullable',
+                'integer',
+                Rule::requiredIf(fn (): bool => $conLegajo && $this->user()?->tieneRol('administrativo')),
+                Rule::prohibitedIf(fn (): bool => $conLegajo && ! $this->user()?->tieneRol('administrativo')),
+                Rule::exists(User::class, 'id')->whereIn(
+                    'rol_id',
+                    Rol::query()->whereIn('nombre', [
+                        'admin',
+                        'oficios',
+                        'coordinador',
+                        'profesional',
+                        'administrativo',
+                        'operador',
+                    ])->pluck('id'),
+                )->where('activo', true)->where('estado_cuenta', User::ESTADO_APROBADO),
+            ],
             'legajo_observaciones' => ['nullable', 'string', 'max:2000'],
         ];
     }
@@ -119,7 +137,10 @@ class StorePersonaRequest extends FormRequest
             'legajo_nivel_riesgo.in' => 'El nivel de riesgo debe ser Bajo, Medio, Alto o Crítico.',
             'legajo_origen_derivacion.required' => 'Indicá la institución o referente que deriva el caso.',
             'legajo_origen_derivacion.max' => 'El origen de la derivación no puede superar los 255 caracteres.',
-            'legajo_profesional_id.prohibited' => 'El responsable sólo puede asignarse mediante una derivación.',
+            'legajo_profesional_id.required' => 'Seleccioná un responsable para el legajo.',
+            'legajo_profesional_id.prohibited' => 'El responsable se asigna automáticamente según tu rol.',
+            'legajo_profesional_id.integer' => 'El responsable seleccionado no es válido.',
+            'legajo_profesional_id.exists' => 'El responsable seleccionado no está habilitado.',
             'legajo_observaciones.max' => 'Las observaciones del legajo no pueden superar los 2000 caracteres.',
         ];
     }

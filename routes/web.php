@@ -5,9 +5,15 @@ use App\Http\Controllers\AdminHomeController;
 use App\Http\Controllers\AdminUserController;
 use App\Http\Controllers\AuditoriaController;
 use App\Http\Controllers\EstadisticasController;
+use App\Http\Controllers\ManualController;
+use App\Http\Controllers\PuntajeController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'verified'])->group(function () {
+    Route::middleware('rol:admin,operador,consulta,oficios,coordinador,profesional,administrativo')
+        ->get('/manual/usuario/pdf', [ManualController::class, 'download'])
+        ->name('manual.download');
+
     Route::controller(EstadisticasController::class)
         ->prefix('estadisticas')
         ->name('estadisticas')
@@ -24,6 +30,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::middleware('rol:admin,coordinador,profesional,administrativo')
                 ->get('/agenda', 'agenda')->name('.agenda');
         });
+
+    Route::middleware('rol:admin,coordinador')
+        ->get('/estadisticas/ranking', [PuntajeController::class, 'index'])
+        ->name('estadisticas.ranking');
 });
 
 Route::middleware(['auth', 'verified'])
@@ -47,6 +57,7 @@ Route::middleware(['auth', 'verified'])
             Route::post('usuarios/{user}/archivar', [AdminUserController::class, 'archive'])->whereNumber('user')->name('usuarios.archivar');
             Route::post('usuarios/{user}/restaurar', [AdminUserController::class, 'restore'])->whereNumber('user')->name('usuarios.restaurar');
         });
+
     });
 
 Route::middleware(['auth', 'verified', 'rol:admin'])
@@ -73,3 +84,9 @@ require __DIR__.'/notificaciones.php';
 require __DIR__.'/workflow.php';
 require __DIR__.'/actas.php';
 require __DIR__.'/legal.php';
+
+if (app()->isLocal()) {
+    Route::get('/_errores/{codigo}', fn (int $codigo) => abort($codigo))
+        ->whereIn('codigo', ['403', '404', '419', '500', '503'])
+        ->name('errores.preview');
+}

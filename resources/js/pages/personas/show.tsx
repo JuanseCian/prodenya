@@ -2,7 +2,6 @@ import { Head, Link, router, usePage } from '@inertiajs/react';
 import { ArrowLeft, Pencil, UserX } from 'lucide-react';
 
 import {
-    AvisoEstado,
     Dato,
     FONT_BODY,
     FONT_HEADING,
@@ -56,7 +55,7 @@ const GENERO_LABEL: Record<string, string> = {
 
 const tituloCard = 'text-base font-semibold text-[#2C4A5E]';
 
-export default function PersonaShow({ persona, legajos, status }: Props) {
+export default function PersonaShow({ persona, legajos }: Props) {
     const errors = (usePage().props.errors ?? {}) as Record<string, string>;
 
     const domicilio = [
@@ -136,7 +135,6 @@ export default function PersonaShow({ persona, legajos, status }: Props) {
                     )}
                 </div>
 
-                <AvisoEstado mensaje={status} />
                 <div className="mb-6">
                     <ResumenErrores errors={errors} />
                 </div>

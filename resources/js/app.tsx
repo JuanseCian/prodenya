@@ -19,7 +19,9 @@ type LoadingRequest = {
 };
 
 function AppShell({ children }: { children: React.ReactNode }) {
-    const [loadingRequest, setLoadingRequest] = useState<LoadingRequest | null>(null);
+    const [loadingRequest, setLoadingRequest] = useState<LoadingRequest | null>(
+        null,
+    );
 
     useEffect(() => {
         document.getElementById('initial-app-loader')?.remove();
@@ -102,6 +104,20 @@ createInertiaApp({
 
 router.on('start', () => {
     document.documentElement.classList.add('is-navigating');
+});
+
+// Lets the server-rendered site header (layouts/frontend) refresh its active links.
+router.on('navigate', (event) => {
+    const { page } = event.detail;
+
+    document.dispatchEvent(
+        new CustomEvent('prodenya:navigated', {
+            detail: {
+                url: page.url,
+                comunicacionNoLeidos: page.props.comunicacionNoLeidos,
+            },
+        }),
+    );
 });
 
 router.on('finish', () => {

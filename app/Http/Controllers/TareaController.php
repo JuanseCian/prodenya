@@ -8,6 +8,7 @@ use App\Models\Legajo;
 use App\Models\MailMessage;
 use App\Models\Tarea;
 use App\Models\User;
+use App\Services\PuntajeService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -154,7 +155,7 @@ class TareaController extends Controller
         return back()->with('status', 'Tarea creada correctamente.');
     }
 
-    public function update(Request $request, Tarea $tarea): RedirectResponse
+    public function update(Request $request, Tarea $tarea, PuntajeService $puntaje): RedirectResponse
     {
         abort_unless(
             $request->user()->esAdmin()
@@ -167,10 +168,17 @@ class TareaController extends Controller
             'estado' => ['required', Rule::in(['pendiente', 'en_progreso', 'completada', 'cancelada'])],
         ]);
 
+        $estadoAnterior = $tarea->estado;
         $tarea->update([
             'estado' => $datos['estado'],
             'completada_en' => $datos['estado'] === 'completada' ? now() : null,
         ]);
+
+        if ($estadoAnterior !== 'completada' && $datos['estado'] === 'completada') {
+            $puntaje->registrarTareaCompletada($tarea);
+        } elseif ($estadoAnterior === 'completada' && $datos['estado'] !== 'completada') {
+            $puntaje->revertirTareaCompletada($tarea);
+        }
 
         return back()->with('status', 'Estado de tarea actualizado.');
     }

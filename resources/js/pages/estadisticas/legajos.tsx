@@ -126,7 +126,7 @@ export default function EstadisticasLegajos(props: EstadisticasData) {
                             <article className="rounded-lg border border-[#DFE4EA] bg-white p-5 sm:p-6">
                                 <div className="flex items-start justify-between gap-3">
                                     <div>
-                                        <p className="text-[0.68rem] font-bold tracking-[0.12em] text-[#23845B] uppercase">
+                                        <p className="text-[length:calc(0.68rem_+_2px)] font-bold tracking-[0.12em] text-[#23845B] uppercase">
                                             Distribución
                                         </p>
                                         <h2

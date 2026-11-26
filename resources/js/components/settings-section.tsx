@@ -32,7 +32,7 @@ export default function SettingsSection({
                     </span>
                     <div>
                         {eyebrow && (
-                            <p className="mb-1 text-[0.65rem] font-bold tracking-[0.16em] text-primary uppercase">
+                            <p className="mb-1 text-[length:calc(0.65rem_+_2px)] font-bold tracking-[0.16em] text-primary uppercase">
                                 {eyebrow}
                             </p>
                         )}

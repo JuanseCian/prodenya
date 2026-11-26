@@ -1,5 +1,5 @@
 import { Plus, X } from 'lucide-react';
-import { useState } from 'react';
+import { useContext, useState } from 'react';
 import type { ReactNode } from 'react';
 
 import type {
@@ -9,7 +9,10 @@ import type {
     TipoPlanilla,
 } from '@/components/auh-planilla-dialog';
 import FirmaDigital from '@/components/firma-digital';
+import { HojaSoloLecturaContext } from '@/components/hoja-solo-lectura-context';
 import SelectorBarrio from '@/components/selector-barrio';
+
+export { HojaSoloLecturaContext };
 
 export interface FirmaEnCurso {
     nombre: string;
@@ -75,6 +78,27 @@ export function Blank({
     min?: number;
     max?: number;
 }) {
+    const soloLectura = useContext(HojaSoloLecturaContext);
+
+    if (soloLectura) {
+        const texto =
+            type === 'date' && value
+                ? new Intl.DateTimeFormat('es-AR').format(
+                      new Date(`${value}T12:00:00`),
+                  )
+                : value;
+
+        return (
+            <span
+                className={`mx-1 border-b border-dotted border-[#2B2F36]/50 px-1 align-baseline font-semibold text-[#173247] ${
+                    texto ? 'inline break-words' : `inline-block ${ancho}`
+                }`}
+            >
+                {texto || '\u00a0'}
+            </span>
+        );
+    }
+
     return (
         <input
             {...rest}
@@ -113,6 +137,39 @@ export function Firma({
     alineacion?: string;
 }) {
     const error = errores[`firmas.${rol}.dibujo`];
+    const soloLectura = useContext(HojaSoloLecturaContext);
+
+    if (soloLectura) {
+        const firmado = soloLectura.firmados.includes(rol);
+        const imagen = soloLectura.imagenes[rol];
+
+        return (
+            <div className={`flex w-full max-w-72 flex-col ${alineacion}`}>
+                <div className="flex min-h-20 w-full flex-col justify-end pb-1">
+                    {firmado && imagen ? (
+                        <img
+                            src={imagen}
+                            alt={`Firma de ${firmas[rol]?.nombre || rol}`}
+                            className="h-[60px] w-auto max-w-full object-contain object-left"
+                        />
+                    ) : firmado ? (
+                        <span className="text-xs font-semibold text-[#31765b]">
+                            ✓ Firmado digitalmente
+                            {firmas[rol]?.nombre
+                                ? ` por ${firmas[rol].nombre}`
+                                : ''}
+                        </span>
+                    ) : (
+                        <span className="text-xs text-[#697586] italic">
+                            Sin firmar
+                        </span>
+                    )}
+                </div>
+                <span className="mt-1 block w-full border-t border-dashed border-black" />
+                {children}
+            </div>
+        );
+    }
 
     return (
         <div className={`flex w-full max-w-72 flex-col ${alineacion}`}>
@@ -170,7 +227,7 @@ function DeclaracionJurada(props: Props) {
     };
 
     return (
-        <Hoja className="font-['Arial',sans-serif] text-[14px] leading-8 font-bold">
+        <Hoja className="font-['Arial',sans-serif] text-[length:calc(14px_+_2px)] leading-8 font-bold">
             <p className="text-center">Declaración jurada</p>
             <p className="text-center">
                 (No convivencia con el núcleo familiar)
@@ -295,7 +352,7 @@ function DeclaracionJurada(props: Props) {
                     errores={props.errores}
                 >
                     <span>Firma por MDS</span>
-                    <span className="mt-1 text-[13px]">
+                    <span className="mt-1 text-[length:calc(13px_+_2px)]">
                         Aclaración
                         <Blank
                             value={props.firmas.mds?.nombre ?? ''}
@@ -316,7 +373,7 @@ function DeclaracionJurada(props: Props) {
                     errores={props.errores}
                 >
                     <span>Firma del adulto responsable</span>
-                    <span className="mt-1 text-[13px]">
+                    <span className="mt-1 text-[length:calc(13px_+_2px)]">
                         Aclaración
                         <Blank
                             value={datos.responsable.nombre}
@@ -328,7 +385,7 @@ function DeclaracionJurada(props: Props) {
                             error={errores['firmas.responsable.nombre']}
                         />
                     </span>
-                    <span className="text-[13px]">
+                    <span className="text-[length:calc(13px_+_2px)]">
                         DNI
                         <Blank
                             value={datos.responsable.dni}
@@ -389,7 +446,7 @@ function NotaElevacion(props: Props) {
     const renglon15 = 'leading-10';
 
     return (
-        <Hoja className="font-['Arial',sans-serif] text-[14px] leading-7 font-bold">
+        <Hoja className="font-['Arial',sans-serif] text-[length:calc(14px_+_2px)] leading-7 font-bold">
             <p>Nota de elevación</p>
             <Renglon />
             <Renglon />
@@ -578,7 +635,7 @@ function InformeRelacion(props: Props) {
     );
 
     return (
-        <Hoja className="font-['Calibri','Carlito','Arial',sans-serif] text-[15px] leading-9">
+        <Hoja className="font-['Calibri','Carlito','Arial',sans-serif] text-[length:calc(15px_+_2px)] leading-9">
             <p className="text-center font-bold underline">
                 INFORME DE RECOVERSION DE RELACION – AUH
             </p>
@@ -607,7 +664,7 @@ function InformeRelacion(props: Props) {
 
             <p className="mt-6 underline">GRUPO FAMILIAR CONVIVIENTE</p>
             <div className="overflow-x-auto">
-                <table className="w-full min-w-[620px] border-collapse text-[13px] leading-5">
+                <table className="w-full min-w-[620px] border-collapse text-[length:calc(13px_+_2px)] leading-5">
                     <thead>
                         <tr>
                             {[
@@ -654,7 +711,7 @@ function InformeRelacion(props: Props) {
                                                 )
                                             }
                                             aria-label={`${campo} fila ${index + 1}`}
-                                            className={`h-9 w-full rounded-sm px-1 text-[13px] text-[#173247] outline-none focus:bg-[#FFF3C4] ${
+                                            className={`h-9 w-full rounded-sm px-1 text-[length:calc(13px_+_2px)] text-[#173247] outline-none focus:bg-[#FFF3C4] ${
                                                 errores[
                                                     `grupo_familiar.${index}.${campo}`
                                                 ]
@@ -701,7 +758,7 @@ function InformeRelacion(props: Props) {
                 rows={6}
                 aria-label="Motivos de intervención"
                 placeholder="Escribí los motivos de intervención…"
-                className={`mt-1 w-full resize-y rounded-sm px-1 text-[15px] leading-9 text-[#173247] outline-none placeholder:text-[#8A6A35]/60 focus:bg-[#FFF3C4] ${
+                className={`mt-1 w-full resize-y rounded-sm px-1 text-[length:calc(15px_+_2px)] leading-9 text-[#173247] outline-none placeholder:text-[#8A6A35]/60 focus:bg-[#FFF3C4] ${
                     errores.motivos ? 'bg-[#FCF1F3]' : 'bg-[#FFFBEA]'
                 }`}
                 style={{

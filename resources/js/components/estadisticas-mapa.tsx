@@ -173,7 +173,7 @@ export default function EstadisticasMapa({ data, problematicas }: Props) {
                     aria-label="Mapa con la distribución geográfica agregada de casos por zona. El detalle en texto está disponible debajo."
                     className="h-[440px] w-full"
                 />
-                <div className="pointer-events-none absolute bottom-3 left-3 rounded-lg bg-white/90 px-3 py-2 text-[0.68rem] text-[#697586] shadow-sm dark:bg-[#20262F]/90 dark:text-[#B7C9D4]">
+                <div className="pointer-events-none absolute bottom-3 left-3 rounded-lg bg-white/90 px-3 py-2 text-[length:calc(0.68rem_+_2px)] text-[#697586] shadow-sm dark:bg-[#20262F]/90 dark:text-[#B7C9D4]">
                     {data.mensaje}
                 </div>
             </div>

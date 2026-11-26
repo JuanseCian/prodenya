@@ -318,3 +318,196 @@ function firmaIntervencionDePrueba(): string
 
     return 'data:image/png;base64,'.base64_encode((string) ob_get_clean());
 }
+
+test('an unsigned acta opens in its sheet when editing and saving regenerates its Word', function () {
+    $this->actingAs($this->admin)
+        ->post(route('legajos.intervenciones.store', $this->legajo), intervencionDeTipo('Acta inicial', [
+            'acta' => ['compareciente_nombre' => 'Gómez, Marta', 'relato' => 'Relato original.'],
+        ]))
+        ->assertSessionHasNoErrors();
+
+    $intervencion = Intervencion::sole();
+    $acta = Acta::sole();
+    $archivoAnterior = $acta->ruta_archivo;
+
+    $this->actingAs($this->admin)
+        ->get(route('legajos.intervenciones.edit', [$this->legajo, $intervencion]))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('actaHoja.tipo', 'inicial')
+            ->where('actaHoja.editable', true)
+            ->where('actaHoja.datos.compareciente_nombre', 'Gómez, Marta')
+            ->where('actaHoja.datos.nino_escuela', ''));
+
+    $this->actingAs($this->admin)
+        ->put(route('legajos.intervenciones.update', [$this->legajo, $intervencion]), intervencionDeTipo('Acta inicial', [
+            'acta' => [
+                'compareciente_nombre' => 'Gómez, Marta',
+                'relato' => 'Relato corregido.',
+                'firmas' => ['equipo' => ['nombre' => 'Lic. Paula Díaz', 'dibujo' => firmaIntervencionDePrueba()]],
+            ],
+        ]))
+        ->assertSessionHasNoErrors()
+        ->assertRedirect(route('legajos.show', $this->legajo));
+
+    $acta->refresh();
+
+    expect($acta->datos['relato'])->toBe('Relato corregido.')
+        ->and($acta->ruta_archivo)->not->toBe($archivoAnterior)
+        ->and($acta->firmas)->toHaveCount(1)
+        ->and($intervencion->refresh()->detalle)->toBe('Relato corregido.')
+        ->and($intervencion->firma_nombre)->toBe('Lic. Paula Díaz');
+    Storage::disk('local')->assertExists($acta->ruta_archivo);
+    Storage::disk('local')->assertMissing($archivoAnterior);
+});
+
+test('a signed acta is shown read-only when editing and its Word is not regenerated', function () {
+    $this->actingAs($this->admin)
+        ->post(route('legajos.intervenciones.store', $this->legajo), intervencionDeTipo('Acta inicial', [
+            'acta' => [
+                'compareciente_nombre' => 'Gómez, Marta',
+                'relato' => 'Relato firmado.',
+                'firmas' => ['equipo' => ['nombre' => 'Lic. Paula Díaz', 'dibujo' => firmaIntervencionDePrueba()]],
+            ],
+        ]))
+        ->assertSessionHasNoErrors();
+
+    $intervencion = Intervencion::sole();
+    $acta = Acta::sole();
+    $archivo = $acta->ruta_archivo;
+
+    $this->actingAs($this->admin)
+        ->get(route('legajos.intervenciones.edit', [$this->legajo, $intervencion]))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('actaHoja.editable', false)
+            ->where('actaHoja.firmados', ['equipo'])
+            ->where('actaHoja.firmas_imagenes.equipo', fn (string $imagen) => str_starts_with($imagen, 'data:image/png;base64,')));
+
+    $this->actingAs($this->admin)
+        ->put(route('legajos.intervenciones.update', [$this->legajo, $intervencion]), intervencionDeTipo('Acta inicial', [
+            'acta' => ['compareciente_nombre' => 'Otra persona', 'relato' => 'Intento de cambio.'],
+        ]))
+        ->assertSessionHasNoErrors();
+
+    expect($acta->refresh()->ruta_archivo)->toBe($archivo)
+        ->and($acta->datos['relato'])->toBe('Relato firmado.')
+        ->and($intervencion->refresh()->detalle)->toBe('Relato firmado.');
+});
+
+test('the acta sheet can be previewed from the legajo before downloading it', function () {
+    $this->actingAs($this->admin)
+        ->post(route('legajos.intervenciones.store', $this->legajo), intervencionDeTipo('Acta telefónica', [
+            'acta' => ['compareciente_nombre' => 'Gómez, Marta', 'relato' => 'Llamado de seguimiento.'],
+        ]))
+        ->assertSessionHasNoErrors();
+
+    $acta = Acta::sole();
+
+    $this->actingAs($this->admin)
+        ->get(route('legajos.show', $this->legajo))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('intervenciones.0.acta.hoja_url', route('actas.hoja', $acta)));
+
+    $this->actingAs($this->admin)
+        ->getJson(route('actas.hoja', $acta))
+        ->assertOk()
+        ->assertJsonPath('tipo', 'telefonica')
+        ->assertJsonPath('datos.compareciente_nombre', 'Gómez, Marta')
+        ->assertJsonPath('datos.relato', 'Llamado de seguimiento.')
+        ->assertJsonPath('legajo_numero', $this->legajo->numero_legajo)
+        ->assertJsonPath('descarga_url', route('actas.descargar', $acta));
+});
+
+test('users without acta access cannot preview an acta sheet', function () {
+    DB::table('roles')->insert(['id' => 9, 'nombre' => 'consulta', 'descripcion' => 'Solo lectura', 'creado_en' => now()]);
+    $acta = Acta::factory()->create(['legajo_id' => $this->legajo->id]);
+
+    $this->actingAs(User::factory()->create(['rol_id' => 9]))
+        ->getJson(route('actas.hoja', $acta))
+        ->assertForbidden();
+});
+
+test('a signature already registered cannot be changed when editing the intervention', function () {
+    $tipo = TipoIntervencion::firstOrCreate(['nombre' => 'Entrevista'], ['activo' => true]);
+    Storage::disk('local')->put('firmas/responsable.png', 'firma original');
+    Storage::disk('local')->put('firmas/entrevistado.png', 'firma entrevistado');
+    $intervencion = Intervencion::create([
+        'legajo_id' => $this->legajo->id,
+        'tipo_intervencion_id' => $tipo->id,
+        'profesional_id' => $this->profesional->id,
+        'fecha_intervencion' => '2026-11-20',
+        'detalle' => 'Entrevista.',
+        'firma_nombre' => 'Lic. Paula Díaz',
+        'firma_aclaracion' => 'Psicóloga',
+        'firma_archivo_path' => 'firmas/responsable.png',
+        'firma_entrevistado_nombre' => 'Marta Gómez',
+        'firma_entrevistado_aclaracion' => 'Madre',
+        'firma_entrevistado_archivo_path' => 'firmas/entrevistado.png',
+    ]);
+
+    $this->actingAs($this->admin)
+        ->put(route('legajos.intervenciones.update', [$this->legajo, $intervencion]), intervencionDeTipo('Entrevista', [
+            'detalle' => 'Entrevista corregida.',
+            'firma_nombre' => 'Otra persona',
+            'firma_aclaracion' => 'Otro cargo',
+            'firma_responsable_dibujo' => firmaIntervencionDePrueba(),
+            'firma_entrevistado_nombre' => '',
+            'firma_entrevistado_aclaracion' => '',
+        ]))
+        ->assertSessionHasNoErrors();
+
+    $intervencion->refresh();
+
+    expect($intervencion->detalle)->toBe('Entrevista corregida.')
+        ->and($intervencion->firma_nombre)->toBe('Lic. Paula Díaz')
+        ->and($intervencion->firma_aclaracion)->toBe('Psicóloga')
+        ->and($intervencion->firma_archivo_path)->toBe('firmas/responsable.png')
+        ->and($intervencion->firma_entrevistado_nombre)->toBe('Marta Gómez')
+        ->and($intervencion->firma_entrevistado_archivo_path)->toBe('firmas/entrevistado.png');
+    Storage::disk('local')->assertExists(['firmas/responsable.png', 'firmas/entrevistado.png']);
+});
+
+test('editing an intervention does not ask to sign again', function () {
+    $tipo = TipoIntervencion::firstOrCreate(['nombre' => 'Entrevista'], ['activo' => true]);
+    $intervencion = Intervencion::create([
+        'legajo_id' => $this->legajo->id,
+        'tipo_intervencion_id' => $tipo->id,
+        'profesional_id' => $this->profesional->id,
+        'fecha_intervencion' => '2026-11-20',
+        'detalle' => 'Entrevista.',
+        'firma_nombre' => 'Lic. Paula Díaz',
+        'firma_aclaracion' => 'Psicóloga',
+        'firma_entrevistado_nombre' => 'Marta Gómez',
+        'firma_entrevistado_aclaracion' => 'Madre',
+    ]);
+
+    $this->actingAs($this->admin)
+        ->put(route('legajos.intervenciones.update', [$this->legajo, $intervencion]), intervencionDeTipo('Entrevista', [
+            'detalle' => 'Entrevista corregida.',
+            'firma_nombre' => 'Lic. Paula Díaz',
+            'firma_aclaracion' => 'Psicóloga',
+            'firma_entrevistado_nombre' => 'Marta Gómez',
+            'firma_entrevistado_aclaracion' => 'Madre',
+        ]))
+        ->assertSessionHasNoErrors();
+
+    expect($intervencion->refresh()->detalle)->toBe('Entrevista corregida.')
+        ->and($intervencion->firma_entrevistado_nombre)->toBe('Marta Gómez');
+});
+
+test('the acta of an intervention has the chosen professional as its responsible', function () {
+    $this->actingAs($this->admin)
+        ->post(route('legajos.intervenciones.store', $this->legajo), intervencionDeTipo('Acta inicial', [
+            'acta' => [
+                'operador' => 'Admin',
+                'compareciente_nombre' => 'Gómez, Marta',
+                'firmas' => ['equipo' => ['nombre' => 'Admin', 'dibujo' => firmaIntervencionDePrueba()]],
+            ],
+        ]))
+        ->assertSessionHasNoErrors();
+
+    $acta = Acta::sole();
+
+    expect($acta->datos['operador'])->toBe('Lic. Paula Díaz')
+        ->and($acta->firmas[0]['nombre'])->toBe('Lic. Paula Díaz')
+        ->and(Intervencion::sole()->firma_nombre)->toBe('Lic. Paula Díaz');
+});

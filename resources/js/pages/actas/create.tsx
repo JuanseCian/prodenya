@@ -35,6 +35,8 @@ interface Props {
     datos: DatosActa | DatosPlanilla;
     barrios: string[];
     escuelas: string[];
+    /** Responsable del acta (quien la carga); null para un administrativo, que lo indica a mano. */
+    responsableFijo?: string | null;
 }
 
 /** Firmantes cuya aclaración es el adulto responsable de la planilla de AUH. */
@@ -74,6 +76,7 @@ export default function ActaCreate({
     datos: datosIniciales,
     barrios,
     escuelas,
+    responsableFijo = null,
 }: Props) {
     const [legajo, setLegajo] = useState<LegajoResumen | null>(legajoInicial);
     const [personaId, setPersonaId] = useState<number | null>(null);
@@ -387,6 +390,7 @@ export default function ActaCreate({
                             <ActaHoja
                                 barrios={barrios}
                                 escuelas={escuelas}
+                                responsableFijo={responsableFijo}
                                 tipo={tipo as TipoActa}
                                 datos={datosActa}
                                 legajoNumero={legajo?.numero_legajo ?? null}

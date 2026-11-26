@@ -14,11 +14,20 @@ import {
 import type { FormEvent } from 'react';
 import { useEffect, useState } from 'react';
 
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Bubble, BubbleContent } from '@/components/ui/bubble';
 import {
     Conversation,
     ConversationContent,
     ConversationScrollButton,
 } from '@/components/ui/conversation';
+import {
+    Message,
+    MessageAvatar,
+    MessageContent,
+    MessageFooter,
+    MessageHeader,
+} from '@/components/ui/message';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface Conversacion {
@@ -321,7 +330,7 @@ export default function Comunicacion({
                                                     </span>
                                                     {conversacion.no_leidos >
                                                         0 && (
-                                                        <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-[#2C4A5E] text-[0.65rem] font-bold text-white">
+                                                        <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-[#2C4A5E] text-[length:calc(0.65rem_+_2px)] font-bold text-white">
                                                             {
                                                                 conversacion.no_leidos
                                                             }
@@ -420,81 +429,117 @@ export default function Comunicacion({
                                                         currentUserId;
 
                                                     return (
-                                                        <article
+                                                        <Message
                                                             key={mensaje.id}
-                                                            className={`flex items-start gap-3 ${propio ? 'justify-end' : 'justify-start'}`}
+                                                            align={
+                                                                propio
+                                                                    ? 'end'
+                                                                    : 'start'
+                                                            }
                                                         >
                                                             {!propio && (
-                                                                <span className="mt-1 flex size-8 shrink-0 items-center justify-center rounded-xl bg-[#DDEBE1] text-[0.65rem] font-bold text-[#41634A]">
-                                                                    {initials(
-                                                                        mensaje.usuario ??
-                                                                            'Usuario',
-                                                                    )}
-                                                                </span>
+                                                                <MessageAvatar>
+                                                                    <Avatar className="size-8 rounded-xl bg-[#DDEBE1]">
+                                                                        <AvatarFallback className="rounded-xl bg-[#DDEBE1] text-[length:calc(0.65rem_+_2px)] font-bold text-[#41634A]">
+                                                                            {initials(
+                                                                                mensaje.usuario ??
+                                                                                    'Usuario',
+                                                                            )}
+                                                                        </AvatarFallback>
+                                                                    </Avatar>
+                                                                </MessageAvatar>
                                                             )}
-                                                            <div
-                                                                className={`max-w-[min(42rem,88%)] min-w-0 rounded-2xl px-4 py-3 shadow-sm ${propio ? 'rounded-tr-md bg-[#2C4A5E] text-white shadow-[0_8px_20px_rgba(44,74,94,0.18)]' : 'rounded-tl-md border border-[#E4E8E5] bg-white text-[#2B2F36]'}`}
-                                                            >
-                                                                <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                                                                    <p
-                                                                        className={`text-xs font-bold ${propio ? 'text-white' : 'text-[#2C4A5E]'}`}
-                                                                    >
-                                                                        {mensaje.usuario ??
-                                                                            'Usuario'}
-                                                                    </p>
-                                                                    <time
-                                                                        className={`text-[0.68rem] ${propio ? 'text-white/65' : 'text-[#697586]'}`}
-                                                                    >
+                                                            <MessageContent>
+                                                                <MessageHeader
+                                                                    className={
+                                                                        propio
+                                                                            ? 'text-right text-[#6B8F71]'
+                                                                            : ''
+                                                                    }
+                                                                >
+                                                                    {mensaje.usuario ??
+                                                                        'Usuario'}
+                                                                </MessageHeader>
+                                                                <Bubble
+                                                                    className={
+                                                                        propio
+                                                                            ? 'rounded-tr-md border-[#2C4A5E] bg-[#2C4A5E] text-white shadow-[0_8px_20px_rgba(44,74,94,0.18)]'
+                                                                            : 'rounded-tl-md border-[#E4E8E5] bg-white text-[#2B2F36]'
+                                                                    }
+                                                                >
+                                                                    <BubbleContent>
+                                                                        {mensaje.cuerpo && (
+                                                                            <p className="whitespace-pre-wrap">
+                                                                                {
+                                                                                    mensaje.cuerpo
+                                                                                }
+                                                                            </p>
+                                                                        )}
+                                                                        {mensaje
+                                                                            .recursos
+                                                                            .length >
+                                                                            0 && (
+                                                                            <div
+                                                                                className={`${mensaje.cuerpo ? 'mt-3' : ''} space-y-2`}
+                                                                            >
+                                                                                {mensaje.recursos.map(
+                                                                                    (
+                                                                                        recurso,
+                                                                                    ) => (
+                                                                                        <a
+                                                                                            key={`${recurso.tipo}-${recurso.id}`}
+                                                                                            href={
+                                                                                                recurso.accesible
+                                                                                                    ? (recurso.url ??
+                                                                                                      '#')
+                                                                                                    : undefined
+                                                                                            }
+                                                                                            className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-xs ${recurso.accesible ? (propio ? 'border-white/20 bg-white/10 text-white hover:bg-white/15' : 'border-[#CFE1D4] bg-[#EAF3ED] text-[#267148] hover:bg-[#DDEBE1]') : 'border-[#E4E8E5] bg-[#F8FAF9] text-[#697586]'}`}
+                                                                                        >
+                                                                                            <Paperclip
+                                                                                                size={
+                                                                                                    14
+                                                                                                }
+                                                                                            />
+                                                                                            <span className="truncate font-semibold">
+                                                                                                {
+                                                                                                    recurso.label
+                                                                                                }
+                                                                                            </span>
+                                                                                        </a>
+                                                                                    ),
+                                                                                )}
+                                                                            </div>
+                                                                        )}
+                                                                    </BubbleContent>
+                                                                </Bubble>
+                                                                <MessageFooter
+                                                                    className={
+                                                                        propio
+                                                                            ? 'justify-end text-[#6B8F71]'
+                                                                            : ''
+                                                                    }
+                                                                >
+                                                                    <time>
                                                                         {formatDate(
                                                                             mensaje.creado_en,
                                                                         )}
                                                                     </time>
-                                                                </div>
-                                                                {mensaje.cuerpo && (
-                                                                    <p
-                                                                        className={`mt-2 text-sm leading-6 whitespace-pre-wrap ${propio ? 'text-white/95' : 'text-[#2B2F36]'}`}
-                                                                    >
-                                                                        {
-                                                                            mensaje.cuerpo
-                                                                        }
-                                                                    </p>
-                                                                )}
-                                                                {mensaje
-                                                                    .recursos
-                                                                    .length >
-                                                                    0 && (
-                                                                    <div className="mt-3 space-y-2">
-                                                                        {mensaje.recursos.map(
-                                                                            (
-                                                                                recurso,
-                                                                            ) => (
-                                                                                <a
-                                                                                    key={`${recurso.tipo}-${recurso.id}`}
-                                                                                    href={
-                                                                                        recurso.accesible
-                                                                                            ? (recurso.url ??
-                                                                                              '#')
-                                                                                            : undefined
-                                                                                    }
-                                                                                    className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-xs ${recurso.accesible ? (propio ? 'border-white/20 bg-white/10 text-white hover:bg-white/15' : 'border-[#CFE1D4] bg-[#EAF3ED] text-[#267148] hover:bg-[#DDEBE1]') : 'border-[#E4E8E5] bg-[#F8FAF9] text-[#697586]'}`}
-                                                                                >
-                                                                                    <Paperclip
-                                                                                        size={
-                                                                                            14
-                                                                                        }
-                                                                                    />
-                                                                                    <span className="truncate font-semibold">
-                                                                                        {
-                                                                                            recurso.label
-                                                                                        }
-                                                                                    </span>
-                                                                                </a>
-                                                                            ),
-                                                                        )}
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        </article>
+                                                                </MessageFooter>
+                                                            </MessageContent>
+                                                            {propio && (
+                                                                <MessageAvatar>
+                                                                    <Avatar className="size-8 rounded-xl bg-[#2C4A5E]">
+                                                                        <AvatarFallback className="rounded-xl bg-[#2C4A5E] text-[length:calc(0.65rem_+_2px)] font-bold text-white">
+                                                                            {initials(
+                                                                                mensaje.usuario ??
+                                                                                    'Usuario',
+                                                                            )}
+                                                                        </AvatarFallback>
+                                                                    </Avatar>
+                                                                </MessageAvatar>
+                                                            )}
+                                                        </Message>
                                                     );
                                                 })
                                             )}
@@ -592,7 +637,7 @@ export default function Comunicacion({
                                                                         }
                                                                     </span>
                                                                     {recurso.detail && (
-                                                                        <span className="mt-0.5 block truncate text-[0.68rem] text-[#697586]">
+                                                                        <span className="mt-0.5 block truncate text-[length:calc(0.68rem_+_2px)] text-[#697586]">
                                                                             {
                                                                                 recurso.detail
                                                                             }
@@ -605,7 +650,7 @@ export default function Comunicacion({
                                                 </div>
                                             )}
                                         </div>
-                                        <p className="mt-2 flex items-center gap-1 text-[0.68rem] text-[#697586]">
+                                        <p className="mt-2 flex items-center gap-1 text-[length:calc(0.68rem_+_2px)] text-[#697586]">
                                             <Check
                                                 size={12}
                                                 className="text-[#267148]"

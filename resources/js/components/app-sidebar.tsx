@@ -1,6 +1,7 @@
 import { Link, usePage } from '@inertiajs/react';
 import {
     BarChart3,
+    BookOpen,
     CalendarDays,
     ClipboardCheck,
     FileText,
@@ -28,6 +29,7 @@ import { estadisticas as estadisticasRoute, home } from '@/routes';
 import actas from '@/routes/actas';
 import agenda from '@/routes/agenda';
 import mailbox from '@/routes/mailbox';
+import manual from '@/routes/manual';
 import tareas from '@/routes/tareas';
 import type { NavItem } from '@/types';
 
@@ -91,6 +93,11 @@ export function AppSidebar() {
             title: 'Mi cuenta',
             href: '/settings/profile',
             icon: UserRound,
+        },
+        {
+            title: 'Manual de usuario',
+            href: manual.download(),
+            icon: BookOpen,
         },
     ];
 

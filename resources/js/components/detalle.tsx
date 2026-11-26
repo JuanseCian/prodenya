@@ -31,7 +31,7 @@ export function Dato({
 }) {
     return (
         <div>
-            <dt className="text-[0.68rem] font-bold tracking-[0.12em] text-[#6B8F71] uppercase">
+            <dt className="text-[length:calc(0.68rem_+_2px)] font-bold tracking-[0.12em] text-[#6B8F71] uppercase">
                 {etiqueta}
             </dt>
             <dd className="mt-1 text-sm whitespace-pre-line text-[#2B2F36]">
@@ -43,8 +43,8 @@ export function Dato({
 
 export function AvisoEstado({ mensaje }: { mensaje?: string | null }) {
     if (!mensaje) {
-return null;
-}
+        return null;
+    }
 
     return (
         <div

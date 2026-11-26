@@ -15,6 +15,7 @@ beforeEach(function () {
         ['id' => 1, 'nombre' => 'admin', 'descripcion' => 'Acceso total', 'creado_en' => now()],
         ['id' => 4, 'nombre' => 'coordinador', 'descripcion' => 'Supervisión', 'creado_en' => now()],
         ['id' => 5, 'nombre' => 'profesional', 'descripcion' => 'Intervenciones', 'creado_en' => now()],
+        ['id' => 6, 'nombre' => 'administrativo', 'descripcion' => 'Administración', 'creado_en' => now()],
     ]);
 });
 
@@ -106,7 +107,7 @@ test('a legajo update cannot assign a responsible directly', function () {
     expect($legajo->fresh()->profesional_id)->toBeNull();
 });
 
-test('a legajo cannot be created with a responsible directly', function () {
+test('a non-administrative user cannot choose a different responsible', function () {
     $coordinador = User::factory()->create(['rol_id' => 4]);
     $profesional = User::factory()->create(['rol_id' => 5]);
     $provincia = DB::table('provincias')->insertGetId(['nombre' => 'Buenos Aires']);
@@ -135,6 +136,101 @@ test('a legajo cannot be created with a responsible directly', function () {
         ->assertInvalid(['legajo_profesional_id']);
 
     expect(Legajo::count())->toBe(0);
+});
+
+test('a professional is assigned as the responsible when creating a legajo', function () {
+    $profesional = User::factory()->create(['rol_id' => 5]);
+    $provincia = DB::table('provincias')->insertGetId(['nombre' => 'Buenos Aires']);
+    $localidad = DB::table('localidades')->insertGetId([
+        'nombre' => 'San Nicolás de los Arroyos',
+        'provincia_id' => $provincia,
+        'codigo_postal' => 2900,
+    ]);
+    $problematica = Problematica::create(['nombre' => 'Vulneración de derechos']);
+
+    $this->actingAs($profesional)
+        ->post(route('legajos.store'), [
+            'nombre' => 'Brenda',
+            'apellido' => 'Profesional',
+            'dni' => '40111222',
+            'fecha_nacimiento' => '2010-01-01',
+            'genero' => 'F',
+            'provincia_id' => $provincia,
+            'localidad_id' => $localidad,
+            'abrir_legajo' => true,
+            'legajo_problematicas' => [$problematica->id],
+            'legajo_nivel_riesgo' => 'Bajo',
+            'legajo_origen_derivacion' => 'Institución',
+        ])
+        ->assertRedirect(route('legajos.index'));
+
+    $legajo = Legajo::firstOrFail();
+
+    expect($legajo->profesional_id)->toBe($profesional->id)
+        ->and(CasoResponsable::where('legajo_id', $legajo->id)->where('usuario_id', $profesional->id)->where('es_principal', true)->where('activo', true)->exists())->toBeTrue();
+});
+
+test('an administrative user must select a responsible before creating a legajo', function () {
+    $administrativo = User::factory()->create(['rol_id' => 6]);
+    $provincia = DB::table('provincias')->insertGetId(['nombre' => 'Buenos Aires']);
+    $localidad = DB::table('localidades')->insertGetId([
+        'nombre' => 'San Nicolás de los Arroyos',
+        'provincia_id' => $provincia,
+        'codigo_postal' => 2900,
+    ]);
+    $problematica = Problematica::create(['nombre' => 'Vulneración de derechos']);
+
+    $this->actingAs($administrativo)
+        ->post(route('legajos.store'), [
+            'nombre' => 'Brenda',
+            'apellido' => 'Sin Responsable',
+            'dni' => '40111222',
+            'fecha_nacimiento' => '2010-01-01',
+            'genero' => 'F',
+            'provincia_id' => $provincia,
+            'localidad_id' => $localidad,
+            'abrir_legajo' => true,
+            'legajo_problematicas' => [$problematica->id],
+            'legajo_nivel_riesgo' => 'Bajo',
+            'legajo_origen_derivacion' => 'Institución',
+        ])
+        ->assertInvalid(['legajo_profesional_id']);
+
+    expect(Legajo::count())->toBe(0);
+});
+
+test('an administrative user can create a legajo for a selected responsible', function () {
+    $administrativo = User::factory()->create(['rol_id' => 6]);
+    $profesional = User::factory()->create(['rol_id' => 5]);
+    $provincia = DB::table('provincias')->insertGetId(['nombre' => 'Buenos Aires']);
+    $localidad = DB::table('localidades')->insertGetId([
+        'nombre' => 'San Nicolás de los Arroyos',
+        'provincia_id' => $provincia,
+        'codigo_postal' => 2900,
+    ]);
+    $problematica = Problematica::create(['nombre' => 'Vulneración de derechos']);
+
+    $this->actingAs($administrativo)
+        ->post(route('legajos.store'), [
+            'nombre' => 'Brenda',
+            'apellido' => 'Responsable',
+            'dni' => '40111222',
+            'fecha_nacimiento' => '2010-01-01',
+            'genero' => 'F',
+            'provincia_id' => $provincia,
+            'localidad_id' => $localidad,
+            'abrir_legajo' => true,
+            'legajo_problematicas' => [$problematica->id],
+            'legajo_nivel_riesgo' => 'Bajo',
+            'legajo_origen_derivacion' => 'Institución',
+            'legajo_profesional_id' => $profesional->id,
+        ])
+        ->assertRedirect(route('legajos.index'));
+
+    $legajo = Legajo::firstOrFail();
+
+    expect($legajo->profesional_id)->toBe($profesional->id)
+        ->and(CasoResponsable::where('legajo_id', $legajo->id)->where('usuario_id', $profesional->id)->where('es_principal', true)->where('activo', true)->exists())->toBeTrue();
 });
 
 test('accepting an additional derivation makes the recipient the principal responsible', function () {

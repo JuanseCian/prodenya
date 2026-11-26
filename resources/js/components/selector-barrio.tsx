@@ -1,5 +1,7 @@
-import { useId, useMemo, useState } from 'react';
+import { useContext, useId, useMemo, useState } from 'react';
 import type { KeyboardEvent } from 'react';
+
+import { HojaSoloLecturaContext } from '@/components/hoja-solo-lectura-context';
 
 interface Props {
     value: string;
@@ -44,6 +46,7 @@ export default function SelectorBarrio({
     const [valorPrevio, setValorPrevio] = useState(value);
     const [abierto, setAbierto] = useState(false);
     const [activo, setActivo] = useState(0);
+    const soloLectura = useContext(HojaSoloLecturaContext);
 
     // Si el barrio cambia desde afuera (p. ej. al elegir una persona), se refleja en el campo.
     if (value !== valorPrevio) {
@@ -58,7 +61,9 @@ export default function SelectorBarrio({
             return opcionesDisponibles;
         }
 
-        return opcionesDisponibles.filter((barrio) => normalizar(barrio).includes(termino));
+        return opcionesDisponibles.filter((barrio) =>
+            normalizar(barrio).includes(termino),
+        );
     }, [opcionesDisponibles, texto, value]);
 
     const elegir = (barrio: string) => {
@@ -77,7 +82,9 @@ export default function SelectorBarrio({
             return;
         }
 
-        const exacto = opcionesDisponibles.find((barrio) => normalizar(barrio) === termino);
+        const exacto = opcionesDisponibles.find(
+            (barrio) => normalizar(barrio) === termino,
+        );
 
         if (exacto) {
             elegir(exacto);
@@ -126,6 +133,20 @@ export default function SelectorBarrio({
         }
     };
 
+    if (soloLectura) {
+        return (
+            <span
+                className={
+                    variante === 'campo'
+                        ? 'block w-full border-b border-dotted border-[#2B2F36]/50 px-1 font-semibold text-[#173247]'
+                        : `mx-1 border-b border-dotted border-[#2B2F36]/50 px-1 align-baseline font-semibold text-[#173247] ${value ? 'inline break-words' : `inline-block ${ancho}`}`
+                }
+            >
+                {value || '\u00a0'}
+            </span>
+        );
+    }
+
     return (
         <span
             className={
@@ -148,7 +169,8 @@ export default function SelectorBarrio({
                 aria-label={placeholder}
                 aria-invalid={error ? true : undefined}
                 title={
-                    error ?? `Escribí para buscar y elegí ${etiqueta} de la lista`
+                    error ??
+                    `Escribí para buscar y elegí ${etiqueta} de la lista`
                 }
                 value={texto}
                 placeholder={placeholder}

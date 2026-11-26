@@ -13,6 +13,8 @@ Route::middleware(['auth', 'rol:'.implode(',', Acta::ROLES)])->group(function ()
     Route::get('actas/nueva/{tipo}', [ActaController::class, 'create'])->name('actas.create')->whereIn('tipo', $tipos);
     Route::post('actas/nueva/{tipo}', [ActaController::class, 'store'])->name('actas.store')->whereIn('tipo', $tipos);
     Route::post('actas/nueva/{tipo}/borrador', [ActaController::class, 'borrador'])->name('actas.borrador')->whereIn('tipo', $tipos);
+    Route::get('actas/{acta}/vista', [ActaController::class, 'vista'])->name('actas.vista')->whereNumber('acta');
+    Route::get('actas/{acta}/hoja', [ActaController::class, 'hoja'])->name('actas.hoja')->whereNumber('acta');
     Route::get('actas/{acta}/descargar', [ActaController::class, 'descargar'])->name('actas.descargar')->whereNumber('acta');
     Route::patch('actas/{acta}/vincular', [ActaController::class, 'vincular'])->name('actas.vincular')->whereNumber('acta');
 });

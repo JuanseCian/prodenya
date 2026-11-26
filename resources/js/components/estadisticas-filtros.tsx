@@ -153,7 +153,7 @@ export default function EstadisticasFiltros({
                     </div>
                     <div className="flex items-center gap-2">
                         {activeFilters > 0 && (
-                            <span className="rounded-full bg-[#E8F0F3] px-2.5 py-1 text-[11px] font-bold text-[#2C4A5E] dark:bg-[#29404D] dark:text-[#B9D5E1]">
+                            <span className="rounded-full bg-[#E8F0F3] px-2.5 py-1 text-[length:calc(11px_+_2px)] font-bold text-[#2C4A5E] dark:bg-[#29404D] dark:text-[#B9D5E1]">
                                 {activeFilters} filtro
                                 {activeFilters === 1 ? '' : 's'} activo
                                 {activeFilters === 1 ? '' : 's'}
