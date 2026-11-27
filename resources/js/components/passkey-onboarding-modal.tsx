@@ -91,12 +91,12 @@ export default function PasskeyOnboardingModal({
                             />
                         </div>
                         <div className="space-y-3">
-                            <DialogTitle className="max-w-[22rem] text-[1.55rem] leading-[1.12] tracking-[-0.035em] text-foreground sm:text-[1.7rem]">
+                            <DialogTitle className="max-w-[22rem] text-[length:calc(1.55rem_+_2px)] leading-[1.12] tracking-[-0.035em] text-foreground sm:text-[length:calc(1.7rem_+_2px)]">
                                 {isComplete
                                     ? 'Llave de acceso activada'
                                     : 'Accedé de forma más rápida y segura'}
                             </DialogTitle>
-                            <DialogDescription className="text-[0.95rem] leading-7 text-muted-foreground">
+                            <DialogDescription className="text-[length:calc(0.95rem_+_2px)] leading-7 text-muted-foreground">
                                 {isComplete
                                     ? 'Ya podés utilizar tu llave de acceso para ingresar a Prodenya.'
                                     : 'Protegé tu cuenta de Prodenya utilizando una llave de acceso. Podrás iniciar sesión con tu huella digital, reconocimiento facial o el método de desbloqueo de tu dispositivo, sin necesidad de escribir tu contraseña.'}

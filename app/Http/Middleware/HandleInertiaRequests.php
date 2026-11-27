@@ -5,7 +5,6 @@ namespace App\Http\Middleware;
 use App\Models\Acta;
 use Illuminate\Http\Request;
 use Illuminate\Notifications\DatabaseNotification;
-use Illuminate\Support\Facades\DB;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -19,9 +18,30 @@ class HandleInertiaRequests extends Middleware
      */
     protected $rootView = 'app';
 
-    public function rootView(Request $request)
+    /**
+     * Routes that keep the bare `app` root view: the admin panel and the
+     * authentication screens, which render their own chrome.
+     *
+     * @var array<int, string>
+     */
+    protected const RUTAS_SIN_HEADER_INSTITUCIONAL = [
+        'admin.*',
+        'login',
+        'register',
+        'register.*',
+        'registration.*',
+        'password.*',
+        'verification.*',
+        'two-factor.*',
+    ];
+
+    /**
+     * Every authenticated page outside the admin panel shares the
+     * institutional header defined in `layouts.frontend`.
+     */
+    public function rootView(Request $request): string
     {
-        if ($request->routeIs('legajos.*', 'mayores18.*', 'mailbox.index', 'comunicacion.*', 'tareas.*', 'agenda.*', 'actas.*')) {
+        if ($request->user() && ! $request->routeIs(...self::RUTAS_SIN_HEADER_INSTITUCIONAL)) {
             return 'layouts.frontend';
         }
 
@@ -83,17 +103,7 @@ class HandleInertiaRequests extends Middleware
                 ) ?? false,
             ],
             'status' => fn (): ?string => $request->session()->get('status'),
-            'comunicacionNoLeidos' => fn (): int => $user
-                ? (int) DB::table('mensajes')
-                    ->join('conversacion_usuario', 'conversacion_usuario.conversacion_id', '=', 'mensajes.conversacion_id')
-                    ->where('conversacion_usuario.usuario_id', $user->id)
-                    ->where('mensajes.usuario_id', '!=', $user->id)
-                    ->where(function ($query) {
-                        $query->whereNull('conversacion_usuario.ultimo_leido_en')
-                            ->orWhereColumn('mensajes.created_at', '>', 'conversacion_usuario.ultimo_leido_en');
-                    })
-                    ->count()
-                : 0,
+            'comunicacionNoLeidos' => fn (): int => $user?->mensajesSinLeer() ?? 0,
             'notificaciones' => fn (): array => $user
                 ? $user->notifications()
                     ->latest()

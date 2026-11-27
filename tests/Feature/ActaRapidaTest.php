@@ -226,16 +226,59 @@ test('an acta saved with a legajo is registered as an intervention of that legaj
             ->missing('tiposActa'));
 });
 
+test('a quick acta linked to a legajo has a complete read-only view from the legajo and edit screens', function () {
+    $admin = User::factory()->create(['rol_id' => 1]);
+    $legajo = crearLegajoParaActa($admin, 'Luz', 'Pérez', '45111222');
+
+    $this->actingAs($admin)
+        ->post(route('actas.store', 'inicial'), [
+            'fecha' => '2026-11-20',
+            'compareciente_nombre' => 'Gómez, Marta',
+            'compareciente_dni' => '22333444',
+            'nino_nombre' => 'Gómez, Luz',
+            'relato' => 'Solicita orientación.',
+        ])
+        ->assertSessionHasNoErrors();
+
+    $acta = Acta::sole();
+
+    $this->actingAs($admin)
+        ->patch(route('actas.vincular', $acta), ['legajo_id' => $legajo->id])
+        ->assertSessionHasNoErrors();
+
+    $intervencion = $acta->fresh()->intervencion;
+
+    $this->actingAs($admin)
+        ->get(route('actas.vista', $acta))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('actas/vista')
+            ->where('acta.titulo', 'Gómez, Marta')
+            ->where('acta.secciones.1.titulo', 'Compareciente')
+            ->where('acta.secciones.1.campos.1', ['label' => 'DNI', 'valor' => '22333444'])
+            ->where('acta.secciones.3.campos.0.valor', 'Solicita orientación.'));
+
+    $this->actingAs($admin)
+        ->get(route('legajos.show', $legajo))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('intervenciones.0.acta.vista_url', route('actas.vista', $acta)));
+
+    $this->actingAs($admin)
+        ->get(route('legajos.intervenciones.edit', [$legajo, $intervencion]))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('acta.vista_url', route('actas.vista', $acta)));
+});
+
 test('the home shows the quick acta shortcut only to roles that can use it', function () {
     $this->actingAs(User::factory()->create(['rol_id' => 5]))
         ->get(route('home'))
         ->assertOk()
-        ->assertSee('Acta rápida');
+        ->assertSee('id="home-quick-acta-orbital"', false);
 
     $this->actingAs(User::factory()->create(['rol_id' => 3]))
         ->get(route('home'))
         ->assertOk()
-        ->assertDontSee('Acta rápida');
+        ->assertDontSee('id="home-quick-acta-orbital"', false);
 });
 
 test('the unlinked actas section lists only actas without legajo, with their readable content', function () {

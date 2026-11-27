@@ -35,23 +35,23 @@
         html.dark body { background: linear-gradient(145deg, #101a20, #0d1620); color: #edf6fb; }
         main { background: #fff; border: 1px solid #dce7df; border-radius: 24px; box-shadow: 0 20px 55px rgba(23, 50, 71, 0.1); max-width: 480px; padding: 42px 34px; text-align: center; width: 100%; }
         html.dark main { background: #172832; border-color: #304753; box-shadow: 0 20px 55px rgba(0, 0, 0, 0.45); }
-        .icon { align-items: center; background: #eaf3ed; border-radius: 50%; color: #397461; display: inline-flex; font-size: 1.8rem; height: 64px; justify-content: center; width: 64px; }
+        .icon { align-items: center; background: #eaf3ed; border-radius: 50%; color: #397461; display: inline-flex; font-size: calc(1.8rem + 2px); height: 64px; justify-content: center; width: 64px; }
         html.dark .icon { background: #1d3328; color: #8bc39a; }
-        h1 { font-size: 1.6rem; letter-spacing: -0.04em; margin: 22px 0 10px; }
-        p { color: #697586; font-size: 0.92rem; line-height: 1.65; margin: 0 auto; max-width: 370px; }
+        h1 { font-size: calc(1.6rem + 2px); letter-spacing: -0.04em; margin: 22px 0 10px; }
+        p { color: #697586; font-size: calc(0.92rem + 2px); line-height: 1.65; margin: 0 auto; max-width: 370px; }
         html.dark p { color: #a9bdc7; }
-        .notice { background: #eaf3ed; border: 1px solid #c6ddcc; border-radius: 10px; color: #397461; font-size: 0.82rem; line-height: 1.5; margin: 22px auto 0; max-width: 370px; padding: 10px 12px; }
+        .notice { background: #eaf3ed; border: 1px solid #c6ddcc; border-radius: 10px; color: #397461; font-size: calc(0.82rem + 2px); line-height: 1.5; margin: 22px auto 0; max-width: 370px; padding: 10px 12px; }
         html.dark .notice { background: #1d3328; border-color: #2c6249; color: #8bc39a; }
         form { margin: 25px auto 0; max-width: 370px; text-align: left; }
-        label { color: #36505c; display: block; font-size: 0.78rem; font-weight: 700; margin-bottom: 7px; }
+        label { color: #36505c; display: block; font-size: calc(0.78rem + 2px); font-weight: 700; margin-bottom: 7px; }
         html.dark label { color: #b9d5e1; }
         input { border: 1px solid #c7d4cc; border-radius: 9px; color: #173247; min-height: 44px; padding: 10px 12px; width: 100%; }
         html.dark input { background: #12212b; border-color: #3f5c6a; color: #edf6fb; }
-        button { background: #397461; border: 0; border-radius: 9px; color: #fff; cursor: pointer; font-size: 0.82rem; font-weight: 700; margin-top: 10px; min-height: 44px; padding: 10px 14px; width: 100%; }
+        button { background: #397461; border: 0; border-radius: 9px; color: #fff; cursor: pointer; font-size: calc(0.82rem + 2px); font-weight: 700; margin-top: 10px; min-height: 44px; padding: 10px 14px; width: 100%; }
         button:hover { background: #2d5d4f; }
         html.dark button { background: #8bc39a; color: #10251c; }
         html.dark button:hover { background: #6fa87f; }
-        a { color: #397461; display: inline-block; font-size: 0.85rem; font-weight: 700; margin-top: 20px; text-decoration: none; }
+        a { color: #397461; display: inline-block; font-size: calc(0.85rem + 2px); font-weight: 700; margin-top: 20px; text-decoration: none; }
         a:hover { text-decoration: underline; }
         html.dark a { color: #8bc39a; }
     </style>

@@ -22,6 +22,14 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
@@ -31,11 +39,20 @@ interface Opcion {
     nombre: string;
 }
 
+interface Responsable {
+    id: number;
+    name: string;
+    profesion?: string | null;
+    rol?: string | null;
+}
+
 interface CreatePersonaProps {
     provincias: Opcion[];
     problematicas: Opcion[];
     modoLegajo?: boolean;
     problematicaOtrosId?: number | null;
+    requiereResponsable?: boolean;
+    responsables?: Responsable[];
 }
 
 const FONT_HEADING = "'Lora', serif";
@@ -71,6 +88,7 @@ const FIELD_LABELS: Record<string, string> = {
     legajo_nivel_riesgo: 'Nivel de riesgo',
     legajo_origen_derivacion: 'Origen de la derivación',
     legajo_observaciones: 'Observaciones del legajo',
+    legajo_profesional_id: 'Responsable',
 };
 
 function SectionHeading({
@@ -91,7 +109,7 @@ function SectionHeading({
                     {icon}
                 </div>
                 <div>
-                    <p className="text-[0.65rem] font-bold tracking-[0.16em] text-primary uppercase">
+                    <p className="text-[length:calc(0.65rem_+_2px)] font-bold tracking-[0.16em] text-primary uppercase">
                         {eyebrow}
                     </p>
                     <CardTitle
@@ -114,6 +132,8 @@ export default function CreatePersona({
     problematicas,
     modoLegajo = false,
     problematicaOtrosId = null,
+    requiereResponsable = false,
+    responsables = [],
 }: CreatePersonaProps) {
     const { data, setData, post, processing, errors } = useForm({
         nombre: '',
@@ -136,12 +156,14 @@ export default function CreatePersona({
         legajo_problematicas: [] as number[],
         legajo_problematica_otros: '',
         legajo_observaciones: '',
+        legajo_profesional_id: '',
     });
 
     const [localidades, setLocalidades] = useState<Opcion[]>([]);
     const [barrios, setBarrios] = useState<Opcion[]>([]);
     const [cargandoLocalidades, setCargandoLocalidades] = useState(false);
     const [cargandoBarrios, setCargandoBarrios] = useState(false);
+    const [responsableDialogOpen, setResponsableDialogOpen] = useState(false);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -219,6 +241,21 @@ export default function CreatePersona({
 
     const submit: FormEventHandler = (event) => {
         event.preventDefault();
+
+        if (
+            modoLegajo &&
+            requiereResponsable &&
+            !data.legajo_profesional_id
+        ) {
+            setResponsableDialogOpen(true);
+
+            return;
+        }
+
+        guardar();
+    };
+
+    const guardar = () => {
         post(modoLegajo ? '/legajos' : '/personas', {
             preserveScroll: true,
         });
@@ -847,7 +884,7 @@ export default function CreatePersona({
                                             {previaLegajo && (
                                                 <div className="flex items-center justify-between gap-3 rounded-lg bg-secondary px-4 py-3">
                                                     <div>
-                                                        <p className="text-[0.65rem] font-bold tracking-[0.12em] text-secondary-foreground uppercase">
+                                                        <p className="text-[length:calc(0.65rem_+_2px)] font-bold tracking-[0.12em] text-secondary-foreground uppercase">
                                                             Número estimado
                                                         </p>
                                                         <p className="mt-1 font-mono text-sm font-semibold tracking-wide text-primary">
@@ -1126,6 +1163,71 @@ export default function CreatePersona({
                     </div>
                 </div>
             </main>
+            <Dialog
+                open={responsableDialogOpen}
+                onOpenChange={setResponsableDialogOpen}
+            >
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Vincular responsable</DialogTitle>
+                        <DialogDescription>
+                            Antes de crear el legajo, seleccioná quién quedará
+                            a cargo del seguimiento del caso.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div>
+                        <Label htmlFor="legajo_profesional_id">
+                            Equipo habilitado
+                        </Label>
+                        <select
+                            id="legajo_profesional_id"
+                            className={`${inputClass} block w-full rounded-md border px-3 text-sm`}
+                            value={data.legajo_profesional_id}
+                            onChange={(event) =>
+                                setData(
+                                    'legajo_profesional_id',
+                                    event.target.value,
+                                )
+                            }
+                        >
+                            <option value="">Seleccionar responsable</option>
+                            {responsables.map((responsable) => (
+                                <option
+                                    key={responsable.id}
+                                    value={responsable.id}
+                                >
+                                    {responsable.name}
+                                    {responsable.rol
+                                        ? ` · ${responsable.rol}`
+                                        : ''}
+                                </option>
+                            ))}
+                        </select>
+                        <FieldError
+                            message={errors.legajo_profesional_id}
+                        />
+                    </div>
+                    <DialogFooter>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setResponsableDialogOpen(false)}
+                        >
+                            Volver
+                        </Button>
+                        <Button
+                            type="button"
+                            disabled={
+                                processing || !data.legajo_profesional_id
+                            }
+                            onClick={guardar}
+                            className="bg-[#2C4A5E] text-white hover:bg-[#1F394B]"
+                        >
+                            Vincular y crear
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </>
     );
 }

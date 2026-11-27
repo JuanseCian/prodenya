@@ -283,7 +283,7 @@ export function NotificationCenter({
             >
                 <Bell size={19} />
                 {unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 grid min-w-5 place-items-center rounded-full bg-[#A84635] px-1 text-[0.65rem] font-bold text-white">
+                    <span className="absolute -top-1 -right-1 grid min-w-5 place-items-center rounded-full bg-[#A84635] px-1 text-[length:calc(0.65rem_+_2px)] font-bold text-white">
                         {unreadCount > 99 ? '99+' : unreadCount}
                     </span>
                 )}
@@ -375,7 +375,7 @@ export function NotificationCenter({
                                         <span className="mt-1 block text-xs leading-5 text-[#697586] dark:text-white/60">
                                             {notification.mensaje}
                                         </span>
-                                        <span className="mt-1 block text-[0.68rem] text-[#9AA5A0]">
+                                        <span className="mt-1 block text-[length:calc(0.68rem_+_2px)] text-[#9AA5A0]">
                                             {formatDate(notification.creada_en)}
                                         </span>
                                     </span>

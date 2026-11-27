@@ -170,7 +170,7 @@ export default function Tareas({
                                                         {tarea.titulo}
                                                     </h2>
                                                     <span
-                                                        className={`rounded-full px-2 py-1 text-[10px] font-bold uppercase ${priorityClass[tarea.prioridad] ?? priorityClass.normal}`}
+                                                        className={`rounded-full px-2 py-1 text-[length:calc(10px_+_2px)] font-bold uppercase ${priorityClass[tarea.prioridad] ?? priorityClass.normal}`}
                                                     >
                                                         {tarea.prioridad}
                                                     </span>
@@ -209,7 +209,7 @@ export default function Tareas({
                                                     )}
                                                 </div>
                                             </div>
-                                            <span className="hidden rounded-full bg-[#F4F6F5] px-2.5 py-1 text-[10px] font-semibold text-[#697586] sm:inline-flex">
+                                            <span className="hidden rounded-full bg-[#F4F6F5] px-2.5 py-1 text-[length:calc(10px_+_2px)] font-semibold text-[#697586] sm:inline-flex">
                                                 {tarea.estado.replace('_', ' ')}
                                             </span>
                                         </article>

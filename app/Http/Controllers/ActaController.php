@@ -9,6 +9,7 @@ use App\Models\Legajo;
 use App\Models\Persona;
 use App\Services\ActaDocumentoService;
 use App\Services\ActaService;
+use App\Services\ConversorPdfService;
 use App\Support\Barrios;
 use App\Support\Escuelas;
 use Carbon\CarbonImmutable;
@@ -95,6 +96,7 @@ class ActaController extends Controller
             'firmantes' => Acta::firmantesDe($tipo),
             'legajo' => $legajo ? $this->legajoResumen($legajo) : null,
             'datos' => $actas->datosIniciales($tipo, $legajo, $request->user()),
+            'responsableFijo' => $actas->responsableFijo($request->user()),
             'barrios' => Barrios::nombres(),
             'escuelas' => Escuelas::nombres(),
         ]);
@@ -193,14 +195,62 @@ class ActaController extends Controller
             ->deleteFileAfterSend();
     }
 
-    public function descargar(Request $request, Acta $acta): StreamedResponse
+    /**
+     * Descarga el acta en Word (por defecto) o en PDF (?formato=pdf, convertido con LibreOffice).
+     */
+    public function descargar(Request $request, Acta $acta, ConversorPdfService $conversor): StreamedResponse|JsonResponse|RedirectResponse
     {
         abort_unless($request->user()->tieneRol(...Acta::ROLES), 403);
         abort_unless(Storage::disk('local')->exists($acta->ruta_archivo), 404);
 
-        AuditoriaEvento::registrar('acta.descargada', $acta);
+        if ($request->query('formato') !== 'pdf') {
+            AuditoriaEvento::registrar('acta.descargada', $acta, null, ['formato' => 'docx']);
 
-        return Storage::disk('local')->download($acta->ruta_archivo, $acta->nombre_archivo, ['Content-Type' => $acta->mime_type]);
+            return Storage::disk('local')->download($acta->ruta_archivo, $acta->nombre_archivo, ['Content-Type' => $acta->mime_type]);
+        }
+
+        try {
+            $rutaPdf = $conversor->pdfDe($acta->ruta_archivo);
+        } catch (Throwable $exception) {
+            report($exception);
+            $mensaje = 'No se pudo generar el PDF del acta en este momento. Descargala en Word o avisá al administrador.';
+
+            return $request->expectsJson()
+                ? response()->json(['message' => $mensaje], 503)
+                : back()->with('status', $mensaje);
+        }
+
+        AuditoriaEvento::registrar('acta.descargada', $acta, null, ['formato' => 'pdf']);
+
+        return Storage::disk('local')->download(
+            $rutaPdf,
+            preg_replace('/\.docx$/i', '', $acta->nombre_archivo).'.pdf',
+            ['Content-Type' => 'application/pdf'],
+        );
+    }
+
+    public function vista(Acta $acta): Response
+    {
+        $acta->loadMissing(['creadoPor', 'legajo']);
+
+        return Inertia::render('actas/vista', [
+            'acta' => $this->resumen($acta) + [
+                'creado_en' => $acta->creado_en?->toIso8601String(),
+                'firmas' => $acta->firmas ?? [],
+                'secciones' => $this->detalle($acta),
+            ],
+        ]);
+    }
+
+    /**
+     * Hoja del acta tal como sale en el Word, para verla o previsualizarla antes de descargar.
+     */
+    public function hoja(Acta $acta, ActaService $actas): JsonResponse
+    {
+        return response()->json($actas->hoja($acta) + [
+            'titulo' => $acta->titulo,
+            'secciones' => $this->detalle($acta),
+        ]);
     }
 
     public function vincular(Request $request, Acta $acta, ActaService $actas): RedirectResponse
@@ -351,6 +401,8 @@ class ActaController extends Controller
             'creado_por' => $acta->creadoPor?->name,
             'legajo' => $acta->legajo ? $this->legajoResumen($acta->legajo) : null,
             'descarga_url' => route('actas.descargar', $acta),
+            'descarga_pdf_url' => route('actas.descargar', ['acta' => $acta, 'formato' => 'pdf']),
+            'vista_url' => route('actas.vista', $acta),
             'vincular_url' => route('actas.vincular', $acta),
         ];
     }

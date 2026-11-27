@@ -787,7 +787,7 @@ export default function RedFamiliarModule({
                                             <Link2 size={13} />
                                             {capitalizar(vinculo.tipo)}
                                             {persona.externo && (
-                                                <Badge className="border-0 bg-[#F2F7FB] text-[10px] text-[#35627A]">
+                                                <Badge className="border-0 bg-[#F2F7FB] text-[length:calc(10px_+_2px)] text-[#35627A]">
                                                     Externo
                                                 </Badge>
                                             )}

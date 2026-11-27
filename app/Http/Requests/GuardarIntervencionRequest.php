@@ -53,6 +53,23 @@ class GuardarIntervencionRequest extends FormRequest
         return $this->isMethod('post') && $this->tipoActa() !== null;
     }
 
+    /**
+     * Al editar una intervención cuya acta todavía no tiene firmas, se corrige la hoja del
+     * acta (que vuelve a reemplazar al detalle) en lugar del texto libre.
+     */
+    public function actaEditable(): ?Acta
+    {
+        $intervencion = $this->route('intervencion');
+
+        if (! $this->isMethod('put') || ! $intervencion instanceof Intervencion || ! is_array($this->input('acta'))) {
+            return null;
+        }
+
+        $acta = $intervencion->acta;
+
+        return $acta && ! Acta::esAuh($acta->tipo) && empty($acta->firmas) ? $acta : null;
+    }
+
     private function tipoActualId(): ?int
     {
         $intervencion = $this->route('intervencion');
@@ -86,7 +103,19 @@ class GuardarIntervencionRequest extends FormRequest
             $reglas += ValidacionActa::reglas($this->tipoActa(), 'acta.');
         }
 
+        if ($acta = $this->actaEditable()) {
+            $reglas['detalle'] = ['nullable', 'string', 'max:10000'];
+            $reglas['acta'] = ['array'];
+            $reglas += ValidacionActa::reglas($acta->tipo, 'acta.');
+        }
+
         if ($this->isMethod('put') && $this->intervencionConActa()) {
+            // El detalle de una intervención con acta sale del acta: no se edita aparte.
+            $reglas['detalle'] = ['nullable', 'string', 'max:10000'];
+        }
+
+        if ($this->isMethod('put')) {
+            // Al editar no se cambian las firmas: se conservan las que ya tiene la intervención.
             $reglas['firma_nombre'] = ['nullable', 'string', 'max:150'];
             $reglas['firma_aclaracion'] = ['nullable', 'string', 'max:150'];
         }
@@ -138,7 +167,9 @@ class GuardarIntervencionRequest extends FormRequest
 
     public function messages(): array
     {
-        return ($this->generaActa() ? ValidacionActa::mensajes($this->tipoActa(), 'acta.') : []) + [
+        $tipoMensajes = $this->generaActa() ? $this->tipoActa() : $this->actaEditable()?->tipo;
+
+        return ($tipoMensajes ? ValidacionActa::mensajes($tipoMensajes, 'acta.') : []) + [
             'fecha_intervencion.required' => 'Ingresá la fecha de la intervención.',
             'fecha_intervencion.date' => 'La fecha de la intervención no es válida.',
             'fecha_intervencion.before_or_equal' => 'La fecha de la intervención no puede ser posterior a hoy.',
@@ -178,13 +209,24 @@ class GuardarIntervencionRequest extends FormRequest
                 $this->validarTipoAlEditar($validator);
             }
 
+            if ($acta = $this->actaEditable()) {
+                ValidacionActa::validarFirmas($validator, $acta->tipo, (array) $this->input('acta', []), 'acta.');
+
+                return;
+            }
+
             if ($this->generaActa()) {
                 ValidacionActa::validarFirmas($validator, $this->tipoActa(), (array) $this->input('acta', []), 'acta.');
 
                 return;
             }
 
-            if ($this->isMethod('post') && ! $this->filled('firma_responsable_dibujo') && ! $this->hasFile('firma_responsable_archivo')) {
+            // Al editar, las firmas ya registradas se conservan: no se vuelven a pedir.
+            if ($this->isMethod('put')) {
+                return;
+            }
+
+            if (! $this->filled('firma_responsable_dibujo') && ! $this->hasFile('firma_responsable_archivo')) {
                 $validator->errors()->add('firma_responsable_digital', 'Dibujá la firma o subí un archivo de firma.');
             }
 

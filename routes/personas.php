@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth'])->group(function () {
     // Legajos es la única experiencia visible. Estas rutas mantienen enlaces antiguos funcionando.
-    Route::middleware('rol:admin,operador,coordinador,administrativo')->group(function () {
+    Route::middleware('rol:admin,operador,coordinador,profesional,administrativo')->group(function () {
         Route::get('personas/nueva', fn () => redirect()->route('legajos.create'))->name('personas.create');
         Route::get('legajos/create', [LegajoController::class, 'create'])->name('legajos.create');
         Route::post('legajos', [LegajoController::class, 'store'])->name('legajos.store');

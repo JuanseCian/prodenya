@@ -20,6 +20,17 @@ test('administrators can access the backend home', function () {
         ->assertViewIs('backend.home.home');
 });
 
+test('the admin home links to the management ranking without rendering it', function () {
+    $admin = User::factory()->create(['rol_id' => 1]);
+
+    $this->actingAs($admin)
+        ->get(route('admin.home'))
+        ->assertOk()
+        ->assertDontSee('Ranking de gestión')
+        ->assertSee(route('estadisticas.ranking'))
+        ->assertSee('Ranking');
+});
+
 test('administrators with a passkey do not see the passkey notice', function () {
     $admin = User::factory()->create(['rol_id' => 1]);
 

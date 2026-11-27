@@ -205,6 +205,9 @@ class EstadisticasController extends Controller
             $usuario?->tieneRol('admin', 'coordinador', 'profesional', 'administrativo')
                 ? 'agenda'
                 : null,
+            $usuario?->tieneRol('admin', 'coordinador')
+                ? 'ranking'
+                : null,
         ]));
     }
 

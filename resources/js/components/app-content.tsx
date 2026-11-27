@@ -10,7 +10,11 @@ type Props = React.ComponentProps<'main'> & {
 export function AppContent({ variant = 'sidebar', children, ...props }: Props) {
     const { url } = usePage();
     const pageTransition = (
-        <div key={url} data-page-transition className="prodenya-page-transition">
+        <div
+            key={url}
+            data-page-transition
+            className="prodenya-page-transition"
+        >
             {children}
         </div>
     );
@@ -20,11 +24,11 @@ export function AppContent({ variant = 'sidebar', children, ...props }: Props) {
     }
 
     return (
-        <main
+        <div
             className="mx-auto flex h-full w-full max-w-7xl flex-1 flex-col gap-4 rounded-xl"
-            {...props}
+            {...(props as React.ComponentProps<'div'>)}
         >
             {pageTransition}
-        </main>
+        </div>
     );
 }

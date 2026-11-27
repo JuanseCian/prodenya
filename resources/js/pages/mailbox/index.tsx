@@ -539,7 +539,7 @@ export default function Mailbox({
                 <div className="mx-auto max-w-[1440px]">
                     <header className="mb-4 flex flex-wrap items-center justify-between gap-3">
                         <div className="min-w-0">
-                            <p className="text-[11px] font-bold tracking-[0.18em] text-primary uppercase">
+                            <p className="text-[length:calc(11px_+_2px)] font-bold tracking-[0.18em] text-primary uppercase">
                                 Comunicaciones
                             </p>
                             <h1 className="mt-1 text-2xl font-semibold tracking-[-0.03em] text-foreground sm:text-3xl">
@@ -654,7 +654,7 @@ export default function Mailbox({
 
                             {clasificaciones.length > 0 && (
                                 <div className="mt-5 hidden border-t border-border pt-4 lg:block">
-                                    <p className="flex items-center justify-between px-3 text-[11px] font-bold tracking-[0.12em] text-muted-foreground uppercase">
+                                    <p className="flex items-center justify-between px-3 text-[length:calc(11px_+_2px)] font-bold tracking-[0.12em] text-muted-foreground uppercase">
                                         Categorías
                                         <Tag className="size-3.5" />
                                     </p>
@@ -728,7 +728,7 @@ export default function Mailbox({
                                         <SlidersHorizontal className="size-3.5" />
                                         Filtros
                                         {filtrosActivos > 0 && (
-                                            <span className="rounded-full bg-primary px-1.5 text-[10px] text-primary-foreground">
+                                            <span className="rounded-full bg-primary px-1.5 text-[length:calc(10px_+_2px)] text-primary-foreground">
                                                 {filtrosActivos}
                                             </span>
                                         )}
@@ -918,7 +918,7 @@ export default function Mailbox({
                                                             {mensaje.is_starred && (
                                                                 <Star className="size-3 fill-warning text-warning" />
                                                             )}
-                                                            <time className="text-[10px] text-muted-foreground">
+                                                            <time className="text-[length:calc(10px_+_2px)] text-muted-foreground">
                                                                 {formatDate(
                                                                     mensaje.received_at ??
                                                                         mensaje.sent_at,
@@ -936,13 +936,13 @@ export default function Mailbox({
                                                     <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
                                                         {mensaje.estado && (
                                                             <span
-                                                                className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${estadoClasses[mensaje.estado] ?? estadoClasses.Nuevo}`}
+                                                                className={`rounded-full border px-2 py-0.5 text-[length:calc(10px_+_2px)] font-semibold ${estadoClasses[mensaje.estado] ?? estadoClasses.Nuevo}`}
                                                             >
                                                                 {mensaje.estado}
                                                             </span>
                                                         )}
                                                         {mensaje.clasificacion_categoria_label && (
-                                                            <span className="max-w-[150px] truncate rounded-full border border-primary/20 bg-primary/5 px-2 py-0.5 text-[10px] font-semibold text-primary">
+                                                            <span className="max-w-[150px] truncate rounded-full border border-primary/20 bg-primary/5 px-2 py-0.5 text-[length:calc(10px_+_2px)] font-semibold text-primary">
                                                                 {
                                                                     mensaje.clasificacion_categoria_label
                                                                 }
@@ -951,7 +951,7 @@ export default function Mailbox({
                                                         {mensaje.prioridad &&
                                                             mensaje.prioridad !==
                                                                 'normal' && (
-                                                                <span className="rounded-full border border-warning/25 bg-warning/10 px-2 py-0.5 text-[10px] font-semibold text-warning">
+                                                                <span className="rounded-full border border-warning/25 bg-warning/10 px-2 py-0.5 text-[length:calc(10px_+_2px)] font-semibold text-warning">
                                                                     {
                                                                         mensaje.prioridad
                                                                     }
@@ -1091,19 +1091,19 @@ export default function Mailbox({
                                         </h2>
                                         <div className="mt-3 flex flex-wrap gap-1.5">
                                             <span
-                                                className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${estadoClasses[detalle.estado] ?? estadoClasses.Nuevo}`}
+                                                className={`rounded-full border px-2.5 py-1 text-[length:calc(11px_+_2px)] font-semibold ${estadoClasses[detalle.estado] ?? estadoClasses.Nuevo}`}
                                             >
                                                 {detalle.estado}
                                             </span>
                                             {detalle.clasificacion_categoria_label && (
-                                                <span className="rounded-full border border-primary/20 bg-primary/5 px-2.5 py-1 text-[11px] font-semibold text-primary">
+                                                <span className="rounded-full border border-primary/20 bg-primary/5 px-2.5 py-1 text-[length:calc(11px_+_2px)] font-semibold text-primary">
                                                     {
                                                         detalle.clasificacion_categoria_label
                                                     }
                                                 </span>
                                             )}
                                             {detalle.prioridad && (
-                                                <span className="rounded-full border border-warning/25 bg-warning/10 px-2.5 py-1 text-[11px] font-semibold text-warning">
+                                                <span className="rounded-full border border-warning/25 bg-warning/10 px-2.5 py-1 text-[length:calc(11px_+_2px)] font-semibold text-warning">
                                                     Prioridad{' '}
                                                     {detalle.prioridad}
                                                 </span>
@@ -1114,7 +1114,7 @@ export default function Mailbox({
                                                     href={legajosRoutes.show.url(
                                                         legajo.id,
                                                     )}
-                                                    className="rounded-full bg-muted px-2.5 py-1 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                                                    className="rounded-full bg-muted px-2.5 py-1 text-[length:calc(11px_+_2px)] font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                                                 >
                                                     Legajo{' '}
                                                     {legajo.numero_legajo}

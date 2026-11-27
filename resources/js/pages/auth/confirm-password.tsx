@@ -24,7 +24,7 @@ export default function ConfirmPassword() {
                             <ShieldCheck className="size-[1.1rem]" />
                         </span>
                         <div>
-                            <p className="text-[0.65rem] font-bold tracking-[0.16em] text-primary uppercase">
+                            <p className="text-[length:calc(0.65rem_+_2px)] font-bold tracking-[0.16em] text-primary uppercase">
                                 Acción sensible
                             </p>
                             <h2 className="mt-1 text-base font-semibold text-card-foreground sm:text-lg">

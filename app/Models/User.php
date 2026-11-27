@@ -13,9 +13,11 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Fortify\Contracts\PasskeyUser;
 use Laravel\Fortify\PasskeyAuthenticatable;
@@ -106,6 +108,11 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
         return $this->belongsTo(Rol::class, 'rol_id');
     }
 
+    public function puntajeMovimientos(): HasMany
+    {
+        return $this->hasMany(PuntajeMovimiento::class, 'usuario_id');
+    }
+
     /**
      * true si el usuario está activo y su rol es alguno de los indicados.
      */
@@ -123,6 +130,22 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     public function esAdmin(): bool
     {
         return $this->tieneRol('admin');
+    }
+
+    /**
+     * Cantidad de mensajes internos que otros usuarios le enviaron y todavía no leyó.
+     */
+    public function mensajesSinLeer(): int
+    {
+        return (int) DB::table('mensajes')
+            ->join('conversacion_usuario', 'conversacion_usuario.conversacion_id', '=', 'mensajes.conversacion_id')
+            ->where('conversacion_usuario.usuario_id', $this->id)
+            ->where('mensajes.usuario_id', '!=', $this->id)
+            ->where(function ($query) {
+                $query->whereNull('conversacion_usuario.ultimo_leido_en')
+                    ->orWhereColumn('mensajes.created_at', '>', 'conversacion_usuario.ultimo_leido_en');
+            })
+            ->count();
     }
 
     /**

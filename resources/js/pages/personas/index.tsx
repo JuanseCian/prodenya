@@ -39,7 +39,7 @@ const GENERO_LABEL: Record<string, string> = {
 };
 
 const thClass =
-    'px-4 py-3 text-left text-[0.68rem] font-bold tracking-[0.12em] text-[#6B8F71] uppercase whitespace-nowrap';
+    'px-4 py-3 text-left text-[length:calc(0.68rem_+_2px)] font-bold tracking-[0.12em] text-[#6B8F71] uppercase whitespace-nowrap';
 const tdClass = 'px-4 py-3.5 align-top text-sm text-[#2B2F36]';
 
 export default function PersonasIndex({

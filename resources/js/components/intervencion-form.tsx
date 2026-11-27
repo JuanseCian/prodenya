@@ -4,7 +4,6 @@ import {
     CalendarDays,
     CheckCircle2,
     Clock3,
-    FileDown,
     FileUp,
     Paperclip,
     Save,
@@ -17,6 +16,8 @@ import type { FormEvent } from 'react';
 
 import ActaHoja from '@/components/acta-hoja';
 import type { DatosActa, TipoActa } from '@/components/acta-hoja';
+import ActaHojaLectura from '@/components/acta-hoja-lectura';
+import type { HojaActaGuardada } from '@/components/acta-hoja-lectura';
 import type {
     DatosPlanilla,
     MiembroGrupo,
@@ -25,6 +26,7 @@ import type {
 import AuhPlanillaHoja from '@/components/auh-planilla-hoja';
 import type { FirmaEnCurso } from '@/components/auh-planilla-hoja';
 import FirmaDigital from '@/components/firma-digital';
+import FirmaGuardada from '@/components/firma-guardada';
 import ResumenErrores from '@/components/resumen-errores';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -57,6 +59,7 @@ interface ActaExistente {
     firmado: boolean;
     requiere_firma: boolean;
     descarga_url: string;
+    vista_url: string;
 }
 
 interface HojaActa {
@@ -123,6 +126,8 @@ interface Props {
     actas?: Record<string, ConfigActa>;
     /** Acta ya generada por esta intervención (al editar). */
     acta?: ActaExistente | null;
+    /** Hoja del acta guardada (al editar): editable mientras no tenga firmas. */
+    actaHoja?: HojaActaGuardada | null;
     /** Barrios que se pueden elegir en las actas. */
     barrios?: string[];
     escuelas?: string[];
@@ -173,6 +178,7 @@ export default function IntervencionForm({
     legajosRelacionados = [],
     actas = {},
     acta = null,
+    actaHoja = null,
     barrios = [],
     escuelas = [],
 }: Props) {
@@ -202,14 +208,27 @@ export default function IntervencionForm({
             legajos_destino_ids: [],
         });
 
+    // Al editar, un acta sin firmas se corrige en su misma hoja; con firmas queda de solo lectura.
+    const actaEditable = editando && actaHoja?.editable ? actaHoja : null;
+    const actasDisponibles: Record<string, ConfigActa> = actaEditable
+        ? {
+              [actaEditable.tipo]: {
+                  label: actaEditable.etiqueta,
+                  esAuh: false,
+                  tipoAuh: null,
+                  firmantes: actaEditable.firmantes,
+                  datos: actaEditable.datos as unknown as DatosActa,
+              },
+          }
+        : actas;
     const tipoActa = editando
-        ? null
+        ? (actaEditable?.tipo ?? null)
         : (tipos.find((tipo) => String(tipo.id) === data.tipo_intervencion_id)
               ?.acta ?? null);
-    const configActa = tipoActa ? actas[tipoActa] : undefined;
+    const configActa = tipoActa ? actasDisponibles[tipoActa] : undefined;
 
     const hojaInicial = (tipo: string | null): HojaActa => {
-        const config = tipo ? actas[tipo] : undefined;
+        const config = tipo ? actasDisponibles[tipo] : undefined;
 
         if (!tipo || !config) {
             return { tipo, datos: null, firmas: {} };
@@ -289,6 +308,12 @@ export default function IntervencionForm({
             },
         }));
 
+    // El responsable del acta es el profesional elegido: figura como operador/a y firma por el Servicio.
+    const nombreProfesional =
+        profesionales.find(
+            (profesional) => String(profesional.id) === data.profesional_id,
+        )?.name ?? '';
+
     const erroresActa = Object.fromEntries(
         Object.entries(errors as Record<string, string>)
             .filter(([campo]) => campo.startsWith('acta.'))
@@ -348,7 +373,7 @@ export default function IntervencionForm({
                                 Volver al legajo
                             </Link>
                             <div className="flex flex-wrap items-center gap-2">
-                                <span className="rounded-full bg-[#DDEBE1] px-2.5 py-1 text-[0.68rem] font-bold tracking-[0.12em] text-[#41634A] uppercase">
+                                <span className="rounded-full bg-[#DDEBE1] px-2.5 py-1 text-[length:calc(0.68rem_+_2px)] font-bold tracking-[0.12em] text-[#41634A] uppercase">
                                     Registro del legajo
                                 </span>
                                 <span className="font-mono text-xs font-semibold text-[#697586]">
@@ -366,7 +391,7 @@ export default function IntervencionForm({
                             </p>
                         </div>
                         <div className="hidden rounded-xl border border-[#DCE3DF] bg-white px-4 py-3 text-right shadow-sm sm:block">
-                            <p className="text-[0.65rem] font-bold tracking-[0.12em] text-[#6B8F71] uppercase">
+                            <p className="text-[length:calc(0.65rem_+_2px)] font-bold tracking-[0.12em] text-[#6B8F71] uppercase">
                                 Estado del registro
                             </p>
                             <p className="mt-1 text-sm font-semibold text-[#2C4A5E]">
@@ -565,12 +590,11 @@ export default function IntervencionForm({
                                             </div>
                                         </div>
 
-                                        {tipoActa ? (
+                                        {tipoActa || actaHoja ? (
                                             <p className="mt-5 border-t border-[#E4E8E5] pt-5 text-sm text-[#697586]">
-                                                Esta intervención se registra
-                                                con su acta: completala abajo.
-                                                El detalle se arma con el relato
-                                                del acta.
+                                                {tipoActa
+                                                    ? 'Esta intervención se registra con su acta: completala abajo. El detalle se arma con el relato del acta.'
+                                                    : 'El detalle de esta intervención es el del acta, que se muestra abajo.'}
                                             </p>
                                         ) : (
                                             <div className="mt-5 border-t border-[#E4E8E5] pt-5">
@@ -609,10 +633,9 @@ export default function IntervencionForm({
                                                     : configActa.label}
                                             </CardTitle>
                                             <p className="mt-1 text-xs text-[#697586]">
-                                                Completá los espacios resaltados
-                                                y firmá sobre cada línea. Se
-                                                guarda en Word junto con la
-                                                intervención.
+                                                {editando
+                                                    ? 'Corregí los espacios resaltados y, si corresponde, firmá sobre cada línea. Al guardar se actualiza el Word del acta.'
+                                                    : 'Completá los espacios resaltados y firmá sobre cada línea. Se guarda en Word junto con la intervención.'}
                                             </p>
                                         </CardHeader>
                                         <CardContent className="bg-[#EEF1EF] px-2 py-5 sm:px-5">
@@ -697,6 +720,9 @@ export default function IntervencionForm({
                                                 />
                                             ) : (
                                                 <ActaHoja
+                                                    responsableFijo={
+                                                        nombreProfesional
+                                                    }
                                                     barrios={barrios}
                                                     escuelas={escuelas}
                                                     tipo={tipoActa as TipoActa}
@@ -719,26 +745,24 @@ export default function IntervencionForm({
                                     </Card>
                                 )}
 
-                                {acta && (
-                                    <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#DCE3DF] bg-white px-5 py-4 shadow-[0_18px_45px_rgba(23,50,71,0.07)]">
-                                        <p className="text-sm text-[#2B2F36]">
-                                            Esta intervención tiene su{' '}
-                                            <strong>{acta.etiqueta}</strong>
-                                            {acta.requiere_firma &&
-                                                (acta.firmado
-                                                    ? ' (firmada)'
-                                                    : ' (sin firmar)')}
-                                            . Para un acta nueva, registrá otra
-                                            intervención.
-                                        </p>
-                                        <a
-                                            href={acta.descarga_url}
-                                            className="inline-flex items-center gap-2 rounded-lg border border-[#DCE3DF] bg-white px-3 py-2 text-xs font-semibold text-[#2C4A5E] transition hover:bg-[#F4F6F5]"
-                                        >
-                                            <FileDown size={14} />
-                                            Descargar acta
-                                        </a>
-                                    </div>
+                                {actaHoja && !actaHoja.editable && (
+                                    <Card className="overflow-hidden border-[#DCE3DF] !bg-white py-0 shadow-[0_18px_45px_rgba(23,50,71,0.07)]">
+                                        <CardHeader className="border-b border-[#E4E8E5] bg-[#F8FAF9] px-5 py-4 sm:px-6">
+                                            <CardTitle className="text-base text-[#2C4A5E]">
+                                                {actaHoja.etiqueta}
+                                            </CardTitle>
+                                            <p className="mt-1 text-xs text-[#697586]">
+                                                El acta ya tiene firmas: se
+                                                muestra tal como quedó y no se
+                                                puede modificar. Para un acta
+                                                nueva, registrá otra
+                                                intervención.
+                                            </p>
+                                        </CardHeader>
+                                        <CardContent className="bg-[#EEF1EF] px-2 py-5 sm:px-5">
+                                            <ActaHojaLectura hoja={actaHoja} />
+                                        </CardContent>
+                                    </Card>
                                 )}
 
                                 {!editando &&
@@ -827,7 +851,67 @@ export default function IntervencionForm({
                                         </Card>
                                     )}
 
-                                {!tipoActa && (
+                                {editando &&
+                                    !tipoActa &&
+                                    !actaHoja &&
+                                    intervencion && (
+                                        <Card className="overflow-hidden border-[#DCE3DF] !bg-white py-0 shadow-[0_18px_45px_rgba(23,50,71,0.07)]">
+                                            <CardHeader className="border-b border-[#E4E8E5] bg-[#F8FAF9] px-5 py-4 sm:px-6">
+                                                <div className="flex items-start justify-between gap-4">
+                                                    <div>
+                                                        <CardTitle className="text-base text-[#2C4A5E]">
+                                                            Firmas
+                                                        </CardTitle>
+                                                        <p className="mt-1 text-xs text-[#697586]">
+                                                            Firmas registradas
+                                                            en la intervención.
+                                                            No se modifican al
+                                                            editar.
+                                                        </p>
+                                                    </div>
+                                                    <ShieldCheck
+                                                        size={20}
+                                                        className="text-[#6B8F71]"
+                                                    />
+                                                </div>
+                                            </CardHeader>
+                                            <CardContent className="grid gap-4 px-5 py-5 sm:grid-cols-2 sm:px-6">
+                                                <FirmaGuardada
+                                                    titulo="Responsable"
+                                                    nombre={
+                                                        intervencion.firma_nombre
+                                                    }
+                                                    aclaracion={
+                                                        intervencion.firma_aclaracion
+                                                    }
+                                                    url={
+                                                        intervencion.tiene_firma_responsable
+                                                            ? `/legajos/${legajo.id}/intervenciones/${intervencion.id}/firma/responsable/descargar`
+                                                            : null
+                                                    }
+                                                />
+                                                {(intervencion.tiene_firma_entrevistado ||
+                                                    intervencion.firma_entrevistado_nombre) && (
+                                                    <FirmaGuardada
+                                                        titulo="Entrevistado"
+                                                        nombre={
+                                                            intervencion.firma_entrevistado_nombre
+                                                        }
+                                                        aclaracion={
+                                                            intervencion.firma_entrevistado_aclaracion
+                                                        }
+                                                        url={
+                                                            intervencion.tiene_firma_entrevistado
+                                                                ? `/legajos/${legajo.id}/intervenciones/${intervencion.id}/firma/entrevistado/descargar`
+                                                                : null
+                                                        }
+                                                    />
+                                                )}
+                                            </CardContent>
+                                        </Card>
+                                    )}
+
+                                {!tipoActa && !editando && (
                                     <Card className="overflow-hidden border-[#DCE3DF] !bg-white py-0 shadow-[0_18px_45px_rgba(23,50,71,0.07)]">
                                         <CardHeader className="border-b border-[#E4E8E5] bg-[#F8FAF9] px-5 py-4 sm:px-6">
                                             <div className="flex items-start justify-between gap-4">
@@ -860,7 +944,7 @@ export default function IntervencionForm({
                                                             intervención.
                                                         </p>
                                                     </div>
-                                                    <span className="rounded-full bg-[#FCEBD7] px-2 py-1 text-[0.62rem] font-bold tracking-[0.08em] text-[#8A6420] uppercase">
+                                                    <span className="rounded-full bg-[#FCEBD7] px-2 py-1 text-[length:calc(0.62rem_+_2px)] font-bold tracking-[0.08em] text-[#8A6420] uppercase">
                                                         Obligatoria
                                                     </span>
                                                 </div>
@@ -947,14 +1031,6 @@ export default function IntervencionForm({
                                                         }
                                                     />
                                                 </label>
-                                                {intervencion?.tiene_firma_responsable && (
-                                                    <a
-                                                        href={`/legajos/${legajo.id}/intervenciones/${intervencion.id}/firma/responsable/descargar`}
-                                                        className="mt-3 inline-block text-xs font-semibold text-[#267148] underline"
-                                                    >
-                                                        Ver firma guardada
-                                                    </a>
-                                                )}
                                             </section>
 
                                             <section className="rounded-xl border border-[#DCE3DF] bg-[#FBFCFB] p-4 sm:p-5">
@@ -969,7 +1045,7 @@ export default function IntervencionForm({
                                                             firmar.
                                                         </p>
                                                     </div>
-                                                    <span className="rounded-full bg-[#EEF0ED] px-2 py-1 text-[0.62rem] font-bold tracking-[0.08em] text-[#697586] uppercase">
+                                                    <span className="rounded-full bg-[#EEF0ED] px-2 py-1 text-[length:calc(0.62rem_+_2px)] font-bold tracking-[0.08em] text-[#697586] uppercase">
                                                         Opcional
                                                     </span>
                                                 </div>
@@ -1056,14 +1132,6 @@ export default function IntervencionForm({
                                                         }
                                                     />
                                                 </label>
-                                                {intervencion?.tiene_firma_entrevistado && (
-                                                    <a
-                                                        href={`/legajos/${legajo.id}/intervenciones/${intervencion.id}/firma/entrevistado/descargar`}
-                                                        className="mt-3 inline-block text-xs font-semibold text-[#267148] underline"
-                                                    >
-                                                        Ver firma guardada
-                                                    </a>
-                                                )}
                                             </section>
                                         </CardContent>
                                     </Card>

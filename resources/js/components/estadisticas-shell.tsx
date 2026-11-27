@@ -11,6 +11,7 @@ import {
     Moon,
     Sun,
     TriangleAlert,
+    Trophy,
     X,
 } from 'lucide-react';
 import { useState } from 'react';
@@ -27,7 +28,8 @@ export type EstadisticasModulo =
     | 'problematicas'
     | 'intervenciones'
     | 'tareas'
-    | 'agenda';
+    | 'agenda'
+    | 'ranking';
 
 const modulos: Array<{
     key: EstadisticasModulo;
@@ -71,6 +73,12 @@ const modulos: Array<{
         href: estadisticas.agenda.url(),
         icon: LayoutDashboard,
     },
+    {
+        key: 'ranking',
+        label: 'Ranking de gestión',
+        href: estadisticas.ranking.url(),
+        icon: Trophy,
+    },
 ];
 
 export default function EstadisticasShell({
@@ -95,15 +103,15 @@ export default function EstadisticasShell({
     );
 
     return (
-        <div className="stats-module-shell min-h-screen bg-background text-foreground">
+        <div className="stats-module-shell min-h-[calc(100dvh-var(--site-header-height,0px))] bg-background text-foreground lg:flex">
             <div
-                className={`fixed inset-0 z-30 bg-[#173247]/45 transition-opacity lg:hidden dark:bg-black/60 ${mobileOpen ? 'opacity-100' : 'pointer-events-none opacity-0'}`}
+                className={`fixed inset-0 z-[46] bg-[#173247]/45 transition-opacity lg:hidden dark:bg-black/60 ${mobileOpen ? 'opacity-100' : 'pointer-events-none opacity-0'}`}
                 onClick={() => setMobileOpen(false)}
                 aria-hidden="true"
             />
 
             <aside
-                className={`fixed inset-y-0 left-0 z-40 flex flex-col border-r border-white/10 bg-brand-strong transition-[width,transform] duration-300 ease-out dark:bg-[#173247] ${collapsed ? 'lg:w-20' : 'lg:w-60'} ${mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'} w-72`}
+                className={`fixed inset-y-0 left-0 z-[47] flex flex-col border-r border-white/10 bg-brand-strong transition-[width,transform] duration-300 ease-out lg:sticky lg:top-[var(--site-header-height,0px)] lg:bottom-auto lg:z-20 lg:h-[calc(100dvh-var(--site-header-height,0px))] lg:shrink-0 dark:bg-[#173247] ${collapsed ? 'lg:w-20' : 'lg:w-60'} ${mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'} w-72`}
             >
                 <div className="flex items-center justify-between border-b border-white/10 px-4 py-5">
                     <button
@@ -155,7 +163,7 @@ export default function EstadisticasShell({
                     className={`flex-1 px-3 pt-6 ${collapsed ? 'lg:px-2' : ''}`}
                 >
                     <p
-                        className={`px-3 text-[0.65rem] font-bold tracking-[0.14em] text-[#B9D5E1]/60 uppercase ${collapsed ? 'lg:hidden' : ''}`}
+                        className={`px-3 text-[length:calc(0.65rem_+_2px)] font-bold tracking-[0.14em] text-[#B9D5E1]/60 uppercase ${collapsed ? 'lg:hidden' : ''}`}
                     >
                         Análisis
                     </p>
@@ -214,10 +222,8 @@ export default function EstadisticasShell({
                 </div>
             </aside>
 
-            <div
-                className={`min-h-screen transition-[margin] duration-300 ${collapsed ? 'lg:ml-20' : 'lg:ml-60'}`}
-            >
-                <header className="sticky top-0 z-20 border-b border-border bg-background/95 backdrop-blur">
+            <div className="min-w-0 flex-1">
+                <header className="sticky top-[var(--site-header-height,0px)] z-20 border-b border-border bg-background/95 backdrop-blur">
                     <div className="flex min-h-16 items-center justify-between gap-4 px-4 py-3 sm:px-7 lg:px-10">
                         <div className="flex min-w-0 items-center gap-3">
                             <button

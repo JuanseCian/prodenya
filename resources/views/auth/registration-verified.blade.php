@@ -35,12 +35,12 @@
         html.dark body { background: #101a20; color: #edf6fb; }
         main { background: #fff; border: 1px solid #dce7df; border-radius: 24px; box-shadow: 0 20px 55px rgba(23, 50, 71, 0.1); max-width: 480px; padding: 42px 34px; text-align: center; width: 100%; }
         html.dark main { background: #172832; border-color: #304753; box-shadow: 0 20px 55px rgba(0, 0, 0, 0.45); }
-        .icon { align-items: center; background: #eaf3ed; border-radius: 50%; color: #397461; display: inline-flex; font-size: 1.8rem; height: 64px; justify-content: center; width: 64px; }
+        .icon { align-items: center; background: #eaf3ed; border-radius: 50%; color: #397461; display: inline-flex; font-size: calc(1.8rem + 2px); height: 64px; justify-content: center; width: 64px; }
         html.dark .icon { background: #1d3328; color: #8bc39a; }
-        h1 { font-size: 1.6rem; letter-spacing: -0.04em; margin: 22px 0 10px; }
-        p { color: #697586; font-size: 0.92rem; line-height: 1.65; margin: 0 auto; max-width: 370px; }
+        h1 { font-size: calc(1.6rem + 2px); letter-spacing: -0.04em; margin: 22px 0 10px; }
+        p { color: #697586; font-size: calc(0.92rem + 2px); line-height: 1.65; margin: 0 auto; max-width: 370px; }
         html.dark p { color: #a9bdc7; }
-        a { background: #173247; border-radius: 9px; color: #fff; display: inline-block; font-size: 0.85rem; font-weight: 700; margin-top: 25px; padding: 11px 17px; text-decoration: none; }
+        a { background: #173247; border-radius: 9px; color: #fff; display: inline-block; font-size: calc(0.85rem + 2px); font-weight: 700; margin-top: 25px; padding: 11px 17px; text-decoration: none; }
         html.dark a { background: #8bc39a; color: #10251c; }
     </style>
 </head>

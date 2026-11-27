@@ -49,7 +49,7 @@ export default function Register() {
                 <div className="w-full max-w-sm rounded-lg border border-[#E3E0D8] bg-white p-8 shadow-sm sm:p-10">
                     <div className="border-b border-[#E3E0D8] pb-6 text-center">
                         <span
-                            className="text-[0.65rem] font-semibold tracking-[0.2em] text-[#6B8F71] uppercase"
+                            className="text-[length:calc(0.65rem_+_2px)] font-semibold tracking-[0.2em] text-[#6B8F71] uppercase"
                             style={{ fontFamily: FONT_BODY }}
                         >
                             Sistema de gestión
@@ -100,14 +100,56 @@ export default function Register() {
 
                         <div className="grid gap-4 sm:grid-cols-2">
                             <div>
-                                <label htmlFor="dni" className="mb-1.5 block text-sm font-medium text-[#2B2F36]" style={{ fontFamily: FONT_BODY }}>DNI</label>
-                                <input id="dni" type="text" name="dni" value={data.dni} inputMode="numeric" onChange={(e) => setData('dni', e.target.value)} className="block w-full rounded-md border border-[#D5D1C6] bg-white px-3.5 py-2.5 text-sm text-[#2B2F36] outline-none focus:border-[#2C4A5E] focus:ring-2 focus:ring-[#2C4A5E]/20" placeholder="Sin puntos" required />
-                                {errors.dni && <p className="mt-1.5 text-sm text-[#B1553F]">{errors.dni}</p>}
+                                <label
+                                    htmlFor="dni"
+                                    className="mb-1.5 block text-sm font-medium text-[#2B2F36]"
+                                    style={{ fontFamily: FONT_BODY }}
+                                >
+                                    DNI
+                                </label>
+                                <input
+                                    id="dni"
+                                    type="text"
+                                    name="dni"
+                                    value={data.dni}
+                                    inputMode="numeric"
+                                    onChange={(e) =>
+                                        setData('dni', e.target.value)
+                                    }
+                                    className="block w-full rounded-md border border-[#D5D1C6] bg-white px-3.5 py-2.5 text-sm text-[#2B2F36] outline-none focus:border-[#2C4A5E] focus:ring-2 focus:ring-[#2C4A5E]/20"
+                                    placeholder="Sin puntos"
+                                    required
+                                />
+                                {errors.dni && (
+                                    <p className="mt-1.5 text-sm text-[#B1553F]">
+                                        {errors.dni}
+                                    </p>
+                                )}
                             </div>
                             <div>
-                                <label htmlFor="telefono" className="mb-1.5 block text-sm font-medium text-[#2B2F36]" style={{ fontFamily: FONT_BODY }}>Teléfono</label>
-                                <input id="telefono" type="tel" name="telefono" value={data.telefono} onChange={(e) => setData('telefono', e.target.value)} className="block w-full rounded-md border border-[#D5D1C6] bg-white px-3.5 py-2.5 text-sm text-[#2B2F36] outline-none focus:border-[#2C4A5E] focus:ring-2 focus:ring-[#2C4A5E]/20" placeholder="Opcional" />
-                                {errors.telefono && <p className="mt-1.5 text-sm text-[#B1553F]">{errors.telefono}</p>}
+                                <label
+                                    htmlFor="telefono"
+                                    className="mb-1.5 block text-sm font-medium text-[#2B2F36]"
+                                    style={{ fontFamily: FONT_BODY }}
+                                >
+                                    Teléfono
+                                </label>
+                                <input
+                                    id="telefono"
+                                    type="tel"
+                                    name="telefono"
+                                    value={data.telefono}
+                                    onChange={(e) =>
+                                        setData('telefono', e.target.value)
+                                    }
+                                    className="block w-full rounded-md border border-[#D5D1C6] bg-white px-3.5 py-2.5 text-sm text-[#2B2F36] outline-none focus:border-[#2C4A5E] focus:ring-2 focus:ring-[#2C4A5E]/20"
+                                    placeholder="Opcional"
+                                />
+                                {errors.telefono && (
+                                    <p className="mt-1.5 text-sm text-[#B1553F]">
+                                        {errors.telefono}
+                                    </p>
+                                )}
                             </div>
                         </div>
 

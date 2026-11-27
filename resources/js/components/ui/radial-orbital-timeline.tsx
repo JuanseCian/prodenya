@@ -63,7 +63,7 @@ export function RadialOrbitalTimeline({ timelineData, className }: RadialOrbital
                     onClick={() => setIsOpen((open) => !open)}
                 >
                     {isOpen ? <X className="mb-1 h-5 w-5 text-[#b9e8cc]" aria-hidden="true" /> : <CirclePlus className="mb-1 h-5 w-5 text-[#b9e8cc]" aria-hidden="true" />}
-                    <span className="max-w-[74px] text-[0.66rem] leading-tight font-bold">{isOpen ? 'Cerrar actas' : 'Ver actas'}</span>
+                    <span className="max-w-[74px] text-[length:calc(0.66rem_+_2px)] leading-tight font-bold">{isOpen ? 'Cerrar actas' : 'Ver actas'}</span>
                 </button>
 
                 <div id="quick-acta-orbital-items" className="contents">
@@ -94,7 +94,7 @@ export function RadialOrbitalTimeline({ timelineData, className }: RadialOrbital
                             onDoubleClick={() => window.location.assign(item.href)}
                         >
                             <Icon className="h-4 w-4" aria-hidden="true" />
-                            <span className="pointer-events-none absolute bottom-full left-1/2 mb-2 -translate-x-1/2 whitespace-nowrap rounded-md bg-[#173247] px-2 py-1 text-[0.65rem] font-semibold text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100 dark:bg-[#edf6fb] dark:text-[#173247]">
+                            <span className="pointer-events-none absolute bottom-full left-1/2 mb-2 -translate-x-1/2 whitespace-nowrap rounded-md bg-[#173247] px-2 py-1 text-[length:calc(0.65rem_+_2px)] font-semibold text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100 dark:bg-[#edf6fb] dark:text-[#173247]">
                                 {item.title}
                             </span>
                         </button>
@@ -111,7 +111,7 @@ export function RadialOrbitalTimeline({ timelineData, className }: RadialOrbital
                         </span>
                         <a
                             href={activeItem.href}
-                            className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-[#173247] px-2.5 py-1 text-[0.7rem] font-bold text-white no-underline transition hover:bg-[#244357] focus-visible:ring-2 focus-visible:ring-[#397461] focus-visible:ring-offset-2 dark:bg-[#397461] dark:hover:bg-[#4a8a74]"
+                            className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-[#173247] px-2.5 py-1 text-[length:calc(0.7rem_+_2px)] font-bold text-white no-underline transition hover:bg-[#244357] focus-visible:ring-2 focus-visible:ring-[#397461] focus-visible:ring-offset-2 dark:bg-[#397461] dark:hover:bg-[#4a8a74]"
                         >
                             Crear
                             <ArrowUpRight className="h-3 w-3" aria-hidden="true" />

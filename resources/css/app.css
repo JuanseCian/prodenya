@@ -58,6 +58,21 @@
     --radius-md: calc(var(--radius) - 2px);
     --radius-sm: calc(var(--radius) - 4px);
 
+    /* Escala tipográfica: cada tamaño de Tailwind lleva 2px más que el original. */
+    --text-xs: calc(0.75rem + 2px);
+    --text-sm: calc(0.875rem + 2px);
+    --text-base: calc(1rem + 2px);
+    --text-lg: calc(1.125rem + 2px);
+    --text-xl: calc(1.25rem + 2px);
+    --text-2xl: calc(1.5rem + 2px);
+    --text-3xl: calc(1.875rem + 2px);
+    --text-4xl: calc(2.25rem + 2px);
+    --text-5xl: calc(3rem + 2px);
+    --text-6xl: calc(3.75rem + 2px);
+    --text-7xl: calc(4.5rem + 2px);
+    --text-8xl: calc(6rem + 2px);
+    --text-9xl: calc(8rem + 2px);
+
     --color-background: var(--background);
     --color-foreground: var(--foreground);
     --color-page: var(--page);
@@ -313,13 +328,13 @@
 
 .stats-map-popup strong {
     color: #173247;
-    font-size: 0.8rem;
+    font-size: calc(0.8rem + 2px);
 }
 
 .stats-map-popup span,
 .stats-map-popup small {
     color: #697586;
-    font-size: 0.72rem;
+    font-size: calc(0.72rem + 2px);
 }
 
 .dark .stats-map-popup strong {
@@ -353,6 +368,8 @@
 
 .legajo-detail-page [data-slot='card'] {
     border-color: #d7e2dc;
+    border-radius: 0.875rem;
+    box-shadow: 0 4px 16px rgba(23, 50, 71, 0.045);
     transition:
         border-color 180ms ease,
         box-shadow 180ms ease;
@@ -360,7 +377,7 @@
 
 .legajo-detail-page [data-slot='card']:hover {
     border-color: #bfd2c6;
-    box-shadow: 0 18px 42px rgba(23, 50, 71, 0.08);
+    box-shadow: 0 8px 20px rgba(23, 50, 71, 0.07);
 }
 
 .dark .legajo-detail-page [data-slot='card'] {
@@ -373,8 +390,17 @@
 }
 
 .legajo-detail-page [data-slot='card-header'] {
+    padding: 0.75rem 1rem;
     position: relative;
     overflow: hidden;
+}
+
+.legajo-detail-page [data-slot='card-content'] {
+    padding: 1rem;
+}
+
+.legajo-detail-page [data-slot='card-title'] {
+    font-size: 0.95rem;
 }
 
 .legajo-detail-page [data-slot='card-header']::before {

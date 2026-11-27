@@ -62,7 +62,7 @@
                 <div style="align-items:center;border:1px solid rgba(57,121,91,.2);border-radius:16px;display:flex;height:76px;justify-content:center;padding:14px;width:76px;">
                     <img src="{{ asset('assets/img/SN.png') }}" alt="" style="height:100%;object-fit:contain;width:100%;">
                 </div>
-                <span style="font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;">PRODENYA</span>
+                <span style="font-size: calc(11px + 2px);font-weight:700;letter-spacing:.16em;text-transform:uppercase;">PRODENYA</span>
             </div>
         </div>
         <x-inertia::app />

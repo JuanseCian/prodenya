@@ -44,10 +44,10 @@ export function EstadisticaKpi({
         >
             <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
-                    <p className="truncate text-[0.68rem] font-bold tracking-[0.1em] text-[#5A7180] uppercase dark:text-[#AFC2CC]">
+                    <p className="truncate text-[length:calc(0.68rem_+_2px)] font-bold tracking-[0.1em] text-[#5A7180] uppercase dark:text-[#AFC2CC]">
                         {label}
                     </p>
-                    <p className="mt-2 text-[2rem] leading-none font-semibold tracking-[-0.05em] text-[#173247] dark:text-[#EDF6FB]">
+                    <p className="mt-2 text-[length:calc(2rem_+_2px)] leading-none font-semibold tracking-[-0.05em] text-[#173247] dark:text-[#EDF6FB]">
                         {value.toLocaleString('es-AR')}
                     </p>
                 </div>

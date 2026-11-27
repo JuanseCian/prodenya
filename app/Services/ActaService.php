@@ -24,10 +24,55 @@ class ActaService
     /** Roles de firmante que pertenecen al Servicio (no a la familia). */
     private const FIRMANTES_DEL_SERVICIO = ['equipo', 'autoridad', 'mds', 'centro', 'profesional'];
 
+    /** Campos de las actas que no son de AUH (los que completa la hoja). */
+    private const CAMPOS_ACTA = [
+        'fecha', 'hora', 'operador',
+        'compareciente_nombre', 'compareciente_dni', 'compareciente_domicilio', 'compareciente_barrio', 'compareciente_telefono', 'vinculo',
+        'nino_nombre', 'nino_dni', 'nino_fecha_nacimiento', 'nino_escuela',
+        'relato', 'estrategias', 'citacion_dia', 'citacion_horario',
+    ];
+
     public function __construct(
         private ActaDocumentoService $documentos,
         private AuhPlanillaService $planillasAuh,
+        private PuntajeService $puntaje,
     ) {}
+
+    /**
+     * Responsable del acta: quien la carga. Un administrativo carga actas hechas por
+     * otra persona, así que en ese caso no hay responsable fijo y se indica a mano.
+     */
+    public function responsableFijo(?User $autor): ?string
+    {
+        if (! $autor || $autor->tieneRol('administrativo')) {
+            return null;
+        }
+
+        return filled($autor->name) ? $autor->name : null;
+    }
+
+    /**
+     * Fija al responsable en el acta: es el operador/a y quien firma por el Servicio.
+     *
+     * @param  array<string, mixed>  $datos
+     * @param  array<string, array{nombre: string, png: string}>  $firmas
+     */
+    public function aplicarResponsable(string $tipo, array &$datos, array &$firmas, ?User $autor): void
+    {
+        $responsable = $this->responsableFijo($autor);
+
+        if ($responsable === null || Acta::esAuh($tipo)) {
+            return;
+        }
+
+        $datos['operador'] = $responsable;
+
+        foreach (array_keys(Acta::firmantesDe($tipo)) as $rol) {
+            if (in_array($rol, self::FIRMANTES_DEL_SERVICIO, true) && isset($firmas[$rol])) {
+                $firmas[$rol]['nombre'] = $responsable;
+            }
+        }
+    }
 
     /**
      * Datos con los que se abre la hoja del acta.
@@ -46,7 +91,7 @@ class ActaService
         return [
             'fecha' => today()->toDateString(),
             'hora' => now()->format('H:i'),
-            'operador' => $usuario->name,
+            'operador' => $this->responsableFijo($usuario) ?? '',
             'compareciente_nombre' => '',
             'compareciente_dni' => '',
             'compareciente_domicilio' => '',
@@ -105,7 +150,10 @@ class ActaService
         ?int $personaId = null,
         ?Intervencion $intervencion = null,
         array &$rutas = [],
+        ?User $responsable = null,
     ): Acta {
+        // Responsable: el profesional de la intervención si se indica; si no, quien carga el acta.
+        $this->aplicarResponsable($tipo, $datos, $firmas, $responsable ?? $usuario);
         $firmantes = Acta::firmantesDe($tipo);
         $temporal = $this->documentos->generar($tipo, $datos, $firmas, $legajo?->numero_legajo);
 
@@ -149,7 +197,154 @@ class ActaService
             $this->asentarEnLegajo($acta, $legajo, $usuario, $intervencion, $rutas);
         }
 
+        $this->puntaje->registrarActa($acta, $usuario);
+
         AuditoriaEvento::registrar('acta.creada', $acta, null, $acta->only(['tipo', 'legajo_id', 'intervencion_id', 'firmado']));
+
+        return $acta;
+    }
+
+    /**
+     * Hoja de un acta ya guardada, para mostrarla igual que el Word (ver, previsualizar o editar).
+     *
+     * Solo se puede editar mientras no tenga firmas: las firmas dibujadas viven únicamente
+     * dentro del Word, así que regenerarlo las perdería.
+     *
+     * @return array{id: int, tipo: string, etiqueta: string, es_auh: bool, fecha: string|null, creado_por: string|null, datos: array<string, mixed>, firmantes: array<string, string>, firmas: array<string, string>, firmados: array<int, string>, firmas_imagenes: array<string, string>, firmado: bool, requiere_firma: bool, editable: bool, responsable_fijo: string|null, legajo_numero: string|null, descarga_url: string, descarga_pdf_url: string}
+     */
+    public function hoja(Acta $acta): array
+    {
+        $acta->loadMissing(['legajo', 'creadoPor']);
+        $firmas = collect($acta->firmas ?? []);
+        $datos = $acta->datos ?? [];
+
+        if (! Acta::esAuh($acta->tipo)) {
+            $datos = [...array_fill_keys(self::CAMPOS_ACTA, ''), ...array_map(fn ($valor) => $valor ?? '', $datos)];
+        }
+
+        return [
+            'id' => $acta->id,
+            'tipo' => $acta->tipo,
+            'etiqueta' => $acta->etiqueta(),
+            'es_auh' => Acta::esAuh($acta->tipo),
+            'fecha' => $acta->fecha?->toDateString(),
+            'creado_por' => $acta->creadoPor?->name,
+            'datos' => $datos,
+            'firmantes' => Acta::firmantesDe($acta->tipo),
+            'firmas' => $firmas->mapWithKeys(fn (array $firma) => [$firma['rol'] => $firma['nombre']])->all(),
+            'firmados' => $firmas->pluck('rol')->values()->all(),
+            'firmas_imagenes' => $this->imagenesDeFirmas($acta),
+            'firmado' => (bool) $acta->firmado,
+            'requiere_firma' => Acta::firmantesDe($acta->tipo) !== [],
+            'editable' => ! Acta::esAuh($acta->tipo) && $firmas->isEmpty(),
+            'responsable_fijo' => $this->responsableFijo($acta->intervencion?->profesional ?? $acta->creadoPor),
+            'legajo_numero' => $acta->legajo?->numero_legajo,
+            'descarga_url' => route('actas.descargar', $acta),
+            'descarga_pdf_url' => route('actas.descargar', ['acta' => $acta, 'formato' => 'pdf']),
+        ];
+    }
+
+    /**
+     * Firmas dibujadas del acta, como data URI por rol, leídas del propio Word.
+     *
+     * Las firmas se insertan en el documento en el orden de los firmantes del tipo, y
+     * PhpWord numera cada imagen nueva (image_{n}_document.png) en ese mismo orden. Si la
+     * cantidad no coincide con quienes firmaron, no se arriesga una asignación incorrecta.
+     *
+     * @return array<string, string>
+     */
+    public function imagenesDeFirmas(Acta $acta): array
+    {
+        $firmados = collect($acta->firmas ?? [])->pluck('rol');
+        $disco = Storage::disk('local');
+
+        if ($firmados->isEmpty() || Acta::esAuh($acta->tipo) || ! $acta->ruta_archivo || ! $disco->exists($acta->ruta_archivo)) {
+            return [];
+        }
+
+        $zip = new \ZipArchive;
+
+        if ($zip->open($disco->path($acta->ruta_archivo)) !== true) {
+            return [];
+        }
+
+        try {
+            $imagenes = [];
+
+            for ($indice = 0; $indice < $zip->numFiles; $indice++) {
+                $nombre = (string) $zip->getNameIndex($indice);
+
+                if (preg_match('/^word\/media\/image_(?:rId)?(\d+)_document\.(png|jpe?g)$/i', $nombre, $coincidencia)) {
+                    $imagenes[(int) $coincidencia[1]] = [$nombre, strtolower($coincidencia[2]) === 'png' ? 'png' : 'jpeg'];
+                }
+            }
+
+            ksort($imagenes);
+            $roles = collect(array_keys(Acta::firmantesDe($acta->tipo)))->filter(fn (string $rol) => $firmados->contains($rol))->values();
+
+            if (count($imagenes) !== $roles->count()) {
+                return [];
+            }
+
+            return collect(array_values($imagenes))
+                ->mapWithKeys(fn (array $imagen, int $posicion) => [
+                    $roles[$posicion] => "data:image/{$imagen[1]};base64,".base64_encode((string) $zip->getFromName($imagen[0])),
+                ])
+                ->all();
+        } finally {
+            $zip->close();
+        }
+    }
+
+    /**
+     * Corrige un acta sin firmas: regenera el Word con los datos nuevos (y las firmas que
+     * se agreguen ahora) y reemplaza el archivo guardado.
+     *
+     * @param  array<string, mixed>  $datos
+     * @param  array<string, array{nombre: string, png: string}>  $firmas
+     * @param  array<int, string>  $rutas  Archivos escritos, para limpiarlos si algo falla.
+     * @param  array<int, string>  $obsoletas  Archivos a borrar cuando la transacción termine bien.
+     */
+    public function actualizar(Acta $acta, array $datos, array $firmas, User $usuario, array &$rutas = [], array &$obsoletas = [], ?User $responsable = null): Acta
+    {
+        $acta->loadMissing(['legajo', 'creadoPor']);
+        // Responsable: el profesional indicado; si no, quien cargó el acta (aunque la corrija otra persona).
+        $this->aplicarResponsable($acta->tipo, $datos, $firmas, $responsable ?? $acta->creadoPor ?? $usuario);
+        $firmantes = Acta::firmantesDe($acta->tipo);
+        $temporal = $this->documentos->generar($acta->tipo, $datos, $firmas, $acta->legajo?->numero_legajo);
+
+        try {
+            $ruta = 'actas/'.now()->format('Y/m').'/'.Str::uuid().'.docx';
+
+            if (! Storage::disk('local')->put($ruta, (string) file_get_contents($temporal))) {
+                throw new \RuntimeException('No se pudo guardar el acta.');
+            }
+
+            $rutas[] = $ruta;
+        } finally {
+            @unlink($temporal);
+        }
+
+        $obsoletas[] = $acta->ruta_archivo;
+        $obsoletas[] = ConversorPdfService::rutaPdf($acta->ruta_archivo);
+        $anterior = $acta->only(['titulo', 'fecha', 'firmado']);
+
+        $acta->update([
+            'titulo' => $this->titulo($acta->tipo, $datos),
+            'fecha' => $datos['fecha'] ?? $acta->fecha?->toDateString() ?? today()->toDateString(),
+            'datos' => $datos,
+            'firmado' => $firmantes !== [] && count($firmas) === count($firmantes),
+            'firmas' => collect($firmas)->map(fn (array $firma, string $rol) => [
+                'rol' => $rol,
+                'rol_label' => $firmantes[$rol],
+                'nombre' => $firma['nombre'],
+                'firmado_en' => now()->toIso8601String(),
+            ])->values()->all(),
+            'ruta_archivo' => $ruta,
+            'tamanio_bytes' => (int) Storage::disk('local')->size($ruta),
+        ]);
+
+        AuditoriaEvento::registrar('acta.actualizada', $acta, $anterior, $acta->only(['titulo', 'fecha', 'firmado']));
 
         return $acta;
     }
@@ -168,6 +363,8 @@ class ActaService
         ]);
 
         $this->asentarEnLegajo($acta, $legajo, $usuario, null, $rutas);
+
+        $this->puntaje->registrarActaVinculada($acta, $usuario);
 
         AuditoriaEvento::registrar('acta.vinculada', $acta, null, ['legajo_id' => $legajo->id, 'intervencion_id' => $acta->intervencion_id]);
     }

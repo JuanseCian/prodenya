@@ -260,7 +260,7 @@ export default function Agenda({ eventos }: Props) {
                                             {weekDays.map((day) => (
                                                 <div
                                                     key={day}
-                                                    className="px-1 py-3 text-center text-[10px] font-bold tracking-[0.08em] text-[#819197] uppercase sm:text-xs"
+                                                    className="px-1 py-3 text-center text-[length:calc(10px_+_2px)] font-bold tracking-[0.08em] text-[#819197] uppercase sm:text-xs"
                                                 >
                                                     {day}
                                                 </div>
@@ -305,7 +305,7 @@ export default function Agenda({ eventos }: Props) {
                                                                             key={
                                                                                 evento.id
                                                                             }
-                                                                            className="block truncate rounded bg-[#EAF3ED] px-1 py-0.5 text-[10px] font-semibold text-[#397461]"
+                                                                            className="block truncate rounded bg-[#EAF3ED] px-1 py-0.5 text-[length:calc(10px_+_2px)] font-semibold text-[#397461]"
                                                                         >
                                                                             {
                                                                                 evento.titulo
@@ -315,7 +315,7 @@ export default function Agenda({ eventos }: Props) {
                                                                 )}
                                                             {dayEvents.length >
                                                                 2 && (
-                                                                <span className="block px-1 text-[10px] font-semibold text-[#697586]">
+                                                                <span className="block px-1 text-[length:calc(10px_+_2px)] font-semibold text-[#697586]">
                                                                     +
                                                                     {dayEvents.length -
                                                                         2}{' '}
@@ -382,7 +382,7 @@ export default function Agenda({ eventos }: Props) {
                                                             <h3 className="text-sm font-semibold text-[#173247]">
                                                                 {evento.titulo}
                                                             </h3>
-                                                            <span className="rounded-full bg-[#EAF3ED] px-2 py-1 text-[10px] font-semibold text-[#397461]">
+                                                            <span className="rounded-full bg-[#EAF3ED] px-2 py-1 text-[length:calc(10px_+_2px)] font-semibold text-[#397461]">
                                                                 {evento.tipo}
                                                             </span>
                                                         </div>
