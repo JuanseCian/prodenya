@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Concerns\HasTeams;
+use App\Notifications\MensajePrivadoNotification;
 use Database\Factories\UserFactory;
 use Illuminate\Auth\MustVerifyEmail as MustVerifyEmailTrait;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -130,6 +131,17 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     public function esAdmin(): bool
     {
         return $this->tieneRol('admin');
+    }
+
+    /**
+     * Avisos del sistema (derivaciones, medidas, invitaciones…) sin leer.
+     * Los mensajes privados tienen su propio contador y no se cuentan acá.
+     */
+    public function avisosSinLeer(): int
+    {
+        return $this->unreadNotifications()
+            ->where('type', '!=', MensajePrivadoNotification::class)
+            ->count();
     }
 
     /**

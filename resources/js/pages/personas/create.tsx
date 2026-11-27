@@ -53,6 +53,7 @@ interface CreatePersonaProps {
     problematicaOtrosId?: number | null;
     requiereResponsable?: boolean;
     responsables?: Responsable[];
+    dniInicial?: string;
 }
 
 const FONT_HEADING = "'Lora', serif";
@@ -134,11 +135,12 @@ export default function CreatePersona({
     problematicaOtrosId = null,
     requiereResponsable = false,
     responsables = [],
+    dniInicial = '',
 }: CreatePersonaProps) {
     const { data, setData, post, processing, errors } = useForm({
         nombre: '',
         apellido: '',
-        dni: '',
+        dni: dniInicial,
         fecha_nacimiento: '',
         genero: 'NO_ESPECIFICA',
         direccion_calle: '',

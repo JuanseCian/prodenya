@@ -65,6 +65,11 @@
                 <span style="font-size: calc(11px + 2px);font-weight:700;letter-spacing:.16em;text-transform:uppercase;">PRODENYA</span>
             </div>
         </div>
-        <x-inertia::app />
+        <div class="flex min-h-screen flex-col">
+            <div class="min-h-screen flex-1">
+                <x-inertia::app />
+            </div>
+            <x-institutional-footer />
+        </div>
     </body>
 </html>

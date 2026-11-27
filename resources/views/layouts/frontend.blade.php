@@ -38,7 +38,6 @@
             <x-inertia::head />
         @endif
         @vite('resources/js/site-header.tsx')
-        @vite('resources/js/site-footer.tsx')
 
     <style>
          :root {
@@ -163,51 +162,6 @@
 
         .site-user-avatar-image { object-fit: cover; }
 
-        .site-account { position: relative; }
-
-        .site-account-trigger {
-            align-items: center;
-            background: transparent;
-            border: 0;
-            border-radius: 12px;
-            color: #fff;
-            cursor: pointer;
-            display: flex;
-            gap: 9px;
-            list-style: none;
-            padding: 5px 7px;
-        }
-
-        .site-account-trigger::-webkit-details-marker { display: none; }
-        .site-account-trigger:hover, .site-account[open] .site-account-trigger { background: rgba(255, 255, 255, 0.13); }
-        .site-account-chevron { font-size: calc(0.8rem + 2px); transition: transform 180ms ease; }
-        .site-account[open] .site-account-chevron { transform: rotate(180deg); }
-
-        .site-account-menu {
-            background: #fff;
-            border: 1px solid #e2e5ed;
-            border-radius: 14px;
-            box-shadow: 0 18px 45px rgba(35, 33, 76, 0.18);
-            color: var(--ink);
-            min-width: 278px;
-            padding: 8px;
-            position: absolute;
-            right: 0;
-            top: calc(100% + 10px);
-            z-index: 30;
-        }
-
-        .site-account-menu-header { border-bottom: 1px solid #edf0f5; padding: 10px 10px 13px; }
-        .site-account-menu-name { color: #2d3348; font-size: calc(0.9rem + 2px); font-weight: 800; }
-        .site-account-menu-email { color: #778096; font-size: calc(0.75rem + 2px); margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .site-account-menu-meta { color: #6673a9; font-size: calc(0.7rem + 2px); font-weight: 700; margin-top: 8px; }
-        .site-account-menu-link, .site-account-menu-logout { align-items: center; border-radius: 9px; display: flex; font-size: calc(0.82rem + 2px); font-weight: 600; gap: 10px; padding: 10px; text-decoration: none; width: 100%; }
-        .site-account-menu-link { color: #3e455d; }
-        .site-account-menu-link:hover { background: #f4f5fb; color: var(--brand-dark); }
-        .site-account-menu-logout { background: transparent; border: 0; color: #b14657; cursor: pointer; text-align: left; }
-        .site-account-menu-logout:hover { background: #fff1f2; }
-        .site-account-menu-separator { border-top: 1px solid #edf0f5; margin: 6px 2px; }
-
         .logout-button {
             background: rgba(43, 38, 91, 0.32);
             border: 1px solid rgba(255, 255, 255, 0.18);
@@ -228,7 +182,7 @@
 
         @media (max-width: 560px) {
             .site-header-inner { padding-left: 16px; padding-right: 16px; }
-            .site-account-menu { max-width: calc(100vw - 32px); min-width: 250px; }
+
         }
 
         .site-shell { background: var(--page); position: relative; }
@@ -249,11 +203,7 @@
             width: 276px;
             z-index: 40;
         }
-        .site-sidebar-brand { align-items: center; display: flex; gap: 11px; padding: 3px 10px 24px; }
-        .site-sidebar-brand .brand-mark { flex-shrink: 0; height: 44px; width: 44px; }
-        .site-sidebar-brand .brand-name { font-size: calc(1.02rem + 2px); }
-        .site-sidebar-brand .brand-caption { color: rgba(255, 255, 255, 0.6); font-size: calc(0.64rem + 2px); }
-        .site-sidebar-rule { background: rgba(255, 255, 255, 0.15); height: 1px; margin: 0 10px 23px; }
+
         .site-sidebar-label { color: rgba(255, 255, 255, 0.45); font-size: calc(0.64rem + 2px); font-weight: 800; letter-spacing: 0.15em; padding: 0 12px 9px; text-transform: uppercase; }
         .site-sidebar-nav { display: flex; flex-direction: column; gap: 5px; }
         .site-sidebar-link {
@@ -276,7 +226,7 @@
         .site-sidebar-link.is-admin { background: rgba(156, 224, 191, 0.12); color: #dff8e9; margin-top: 6px; }
         .site-sidebar-link.is-admin i { color: #9ce0bf; }
         .site-sidebar-link.is-admin:hover { background: rgba(156, 224, 191, 0.2); }
-        .site-sidebar-spacer { flex: 1; min-height: 28px; }
+
         .site-header { position: sticky; top: 0; }
         .site-header-inner { max-width: none; }
          .site-sidebar-backdrop { background: rgba(15, 23, 32, 0.25); inset: 0; opacity: 0; pointer-events: none; position: fixed; transition: opacity 360ms cubic-bezier(0.22, 1, 0.36, 1); z-index: 35; }
@@ -291,69 +241,34 @@
          /* Header: one restrained system for identity, navigation and account tools. */
          .site-header { background: #173247; box-shadow: 0 1px 0 rgba(255, 255, 255, 0.08); }
           .site-header-inner { align-items: center; display: flex; gap: 28px; min-height: 76px; padding: 12px 28px; }
-         .site-mobile-nav-toggle { align-items: center; background: transparent; border: 1px solid transparent; border-radius: 7px; color: #fff; cursor: pointer; display: none; flex: 0 0 44px; height: 44px; justify-content: center; padding: 0; }
-         .site-mobile-nav-toggle:hover, .site-mobile-nav-toggle:focus-visible { background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.25); outline: none; }
-         .site-mobile-nav-toggle i { font-size: calc(1.25rem + 2px); }
+
          .site-header-brand { align-items: center; color: #fff; display: inline-flex; flex: 0 1 auto; gap: 12px; min-width: 236px; text-decoration: none; }
           .site-header-brand .brand-mark { background: transparent; border: 0; border-radius: 0; box-shadow: none; flex: 0 0 42px; height: 42px; padding: 0; width: 42px; }
          .site-header-brand .brand-divider { background: rgba(255, 255, 255, 0.26); height: 36px; }
          .site-header-brand .brand-name { color: #fff; font-size: calc(1.18rem + 2px); font-weight: 700; letter-spacing: 0.085em; }
          .site-header-brand .brand-caption { color: rgba(255, 255, 255, 0.68); font-size: calc(0.75rem + 2px); font-weight: 400; letter-spacing: 0; margin-top: 4px; }
-         .site-primary-nav { align-items: center; display: flex; flex: 1 1 auto; gap: 4px; min-width: 0; }
-         .site-primary-link { align-items: center; background: transparent; border: 1px solid transparent; border-radius: 7px; color: rgba(255, 255, 255, 0.78); display: inline-flex; font-size: calc(0.875rem + 2px); font-weight: 550; gap: 8px; justify-content: center; min-height: 44px; padding: 9px 12px; text-decoration: none; transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease; white-space: nowrap; }
-         .site-primary-link i { color: rgba(255, 255, 255, 0.62); font-size: calc(1.05rem + 2px); }
-         .site-primary-link:hover, .site-primary-link:focus-visible { background: rgba(255, 255, 255, 0.09); border-color: rgba(255, 255, 255, 0.16); color: #fff; outline: none; }
-         .site-primary-link:hover i, .site-primary-link:focus-visible i { color: #fff; }
-         .site-primary-link.is-active { background: rgba(255, 255, 255, 0.14); color: #fff; font-weight: 650; }
-         .site-primary-link.is-active::after { background: #9ce0bf; border-radius: 999px; content: ''; height: 3px; margin-left: 1px; width: 3px; }
-         .site-disclosure { position: relative; }
-         .site-disclosure-trigger { cursor: pointer; list-style: none; }
-         .site-disclosure-trigger::-webkit-details-marker { display: none; }
-         .site-disclosure-trigger .site-disclosure-chevron { color: rgba(255, 255, 255, 0.54); font-size: calc(0.7rem + 2px); margin-left: 1px; transition: transform 150ms ease; width: auto; }
-         .site-disclosure[open] .site-disclosure-chevron { transform: rotate(180deg); }
-         .site-header-more-panel { animation: none; background: #fff; border: 1px solid #dce3df; border-radius: 9px; box-shadow: 0 12px 28px rgba(23, 50, 71, 0.16); min-width: 248px; padding: 6px; position: absolute; right: 0; top: calc(100% + 8px); }
-         .site-header-more-link { border-radius: 6px; color: #2c4a5e; font-size: calc(0.84rem + 2px); font-weight: 550; gap: 10px; min-height: 42px; padding: 9px 10px; transition: background-color 150ms ease, color 150ms ease; }
-         .site-header-more-link:hover, .site-header-more-link:focus-visible { background: #eef5f1; color: #173247; outline: none; transform: none; }
-         .site-header-more-link i { color: #6b8f71; }
+
          .site-header-tools { align-items: center; display: flex; flex: 0 0 auto; gap: 6px; margin-left: auto; }
-         .site-message-link, .site-admin-link { align-items: center; background: transparent; border: 1px solid transparent; border-radius: 7px; color: rgba(255, 255, 255, 0.78); display: inline-flex; font-size: calc(0.84rem + 2px); font-weight: 550; gap: 8px; min-height: 44px; padding: 9px 11px; text-decoration: none; transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease; white-space: nowrap; }
-         .site-message-link:hover, .site-message-link:focus-visible, .site-admin-link:hover, .site-admin-link:focus-visible { background: rgba(255, 255, 255, 0.09); border-color: rgba(255, 255, 255, 0.16); color: #fff; outline: none; }
-         .site-message-link > i, .site-admin-link > i { color: rgba(255, 255, 255, 0.64); font-size: calc(1.05rem + 2px); }
-         .site-message-badge { background: #9ce0bf; border: 2px solid #173247; color: #244d3b; font-size: calc(0.62rem + 2px); height: 18px; min-width: 18px; }
-         .site-message-badge.is-empty { display: none; }
-         .site-message-link.is-notified .site-message-icon-wrap, .site-message-link.is-notified::after { animation: none; }
-         .site-header-account { margin-left: 6px; }
-         .site-header-account::before { background: rgba(255, 255, 255, 0.2); content: ''; height: 28px; left: -7px; position: absolute; top: 8px; width: 1px; }
-         .site-header-account .site-account-trigger { border-radius: 7px; gap: 8px; min-height: 44px; padding: 4px 7px; }
-         .site-header-account .site-account-trigger:hover, .site-header-account[open] .site-account-trigger, .site-header-account .site-account-trigger:focus-visible { background: rgba(255, 255, 255, 0.09); outline: none; }
-         .site-header-account .site-user-avatar { height: 36px; width: 36px; }
-         .site-account-visible-name { color: rgba(255, 255, 255, 0.86); font-size: calc(0.82rem + 2px); max-width: 132px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-         .site-header-account .site-account-chevron { color: rgba(255, 255, 255, 0.62); font-size: calc(0.7rem + 2px); }
-         .site-header-account .site-account-menu { min-width: 272px; right: 0; top: calc(100% + 8px); }
-         .site-header-account .site-account-menu-link, .site-header-account .site-account-menu-logout { min-height: 42px; }
+
          .site-sidebar-link:hover { transform: none; }
-         .site-sidebar-link:focus-visible, .site-account-menu-link:focus-visible, .site-account-menu-logout:focus-visible { outline: 2px solid #9ce0bf; outline-offset: 2px; }
+         .site-sidebar-link:focus-visible { outline: 2px solid #9ce0bf; outline-offset: 2px; }
          @media (max-width: 1100px) {
              .site-header-inner { gap: 18px; padding-left: 24px; padding-right: 24px; }
              .site-header-brand { min-width: 210px; }
              .site-header-brand .brand-caption { display: none; }
-             .site-account-visible-name { max-width: 92px; }
+
          }
          @media (max-width: 920px) {
               .site-header-inner { align-items: center; flex-wrap: nowrap; gap: 10px; min-height: 64px; padding: 8px 16px; }
-             .site-mobile-nav-toggle { display: inline-flex; }
+
              .site-header-brand { flex: 1 1 auto; gap: 9px; min-width: 0; }
              .site-header-brand .brand-mark { flex-basis: 38px; height: 38px; width: 38px; }
              .site-header-brand .brand-divider { height: 28px; }
               .site-header-brand .brand-name { font-size: calc(0.98rem + 2px); }
               .site-header-brand .brand-caption { display: none; }
-              .site-primary-nav { display: none; }
+
               .site-header-tools { gap: 2px; }
-             .site-admin-link { display: none; }
-              .site-account-visible-name { display: none; }
-              .site-header-account { margin-left: 2px; }
-              .site-header-account::before { display: none; }
-               .site-header-account .site-account-menu { position: fixed; right: 16px; top: 64px; }
+
               .site-main { padding-bottom: calc(78px + env(safe-area-inset-bottom)); }
               .site-mobile-bottom-nav {
                   align-items: stretch;
@@ -398,11 +313,10 @@
           }
          @media (max-width: 480px) {
              .site-header-inner { padding-left: 12px; padding-right: 12px; }
-             .site-message-label { display: none; }
-             .site-message-link, .site-admin-link, .site-header-account .site-account-trigger, .site-mobile-nav-toggle { min-height: 44px; min-width: 44px; padding: 8px; }
+
              .site-header-brand .brand-divider { display: none; }
              .site-header-brand .brand-name { font-size: calc(0.92rem + 2px); letter-spacing: 0.07em; }
-             .site-account-menu { max-width: calc(100vw - 24px); min-width: 248px; }
+
          }
         @media (prefers-reduced-motion: reduce) {
             .site-header {
@@ -428,41 +342,19 @@
          .site-sidebar-link:hover, .site-sidebar-link:focus-visible { background: #f1f6f3; border-color: #dce9e1; color: #173247; outline: none; }
          .site-sidebar-link.is-active { background: #eaf3ed; border-color: #d5e6da; box-shadow: inset 3px 0 0 #6b8f71; color: #173247; font-weight: 700; }
          .site-sidebar-link.is-active i, .site-sidebar-link:hover i, .site-sidebar-link:focus-visible i { color: #397461; }
-          .site-sidebar-account { border-top: 1px solid #e5ebe7; margin-top: auto; padding: 14px 20px 16px; }
-          .site-sidebar-account-trigger { align-items: center; border-radius: 8px; cursor: pointer; display: flex; gap: 10px; list-style: none; min-width: 0; padding: 4px; }
-          .site-sidebar-account-trigger::-webkit-details-marker { display: none; }
-          .site-sidebar-account-trigger:hover, .site-sidebar-account-trigger:focus-visible { background: #f1f6f3; outline: none; }
-         .site-sidebar-account-heading { align-items: center; display: flex; gap: 10px; min-width: 0; }
-         .site-sidebar-account .site-user-avatar { background: #eaf3ed; color: #397461; flex: 0 0 36px; height: 36px; width: 36px; }
-         .site-sidebar-account-copy { min-width: 0; }
-          .site-sidebar-account-copy h2 { color: #173247; font-size: calc(0.82rem + 2px); font-weight: 700; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-          .site-sidebar-account-copy p { color: #71828a; font-size: calc(0.7rem + 2px); margin: 3px 0 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-          .site-sidebar-account-copy small { color: #6b8f71; display: block; font-size: calc(0.68rem + 2px); font-weight: 650; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-          .site-sidebar-account-chevron { color: #819197; font-size: calc(0.75rem + 2px); margin-left: auto; transition: transform 150ms ease; }
-          .site-sidebar-account[open] .site-sidebar-account-chevron { transform: rotate(180deg); }
-          .site-sidebar-account-options { border-top: 1px solid #edf1ef; margin-top: 12px; padding-top: 8px; }
-          .site-sidebar-account-email { color: #71828a; font-size: calc(0.72rem + 2px); margin: 0 10px 5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-         .site-sidebar-account-link { align-items: center; background: transparent; border: 0; border-radius: 7px; color: #49616d; display: flex; font: inherit; font-size: calc(0.8rem + 2px); font-weight: 550; gap: 10px; min-height: 42px; padding: 9px 10px; text-align: left; text-decoration: none; width: 100%; }
-         .site-sidebar-account-link:hover, .site-sidebar-account-link:focus-visible { background: #f1f6f3; color: #173247; outline: none; }
-         .site-sidebar-account-link i { color: #77918d; font-size: calc(0.95rem + 2px); width: 18px; }
-         .site-sidebar-logout-form { border-top: 1px solid #edf1ef; margin-top: 6px; padding-top: 6px; }
-         .site-sidebar-logout { color: #9b5964; cursor: pointer; }
-         .site-sidebar-logout:hover, .site-sidebar-logout:focus-visible { background: #fcf1f3; color: #8c4c58; }
-         .site-sidebar-logout i { color: currentColor; }
-         .site-header-quick-link, .site-menu-toggle { align-items: center; background: transparent; border: 1px solid transparent; border-radius: 7px; color: rgba(255, 255, 255, 0.8); display: inline-flex; font-size: calc(0.84rem + 2px); font-weight: 550; gap: 8px; min-height: 44px; padding: 9px 11px; text-decoration: none; transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease; white-space: nowrap; }
-         .site-header-quick-link:hover, .site-header-quick-link:focus-visible, .site-menu-toggle:hover, .site-menu-toggle:focus-visible { background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.2); color: #fff; outline: none; }
-         .site-header-quick-link > i, .site-menu-toggle > i { color: rgba(255, 255, 255, 0.66); font-size: calc(1.05rem + 2px); }
+
+         .site-header-quick-link { align-items: center; background: transparent; border: 1px solid transparent; border-radius: 7px; color: rgba(255, 255, 255, 0.8); display: inline-flex; font-size: calc(0.84rem + 2px); font-weight: 550; gap: 8px; min-height: 44px; padding: 9px 11px; text-decoration: none; transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease; white-space: nowrap; }
+         .site-header-quick-link:hover, .site-header-quick-link:focus-visible { background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.2); color: #fff; outline: none; }
+         .site-header-quick-link > i { color: rgba(255, 255, 255, 0.66); font-size: calc(1.05rem + 2px); }
          .site-header-quick-link.is-active { background: rgba(255, 255, 255, 0.13); color: #fff; font-weight: 650; }
          .site-header-quick-link.is-active::after { background: #9ce0bf; border-radius: 999px; content: ''; height: 3px; margin-left: 1px; width: 3px; }
-         .site-menu-toggle { background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.18); color: #fff; cursor: pointer; }
-         .site-menu-toggle[aria-expanded="true"] { background: rgba(255, 255, 255, 0.16); }
-         .site-menu-toggle > i { color: #b9e8cc; }
+
          .site-header-tools { gap: 5px; }
          @media (max-width: 920px) {
              .site-header-inner { gap: 8px; }
              .site-header-brand { flex: 1 1 auto; min-width: 0; }
-             .site-header-quick-link > span:not(.site-message-badge), .site-menu-toggle > span { display: none; }
-             .site-header-quick-link, .site-menu-toggle { min-height: 44px; min-width: 44px; padding: 8px; }
+
+             .site-header-quick-link { min-height: 44px; min-width: 44px; padding: 8px; }
              .site-sidebar { width: min(344px, calc(100vw - 20px)); }
          }
           @media (max-width: 480px) {
@@ -494,7 +386,7 @@
          .site-header-brand .brand-name { font-size: calc(1.06rem + 2px); letter-spacing: 0.13em; }
          .site-header-brand .brand-caption { color: rgba(235, 248, 242, 0.72); font-size: calc(0.72rem + 2px); letter-spacing: 0.01em; margin-top: 5px; }
           .site-header-tools { gap: 8px; }
-          .site-header-quick-link, .site-menu-toggle {
+          .site-header-quick-link {
              border-radius: 12px;
              font-size: calc(0.84rem + 2px);
              font-weight: 650;
@@ -502,35 +394,11 @@
              padding: 10px 13px;
              transition: background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease, color 160ms ease, transform 160ms ease;
          }
-         .site-header-quick-link:hover, .site-header-quick-link:focus-visible, .site-menu-toggle:hover, .site-menu-toggle:focus-visible {
+         .site-header-quick-link:hover, .site-header-quick-link:focus-visible {
              box-shadow: 0 6px 16px rgba(5, 24, 36, 0.14);
              transform: translateY(-1px);
          }
          .site-header-quick-link.is-active { background: rgba(255, 255, 255, 0.16); }
-         .site-message-badge { background: #a8e8c7; border-color: #173c50; box-shadow: 0 2px 7px rgba(5, 24, 36, 0.18); color: #174b3a; }
-         .site-menu-toggle {
-             background: rgba(255, 255, 255, 0.08);
-             border-color: rgba(255, 255, 255, 0.18);
-             color: #fff;
-             box-shadow: none;
-             flex: 0 0 48px;
-             height: 48px;
-             min-height: 48px;
-             min-width: 48px;
-             padding: 5px;
-         }
-         .site-menu-toggle:hover, .site-menu-toggle:focus-visible { background: rgba(255, 255, 255, 0.14); color: #fff; }
-         .site-menu-toggle > i { color: rgba(255, 255, 255, 0.84); }
-         .site-menu-toggle .site-user-avatar {
-             background: rgba(255, 255, 255, 0.12);
-             border: 2px solid rgba(255, 255, 255, 0.36);
-             color: #fff;
-             flex: 0 0 36px;
-             font-size: calc(0.68rem + 2px);
-             height: 36px;
-             width: 36px;
-         }
-         .site-menu-toggle .site-user-avatar-image { object-fit: cover; }
 
           .site-sidebar-backdrop { background: rgba(10, 29, 40, 0.25); backdrop-filter: none; }
           .site-sidebar {
@@ -587,18 +455,7 @@
          .site-sidebar-link:hover i, .site-sidebar-link:focus-visible i { background: #e3f2e9; border-color: #cde3d5; color: #397461; }
           .site-sidebar-link.is-active { background: #eaf3ed; border-color: #cbe4d4; box-shadow: inset 4px 0 0 #5b9d7b; color: #173247; }
          .site-sidebar-link.is-active i { background: #cfead9; border-color: #b8ddc6; color: #31765b; }
-         .site-sidebar-account { background: rgba(235, 247, 240, 0.74); border: 1px solid #d5e8dc; border-radius: 16px; margin: auto 16px 16px; padding: 8px; }
-         .site-sidebar-account-trigger { border-radius: 11px; min-height: 58px; padding: 7px 8px; }
-         .site-sidebar-account-trigger:hover, .site-sidebar-account-trigger:focus-visible { background: rgba(255, 255, 255, 0.72); }
-         .site-sidebar-account .site-user-avatar { background: #d7eee0; border: 1px solid #c1e2ce; flex-basis: 38px; height: 38px; width: 38px; }
-         .site-sidebar-account-copy h2 { font-size: calc(0.84rem + 2px); }
-         .site-sidebar-account-copy small { color: #4c8b6c; font-size: calc(0.69rem + 2px); margin-top: 5px; }
-         .site-sidebar-account-chevron { margin-right: 3px; }
-         .site-sidebar-account-options { border-top-color: #d5e8dc; margin-top: 7px; padding: 9px 4px 2px; }
-         .site-sidebar-account-email { color: #5d707a; margin: 0 8px 6px; }
-          .site-sidebar-account-link { border-radius: 10px; min-height: 40px; }
-          .site-sidebar-account-link:hover, .site-sidebar-account-link:focus-visible { background: rgba(255, 255, 255, 0.82); }
-          .site-sidebar-logout-form { border-top-color: #d5e8dc; }
+
          @media (max-width: 1100px) {
              .site-header-inner { gap: 16px; }
              .site-header-brand { min-width: 220px; }
@@ -633,16 +490,6 @@
          .dark .site-sidebar-link:hover i, .dark .site-sidebar-link:focus-visible i { background: #285143; border-color: #40775f; color: #b9e8cc; }
           .dark .site-sidebar-link.is-active { background: #214537; border-color: #40775f; color: #fff; }
          .dark .site-sidebar-link.is-active i { background: #2c6249; border-color: #4a916f; color: #c5f0d6; }
-         .dark .site-sidebar-account { background: rgba(28, 53, 68, 0.85); border-color: #315063; }
-         .dark .site-sidebar-account-trigger:hover, .dark .site-sidebar-account-trigger:focus-visible { background: rgba(255, 255, 255, 0.08); }
-         .dark .site-sidebar-account .site-user-avatar { background: #285143; border-color: #40775f; color: #c5f0d6; }
-         .dark .site-sidebar-account-copy h2 { color: #edf6fb; }
-          .dark .site-sidebar-account-copy small, .dark .site-sidebar-account-email { color: #a8caba; }
-          .dark .site-sidebar-account-chevron { color: #a8bbc5; }
-          .dark .site-sidebar-account-options, .dark .site-sidebar-logout-form { border-color: #315063; }
-         .dark .site-sidebar-account-link { color: #c2d1d8; }
-          .dark .site-sidebar-account-link:hover, .dark .site-sidebar-account-link:focus-visible { background: rgba(255, 255, 255, 0.08); color: #fff; }
-           .dark .site-sidebar-account-link i { color: #9ccfb2; }
 
           /* Final institutional navigation layer: restrained surfaces, compact rhythm, no decorative blur. */
           .site-header {
@@ -653,14 +500,9 @@
           .site-header-brand { gap: 12px; min-width: 238px; }
           .site-header-brand .brand-mark { background: rgba(255, 255, 255, 0.08); border-radius: 10px; box-shadow: none; }
           .site-header-tools { gap: 4px; }
-          .site-header-quick-link, .site-menu-toggle { border-radius: 8px; min-height: 44px; padding: 9px 11px; transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease; }
-          .site-header-quick-link:hover, .site-header-quick-link:focus-visible, .site-menu-toggle:hover, .site-menu-toggle:focus-visible { box-shadow: none; transform: none; }
-          .site-menu-toggle { flex: 0 0 auto; height: 44px; min-height: 44px; min-width: 44px; padding: 8px 11px; }
-          .site-header-account { position: relative; }
-          .site-account-header-copy { display: flex; flex-direction: column; min-width: 0; text-align: left; }
-          .site-account-visible-role { color: rgba(235, 248, 242, 0.58); font-size: calc(0.68rem + 2px); line-height: 1.2; margin-top: 2px; }
-          .site-header-account .site-account-trigger { min-height: 44px; }
-          .site-header-account .site-account-menu { right: 0; top: calc(100% + 8px); }
+          .site-header-quick-link { border-radius: 8px; min-height: 44px; padding: 9px 11px; transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease; }
+          .site-header-quick-link:hover, .site-header-quick-link:focus-visible { box-shadow: none; transform: none; }
+
           .site-sidebar-backdrop { background: rgba(10, 29, 40, 0.36); backdrop-filter: none; transition-duration: 180ms; }
           .site-sidebar { background: #fff; border-left: 1px solid #dbe9e1; border-radius: 0; bottom: 0; box-shadow: -18px 0 42px rgba(18, 52, 67, 0.16); max-height: 100dvh; right: 0; top: 0; transform: translateX(100%); width: 360px; }
           .site-sidebar-header { background: #f7faf8; border-radius: 0; min-height: 70px; padding: 12px 16px 12px 20px; }
@@ -677,9 +519,9 @@
           @media (max-width: 920px) {
               .site-header-inner { min-height: 64px; padding-bottom: 8px; padding-top: 8px; }
               .site-header-brand { min-width: 0; }
-              .site-header-brand .brand-caption, .site-account-visible-role { display: none; }
-              .site-header-quick-link > span, .site-menu-toggle > span, .site-account-visible-name { display: none; }
-              .site-header-quick-link, .site-menu-toggle, .site-header-account .site-account-trigger { min-height: 44px; min-width: 44px; padding: 8px; }
+              .site-header-brand .brand-caption { display: none; }
+              .site-header-quick-link > span { display: none; }
+              .site-header-quick-link { min-height: 44px; min-width: 44px; padding: 8px; }
               .site-sidebar { width: min(360px, 100vw); }
           }
            @media (max-width: 480px) {
@@ -697,63 +539,20 @@
            .site-header-inner { min-height: 74px; }
            .site-header-brand .brand-mark { background: transparent; border: 0; box-shadow: none; }
            .site-header-tools { gap: 6px; }
-           .site-header-quick-link,
-           .site-profile-link,
-           .site-menu-toggle {
+           .site-header-quick-link {
                min-height: 44px;
                transition: background-color 170ms ease, border-color 170ms ease, color 170ms ease;
            }
            .site-header-quick-link:hover,
-           .site-header-quick-link:focus-visible,
-           .site-profile-link:hover,
-           .site-profile-link:focus-visible,
-           .site-menu-toggle:hover,
-           .site-menu-toggle:focus-visible {
+           .site-header-quick-link:focus-visible {
                box-shadow: none;
                outline: none;
                transform: none;
            }
-           .site-profile-link {
-               align-items: center;
-               background: transparent;
-               border: 1px solid transparent;
-               border-radius: 8px;
-               display: inline-flex;
-               justify-content: center;
-               padding: 8px;
-           }
-           .site-profile-link.is-active,
-           .site-profile-link:hover,
-           .site-profile-link:focus-visible {
-               background: rgba(255, 255, 255, 0.1);
-               border-color: rgba(255, 255, 255, 0.16);
-           }
-           .site-profile-link .site-user-avatar {
-               background: rgba(255, 255, 255, 0.12);
-               border: 2px solid rgba(255, 255, 255, 0.36);
-               color: #fff;
-               flex: 0 0 34px;
-               font-size: calc(0.67rem + 2px);
-               height: 34px;
-               width: 34px;
-           }
-           .site-menu-toggle {
-               background: transparent;
-               border-color: rgba(255, 255, 255, 0.18);
-               display: inline-flex;
-               gap: 8px;
-               justify-content: center;
-               min-width: 44px;
-               padding: 8px 11px;
-           }
-           .site-menu-toggle > i { color: #d1e7dc; font-size: calc(1.2rem + 2px); }
-           .site-menu-toggle[aria-expanded='true'] { background: rgba(255, 255, 255, 0.14); }
+
            @media (max-width: 920px) {
-               .site-header-quick-link,
-               .site-profile-link,
-               .site-menu-toggle,
-               .site-header-account .site-account-trigger { min-height: 44px; min-width: 44px; padding: 8px; }
-               .site-profile-link .site-user-avatar { flex-basis: 30px; height: 30px; width: 30px; }
+               .site-header-quick-link { min-height: 44px; min-width: 44px; padding: 8px; }
+
            }
 
            /* Final institutional layer: compact, opaque and easy to scan. */
@@ -780,17 +579,12 @@
           .site-sidebar-link.is-active i { background: #cfead9; border-color: #b8ddc6; }
           .site-sidebar-link-admin { background: #f1f6fa; border-color: #d9e6ee; }
           .site-sidebar-link-admin i { background: #e4eef5; border-color: #c6dce9; color: #35627a; }
-          .site-sidebar-account { background: #f4faf6; border: 1px solid #d5e8dc; border-radius: 14px; margin: auto 16px 16px; padding: 8px; }
-          .site-sidebar-account-trigger { min-height: 56px; }
-          .site-sidebar-account-options { border-top-color: rgba(207, 229, 216, 0.9); }
-          .site-menu-toggle { gap: 8px; }
-          .site-menu-toggle .site-user-avatar { background: rgba(255, 255, 255, 0.13); border: 2px solid rgba(255, 255, 255, 0.42); }
-          .site-menu-toggle .site-user-avatar-image { border-radius: 999px; object-fit: cover; }
+
           .dark .site-sidebar { background: #152532; border-color: #294252; }
           .dark .site-sidebar-header { background: #1b303f; border-color: #294252; }
           .dark .site-sidebar-link i { background: #1c3544; border-color: #315063; }
           .dark .site-sidebar-link.is-active { background: #214537; border-color: #40775f; }
-          .dark .site-sidebar-account { background: #1c3544; border-color: #315063; }
+
           @media (max-width: 920px) {
               .site-sidebar { bottom: 8px; max-height: calc(100dvh - 16px); right: 8px; top: 8px; width: min(360px, calc(100vw - 16px)); }
           }
@@ -846,6 +640,40 @@
             .site-user-menu-panel { animation: none; }
         }
 
+        .site-avisos { border-bottom: 1px solid #edf1ef; margin: 2px 0 4px; padding: 0 2px 6px; }
+        .site-avisos[hidden] { display: none; }
+        .site-avisos-chevron { font-size: 11px !important; margin-left: 4px; transition: transform 150ms ease; width: auto !important; }
+        [data-avisos-toggle] .site-count-badge + .site-avisos-chevron { margin-left: 6px; }
+        [data-avisos-toggle]:not(:has(.site-count-badge:not([hidden]))) .site-avisos-chevron { margin-left: auto; }
+        [data-avisos-toggle][aria-expanded='true'] .site-avisos-chevron { transform: rotate(180deg); }
+        .site-avisos-list { list-style: none; margin: 0; max-height: 280px; overflow-y: auto; padding: 0; }
+        .site-aviso { border-radius: 8px; color: #2c4a5e; cursor: pointer; display: block; padding: 7px 10px 7px 26px; position: relative; text-decoration: none; }
+        .site-aviso:hover, .site-aviso:focus-visible { background: #f2f6f4; outline: none; }
+        .site-aviso.is-unread::before { background: #c2414f; border-radius: 999px; content: ''; height: 7px; left: 10px; position: absolute; top: 13px; width: 7px; }
+        .site-aviso-title { display: block; font-size: 13px; font-weight: 600; line-height: 1.3; }
+        .site-aviso:not(.is-unread) .site-aviso-title { color: #71828a; font-weight: 500; }
+        .site-aviso-text { color: #71828a; display: -webkit-box; font-size: 12px; line-height: 1.35; margin-top: 2px; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+        .site-aviso-time { color: #9aa9ae; display: block; font-size: 11px; margin-top: 3px; }
+        .site-avisos-empty { color: #8a9aa1; font-size: 13px; padding: 10px; text-align: center; }
+        .site-avisos-all { background: transparent; border: 0; border-radius: 8px; color: #397461; cursor: pointer; font: inherit; font-size: 12px; font-weight: 600; margin-top: 2px; padding: 6px 10px; text-align: left; width: 100%; }
+        .site-avisos-all:hover, .site-avisos-all:focus-visible { background: #eef6f1; outline: none; }
+        .dark .site-avisos { border-color: #294252; }
+        .dark .site-aviso { color: #dbe7ee; }
+        .dark .site-aviso:hover, .dark .site-aviso:focus-visible { background: #1c3544; }
+        .dark .site-aviso-text, .dark .site-aviso:not(.is-unread) .site-aviso-title { color: #93a8b3; }
+        .dark .site-avisos-all { color: #9ccfb2; }
+        .dark .site-avisos-all:hover { background: #1c3544; }
+
+        .site-footer { align-items: center; border-top: 1px solid var(--line); color: #71828a; display: flex; flex-wrap: wrap; font-size: 12px; gap: 6px 18px; justify-content: space-between; padding: 14px 28px; }
+        .site-footer a { color: #5e747d; text-decoration: none; }
+        .site-footer a:hover, .site-footer a:focus-visible { color: #173247; text-decoration: underline; }
+        .dark .site-footer { border-color: #294252; color: #93a8b3; }
+        .dark .site-footer a { color: #a8bbc5; }
+        @media (max-width: 920px) {
+            .site-footer { justify-content: center; padding: 12px 16px calc(84px + env(safe-area-inset-bottom)); text-align: center; }
+            .site-main { padding-bottom: 0 !important; }
+        }
+
         /* Brand doubles as the menu button. */
         .site-brand-toggle { background: transparent; border: 0; border-radius: 12px; cursor: pointer; font: inherit; margin-left: -10px; padding: 6px 12px 6px 10px; text-align: left; transition: background-color 180ms ease; }
         .site-brand-toggle:hover, .site-brand-toggle:focus-visible { background: rgba(255, 255, 255, 0.07); outline: none; }
@@ -872,7 +700,7 @@
         .site-sidebar-link.is-active, .dark .site-sidebar-link.is-active { background: rgba(156, 224, 191, 0.13); border-color: rgba(156, 224, 191, 0.2); box-shadow: inset 3px 0 0 #9ce0bf; color: #fff; font-weight: 700; }
         .site-sidebar-link.is-active i, .dark .site-sidebar-link.is-active i { background: rgba(156, 224, 191, 0.24); border-color: rgba(156, 224, 191, 0.34); color: #d8f5e4; }
         .site-sidebar-link:focus-visible { outline: 2px solid #9ce0bf; outline-offset: 1px; }
-        .site-sidebar-badge { border: 0; margin-left: auto; }
+
         .site-sidebar::-webkit-scrollbar { width: 8px; }
         .site-sidebar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.14); border-radius: 999px; }
 
@@ -936,6 +764,17 @@
             .site-user-menu-panel { position: fixed; right: 12px; top: calc(var(--site-header-height) + 4px); width: min(240px, calc(100vw - 24px)); }
         }
 
+        /* Pages with their own layout (Estadísticas) hide the institutional header and sidebar. */
+        .site-shell.has-own-layout { --site-header-height: 0px; }
+        .site-shell.has-own-layout .site-header,
+        .site-shell.has-own-layout .site-sidebar,
+        .site-shell.has-own-layout .site-sidebar-backdrop,
+        .site-shell.has-own-layout .site-brand-indicator,
+        .site-shell.has-own-layout .site-mobile-bottom-link--more { display: none !important; }
+        .site-shell.has-own-layout .site-page { background: var(--page); }
+        .site-shell.has-own-layout .site-main,
+        .site-shell.has-own-layout [data-site-footer] { border-radius: 0; margin-left: 0; }
+
         @media (prefers-reduced-motion: reduce) {
             .site-sidebar, .site-sidebar-label, .site-sidebar-link, .site-main, [data-site-footer], .site-brand-indicator { transition: none !important; }
             .site-sidebar-label, .site-sidebar-link { opacity: 1; transform: none; }
@@ -950,12 +789,17 @@
         $mensajesSinLeer = auth()->check()
             ? (int) (isset($page) ? data_get($page, 'props.comunicacionNoLeidos', 0) : auth()->user()->mensajesSinLeer())
             : 0;
+        $avisosSinLeer = auth()->check()
+            ? (int) (isset($page) ? data_get($page, 'props.notificacionesNoLeidas', 0) : ($frontendNotificacionesNoLeidas ?? auth()->user()->avisosSinLeer()))
+            : 0;
+        $pendientesCuenta = $mensajesSinLeer + $avisosSinLeer;
     @endphp
-    <div class="site-shell" id="site-shell">
+    <div @class(['site-shell', 'has-own-layout' => request()->is('estadisticas', 'estadisticas/*')]) id="site-shell">
         <script>
             (() => {
                 let preferencia = null;
                 try { preferencia = localStorage.getItem('prodenya.sidebar'); } catch (e) {}
+                if (/^\/estadisticas(\/|$)/.test(window.location.pathname)) return;
                 if (window.matchMedia('(min-width: 1021px)').matches && preferencia !== 'cerrado') {
                     document.getElementById('site-shell').classList.add('sidebar-docked');
                 }
@@ -1043,7 +887,7 @@
         <header class="site-header">
             <div class="site-header-inner">
                 @auth
-                    <button type="button" class="brand-lockup site-header-brand site-brand-toggle" data-sidebar-toggle aria-expanded="false" aria-controls="site-sidebar" aria-label="PRODENYA: mostrar u ocultar el menú">
+                    <button type="button" class="brand-lockup site-header-brand site-brand-toggle" data-home-url="{{ route('home') }}" data-sidebar-toggle aria-expanded="false" aria-controls="site-sidebar" aria-label="PRODENYA: mostrar u ocultar el menú">
                     <img src="{{ asset('assets/img/SN.png') }}" class="brand-mark brand-mark-image" alt="San Nicolás">
                     <span class="brand-divider" aria-hidden="true"></span>
                     <span>
@@ -1105,13 +949,32 @@
                                     @else
                                         <span class="site-user-avatar" aria-hidden="true">{{ $headerInitials }}</span>
                                     @endif
-                                    <span class="site-count-badge site-user-menu-dot" data-unread-messages @if (! $mensajesSinLeer) hidden @endif>{{ $mensajesSinLeer }}</span>
+                                    <span class="site-count-badge site-user-menu-dot" data-unread-total @if (! $pendientesCuenta) hidden @endif>{{ $pendientesCuenta > 99 ? '99+' : $pendientesCuenta }}</span>
                                 </span>
                                 <i class="bi bi-chevron-down site-user-menu-chevron" aria-hidden="true"></i>
                             </summary>
                             <div class="site-user-menu-panel">
                                 <p class="site-user-menu-name">{{ $headerUser->name }}</p>
                                 <nav class="site-user-menu-links" aria-label="Opciones de la cuenta">
+                                    @if (Route::has('notificaciones.index'))
+                                        <button type="button" class="site-user-menu-link" data-avisos-toggle aria-expanded="false" aria-controls="site-avisos">
+                                            <i class="bi bi-bell" aria-hidden="true"></i>Notificaciones
+                                            <span class="site-count-badge" data-unread-avisos @if (! $avisosSinLeer) hidden @endif>{{ $avisosSinLeer }}</span>
+                                            <i class="bi bi-chevron-down site-avisos-chevron" aria-hidden="true"></i>
+                                        </button>
+                                        <div
+                                            id="site-avisos"
+                                            class="site-avisos"
+                                            data-avisos-panel
+                                            data-endpoint="{{ route('notificaciones.index') }}"
+                                            data-leer-url="{{ route('notificaciones.leer', '__ID__') }}"
+                                            data-leer-todas-url="{{ route('notificaciones.leer-todas') }}"
+                                            hidden
+                                        >
+                                            <ul class="site-avisos-list" data-avisos-list aria-live="polite"></ul>
+                                            <button type="button" class="site-avisos-all" data-avisos-read-all hidden>Marcar todas como leídas</button>
+                                        </div>
+                                    @endif
                                     @if (Route::has('profile.edit'))
                                         <a href="{{ route('profile.edit') }}" class="site-user-menu-link"><i class="bi bi-person" aria-hidden="true"></i>Mi perfil</a>
                                     @endif
@@ -1120,12 +983,6 @@
                                     @endif
                                     @if ($headerCanAgenda)
                                         <a href="{{ route('agenda.index') }}" class="site-user-menu-link"><i class="bi bi-calendar3" aria-hidden="true"></i>Agenda</a>
-                                    @endif
-                                    @if (Route::has('security.edit'))
-                                        <a href="{{ route('security.edit') }}" class="site-user-menu-link"><i class="bi bi-shield-lock" aria-hidden="true"></i>Seguridad</a>
-                                    @endif
-                                    @if (Route::has('appearance.edit'))
-                                        <a href="{{ route('appearance.edit') }}" class="site-user-menu-link"><i class="bi bi-sliders2" aria-hidden="true"></i>Preferencias</a>
                                     @endif
                                 </nav>
                                 <form method="POST" action="{{ route('logout') }}" class="site-user-menu-logout-form">
@@ -1152,9 +1009,7 @@
             @endif
         </main>
 
-          <div
-              data-site-footer
-          ></div>
+        <x-institutional-footer />
          @auth
              <nav class="site-mobile-bottom-nav" aria-label="Navegación principal móvil">
                  <a href="{{ route('home') }}" class="site-mobile-bottom-link {{ request()->routeIs('home') ? 'is-active' : '' }}" @if (request()->routeIs('home')) aria-current="page" @endif>
@@ -1252,8 +1107,21 @@
                 }
             };
 
+            /** Statistics has its own layout, so the institutional header and sidebar step aside there. */
+            const hasOwnMenu = (pathname) => /^\/estadisticas(\/|$)/.test(pathname);
+
             const applyMode = () => {
+                const suppressed = hasOwnMenu(window.location.pathname);
+                shell.classList.toggle('has-own-layout', suppressed);
                 syncHeaderHeight();
+                if (suppressed) {
+                    if (shell.classList.contains('sidebar-open')) setDrawer(false);
+                    shell.classList.remove('sidebar-docked', 'sidebar-open');
+                    sidebar.setAttribute('aria-hidden', 'true');
+                    sidebar.setAttribute('inert', '');
+                    syncToggles(false);
+                    return;
+                }
                 if (desktop.matches) {
                     if (shell.classList.contains('sidebar-open')) setDrawer(false);
                     setDocked(readPreference() !== 'cerrado');
@@ -1264,6 +1132,10 @@
             };
 
             toggles.forEach((toggle) => toggle.addEventListener('click', () => {
+                if (shell.classList.contains('has-own-layout')) {
+                    if (toggle.dataset.homeUrl) window.location.assign(toggle.dataset.homeUrl);
+                    return;
+                }
                 if (desktop.matches) {
                     setDocked(!shell.classList.contains('sidebar-docked'), true);
                 } else {
@@ -1301,6 +1173,7 @@
             });
 
             desktop.addEventListener('change', applyMode);
+            document.addEventListener('prodenya:navigated', applyMode);
             window.addEventListener('resize', syncHeaderHeight, { passive: true });
             applyMode();
             window.requestAnimationFrame(() => window.requestAnimationFrame(() => shell.classList.add('sidebar-ready')));
@@ -1332,19 +1205,121 @@
                 });
             };
 
-            const refreshUnread = (count) => {
-                if (typeof count !== 'number') return;
-                document.querySelectorAll('[data-unread-messages]').forEach((badge) => {
+            const counts = {
+                messages: {{ $mensajesSinLeer }},
+                avisos: {{ $avisosSinLeer }},
+            };
+            const paintBadges = (selector, count) => {
+                document.querySelectorAll(selector).forEach((badge) => {
                     badge.textContent = count > 99 ? '99+' : String(count);
                     badge.hidden = count === 0;
                 });
             };
+            const refreshUnread = (messages, avisos) => {
+                if (typeof messages === 'number') counts.messages = messages;
+                if (typeof avisos === 'number') counts.avisos = avisos;
+                paintBadges('[data-unread-messages]', counts.messages);
+                paintBadges('[data-unread-avisos]', counts.avisos);
+                paintBadges('[data-unread-total]', counts.messages + counts.avisos);
+            };
+            document.addEventListener('prodenya:avisos-changed', (event) => refreshUnread(undefined, event.detail));
 
             document.addEventListener('prodenya:navigated', (event) => {
                 const detail = event.detail ?? {};
                 refreshActiveLinks(new URL(detail.url ?? window.location.href, window.location.origin).pathname.replace(/\/$/, '') || '/');
-                refreshUnread(detail.comunicacionNoLeidos);
+                refreshUnread(detail.comunicacionNoLeidos, detail.notificacionesNoLeidas);
                 document.querySelectorAll('.site-user-menu[open]').forEach((menu) => { menu.open = false; });
+            });
+        })();
+
+        /** Account menu notifications: loaded the first time they are opened. */
+        (() => {
+            const toggle = document.querySelector('[data-avisos-toggle]');
+            const panel = document.querySelector('[data-avisos-panel]');
+            if (!toggle || !panel) return;
+
+            const list = panel.querySelector('[data-avisos-list]');
+            const readAll = panel.querySelector('[data-avisos-read-all]');
+            const csrf = document.querySelector('meta[name="csrf-token"]')?.content ?? '';
+            const relative = new Intl.RelativeTimeFormat('es', { numeric: 'auto' });
+            let loaded = false;
+
+            const timeAgo = (iso) => {
+                if (!iso) return '';
+                const minutes = Math.round((new Date(iso).getTime() - Date.now()) / 60000);
+                if (Math.abs(minutes) < 60) return relative.format(minutes, 'minute');
+                const hours = Math.round(minutes / 60);
+                if (Math.abs(hours) < 24) return relative.format(hours, 'hour');
+                return relative.format(Math.round(hours / 24), 'day');
+            };
+            const request = (url, method = 'GET') => fetch(url, {
+                method,
+                credentials: 'same-origin',
+                headers: { Accept: 'application/json', 'X-CSRF-TOKEN': csrf, 'X-Requested-With': 'XMLHttpRequest' },
+            });
+            const element = (tag, className, text) => {
+                const node = document.createElement(tag);
+                if (className) node.className = className;
+                if (text) node.textContent = text;
+                return node;
+            };
+            const announce = (unread) => document.dispatchEvent(new CustomEvent('prodenya:avisos-changed', { detail: unread }));
+
+            const render = (items, unread) => {
+                list.replaceChildren();
+                if (!items.length) {
+                    list.append(element('li', 'site-avisos-empty', 'No tenés notificaciones.'));
+                }
+                items.forEach((item) => {
+                    const row = element('li');
+                    const link = element(item.url ? 'a' : 'div', `site-aviso${item.leida ? '' : ' is-unread'}`);
+                    if (item.url) link.href = item.url;
+                    link.tabIndex = 0;
+                    link.append(element('span', 'site-aviso-title', item.titulo));
+                    if (item.mensaje) link.append(element('span', 'site-aviso-text', item.mensaje));
+                    link.append(element('span', 'site-aviso-time', timeAgo(item.creada_en)));
+                    link.addEventListener('click', async (event) => {
+                        if (item.leida) return;
+                        event.preventDefault();
+                        try { await request(panel.dataset.leerUrl.replace('__ID__', item.id), 'PATCH'); } catch (e) {}
+                        announce(Math.max(0, unread - 1));
+                        if (item.url) window.location.assign(item.url);
+                        else load();
+                    });
+                    row.append(link);
+                    list.append(row);
+                });
+                readAll.hidden = unread === 0;
+                announce(unread);
+            };
+
+            const load = async () => {
+                list.replaceChildren(element('li', 'site-avisos-empty', 'Cargando…'));
+                try {
+                    const response = await request(panel.dataset.endpoint);
+                    const data = await response.json();
+                    render(data.notificaciones ?? [], Number(data.notificacionesNoLeidas ?? 0));
+                    loaded = true;
+                } catch (e) {
+                    list.replaceChildren(element('li', 'site-avisos-empty', 'No pudimos cargar las notificaciones.'));
+                }
+            };
+
+            toggle.addEventListener('click', () => {
+                const open = panel.hidden;
+                panel.hidden = !open;
+                toggle.setAttribute('aria-expanded', String(open));
+                if (open && !loaded) load();
+            });
+            readAll.addEventListener('click', async () => {
+                try { await request(panel.dataset.leerTodasUrl, 'PATCH'); } catch (e) {}
+                loaded = false;
+                load();
+            });
+            document.addEventListener('prodenya:navigated', () => {
+                loaded = false;
+                panel.hidden = true;
+                toggle.setAttribute('aria-expanded', 'false');
             });
         })();
 

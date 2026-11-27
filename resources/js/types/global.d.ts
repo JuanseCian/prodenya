@@ -24,7 +24,6 @@ declare module '@inertiajs/core' {
                 accessAgenda: boolean;
                 accessActas: boolean;
             };
-            notificaciones: NotificationItem[];
             notificacionesNoLeidas: number;
             [key: string]: unknown;
         };

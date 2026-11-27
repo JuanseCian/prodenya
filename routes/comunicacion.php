@@ -13,6 +13,9 @@ Route::middleware(['auth', 'verified', 'rol:admin,operador,consulta,oficios,coor
         Route::get('/{conversacion}', 'show')->whereNumber('conversacion')->name('show');
         Route::post('/conversaciones', 'crearConversacion')->name('conversaciones.store');
         Route::post('/{conversacion}/mensajes', 'enviarMensaje')->whereNumber('conversacion')->name('mensajes.store');
+        Route::get('/{conversacion}/mensajes/archivos/{mensajeArchivo}', 'abrirArchivo')
+            ->whereNumber(['conversacion', 'mensajeArchivo'])
+            ->name('archivos.abrir');
         Route::patch('/{conversacion}/leida', 'marcarLeida')->whereNumber('conversacion')->name('leida');
         Route::get('/recursos/buscar', 'buscarRecursos')->name('recursos.buscar');
         Route::get('/recursos/{tipo}/{id}', 'abrirRecurso')->whereNumber('id')->name('recursos.abrir');

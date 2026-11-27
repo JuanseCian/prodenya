@@ -144,6 +144,7 @@ class LegajoController extends Controller
     {
         return Inertia::render('personas/create', [
             'modoLegajo' => true,
+            'dniInicial' => mb_substr(preg_replace('/\D/', '', (string) $request->query('dni')), 0, 10),
             'problematicaOtrosId' => Problematica::idOtros(),
             'provincias' => Provincia::orderBy('nombre')->get(['id', 'nombre']),
             'problematicas' => Problematica::orderBy('nombre')->get(['id', 'nombre']),

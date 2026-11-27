@@ -115,6 +115,7 @@ router.on('navigate', (event) => {
             detail: {
                 url: page.url,
                 comunicacionNoLeidos: page.props.comunicacionNoLeidos,
+                notificacionesNoLeidas: page.props.notificacionesNoLeidas,
             },
         }),
     );

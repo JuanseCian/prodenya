@@ -1,6 +1,7 @@
 import { Head, router, useForm, usePage } from '@inertiajs/react';
 import {
     Check,
+    FileText,
     MessageCircle,
     Paperclip,
     Plus,
@@ -11,16 +12,23 @@ import {
     UserRound,
     X,
 } from 'lucide-react';
-import type { FormEvent } from 'react';
-import { useEffect, useState } from 'react';
+import type { FormEvent, KeyboardEvent } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Bubble, BubbleContent } from '@/components/ui/bubble';
 import {
     Conversation,
     ConversationContent,
     ConversationScrollButton,
 } from '@/components/ui/conversation';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import {
     Message,
     MessageAvatar,
@@ -33,6 +41,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 interface Conversacion {
     id: number;
     nombre: string;
+    avatar: string | null;
     ultimo_mensaje: string;
     ultimo_mensaje_en: string | null;
     no_leidos: number;
@@ -52,8 +61,18 @@ interface Mensaje {
     cuerpo: string | null;
     usuario_id: number;
     usuario: string | null;
+    usuario_avatar: string | null;
     creado_en: string | null;
     recursos: Recurso[];
+    archivos: ArchivoMensaje[];
+}
+
+interface ArchivoMensaje {
+    id: number;
+    nombre: string;
+    mime: string;
+    tamanio: number;
+    url: string;
 }
 
 interface Usuario {
@@ -67,6 +86,7 @@ interface Props {
     conversaciones: Conversacion[];
     conversacionSeleccionada: number | null;
     nombreConversacion: string | null;
+    avatarConversacion: string | null;
     mensajes: Mensaje[];
     usuarios: Usuario[];
 }
@@ -90,26 +110,45 @@ const initials = (value: string) =>
         .map((part) => part[0]?.toUpperCase())
         .join('');
 
+const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) {
+        return `${bytes} B`;
+    }
+
+    if (bytes < 1024 * 1024) {
+        return `${Math.ceil(bytes / 1024)} KB`;
+    }
+
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+};
+
 export default function Comunicacion({
     conversaciones,
     conversacionSeleccionada,
     nombreConversacion,
     mensajes,
     usuarios,
+    avatarConversacion,
 }: Props) {
     const [mostrarNuevo, setMostrarNuevo] = useState(false);
     const [buscarRecurso, setBuscarRecurso] = useState('');
     const [sugerencias, setSugerencias] = useState<Recurso[]>([]);
     const [recursoSeleccionado, setRecursoSeleccionado] =
         useState<Recurso | null>(null);
+    const [mostrarAdjuntos, setMostrarAdjuntos] = useState(false);
+    const [recursoModalAbierto, setRecursoModalAbierto] = useState(false);
     const [actualizando, setActualizando] = useState(false);
-    const currentUserId = usePage().props.auth.user.id;
+    const archivoInputRef = useRef<HTMLInputElement>(null);
+    const currentUser = usePage().props.auth.user;
+    const currentUserId = currentUser.id;
+    const currentUserAvatar = currentUser.avatar;
 
     const nuevoChat = useForm({ usuario_id: '' });
     const mensajeForm = useForm({
         cuerpo: '',
         tipo_recurso: '',
         recurso_id: '',
+        archivos: [] as File[],
     });
 
     useEffect(() => {
@@ -146,6 +185,14 @@ export default function Comunicacion({
         mensajeForm.setData('recurso_id', String(recurso.id));
         setBuscarRecurso('');
         setSugerencias([]);
+        setRecursoModalAbierto(false);
+    };
+
+    const abrirSelectorRecursos = () => {
+        setMostrarAdjuntos(false);
+        setBuscarRecurso('');
+        setSugerencias([]);
+        setRecursoModalAbierto(true);
     };
 
     const quitarRecurso = () => {
@@ -154,26 +201,78 @@ export default function Comunicacion({
         mensajeForm.setData('recurso_id', '');
     };
 
-    const enviar = (event: FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
+    const seleccionarArchivos = (files: FileList | null) => {
+        if (!files) {
+            return;
+        }
 
-        if (!conversacionSeleccionada) {
+        mensajeForm.setData(
+            'archivos',
+            [...mensajeForm.data.archivos, ...Array.from(files)].slice(0, 10),
+        );
+    };
+
+    const quitarArchivo = (index: number) => {
+        mensajeForm.setData(
+            'archivos',
+            mensajeForm.data.archivos.filter(
+                (_, archivoIndex) => archivoIndex !== index,
+            ),
+        );
+    };
+
+    const enviarMensaje = () => {
+        if (
+            !conversacionSeleccionada ||
+            mensajeForm.processing ||
+            (!mensajeForm.data.cuerpo.trim() &&
+                !recursoSeleccionado &&
+                mensajeForm.data.archivos.length === 0)
+        ) {
             return;
         }
 
         mensajeForm.post(`/comunicacion/${conversacionSeleccionada}/mensajes`, {
+            forceFormData: true,
             preserveScroll: true,
             onSuccess: () => {
                 mensajeForm.reset();
                 quitarRecurso();
+
+                if (archivoInputRef.current) {
+                    archivoInputRef.current.value = '';
+                }
             },
         });
+    };
+
+    const enviar = (event: FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        enviarMensaje();
+    };
+
+    const manejarTeclaMensaje = (event: KeyboardEvent<HTMLTextAreaElement>) => {
+        if (
+            event.key !== 'Enter' ||
+            event.shiftKey ||
+            event.nativeEvent.isComposing
+        ) {
+            return;
+        }
+
+        event.preventDefault();
+        enviarMensaje();
     };
 
     const actualizar = () => {
         setActualizando(true);
         router.reload({
-            only: ['conversaciones', 'mensajes', 'nombreConversacion'],
+            only: [
+                'conversaciones',
+                'mensajes',
+                'nombreConversacion',
+                'avatarConversacion',
+            ],
             onFinish: () => setActualizando(false),
         });
     };
@@ -181,6 +280,75 @@ export default function Comunicacion({
     return (
         <>
             <Head title="Comunicación" />
+            <Dialog
+                open={recursoModalAbierto}
+                onOpenChange={(abierto) => {
+                    setRecursoModalAbierto(abierto);
+
+                    if (!abierto) {
+                        setBuscarRecurso('');
+                        setSugerencias([]);
+                    }
+                }}
+            >
+                <DialogContent className="border-[#DCE3DF] bg-[#FBFCFB] sm:max-w-lg">
+                    <DialogHeader>
+                        <DialogTitle className="text-[#173247]">
+                            Compartir legajo o acta
+                        </DialogTitle>
+                        <DialogDescription className="text-[#697586]">
+                            Buscá un recurso para adjuntarlo a la conversación.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="relative">
+                        <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-[#697586]" />
+                        <input
+                            autoFocus
+                            value={buscarRecurso}
+                            onChange={(event) =>
+                                setBuscarRecurso(event.target.value)
+                            }
+                            placeholder="Buscar por número, nombre o título…"
+                            className="h-11 w-full rounded-xl border border-[#D5D1C6] bg-white pr-3 pl-10 text-sm text-[#2B2F36] transition outline-none placeholder:text-[#697586] focus:border-[#2C4A5E] focus:ring-2 focus:ring-[#2C4A5E]/20"
+                        />
+                    </div>
+                    <div className="max-h-72 overflow-y-auto rounded-xl border border-[#E4E8E5] bg-white p-1">
+                        {recursosVisibles.length > 0 ? (
+                            recursosVisibles.map((recurso) => (
+                                <button
+                                    key={`${recurso.tipo}-${recurso.id}`}
+                                    type="button"
+                                    onClick={() => seleccionarRecurso(recurso)}
+                                    className="flex w-full items-start gap-3 rounded-lg px-3 py-3 text-left transition hover:bg-[#F4F6F5]"
+                                >
+                                    <Paperclip
+                                        size={16}
+                                        className="mt-0.5 shrink-0 text-[#6B8F71]"
+                                    />
+                                    <span className="min-w-0">
+                                        <span className="block truncate text-sm font-semibold text-[#2C4A5E]">
+                                            {recurso.label}
+                                        </span>
+                                        {recurso.detail && (
+                                            <span className="mt-1 block truncate text-xs text-[#697586]">
+                                                {recurso.detail}
+                                            </span>
+                                        )}
+                                    </span>
+                                </button>
+                            ))
+                        ) : buscarRecurso.trim().length >= 2 ? (
+                            <p className="px-3 py-8 text-center text-sm text-[#697586]">
+                                No encontramos recursos con esa búsqueda.
+                            </p>
+                        ) : (
+                            <p className="px-3 py-8 text-center text-sm text-[#697586]">
+                                Escribí al menos dos caracteres para buscar.
+                            </p>
+                        )}
+                    </div>
+                </DialogContent>
+            </Dialog>
             <main className="admin-page-shell min-h-screen bg-background px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
                 <div className="mx-auto max-w-7xl">
                     <div className="mb-7 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -211,7 +379,7 @@ export default function Comunicacion({
                         </div>
                     </div>
 
-                    <div className="grid min-h-[calc(100dvh-8rem)] overflow-hidden rounded-2xl border border-[#D5E0DA] bg-white shadow-[0_22px_60px_rgba(23,50,71,0.1)] lg:min-h-[650px] lg:grid-cols-[310px_minmax(0,1fr)]">
+                    <div className="grid h-[calc(100dvh-8rem)] min-h-[540px] overflow-hidden rounded-2xl border border-[#D5E0DA] bg-white shadow-[0_22px_60px_rgba(23,50,71,0.1)] lg:h-[650px] lg:min-h-0 lg:grid-cols-[310px_minmax(0,1fr)]">
                         <aside className="border-b border-[#E4E8E5] bg-[#F8FAF9] lg:border-r lg:border-b-0">
                             <div className="flex items-center justify-between border-b border-[#E4E8E5] bg-white/70 px-4 py-4">
                                 <div>
@@ -319,9 +487,23 @@ export default function Comunicacion({
                                             }
                                             className={`mb-1 flex w-full items-start gap-3 rounded-xl border p-3 text-left transition ${conversacion.id === conversacionSeleccionada ? 'border-[#CFE1D4] bg-[#EAF3ED] shadow-sm' : 'border-transparent hover:border-[#E4E8E5] hover:bg-white'}`}
                                         >
-                                            <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#DDEBE1] text-xs font-bold text-[#41634A]">
-                                                {initials(conversacion.nombre)}
-                                            </span>
+                                            <Avatar className="size-9 rounded-full bg-[#DDEBE1]">
+                                                {conversacion.avatar && (
+                                                    <AvatarImage
+                                                        src={
+                                                            conversacion.avatar
+                                                        }
+                                                        alt={
+                                                            conversacion.nombre
+                                                        }
+                                                    />
+                                                )}
+                                                <AvatarFallback className="rounded-full bg-[#DDEBE1] text-xs font-bold text-[#41634A]">
+                                                    {initials(
+                                                        conversacion.nombre,
+                                                    )}
+                                                </AvatarFallback>
+                                            </Avatar>
                                             <span className="min-w-0 flex-1">
                                                 <span className="flex items-center justify-between gap-2">
                                                     <span className="truncate text-sm font-semibold text-[#2C4A5E]">
@@ -349,15 +531,27 @@ export default function Comunicacion({
                             </div>
                         </aside>
 
-                        <section className="flex min-h-[calc(100dvh-8rem)] min-w-0 flex-col bg-white lg:min-h-[650px]">
+                        <section className="flex min-h-0 min-w-0 flex-col bg-white">
                             {conversacionSeleccionada ? (
                                 <>
                                     <header className="flex items-center justify-between gap-3 border-b border-[#E4E8E5] bg-white px-5 py-4 sm:px-7">
                                         <div className="flex min-w-0 items-center gap-3">
-                                            <span className="relative flex size-11 shrink-0 items-center justify-center rounded-2xl bg-[#2C4A5E] text-xs font-bold text-white shadow-sm">
-                                                {initials(
-                                                    nombreConversacion ?? '',
+                                            <span className="relative flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-[#2C4A5E] text-xs font-bold text-white shadow-sm">
+                                                {avatarConversacion && (
+                                                    <img
+                                                        src={avatarConversacion}
+                                                        alt={
+                                                            nombreConversacion ??
+                                                            'Conversación'
+                                                        }
+                                                        className="size-full object-cover"
+                                                    />
                                                 )}
+                                                {!avatarConversacion &&
+                                                    initials(
+                                                        nombreConversacion ??
+                                                            '',
+                                                    )}
                                                 <span className="absolute -right-0.5 -bottom-0.5 size-3 rounded-full border-2 border-white bg-[#6B8F71]" />
                                             </span>
                                             <div className="min-w-0">
@@ -389,7 +583,7 @@ export default function Comunicacion({
                                         </button>
                                     </header>
 
-                                    <Conversation className="bg-[radial-gradient(circle_at_top_left,_rgba(234,243,237,0.75),_transparent_38%),#FAFBFA]">
+                                    <Conversation className="min-h-0 bg-[radial-gradient(circle_at_top_left,_rgba(234,243,237,0.75),_transparent_38%),#FAFBFA]">
                                         <ConversationContent className="space-y-5 px-4 py-5 sm:px-7">
                                             {actualizando ? (
                                                 <div className="space-y-5">
@@ -440,6 +634,17 @@ export default function Comunicacion({
                                                             {!propio && (
                                                                 <MessageAvatar>
                                                                     <Avatar className="size-8 rounded-xl bg-[#DDEBE1]">
+                                                                        {mensaje.usuario_avatar && (
+                                                                            <AvatarImage
+                                                                                src={
+                                                                                    mensaje.usuario_avatar
+                                                                                }
+                                                                                alt={
+                                                                                    mensaje.usuario ??
+                                                                                    'Usuario'
+                                                                                }
+                                                                            />
+                                                                        )}
                                                                         <AvatarFallback className="rounded-xl bg-[#DDEBE1] text-[length:calc(0.65rem_+_2px)] font-bold text-[#41634A]">
                                                                             {initials(
                                                                                 mensaje.usuario ??
@@ -511,6 +716,74 @@ export default function Comunicacion({
                                                                                 )}
                                                                             </div>
                                                                         )}
+                                                                        {mensaje
+                                                                            .archivos
+                                                                            .length >
+                                                                            0 && (
+                                                                            <div
+                                                                                className={`${mensaje.cuerpo || mensaje.recursos.length > 0 ? 'mt-3' : ''} space-y-2`}
+                                                                            >
+                                                                                {mensaje.archivos.map(
+                                                                                    (
+                                                                                        archivo,
+                                                                                    ) =>
+                                                                                        archivo.mime.startsWith(
+                                                                                            'image/',
+                                                                                        ) ? (
+                                                                                            <a
+                                                                                                key={
+                                                                                                    archivo.id
+                                                                                                }
+                                                                                                href={
+                                                                                                    archivo.url
+                                                                                                }
+                                                                                                target="_blank"
+                                                                                                rel="noreferrer"
+                                                                                                className="block overflow-hidden rounded-lg border border-white/20"
+                                                                                            >
+                                                                                                <img
+                                                                                                    src={
+                                                                                                        archivo.url
+                                                                                                    }
+                                                                                                    alt={
+                                                                                                        archivo.nombre
+                                                                                                    }
+                                                                                                    className="max-h-64 w-full object-cover"
+                                                                                                />
+                                                                                            </a>
+                                                                                        ) : (
+                                                                                            <a
+                                                                                                key={
+                                                                                                    archivo.id
+                                                                                                }
+                                                                                                href={
+                                                                                                    archivo.url
+                                                                                                }
+                                                                                                target="_blank"
+                                                                                                rel="noreferrer"
+                                                                                                className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-xs ${propio ? 'border-white/20 bg-white/10 text-white hover:bg-white/15' : 'border-[#CFE1D4] bg-[#EAF3ED] text-[#267148] hover:bg-[#DDEBE1]'}`}
+                                                                                            >
+                                                                                                <FileText
+                                                                                                    size={
+                                                                                                        14
+                                                                                                    }
+                                                                                                    className="shrink-0"
+                                                                                                />
+                                                                                                <span className="min-w-0 truncate font-semibold">
+                                                                                                    {
+                                                                                                        archivo.nombre
+                                                                                                    }
+                                                                                                </span>
+                                                                                                <span className="shrink-0 opacity-70">
+                                                                                                    {formatFileSize(
+                                                                                                        archivo.tamanio,
+                                                                                                    )}
+                                                                                                </span>
+                                                                                            </a>
+                                                                                        ),
+                                                                                )}
+                                                                            </div>
+                                                                        )}
                                                                     </BubbleContent>
                                                                 </Bubble>
                                                                 <MessageFooter
@@ -530,6 +803,17 @@ export default function Comunicacion({
                                                             {propio && (
                                                                 <MessageAvatar>
                                                                     <Avatar className="size-8 rounded-xl bg-[#2C4A5E]">
+                                                                        {currentUserAvatar && (
+                                                                            <AvatarImage
+                                                                                src={
+                                                                                    currentUserAvatar
+                                                                                }
+                                                                                alt={
+                                                                                    mensaje.usuario ??
+                                                                                    'Usuario'
+                                                                                }
+                                                                            />
+                                                                        )}
                                                                         <AvatarFallback className="rounded-xl bg-[#2C4A5E] text-[length:calc(0.65rem_+_2px)] font-bold text-white">
                                                                             {initials(
                                                                                 mensaje.usuario ??
@@ -583,6 +867,7 @@ export default function Comunicacion({
                                                         event.target.value,
                                                     )
                                                 }
+                                                onKeyDown={manejarTeclaMensaje}
                                                 rows={2}
                                                 placeholder="Escribí un mensaje…"
                                                 className="block w-full resize-none rounded-xl border border-[#D5D1C6] bg-[#FAFBFA] px-4 py-3 pr-14 text-sm leading-6 text-[#2B2F36] outline-none placeholder:text-[#697586]/60 focus:border-[#2C4A5E] focus:ring-2 focus:ring-[#2C4A5E]/20"
@@ -592,7 +877,10 @@ export default function Comunicacion({
                                                 disabled={
                                                     mensajeForm.processing ||
                                                     (!mensajeForm.data.cuerpo.trim() &&
-                                                        !recursoSeleccionado)
+                                                        !recursoSeleccionado &&
+                                                        mensajeForm.data
+                                                            .archivos.length ===
+                                                            0)
                                                 }
                                                 className="absolute right-2 bottom-2 inline-flex size-9 items-center justify-center rounded-lg bg-[#2C4A5E] text-white transition hover:bg-[#1F394B] disabled:cursor-not-allowed disabled:opacity-40"
                                                 aria-label="Enviar mensaje"
@@ -600,56 +888,107 @@ export default function Comunicacion({
                                                 <Send size={16} />
                                             </button>
                                         </div>
-                                        <div className="relative mt-2">
-                                            <Search className="pointer-events-none absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-[#697586]" />
-                                            <input
-                                                value={buscarRecurso}
-                                                onChange={(event) =>
-                                                    setBuscarRecurso(
-                                                        event.target.value,
-                                                    )
-                                                }
-                                                placeholder="Buscar y adjuntar un legajo, intervención, documento o mail…"
-                                                className="h-9 w-full rounded-lg border border-transparent bg-[#F8FAF9] pr-3 pl-8 text-xs text-[#2B2F36] transition outline-none placeholder:text-[#697586] focus:border-[#DCE3DF] focus:bg-white"
-                                            />
-                                            {recursosVisibles.length > 0 && (
-                                                <div className="absolute right-0 bottom-full left-0 z-20 mb-2 max-h-64 overflow-y-auto rounded-xl border border-[#DCE3DF] bg-white p-1 shadow-[0_15px_35px_rgba(23,50,71,0.15)]">
-                                                    {recursosVisibles.map(
-                                                        (recurso) => (
+                                        <div className="mt-3 flex items-center justify-between gap-3">
+                                            <div className="relative flex items-center gap-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        setMostrarAdjuntos(
+                                                            (value) => !value,
+                                                        )
+                                                    }
+                                                    className="inline-flex size-9 items-center justify-center rounded-lg border border-[#DCE3DF] text-[#2C4A5E] transition hover:bg-[#F4F6F5]"
+                                                    aria-label="Adjuntar contenido"
+                                                    aria-expanded={
+                                                        mostrarAdjuntos
+                                                    }
+                                                >
+                                                    <Plus size={17} />
+                                                </button>
+                                                {mostrarAdjuntos && (
+                                                    <div className="absolute bottom-full left-0 z-30 mb-2 w-56 rounded-xl border border-[#DCE3DF] bg-white p-1.5 shadow-[0_15px_35px_rgba(23,50,71,0.15)]">
+                                                        <button
+                                                            type="button"
+                                                            onClick={
+                                                                abrirSelectorRecursos
+                                                            }
+                                                            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-semibold text-[#2C4A5E] hover:bg-[#F4F6F5]"
+                                                        >
+                                                            <Paperclip
+                                                                size={15}
+                                                            />
+                                                            Legajo, acta o
+                                                            recurso
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setMostrarAdjuntos(
+                                                                    false,
+                                                                );
+                                                                archivoInputRef.current?.click();
+                                                            }}
+                                                            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-semibold text-[#2C4A5E] hover:bg-[#F4F6F5]"
+                                                        >
+                                                            <FileText
+                                                                size={15}
+                                                            />
+                                                            Foto o archivo
+                                                        </button>
+                                                    </div>
+                                                )}
+                                                <input
+                                                    ref={archivoInputRef}
+                                                    type="file"
+                                                    multiple
+                                                    accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip"
+                                                    className="hidden"
+                                                    onChange={(event) => {
+                                                        seleccionarArchivos(
+                                                            event.target.files,
+                                                        );
+                                                        event.target.value = '';
+                                                    }}
+                                                />
+                                                <span className="text-xs text-[#697586]">
+                                                    Adjuntar legajos, actas,
+                                                    fotos o archivos
+                                                </span>
+                                            </div>
+                                        </div>
+                                        {mensajeForm.data.archivos.length >
+                                            0 && (
+                                            <div className="mt-3 flex flex-wrap gap-2">
+                                                {mensajeForm.data.archivos.map(
+                                                    (archivo, index) => (
+                                                        <span
+                                                            key={`${archivo.name}-${index}`}
+                                                            className="inline-flex max-w-full items-center gap-2 rounded-lg border border-[#DCE3DF] bg-[#F8FAF9] px-2.5 py-1.5 text-xs text-[#2C4A5E]"
+                                                        >
+                                                            <FileText
+                                                                size={13}
+                                                                className="shrink-0 text-[#6B8F71]"
+                                                            />
+                                                            <span className="max-w-48 truncate font-semibold">
+                                                                {archivo.name}
+                                                            </span>
                                                             <button
-                                                                key={`${recurso.tipo}-${recurso.id}`}
                                                                 type="button"
                                                                 onClick={() =>
-                                                                    seleccionarRecurso(
-                                                                        recurso,
+                                                                    quitarArchivo(
+                                                                        index,
                                                                     )
                                                                 }
-                                                                className="flex w-full items-start gap-2 rounded-lg px-3 py-2 text-left transition hover:bg-[#F4F6F5]"
+                                                                className="rounded p-0.5 text-[#697586] hover:bg-[#EAF3ED] hover:text-[#2C4A5E]"
+                                                                aria-label={`Quitar ${archivo.name}`}
                                                             >
-                                                                <Paperclip
-                                                                    size={14}
-                                                                    className="mt-0.5 shrink-0 text-[#6B8F71]"
-                                                                />
-                                                                <span className="min-w-0">
-                                                                    <span className="block truncate text-xs font-semibold text-[#2C4A5E]">
-                                                                        {
-                                                                            recurso.label
-                                                                        }
-                                                                    </span>
-                                                                    {recurso.detail && (
-                                                                        <span className="mt-0.5 block truncate text-[length:calc(0.68rem_+_2px)] text-[#697586]">
-                                                                            {
-                                                                                recurso.detail
-                                                                            }
-                                                                        </span>
-                                                                    )}
-                                                                </span>
+                                                                <X size={13} />
                                                             </button>
-                                                        ),
-                                                    )}
-                                                </div>
-                                            )}
-                                        </div>
+                                                        </span>
+                                                    ),
+                                                )}
+                                            </div>
+                                        )}
                                         <p className="mt-2 flex items-center gap-1 text-[length:calc(0.68rem_+_2px)] text-[#697586]">
                                             <Check
                                                 size={12}

@@ -4,10 +4,13 @@ namespace App\Http\Controllers\frontend;
 
 use App\Http\Controllers\Controller;
 use App\Models\AgendaEvento;
+use App\Models\Legajo;
+use App\Models\Persona;
 use App\Models\Tarea;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 
@@ -15,28 +18,65 @@ class HomeController extends Controller
 {
     public function index(Request $request): View
     {
-        $notificaciones = $request->user()->notifications()
-            ->latest()
-            ->limit(10)
-            ->get()
-            ->map(fn (DatabaseNotification $notification): array => [
-                'id' => $notification->id,
-                'titulo' => $notification->data['titulo'] ?? 'Notificación',
-                'mensaje' => $notification->data['mensaje'] ?? '',
-                'url' => $notification->data['url'] ?? null,
-                'leida' => $notification->read_at !== null,
-                'creada_en' => $notification->created_at?->toIso8601String(),
-            ])
-            ->values()
-            ->all();
+        $usuario = $request->user();
 
         return view('frontend.home.home', [
-            'frontendNotificaciones' => $notificaciones,
-            'frontendNotificacionesNoLeidas' => $request->user()->unreadNotifications()->count(),
+            'homeSaludo' => $this->saludo(),
+            'homeTareasPendientes' => $this->tareasAbiertas($usuario->id)->count(),
+            'homeTareasVencidas' => $this->tareasAbiertas($usuario->id)
+                ->whereNotNull('fecha_limite')
+                ->whereDate('fecha_limite', '<', today())
+                ->count(),
+            'frontendNotificacionesNoLeidas' => $usuario->avisosSinLeer(),
             'showPasskeyNotice' => Features::canManagePasskeys()
-                && ! $request->user()->passkeys()->exists(),
+                && ! $usuario->passkeys()->exists(),
             'passkeyPasswordConfirmed' => now()->timestamp - (int) $request->session()->get('auth.password_confirmed_at', 0)
                 <= (int) config('auth.password_timeout'),
+        ]);
+    }
+
+    /**
+     * Busca personas por nombre, apellido o DNI para abrir su legajo o crear uno nuevo.
+     */
+    public function buscarPersonas(Request $request): JsonResponse
+    {
+        $termino = trim((string) $request->query('q'));
+
+        if (mb_strlen($termino) < 2) {
+            return response()->json(['personas' => []]);
+        }
+
+        $digitos = preg_replace('/\D/', '', $termino);
+        $esDni = $digitos !== '' && $digitos === preg_replace('/[\s.]/', '', $termino);
+
+        $personas = Persona::query()
+            ->where('activo', true)
+            ->when($esDni, fn ($query) => $query->where('dni', 'like', "{$digitos}%"))
+            ->when(! $esDni, function ($query) use ($termino) {
+                foreach (preg_split('/[\s,]+/', $termino, -1, PREG_SPLIT_NO_EMPTY) as $palabra) {
+                    $query->where(fn ($porPalabra) => $porPalabra
+                        ->where('apellido', 'like', "%{$palabra}%")
+                        ->orWhere('nombre', 'like', "%{$palabra}%"));
+                }
+            })
+            ->with(['legajos' => fn ($query) => $query->latest('fecha_apertura')->select(['id', 'persona_id', 'numero_legajo', 'estado', 'fecha_apertura'])])
+            ->orderBy('apellido')
+            ->orderBy('nombre')
+            ->limit(8)
+            ->get(['id', 'nombre', 'apellido', 'dni', 'fecha_nacimiento']);
+
+        return response()->json([
+            'personas' => $personas->map(fn (Persona $persona): array => [
+                'id' => $persona->id,
+                'nombre' => trim(mb_convert_case("{$persona->apellido}, {$persona->nombre}", MB_CASE_TITLE), ', '),
+                'dni' => (string) ($persona->dni ?? ''),
+                'edad' => $persona->fecha_nacimiento?->age,
+                'legajos' => $persona->legajos->map(fn (Legajo $legajo): array => [
+                    'numero' => $legajo->numero_legajo,
+                    'estado' => $legajo->estado,
+                    'url' => route('legajos.show', $legajo),
+                ])->values(),
+            ])->values(),
         ]);
     }
 
@@ -45,9 +85,7 @@ class HomeController extends Controller
         $usuario = $request->user();
         $hoy = today();
         $hasta = $hoy->copy()->addDays(3);
-        $tareasBase = Tarea::query()
-            ->where('asignado_a', $usuario->id)
-            ->whereNotIn('estado', ['completada', 'cancelada']);
+        $tareasBase = $this->tareasAbiertas($usuario->id);
         $tareas = (clone $tareasBase)
             ->where(function ($query) use ($hasta) {
                 $query->whereNull('fecha_limite')
@@ -145,5 +183,26 @@ class HomeController extends Controller
                 'agenda_url' => route('agenda.index'),
             ])->values(),
         ]);
+    }
+
+    /**
+     * Tareas asignadas al usuario que todavía no se cerraron.
+     */
+    private function tareasAbiertas(int $usuarioId): Builder
+    {
+        return Tarea::query()
+            ->where('asignado_a', $usuarioId)
+            ->whereNotIn('estado', ['completada', 'cancelada']);
+    }
+
+    private function saludo(): string
+    {
+        $hora = now()->hour;
+
+        return match (true) {
+            $hora < 13 => 'Buen día',
+            $hora < 20 => 'Buenas tardes',
+            default => 'Buenas noches',
+        };
     }
 }

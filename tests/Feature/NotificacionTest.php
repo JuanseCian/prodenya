@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use App\Notifications\MensajePrivadoNotification;
 use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -58,4 +59,26 @@ test('a user cannot mark another users notification as read', function () {
         ->assertForbidden();
 
     expect($notificacion->fresh()->read_at)->toBeNull();
+});
+
+test('the notices inbox leaves private messages to their own counter', function () {
+    $usuario = User::factory()->create(['rol_id' => 1]);
+    $aviso = crearNotificacionPara($usuario);
+    $usuario->notify(new MensajePrivadoNotification(1, 'Ana', 'Hola'));
+
+    expect($usuario->avisosSinLeer())->toBe(1);
+
+    $this->actingAs($usuario)
+        ->getJson(route('notificaciones.index'))
+        ->assertOk()
+        ->assertJsonCount(1, 'notificaciones')
+        ->assertJsonPath('notificaciones.0.id', $aviso->id)
+        ->assertJsonPath('notificacionesNoLeidas', 1);
+
+    $this->actingAs($usuario)
+        ->patchJson(route('notificaciones.leer-todas'))
+        ->assertOk();
+
+    expect($usuario->avisosSinLeer())->toBe(0)
+        ->and($usuario->unreadNotifications()->count())->toBe(1);
 });

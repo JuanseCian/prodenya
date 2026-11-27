@@ -33,4 +33,9 @@ class Mensaje extends Model
     {
         return $this->hasMany(MensajeRecurso::class, 'mensaje_id');
     }
+
+    public function archivos(): HasMany
+    {
+        return $this->hasMany(MensajeArchivo::class, 'mensaje_id');
+    }
 }

@@ -4,7 +4,6 @@ namespace App\Http\Middleware;
 
 use App\Models\Acta;
 use Illuminate\Http\Request;
-use Illuminate\Notifications\DatabaseNotification;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -104,25 +103,7 @@ class HandleInertiaRequests extends Middleware
             ],
             'status' => fn (): ?string => $request->session()->get('status'),
             'comunicacionNoLeidos' => fn (): int => $user?->mensajesSinLeer() ?? 0,
-            'notificaciones' => fn (): array => $user
-                ? $user->notifications()
-                    ->latest()
-                    ->limit(10)
-                    ->get()
-                    ->map(fn (DatabaseNotification $notification): array => [
-                        'id' => $notification->id,
-                        'titulo' => $notification->data['titulo'] ?? 'Notificación',
-                        'mensaje' => $notification->data['mensaje'] ?? '',
-                        'url' => $notification->data['url'] ?? null,
-                        'leida' => $notification->read_at !== null,
-                        'creada_en' => $notification->created_at?->toIso8601String(),
-                    ])
-                    ->values()
-                    ->all()
-                : [],
-            'notificacionesNoLeidas' => fn (): int => $user
-                ? (int) $user->unreadNotifications()->count()
-                : 0,
+            'notificacionesNoLeidas' => fn (): int => $user?->avisosSinLeer() ?? 0,
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
     }

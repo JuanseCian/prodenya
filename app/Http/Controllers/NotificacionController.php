@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Notifications\MensajePrivadoNotification;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -13,7 +14,7 @@ class NotificacionController extends Controller
     {
         return response()->json([
             'notificaciones' => $this->notificaciones($request),
-            'notificacionesNoLeidas' => (int) $request->user()->unreadNotifications()->count(),
+            'notificacionesNoLeidas' => $request->user()->avisosSinLeer(),
         ]);
     }
 
@@ -31,7 +32,9 @@ class NotificacionController extends Controller
 
     public function marcarTodasLeidas(Request $request): RedirectResponse|JsonResponse
     {
-        $request->user()->unreadNotifications()->update(['read_at' => now()]);
+        $request->user()->unreadNotifications()
+            ->where('type', '!=', MensajePrivadoNotification::class)
+            ->update(['read_at' => now()]);
 
         if ($request->expectsJson()) {
             return response()->json(['ok' => true]);
@@ -44,6 +47,7 @@ class NotificacionController extends Controller
     private function notificaciones(Request $request): array
     {
         return $request->user()->notifications()
+            ->where('type', '!=', MensajePrivadoNotification::class)
             ->latest()
             ->limit(10)
             ->get()

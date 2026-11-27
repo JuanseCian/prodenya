@@ -36,6 +36,28 @@ test('guests on the login screen do not get the institutional header', function 
         ->assertDontSee('site-header', false);
 });
 
+test('the institutional footer shows official contact information', function () {
+    $admin = User::factory()->create(['rol_id' => 1]);
+
+    $this->actingAs($admin)
+        ->get(route('profile.edit'))
+        ->assertOk()
+        ->assertSee('Sistema de Promoción y Protección de los Derechos', false)
+        ->assertSee('Alte. Brown y José Luis Lazarte')
+        ->assertSee('prodenya.sn@gmail.com')
+        ->assertSee('08:00 a 14:00')
+        ->assertSee(route('legal.privacidad'), false);
+});
+
+test('institutional information routes are available', function () {
+    foreach (['legal.contacto', 'legal.privacidad', 'legal.accesibilidad'] as $routeName) {
+        $this->get(route($routeName))->assertOk();
+    }
+
+    $this->get(route('legal.ubicacion'))
+        ->assertRedirectContains('google.com/maps/search');
+});
+
 test('the header account menu shows the unread internal messages count', function () {
     $admin = User::factory()->create(['rol_id' => 1]);
     $remitente = User::factory()->create(['rol_id' => 1]);
@@ -65,4 +87,18 @@ test('the header account menu shows the unread internal messages count', functio
         ->assertSee('site-user-menu', false)
         ->assertSee('data-unread-messages >3</span>', false)
         ->assertSee('Cerrar sesión');
+});
+
+test('statistics pages keep their own layout without the institutional header and sidebar', function () {
+    $admin = User::factory()->create(['rol_id' => 1]);
+
+    $this->actingAs($admin)
+        ->get(route('estadisticas'))
+        ->assertOk()
+        ->assertSee('class="site-shell has-own-layout"', false);
+
+    $this->actingAs($admin)
+        ->get(route('profile.edit'))
+        ->assertOk()
+        ->assertSee('class="site-shell"', false);
 });

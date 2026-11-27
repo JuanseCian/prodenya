@@ -7,6 +7,16 @@
 @section('content')
     @php
         $homeDate = now()->translatedFormat('l d \\d\\e F');
+        $homeUser = auth()->user();
+        $homeFirstName = \Illuminate\Support\Str::of($homeUser->name)->trim()->explode(' ')->first();
+        $puedeVerLegajos = Route::has('legajos.index') && $homeUser->tieneRol('admin', 'operador', 'consulta', 'oficios', 'coordinador', 'profesional', 'administrativo');
+        $puedeCrearLegajo = Route::has('legajos.create') && $homeUser->tieneRol('admin', 'operador', 'coordinador', 'profesional', 'administrativo');
+        $puedeVerTareas = Route::has('tareas.index') && $homeUser->tieneRol('admin', 'operador', 'oficios', 'coordinador', 'profesional', 'administrativo');
+        $puedeVerAgenda = Route::has('agenda.index') && $homeUser->tieneRol('admin', 'coordinador', 'profesional', 'administrativo');
+        $puedeVerMensajes = Route::has('comunicacion.index') && $homeUser->tieneRol('admin', 'operador', 'consulta', 'oficios', 'coordinador', 'profesional', 'administrativo');
+        $puedeVerCorreo = Route::has('mailbox.index') && $homeUser->tieneRol('admin', 'oficios', 'coordinador');
+        $homeMensajes = $puedeVerMensajes ? $homeUser->mensajesSinLeer() : 0;
+        $homeAvisos = $frontendNotificacionesNoLeidas ?? 0;
         $quickActaTimeline = collect(\App\Models\Acta::TIPOS)->map(function (array $config, string $tipo): array {
             return [
                 'id' => $tipo,
@@ -43,15 +53,35 @@
         </div>
 
         <main class="home-container">
-            <h1 class="sr-only">Inicio</h1>
 
             <section class="home-overview" aria-label="Acciones principales">
                 @if (Route::has('actas.create') && auth()->user()->tieneRol(...\App\Models\Acta::ROLES))
                     <div id="home-quick-acta-orbital" class="home-quick-acta-orbital"></div>
                 @endif
                 <div class="home-overview-copy">
-                    <p class="home-eyebrow">CENTRO DE TRABAJO</p>
+                    <h1 class="home-greeting">{{ $homeSaludo ?? 'Hola' }}, {{ $homeFirstName }}</h1>
                     <p class="home-overview-date"><i class="bi bi-calendar3" aria-hidden="true"></i> {{ ucfirst($homeDate) }}</p>
+                    @php
+                        $homeVencidas = $puedeVerTareas ? ($homeTareasVencidas ?? 0) : 0;
+                        $homePendientes = $puedeVerTareas ? max(0, ($homeTareasPendientes ?? 0) - $homeVencidas) : 0;
+                        $homeAlDia = ! $homeVencidas && ! $homePendientes && ! $homeMensajes && ! $homeAvisos;
+                    @endphp
+                    <ul class="home-pulse" aria-label="Lo que tenés pendiente">
+                        @if ($homeVencidas)
+                            <li><a href="{{ route('tareas.index') }}" class="home-pulse-chip is-alert"><strong>{{ $homeVencidas }}</strong> {{ $homeVencidas === 1 ? 'tarea vencida' : 'tareas vencidas' }}</a></li>
+                        @endif
+                        @if ($homePendientes)
+                            <li><a href="{{ route('tareas.index') }}" class="home-pulse-chip"><strong>{{ $homePendientes }}</strong> {{ $homePendientes === 1 ? 'tarea pendiente' : 'tareas pendientes' }}</a></li>
+                        @endif
+                        @if ($homeMensajes)
+                            <li><a href="{{ route('comunicacion.index') }}" class="home-pulse-chip"><strong>{{ $homeMensajes }}</strong> {{ $homeMensajes === 1 ? 'mensaje sin leer' : 'mensajes sin leer' }}</a></li>
+                        @endif
+                        @if ($homeAvisos)
+                            <li><button type="button" class="home-pulse-chip" data-open-avisos><strong>{{ $homeAvisos }}</strong> {{ $homeAvisos === 1 ? 'notificación' : 'notificaciones' }}</button></li>
+                        @endif
+                        @if ($homeAlDia)
+                        @endif
+                    </ul>
                 </div>
                 <div class="home-overview-actions">
                     <button type="button" class="home-panel-launch" data-personal-panel-open>
@@ -70,29 +100,35 @@
                     </div>
                 </div>
                 <div class="home-shortcut-grid">
-                    @if (Route::has('legajos.index'))
+                    @if ($puedeVerLegajos)
                         <a href="{{ route('legajos.index') }}" class="home-shortcut">
                             <i class="bi bi-folder2-open" aria-hidden="true"></i>
                             <span><strong>Consultar legajos</strong><small>Personas, intervenciones y seguimiento</small></span>
                             <i class="bi bi-arrow-up-right home-shortcut-arrow" aria-hidden="true"></i>
                         </a>
                     @endif
-                    @if (Route::has('legajos.create'))
+                    @if ($puedeCrearLegajo)
                         <a href="{{ route('legajos.create') }}" class="home-shortcut">
                             <i class="bi bi-folder-plus" aria-hidden="true"></i>
                             <span><strong>Nuevo legajo</strong><small>Iniciar un nuevo registro</small></span>
                             <i class="bi bi-arrow-up-right home-shortcut-arrow" aria-hidden="true"></i>
                         </a>
                     @endif
-                
-                    @if (Route::has('agenda.index'))
+                    @if ($puedeVerTareas)
+                        <a href="{{ route('tareas.index') }}" class="home-shortcut">
+                            <i class="bi bi-check2-square" aria-hidden="true"></i>
+                            <span><strong>Tareas</strong><small>Lo asignado a vos y a tu equipo</small></span>
+                            <i class="bi bi-arrow-up-right home-shortcut-arrow" aria-hidden="true"></i>
+                        </a>
+                    @endif
+                    @if ($puedeVerAgenda)
                         <a href="{{ route('agenda.index') }}" class="home-shortcut">
                             <i class="bi bi-calendar3" aria-hidden="true"></i>
                             <span><strong>Agenda completa</strong><small>Calendarios personal y general</small></span>
                             <i class="bi bi-arrow-up-right home-shortcut-arrow" aria-hidden="true"></i>
                         </a>
                     @endif
-                    @if (Route::has('mailbox.index') && auth()->user()->tieneRol('admin', 'oficios', 'coordinador'))
+                    @if ($puedeVerCorreo)
                         <a href="{{ route('mailbox.index') }}" class="home-shortcut">
                             <i class="bi bi-inbox" aria-hidden="true"></i>
                             <span><strong>Correo institucional</strong><small>Oficios y comunicaciones recibidas</small></span>
@@ -131,11 +167,11 @@
                     </div>
                     <div class="home-preview-columns">
                         <section class="home-preview-section" aria-labelledby="home-preview-tasks-title">
-                            <div class="home-preview-section-heading"><h3 id="home-preview-tasks-title">Tareas por atender</h3><a href="{{ route('tareas.index') }}">Ver todas <i class="bi bi-arrow-up-right" aria-hidden="true"></i></a></div>
+                            <div class="home-preview-section-heading"><h3 id="home-preview-tasks-title">Tareas por atender</h3>@if ($puedeVerTareas)<a href="{{ route('tareas.index') }}">Ver todas <i class="bi bi-arrow-up-right" aria-hidden="true"></i></a>@endif</div>
                             <div class="home-control-list" data-panel-tasks></div>
                         </section>
                         <section class="home-preview-section" aria-labelledby="home-preview-events-title">
-                            <div class="home-preview-section-heading"><h3 id="home-preview-events-title">Agenda próxima</h3><a href="{{ route('agenda.index') }}">Abrir agenda <i class="bi bi-arrow-up-right" aria-hidden="true"></i></a></div>
+                            <div class="home-preview-section-heading"><h3 id="home-preview-events-title">Agenda próxima</h3>@if ($puedeVerAgenda)<a href="{{ route('agenda.index') }}">Abrir agenda <i class="bi bi-arrow-up-right" aria-hidden="true"></i></a>@endif</div>
                             <div class="home-control-list" data-panel-events></div>
                         </section>
                     </div>
@@ -184,11 +220,11 @@
 
                 <div class="home-control-sections">
                     <section class="home-control-section" aria-labelledby="panel-tasks-title">
-                        <div class="home-control-section-heading"><h3 id="panel-tasks-title">Tareas por atender</h3><a href="{{ route('tareas.index') }}">Ver todas <i class="bi bi-arrow-up-right" aria-hidden="true"></i></a></div>
+                        <div class="home-control-section-heading"><h3 id="panel-tasks-title">Tareas por atender</h3>@if ($puedeVerTareas)<a href="{{ route('tareas.index') }}">Ver todas <i class="bi bi-arrow-up-right" aria-hidden="true"></i></a>@endif</div>
                         <div class="home-control-list" data-panel-tasks></div>
                     </section>
                     <section class="home-control-section" aria-labelledby="panel-events-title">
-                        <div class="home-control-section-heading"><h3 id="panel-events-title">Agenda próxima</h3><a href="{{ route('agenda.index') }}">Abrir agenda <i class="bi bi-arrow-up-right" aria-hidden="true"></i></a></div>
+                        <div class="home-control-section-heading"><h3 id="panel-events-title">Agenda próxima</h3>@if ($puedeVerAgenda)<a href="{{ route('agenda.index') }}">Abrir agenda <i class="bi bi-arrow-up-right" aria-hidden="true"></i></a>@endif</div>
                         <div class="home-control-list" data-panel-events></div>
                     </section>
                 </div>
@@ -361,6 +397,24 @@
             .home-panel-backdrop, .home-control-panel, .home-panel-launch, .home-shortcut { transition: none; }
             .home-skeleton { animation: none; background: #e9f1ec; }
             .dark .home-skeleton { background: #1c3544; }
+        }
+
+        /* Greeting and pending counters */
+        .home-greeting { color: #173247; font-size: calc(1.7rem + 2px); font-weight: 750; letter-spacing: -0.03em; line-height: 1.15; margin: 0; }
+        .home-pulse { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; margin: 14px 0 0; padding: 0; }
+        .home-pulse-chip { align-items: center; background: #fff; border: 1px solid #dce7ed; border-radius: 999px; color: #2c4a5e; cursor: pointer; display: inline-flex; font: inherit; font-size: 13px; gap: 6px; padding: 5px 12px; text-decoration: none; transition: border-color 150ms ease, background-color 150ms ease; }
+        .home-pulse-chip strong { color: #173247; font-weight: 750; }
+        .home-pulse-chip:hover, .home-pulse-chip:focus-visible { background: #f2f8f4; border-color: #a9cbb5; outline: none; }
+        .home-pulse-chip.is-alert { background: #fdf2f3; border-color: #f0cdd3; color: #9b3f4c; }
+        .home-pulse-chip.is-alert strong { color: #9b3f4c; }
+        .home-pulse-chip.is-ok { background: #eef7f1; border-color: #cfe5d7; color: #397461; cursor: default; }
+
+        html.dark .home-greeting { color: #edf6fb; }
+        html.dark .home-pulse-chip { background: #152532; border-color: #294252; }
+        html.dark .home-pulse-chip, html.dark .home-pulse-chip strong { color: #dbe7ee; }
+
+        @media (max-width: 640px) {
+            .home-greeting { font-size: calc(1.35rem + 2px); }
         }
     </style>
 
@@ -565,6 +619,20 @@
                         first.focus();
                     }
                 });
+            })();
+        </script>
+        <script>
+            (() => {
+                document.querySelectorAll('[data-open-avisos]').forEach((button) => button.addEventListener('click', (event) => {
+                    event.stopPropagation();
+                    const menu = document.querySelector('.site-user-menu');
+                    const toggle = document.querySelector('[data-avisos-toggle]');
+                    if (!menu || !toggle) return;
+                    menu.open = true;
+                    if (toggle.getAttribute('aria-expanded') !== 'true') toggle.click();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    toggle.focus();
+                }));
             })();
         </script>
     @endpush

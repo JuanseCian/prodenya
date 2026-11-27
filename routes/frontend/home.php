@@ -10,3 +10,7 @@ Route::get('/', [HomeController::class, 'index'])
 Route::get('/mi-panel', [HomeController::class, 'panel'])
     ->middleware('auth')
     ->name('personal-panel');
+
+Route::get('/buscar-personas', [HomeController::class, 'buscarPersonas'])
+    ->middleware(['auth', 'verified', 'rol:admin,operador,consulta,oficios,coordinador,profesional,administrativo'])
+    ->name('home.buscar-personas');
