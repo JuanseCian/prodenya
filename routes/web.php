@@ -4,6 +4,7 @@ use App\Http\Controllers\AdminCatalogController;
 use App\Http\Controllers\AdminHomeController;
 use App\Http\Controllers\AdminUserController;
 use App\Http\Controllers\AuditoriaController;
+use App\Http\Controllers\AvisoController;
 use App\Http\Controllers\EstadisticasController;
 use Illuminate\Support\Facades\Route;
 
@@ -46,6 +47,19 @@ Route::middleware(['auth', 'verified'])
             Route::post('usuarios/{user}/reactivar', [AdminUserController::class, 'reactivate'])->whereNumber('user')->name('usuarios.reactivar');
             Route::post('usuarios/{user}/archivar', [AdminUserController::class, 'archive'])->whereNumber('user')->name('usuarios.archivar');
             Route::post('usuarios/{user}/restaurar', [AdminUserController::class, 'restore'])->whereNumber('user')->name('usuarios.restaurar');
+
+            Route::controller(AvisoController::class)
+                ->prefix('avisos')
+                ->name('avisos.')
+                ->group(function () {
+                    Route::get('/', 'index')->name('index');
+                    Route::get('crear', 'create')->name('create');
+                    Route::post('/', 'store')->name('store');
+                    Route::get('{aviso}/editar', 'edit')->whereNumber('aviso')->name('edit');
+                    Route::put('{aviso}', 'update')->whereNumber('aviso')->name('update');
+                    Route::post('{aviso}/desactivar', 'desactivar')->whereNumber('aviso')->name('desactivar');
+                    Route::post('{aviso}/reactivar', 'reactivar')->whereNumber('aviso')->name('reactivar');
+                });
         });
     });
 

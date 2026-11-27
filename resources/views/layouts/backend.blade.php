@@ -389,6 +389,10 @@
                             <span class="rounded-full bg-amber-400 px-2 py-0.5 text-[0.65rem] font-bold text-slate-950">{{ $usuariosPendientes > 99 ? '99+' : $usuariosPendientes }}</span>
                         @endif
                     </a>
+                    <a href="{{ route('admin.avisos.index') }}" title="Avisos" class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-slate-300 transition hover:bg-slate-800 hover:text-white {{ request()->routeIs('admin.avisos.*') ? 'bg-slate-800 text-white' : '' }}">
+                        <i class="bi bi-megaphone w-5"></i>
+                        <span class="flex-1">Avisos</span>
+                    </a>
                 @endif
 
                 @if (auth()->user()?->esAdmin())
